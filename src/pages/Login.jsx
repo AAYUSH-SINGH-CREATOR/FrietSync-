@@ -66,9 +66,9 @@ const Login = () => {
           Welcome back to
         </h1>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-indigo-700 dark:text-indigo-400 transition-colors">
-          FrietSync
-        </h1>
+        <h1 className="inline-block text-3xl sm:text-4xl lg:text-5xl pb-2 font-extrabold bg-linear-to-r from-[#32a6ea] via-[#3A4BBD] to-[#FD8DAF] bg-clip-text text-transparent">
+  FrietSync
+</h1>
       </div>
 
       <div className="flex justify-center items-start mt-6 sm:mt-8 lg:mt-10 relative z-10">
