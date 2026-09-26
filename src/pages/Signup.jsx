@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { registerUser } from '../services/authApi';
+import { FiSun } from "react-icons/fi";
+import { FaMoon } from "react-icons/fa";
+
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -47,8 +50,8 @@ const Signup = () => {
       <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-96 lg:h-96 bg-pink-100 rounded-full blur-[70px] sm:blur-[100px] opacity-60 dark:opacity-0 transition-opacity"></div>
 
       <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex items-center gap-2 sm:gap-3 z-50">
-        <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          Light
+        <span className="text-sm sm:text-sm font-medium text-zinc-900 dark:text-zinc-200">
+          <FiSun />
         </span>
 
         <button
@@ -62,8 +65,8 @@ const Signup = () => {
           />
         </button>
 
-        <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          Dark
+        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200">
+          <FaMoon />
         </span>
       </div>
 

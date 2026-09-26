@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
+  const[showpass, setshowpass] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
@@ -17,7 +18,7 @@ export const ThemeProvider = ({ children }) => {
   }, [isDarkMode]);
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode }}>
+    <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode , setshowpass}}>
       {children}
     </ThemeContext.Provider>
   );
