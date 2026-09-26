@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { registerUser } from '../services/authApi';
+import { Link, useNavigate } from 'react-router-dom';
 import teamAvatar1 from '../assets/team-avatar1.png'; 
 import teamAvatar2 from '../assets/team-avatar2.png';
 import teamAvatar3 from '../assets/team-avatar3.png';
@@ -7,10 +7,12 @@ import { BiSolidStarHalf } from "react-icons/bi";
 import { FaBug } from "react-icons/fa";
 import { FaPaintbrush } from "react-icons/fa6";
 import { FaRocket } from "react-icons/fa";
-import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { registerUser } from '../services/authApi';
 
 const Signup = () => {
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,8 +38,9 @@ const Signup = () => {
     setErrorMessage('');
     setIsLoading(true);
 
-    try {
+   try {
       await registerUser(formData);
+      navigate('/login');
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -116,7 +119,7 @@ const Signup = () => {
           <h2 className="text-2xl font-bold text-center text-zinc-950 dark:text-white">Create your account</h2>
           <p className="text-sm text-center text-zinc-700 dark:text-zinc-400 mt-1 mb-6">
             Already have an account?{' '}
-            <Link to ="/login" href="#" className="text-indigo-700 dark:text-indigo-400 font-semibold hover:underline">
+            <Link to="/login" className="text-indigo-700 dark:text-indigo-400 font-semibold hover:underline">
               Log in
             </Link>
           </p>

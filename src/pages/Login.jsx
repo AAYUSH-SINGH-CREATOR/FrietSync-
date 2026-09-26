@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import teamAvatar1 from '../assets/team-avatar1.png'; 
 import teamAvatar2 from '../assets/team-avatar2.png';
 import teamAvatar3 from '../assets/team-avatar3.png';
@@ -8,8 +8,11 @@ import { FaBug } from "react-icons/fa";
 import { FaPaintbrush } from "react-icons/fa6";
 import { FaRocket } from "react-icons/fa";
 import { useTheme } from '../context/ThemeContext';
+import { loginUser } from '../services/authApi'; 
 
 const Login = () => {
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -30,7 +33,8 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      console.log("Logging in with:", formData);
+      await loginUser(formData);
+      navigate('/dashboard'); 
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -138,7 +142,6 @@ const Login = () => {
                   placeholder="Enter Password"
                   className="w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition pr-10"
                 />
-                
               </div>
               <div className="text-right mt-2">
                 <a href="#" className="text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
@@ -190,4 +193,3 @@ const Login = () => {
 };
 
 export default Login;
-
