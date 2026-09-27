@@ -39,3 +39,24 @@ export const loginUser = async (userData) => {
 
   return data;
 };
+
+export const verifyOtp = async (email, otp) => {
+  const requestBody = { 
+    email: email, 
+    code: otp 
+  };
+  console.log(requestBody);
+  const response = await fetch(`${BASE_URL}/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, code: otp }), 
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.message || 'Invalid or expired OTP.');
+  }
+  
+  return data;
+}
