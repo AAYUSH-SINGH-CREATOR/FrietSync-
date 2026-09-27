@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { loginUser } from '../services/authApi';
-import { FiSun } from "react-icons/fi";
+import { FiSun, FiEye, FiEyeOff} from "react-icons/fi";
 import { FaMoon } from "react-icons/fa";
 
 const Login = () => {
@@ -15,6 +15,7 @@ const Login = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const { isDarkMode, setIsDarkMode } = useTheme();
 
@@ -110,7 +111,7 @@ const Login = () => {
               />
             </div>
 
-            <div>
+           <div>
               <label
                 htmlFor="password"
                 className="block text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-1 sm:mb-1.5"
@@ -120,13 +121,20 @@ const Login = () => {
 
               <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Enter Password"
                   className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition pr-10"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  {showPassword ? <FiEye size={18} /> : <FiEyeOff size={18} />}
+                </button>
               </div>
 
               <div className="text-right mt-1.5 sm:mt-2">
