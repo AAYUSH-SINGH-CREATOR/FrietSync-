@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { registerUser } from '../services/authApi';
-import { FiSun } from "react-icons/fi";
+import { FiSun, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaMoon } from "react-icons/fa";
 
 
 const Signup = () => {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -36,7 +37,8 @@ const Signup = () => {
 
     try {
       await registerUser(formData);
-      navigate('/login');
+      // navigate('/login');
+      navigate('/verify-otp', { state: { email: formData.email } });
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -125,14 +127,26 @@ const Signup = () => {
                   {field.label}
                 </label>
 
-                <input
-                  type={field.type}
-                  id={field.id}
-                  value={formData[field.id]}
-                  onChange={handleInputChange}
-                  placeholder={field.placeholder}
-                  className="w-full px-3 sm:px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition"
-                />
+                <div className="relative">
+                  <input
+                    type={field.type === 'password' ? (showPassword ? 'text' : 'password') : field.type}
+                    id={field.id}
+                    value={formData[field.id]}
+                    onChange={handleInputChange}
+                    placeholder={field.placeholder}
+                    className="w-full px-3 sm:px-4 py-2.5 pr-10 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition"
+                  />
+          
+                  {field.type === 'password' && (
+                    <button
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                    >
+                      {showPassword ? <FiEye size={18} /> : <FiEyeOff size={18} />}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
 
