@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { loginUser } from '../services/authApi';
-import { FiSun, FiEye, FiEyeOff} from "react-icons/fi";
+import { FiSun, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaMoon } from "react-icons/fa";
 
 const Login = () => {
@@ -44,20 +44,19 @@ const Login = () => {
       <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-pink-100 rounded-full blur-[80px] sm:blur-[100px] opacity-60 dark:opacity-0 transition-opacity"></div>
 
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 lg:right-8 flex items-center gap-1.5 sm:gap-3 z-50">
-        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200"><FiSun/></span>
+        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200"><FiSun /></span>
 
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="relative inline-flex h-5 w-10 sm:h-6 sm:w-12 items-center rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 focus:outline-none"
         >
           <span
-            className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 transform rounded-full bg-white transition duration-300 ease-in-out ${
-              isDarkMode ? 'translate-x-5.5 sm:translate-x-7' : 'translate-x-1'
-            }`}
+            className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 transform rounded-full bg-white transition duration-300 ease-in-out ${isDarkMode ? 'translate-x-5.5 sm:translate-x-7' : 'translate-x-1'
+              }`}
           />
         </button>
 
-        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200"> <FaMoon/> </span>
+        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200"> <FaMoon /> </span>
       </div>
 
       <div className="text-center mt-14 sm:mt-12 lg:mt-10">
@@ -70,8 +69,8 @@ const Login = () => {
         </h1>
 
         <h1 className="inline-block text-3xl sm:text-4xl lg:text-5xl pb-2 font-extrabold bg-linear-to-r from-[#32a6ea] via-[#3A4BBD] to-[#FD8DAF] bg-clip-text text-transparent">
-  FrietSync
-</h1>
+          FrietSync
+        </h1>
       </div>
 
       <div className="flex justify-center items-start mt-6 sm:mt-8 lg:mt-10 relative z-10">
@@ -111,7 +110,7 @@ const Login = () => {
               />
             </div>
 
-           <div>
+            <div>
               <label
                 htmlFor="password"
                 className="block text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-1 sm:mb-1.5"
@@ -138,12 +137,12 @@ const Login = () => {
               </div>
 
               <div className="text-right mt-1.5 sm:mt-2">
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="text-[11px] sm:text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   Forgot password ?
-                </a>
+                </Link>
               </div>
             </div>
 

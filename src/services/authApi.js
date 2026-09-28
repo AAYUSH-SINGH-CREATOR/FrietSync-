@@ -60,3 +60,30 @@ export const verifyOtp = async (email, otp) => {
   
   return data;
 }
+
+
+export const sendForgotPasswordOtp = async (email) => {
+  const response = await fetch(`${BASE_URL}/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }), 
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to send OTP.');
+  return data;
+};
+
+export const resetPassword = async (email, otp, newPassword) => {
+  const response = await fetch(`${BASE_URL}/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      email: email, 
+      code: otp, 
+      newPassword: newPassword 
+    }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to reset password.');
+  return data;
+};
