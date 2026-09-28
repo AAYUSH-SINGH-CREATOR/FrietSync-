@@ -5,7 +5,6 @@ import { registerUser } from '../services/authApi';
 import { FiSun, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaMoon } from "react-icons/fa";
 
-
 const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -19,25 +18,43 @@ const Signup = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const { isDarkMode, setIsDarkMode } = useTheme();
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     setFormData({ ...formData, [id]: value });
+
+    if (fieldErrors[id]) {
+      setFieldErrors({ ...fieldErrors, [id]: '' });
+    }
   };
 
   const handleCreateAccount = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("Passwords do not match!");
+    const errors = {};
+
+    if (!formData.name) errors.name = "username is required";
+    if (!formData.email) errors.email = "email is required";
+    if (!formData.password) errors.password = "password is required";
+    if (!formData.confirmPassword) errors.confirmPassword = "password required";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+
+    if (formData.password !== formData.confirmPassword) {
+      setFieldErrors({ confirmPassword: "Passwords do not match!" });
+      return;
+    }
+
+    setFieldErrors({});
     setErrorMessage('');
     setIsLoading(true);
 
     try {
       await registerUser(formData);
-      // navigate('/login');
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (error) {
       setErrorMessage(error.message);
@@ -80,15 +97,16 @@ const Signup = () => {
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white mt-4 leading-tight transition-colors">
           Turn Ideas Into Progress
         </h1>
-<div className='flex justify-center gap-4'>
-  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white">
-          with
-        </h1>
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl pb-2 font-extrabold bg-linear-to-r from-[#32a6ea] via-[#3A4BBD] to-[#FD8DAF] bg-clip-text text-transparent">
-         FrietSync
-        </h1>
-</div>
-      
+
+        <div className="flex justify-center gap-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white">
+            with
+          </h1>
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl pb-2 font-extrabold bg-linear-to-r from-[#32a6ea] via-[#3A4BBD] to-[#FD8DAF] bg-clip-text text-transparent">
+            FrietSync
+          </h1>
+        </div>
       </div>
 
       <div className="flex justify-center items-start mt-8 sm:mt-10 lg:mt-12 px-0 sm:px-4 relative z-10">
@@ -114,12 +132,12 @@ const Signup = () => {
             onSubmit={(e) => e.preventDefault()}
           >
             {[
-              { label: 'Name', id: 'name', type: 'text', placeholder: 'Enter name' },
-              { label: 'Email', id: 'email', type: 'email', placeholder: 'eg: admin@gmail.com' },
-              { label: 'Password', id: 'password', type: 'password', placeholder: 'Enter Password' },
-              { label: 'Re-enter Password', id: 'confirmPassword', type: 'password', placeholder: 'Re-enter Password' },
+              { label: 'Username*', id: 'name', type: 'text', placeholder: 'Enter username' },
+              { label: 'Email*', id: 'email', type: 'email', placeholder: 'eg: admin@gmail.com' },
+              { label: 'Password*', id: 'password', type: 'password', placeholder: 'Enter Password' },
+              { label: 'Confirm Password*', id: 'confirmPassword', type: 'password', placeholder: 'Re-enter Password' },
             ].map((field) => (
-              <div key={field.id}>
+              <div key={field.id} className="text-left">
                 <label
                   htmlFor={field.id}
                   className="block text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-1.5"
@@ -134,12 +152,16 @@ const Signup = () => {
                     value={formData[field.id]}
                     onChange={handleInputChange}
                     placeholder={field.placeholder}
-                    className="w-full px-3 sm:px-4 py-2.5 pr-10 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition"
+                    className={`w-full px-3 sm:px-4 py-2.5 pr-10 rounded-lg border bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 outline-none transition ${
+                      fieldErrors[field.id]
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-zinc-300 dark:border-zinc-700 focus:border-indigo-600 dark:focus:border-indigo-500'
+                    }`}
                   />
-          
+
                   {field.type === 'password' && (
                     <button
-                      type="button" 
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                     >
@@ -147,6 +169,12 @@ const Signup = () => {
                     </button>
                   )}
                 </div>
+
+                {fieldErrors[field.id] && (
+                  <p className="text-red-500 text-xs mt-1.5 font-medium">
+                    {fieldErrors[field.id]}
+                  </p>
+                )}
               </div>
             ))}
 
@@ -165,7 +193,6 @@ const Signup = () => {
             </p>
           )}
         </div>
-
       </div>
     </div>
   );
