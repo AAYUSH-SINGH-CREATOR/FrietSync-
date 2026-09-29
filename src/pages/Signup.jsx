@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { registerUser } from '../services/authApi';
@@ -15,6 +15,13 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem('frietSyncToken');
+    if (token) {
+      navigate('/dashboard'); 
+    }
+  }, [navigate]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -99,7 +106,7 @@ const Signup = () => {
         </h1>
 
         <div className="flex justify-center gap-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white transition-colors">
             with
           </h1>
 
