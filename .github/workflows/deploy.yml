@@ -1,0 +1,27 @@
+name: Deploy FrietSync
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/FrietSync
+            git pull origin main
+            cd frontend
+            npm install
+            npm run build
+            sudo rm -rf /var/www/frietsync/*
+            sudo cp -r dist/* /var/www/frietsync/
+            sudo systemctl reload nginx
