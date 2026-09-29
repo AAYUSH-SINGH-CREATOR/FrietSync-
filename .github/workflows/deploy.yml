@@ -17,9 +17,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/FrietSync
+            cd ~/FrietSync-
             git pull origin main
-            cd frontend
             npm install
             npm run build
             sudo rm -rf /var/www/frietsync/*
