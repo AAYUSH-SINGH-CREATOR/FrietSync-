@@ -3,19 +3,43 @@ import { useNavigate } from 'react-router-dom';
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  function handleLogout() {
+  const handleLogout = () => {
     localStorage.removeItem('frietSyncToken');
     navigate('/login');
-  }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 dark:bg-zinc-900 transition-colors duration-300">
-      <h1 className="text-5xl font-extrabold text-zinc-900 dark:text-white">
-        helooo this is dashboard
-      </h1>
-      <button className="border-transparent p-3 rounded-4xl text-2xl bg-green-300 hover:bg-green-500" onClick={handleLogout} >
-        logout
-      </button>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-black text-sky-600 tracking-tight">
+            FrietSync
+          </span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-semibold">
+            Dashboard
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleLogout}
+            className="text-sm font-semibold text-gray-700 hover:text-red-600 px-3 py-1.5 rounded-lg border border-gray-300 hover:border-red-300 transition cursor-pointer"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-10">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            Welcome to your Dashboard 👋
+          </h1>
+          <p className="text-gray-600 mb-6">
+            You are logged in successfully with FrietSync.
+          </p>
+        </div>
+      </main>
     </div>
   );
 };
