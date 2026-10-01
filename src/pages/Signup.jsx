@@ -102,7 +102,7 @@ const Signup = () => {
         </button>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white mt-4 leading-tight transition-colors">
-          Turn Ideas Into Progress
+          Turn Ideas into Progresss
         </h1>
 
         <div className="flex justify-center gap-4">
