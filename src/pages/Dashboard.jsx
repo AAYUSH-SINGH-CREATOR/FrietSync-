@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logoutUser } from '../services/authApi';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem('frietSyncToken');
-    navigate('/login');
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logoutUser();
+    } finally {
+      navigate('/login');
+    }
   };
 
   return (
@@ -23,9 +30,10 @@ const Dashboard = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={handleLogout}
-            className="text-sm font-semibold text-gray-700 hover:text-red-600 px-3 py-1.5 rounded-lg border border-gray-300 hover:border-red-300 transition cursor-pointer"
+            disabled={isLoggingOut}
+            className="text-sm font-semibold text-gray-700 hover:text-red-600 disabled:opacity-50 px-3 py-1.5 rounded-lg border border-gray-300 hover:border-red-300 transition cursor-pointer"
           >
-            Logout
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
           </button>
         </div>
       </header>
@@ -33,7 +41,7 @@ const Dashboard = () => {
       <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-10">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Welcome to your Dashboard 👋
+            Welcome to your Dashboard 
           </h1>
           <p className="text-gray-600 mb-6">
             You are logged in successfully with FrietSync.
