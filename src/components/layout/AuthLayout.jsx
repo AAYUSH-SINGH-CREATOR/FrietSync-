@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import authBg from '../../assets/authbg.svg';
+import authBg from '../../assets/authbg.png';
 import signupImg from '../../assets/signupimg.svg';
 
 const AuthLayout = ({
@@ -24,12 +24,12 @@ const AuthLayout = ({
 
   return (
     <div
-      className="min-h-screen w-screen relative bg-cover bg-no-repeat flex items-center justify-center bg-center font-sans overflow-x-hidden"
+      className="min-h-screen w-screen relative bg-[length:100%_100%] bg-no-repeat flex items-center justify-center bg-center font-sans overflow-x-hidden"
       style={{
         backgroundImage: `url(${authBg})`,
       }}
     >
-      <button w-full relative flex items-center justify-center  bg-center font-sans overflow-x-hidden
+      <button 
         type="button"
         onClick={handleBack}
         aria-label="Go back"
@@ -66,7 +66,6 @@ const AuthLayout = ({
             </div>
           </div>
         ) : (
-
           <div className="flex justify-center items-center py-4 sm:py-8">
             <div
               className={`w-full ${cardMaxWidth} bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 shadow-lg border border-gray-100`}
@@ -81,3 +80,4 @@ const AuthLayout = ({
 };
 
 export default AuthLayout;
+

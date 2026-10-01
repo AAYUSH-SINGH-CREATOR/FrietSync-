@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import AuthLayout from '../components/layout/AuthLayout';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 import { loginUser } from '../services/authApi';
-import { FiSun, FiEye, FiEyeOff } from "react-icons/fi";
-import { FaMoon } from "react-icons/fa";
+import loginImg from '../assets/loginimg.svg'
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,25 +14,39 @@ const Login = () => {
     password: '',
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem('frietSyncToken');
-    if (token) {
-      navigate('/dashboard'); 
-    }
-  }, [navigate]);
-
   const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
-  const { isDarkMode, setIsDarkMode } = useTheme();
-
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData({ ...formData, [id]: value });
+    setFormData((prev) => ({ ...prev, [id]: value }));
+
+    if (fieldErrors[id]) {
+      setFieldErrors((prev) => ({ ...prev, [id]: '' }));
+    }
+    if (errorMessage) {
+      setErrorMessage('');
+    }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    if (e) e.preventDefault();
+
+    const errors = {};
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    }
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
     setErrorMessage('');
     setIsLoading(true);
 
@@ -39,137 +54,90 @@ const Login = () => {
       await loginUser(formData);
       navigate('/dashboard');
     } catch (error) {
-      setErrorMessage(error.message);
+      const msg = error.message || 'Login failed';
+      if (
+        msg.toLowerCase().includes('email') ||
+        msg.toLowerCase().includes('not registered') ||
+        msg.toLowerCase().includes('user')
+      ) {
+        setFieldErrors({ email: msg });
+      } else if (msg.toLowerCase().includes('password')) {
+        setFieldErrors({ password: msg });
+      } else {
+        setErrorMessage(msg);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="h-dvh w-full bg-linear-to-b from-[#6BBAEC00] to-[#02A2FF] dark:bg-linear-to-b dark:from-zinc-900 dark:to-cyan-950 font-sans px-4 py-3 sm:px-6 sm:py-4 relative overflow-hidden transition-colors duration-300">
+    <AuthLayout
+      leftTitle = 'Welcome back to Frietsync'
+       leftBrand = ''
+     leftImage={loginImg}
+    showLeftIllustration={true} onBack={() => navigate('/signup')}>
+      <div className="text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          Log back in
+        </h2>
 
-      <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-pink-100 rounded-full blur-[80px] sm:blur-[100px] opacity-60 dark:opacity-0 transition-opacity"></div>
+        <p className="text-xs sm:text-sm text-gray-600 mt-1 mb-6">
+          Dont have an account ?{' '}
+          <Link
+            to="/signup"
+            className="text-sky-600 font-semibold hover:underline"
+          >
+            Sign Up
+          </Link>
+        </p>
 
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 lg:right-8 flex items-center gap-1.5 sm:gap-3 z-50">
-        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200"><FiSun /></span>
-
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="relative inline-flex h-5 w-10 sm:h-6 sm:w-12 items-center rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 focus:outline-none"
-        >
-          <span
-            className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 transform rounded-full bg-white transition duration-300 ease-in-out ${isDarkMode ? 'translate-x-5.5 sm:translate-x-7' : 'translate-x-1'
-              }`}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            placeholder="Enter email"
+            value={formData.email}
+            onChange={handleChange}
+            error={fieldErrors.email}
           />
-        </button>
 
-        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200"> <FaMoon /> </span>
-      </div>
+          <div>
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              placeholder="Enter Password"
+              value={formData.password}
+              onChange={handleChange}
+              error={fieldErrors.password}
+            />
 
-      <div className="text-center mt-14 sm:mt-12 lg:mt-10">
-        <button className="bg-linear-to-r from-blue-300 to-pink-300 text-xs sm:text-sm font-medium px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-zinc-900 shadow-sm border border-transparent dark:border-zinc-700">
-          Get started in minutes
-        </button>
+            <div className="text-right mt-1.5">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-gray-500 hover:text-gray-800 transition"
+              >
+                Forgot password ?
+              </Link>
+            </div>
+          </div>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white mt-3 sm:mt-4 leading-tight transition-colors">
-          Welcome back to
-        </h1>
+          <div className="pt-2">
+            <Button type="submit" isLoading={isLoading} onClick={handleLogin}>
+              Login
+            </Button>
+          </div>
+        </form>
 
-        <h1 className="inline-block text-3xl sm:text-4xl lg:text-5xl pb-2 font-extrabold bg-linear-to-r from-[#32a6ea] via-[#3A4BBD] to-[#FD8DAF] bg-clip-text text-transparent">
-          FrietSync
-        </h1>
-      </div>
-
-      <div className="flex justify-center items-start mt-6 sm:mt-8 lg:mt-10 relative z-10">
-        <div className="bg-white dark:bg-[#1e1e1e] p-5 sm:p-7 lg:p-10 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-[480px] border border-zinc-100 dark:border-zinc-800 transition-colors">
-
-          <h2 className="text-xl sm:text-2xl font-bold text-center text-zinc-950 dark:text-white">
-            Log back in
-          </h2>
-
-          <p className="text-xs sm:text-sm text-center text-zinc-700 dark:text-zinc-400 mt-1 mb-4 sm:mb-6">
-            Dont have an account ?{' '}
-            <Link
-              to="/signup"
-              className="text-indigo-700 dark:text-indigo-400 font-semibold hover:underline"
-            >
-              Sign Up
-            </Link>
+        {errorMessage && (
+          <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+            {errorMessage}
           </p>
-
-          <form className="space-y-3.5 sm:space-y-5" onSubmit={(e) => e.preventDefault()}>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-1 sm:mb-1.5"
-              >
-                Email
-              </label>
-
-              <input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="eg: admin@gmail.com"
-                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-1 sm:mb-1.5"
-              >
-                Password
-              </label>
-
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter Password"
-                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                >
-                  {showPassword ? <FiEye size={18} /> : <FiEyeOff size={18} />}
-                </button>
-              </div>
-
-              <div className="text-right mt-1.5 sm:mt-2">
-                <Link
-                  to="/forgot-password"
-                  className="text-[11px] sm:text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                >
-                  Forgot password ?
-                </Link>
-              </div>
-            </div>
-
-            <button
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="w-full bg-[#B7E4FF] hover:bg-sky-300 text-zinc-950 text-sm sm:text-base font-semibold py-2.5 sm:py-3 rounded-lg mt-3 sm:mt-4 shadow-md transition duration-150 disabled:opacity-70"
-            >
-              {isLoading ? 'Logging In...' : 'Login'}
-            </button>
-          </form>
-
-          {errorMessage && (
-            <p className="text-red-600 dark:text-red-400 text-xs sm:text-sm mt-3 sm:mt-4 text-center">
-              {errorMessage}
-            </p>
-          )}
-        </div>
+        )}
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
