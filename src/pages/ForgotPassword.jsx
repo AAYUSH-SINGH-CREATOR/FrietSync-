@@ -1,235 +1,302 @@
-import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiArrowLeft } from 'react-icons/fi';
+import AuthLayout from '../components/layout/AuthLayout';
+import Input from '../components/ui/Input';
+import OtpInput from '../components/ui/OtpInput';
+import Button from '../components/ui/Button';
+import forgetPassImg from '../assets/forgetpass.svg';
 import { sendForgotPasswordOtp, resetPassword } from '../services/authApi';
-import { FiSun, FiEye, FiEyeOff, FiArrowLeft } from "react-icons/fi";
-import { FaMoon } from "react-icons/fa";
-import forgetpassImg from '../assets/forgetpass.svg';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const { isDarkMode, setIsDarkMode } = useTheme();
 
   const [step, setStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState(new Array(6).fill(""));
-  const [passwords, setPasswords] = useState({ newPassword: '', confirmPassword: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const inputRefs = useRef([]);
+  const [otp, setOtp] = useState(new Array(6).fill(''));
+  const [passwords, setPasswords] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
 
-  const handleSendOtp = async () => {
-    if (!email) {
-      setErrorMessage("Please enter your registered email.");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [showRequirements, setShowRequirements] = useState(false);
+  const criteria = {
+    minLength: passwords.newPassword.length >= 8,
+    hasUpper: /[A-Z]/.test(passwords.newPassword),
+    hasLower: /[a-z]/.test(passwords.newPassword),
+    hasNumber: /[0-9]/.test(passwords.newPassword),
+    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(passwords.newPassword),
+  };
+
+  const isPasswordValid = Object.values(criteria).every(Boolean);
+
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1);
+      setOtp(new Array(6).fill(''));
+      setPasswords({ newPassword: '', confirmPassword: '' });
+      setErrorMessage('');
+      setShowRequirements(false);
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const handleSendOtp = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!email.trim()) {
+      setFieldErrors({ email: 'Please enter your registered email' });
       return;
     }
+
+    setFieldErrors({});
     setErrorMessage('');
     setIsLoading(true);
+
     try {
       await sendForgotPasswordOtp(email);
-      setStep(2); 
+      setStep(2);
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return false;
-    setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
-    if (element.nextSibling && element.value !== "") {
-      element.nextSibling.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (e, index) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1].focus();
-    }
-  };
-
-  const handleVerifyOtp = () => {
-    const otpString = otp.join("");
-    if (otpString.length < 6) {
-      setErrorMessage("Please enter all 6 digits.");
-      return;
-    }
-    setErrorMessage('');
-    setStep(3); 
-  };
-
-  const handlePasswordChange = (e) => {
-    setPasswords({ ...passwords, [e.target.id]: e.target.value });
-  };
-
-  const handleResetPassword = async () => {
-    if (!passwords.newPassword || !passwords.confirmPassword) {
-      setErrorMessage("Please fill in all fields.");
-      return;
-    }
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      setErrorMessage("Passwords do not match!");
-      return;
-    }
-    
-    setErrorMessage('');
-    setIsLoading(true);
-    
-    try {
-      const otpString = otp.join("");
-      await resetPassword(email, otpString, passwords.newPassword);
-      navigate('/login'); 
-    } catch (error) {
-      setErrorMessage(error.message);
-      if (error.message.toLowerCase().includes("otp") || error.message.toLowerCase().includes("code")) {
-         setStep(2);
+      const msg = error.message || 'Failed to send OTP.';
+      if (
+        msg.toLowerCase().includes('not registered') ||
+        msg.toLowerCase().includes('user') ||
+        msg.toLowerCase().includes('email')
+      ) {
+        setFieldErrors({ email: msg });
+      } else {
+        setErrorMessage(msg);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleResetPassword = async (e) => {
+    if (e) e.preventDefault();
+
+    const errors = {};
+    const otpString = otp.join('');
+    
+    if (otpString.length < 6) {
+      setErrorMessage('Please enter the complete 6-digit OTP.');
+      return;
+    }
+
+    // Password requirements check matching the Signup flow
+    if (!passwords.newPassword) {
+      errors.newPassword = 'New password is required';
+    } else if (!isPasswordValid) {
+      errors.newPassword = (
+        <span className="text-red-500 text-xs">
+          Password doesn't meet{' '}
+          <span
+            onClick={() => setShowRequirements((prev) => !prev)}
+            className="underline cursor-pointer hover:text-red-700 font-semibold"
+          >
+            requirements
+          </span>
+        </span>
+      );
+      setShowRequirements(true);
+    }
+
+    if (!passwords.confirmPassword) {
+      errors.confirmPassword = 'Confirm password is required';
+    } else if (passwords.newPassword !== passwords.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match!';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setErrorMessage('');
+    setIsLoading(true);
+
+    try {
+      await resetPassword(email, otpString, passwords.newPassword);
+      navigate('/login');
+    } catch (error) {
+      const msg = error.message || 'Failed to reset password. Please check your OTP.';
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#6BBAEC00] to-[#02A2FF] dark:bg-gradient-to-b dark:from-zinc-900 dark:to-cyan-950 font-sans p-3 sm:p-4 relative overflow-hidden transition-colors duration-300 flex flex-col items-center justify-center">
-      
-      <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-96 lg:h-96 bg-pink-100 rounded-full blur-[70px] sm:blur-[100px] opacity-60 dark:opacity-0 transition-opacity"></div>
+    <AuthLayout
+      showLeftIllustration={step === 1}
+      leftTitle="Recover your account with"
+      leftBrand="Frietsync"
+      leftImage={forgetPassImg}
+      onBack={handleBack}
+    >
+      {step === 1 && (
+        <div className="text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+            Forgot Password ?
+          </h2>
 
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex items-center gap-2 sm:gap-3 z-50">
-        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200"><FiSun /></span>
-        <button onClick={() => setIsDarkMode(!isDarkMode)} className="relative inline-flex h-6 w-11 sm:w-12 items-center rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 focus:outline-none">
-          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-300 ease-in-out ${isDarkMode ? 'translate-x-6 sm:translate-x-7' : 'translate-x-1'}`} />
-        </button>
-        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200"><FaMoon /></span>
-      </div>
+          <form onSubmit={handleSendOtp} className="space-y-5">
+            <Input
+              id="email"
+              label="Enter email"
+              type="email"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors({});
+                if (errorMessage) setErrorMessage('');
+              }}
+              error={fieldErrors.email}
+            />
 
-      <div className="bg-white dark:bg-[#1e1e1e] p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-[500px] border border-zinc-100 dark:border-zinc-800 relative z-10 transition-colors mt-12 sm:mt-0">
-        
-        {step === 1 && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl sm:text-[28px] font-bold text-zinc-950 dark:text-white mb-6 text-center">
-              Forgot Password ?
-            </h2>
-            
-            <img src={forgetpassImg} alt="Forgot Password Illustration" className="w-100 h-auto mb-8 object-contain" />
-            
-            <div className="w-full mb-6">
-              <label htmlFor="email" className="block text-xs font-semibold text-zinc-800 dark:text-zinc-300 mb-1.5 ml-1">
-                Enter email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter registered email"
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm text-zinc-950 dark:text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-sky-300 dark:focus:ring-sky-600 outline-none transition-all"
+            <div className="pt-2">
+              <Button type="submit" isLoading={isLoading} onClick={handleSendOtp}>
+                Send OTP
+              </Button>
+            </div>
+          </form>
+
+          {errorMessage && (
+            <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+              {errorMessage}
+            </p>
+          )}
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            Reset Password
+          </h2>
+
+          <p className="text-xs sm:text-sm text-gray-600 mb-6">
+            Enter the code sent to <span className="font-semibold text-gray-900">{email}</span> and your new password.
+          </p>
+
+          <form onSubmit={handleResetPassword} className="space-y-5">
+            <div className="my-2 flex justify-center">
+              <OtpInput
+                otp={otp}
+                setOtp={(newOtp) => {
+                  setOtp(newOtp);
+                  if (errorMessage) setErrorMessage('');
+                }}
+                error={errorMessage.includes('OTP') ? errorMessage : ''}
+                length={6}
               />
             </div>
-            
-            <button
-              onClick={handleSendOtp}
-              disabled={isLoading}
-              className="w-full bg-[#B7E4FF] hover:bg-sky-300 text-zinc-950 font-bold py-3 rounded-xl shadow-sm transition duration-150 disabled:opacity-70"
-            >
-              {isLoading ? 'Sending...' : 'Send OTP'}
-            </button>
-          </div>
-        )}
 
-        {step === 2 && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold text-zinc-950 dark:text-white mb-2 text-center">Verify OTP</h2>
-            <p className="text-sm text-center text-zinc-600 dark:text-zinc-400 mb-8">
-              Enter code sent to <span className="font-semibold text-zinc-800 dark:text-zinc-200">{email}</span>
+            <div className="relative">
+              <Input
+                id="newPassword"
+                label="New Password"
+                type="password"
+                placeholder="Enter Password"
+                value={passwords.newPassword}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPasswords({ ...passwords, newPassword: value });
+                  if (fieldErrors.newPassword) setFieldErrors({ ...fieldErrors, newPassword: '' });
+                  
+                  const newCriteria = {
+                    minLength: value.length >= 8,
+                    hasUpper: /[A-Z]/.test(value),
+                    hasLower: /[a-z]/.test(value),
+                    hasNumber: /[0-9]/.test(value),
+                    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+                  };
+                  if (Object.values(newCriteria).every(Boolean)) {
+                    setShowRequirements(false);
+                  }
+                }}
+                error={fieldErrors.newPassword}
+              />
+
+              {showRequirements && (
+                <div className="absolute bottom-full right-0 mb-2 w-full sm:w-[330px] bg-white border border-gray-400 rounded-[20px] p-4 shadow-xl z-50 text-left transition-all">
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-xs sm:text-[13px] font-semibold text-gray-900">
+                      Password must contain at least 8 characters
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowRequirements(false)}
+                      className="text-gray-400 hover:text-gray-700 text-sm font-bold ml-2 cursor-pointer leading-none"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <ul className="text-xs sm:text-[13px] space-y-1.5 pl-5 list-disc text-gray-800">
+                    <li className={criteria.hasUpper ? 'text-green-600 font-medium' : ''}>
+                      One uppercase letter (A–Z)
+                    </li>
+                    <li className={criteria.hasLower ? 'text-green-600 font-medium' : ''}>
+                      One lowercase letter (a–z)
+                    </li>
+                    <li className={criteria.hasNumber ? 'text-green-600 font-medium' : ''}>
+                      One number (0–9)
+                    </li>
+                    <li className={criteria.hasSpecial ? 'text-green-600 font-medium' : ''}>
+                      One special character (!, @, #, $, %, etc.)
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <Input
+              id="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm Password"
+              value={passwords.confirmPassword}
+              onChange={(e) => {
+                setPasswords({ ...passwords, confirmPassword: e.target.value });
+                if (fieldErrors.confirmPassword) setFieldErrors({ ...fieldErrors, confirmPassword: '' });
+              }}
+              error={fieldErrors.confirmPassword}
+            />
+
+            <div className="pt-2">
+              <Button type="submit" isLoading={isLoading} onClick={handleResetPassword}>
+                Reset Password
+              </Button>
+            </div>
+          </form>
+
+          {errorMessage && !errorMessage.includes('OTP') && (
+            <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+              {errorMessage}
             </p>
+          )}
 
-            <div className="flex justify-center gap-2 sm:gap-3 mb-8">
-              {otp.map((data, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  maxLength="1"
-                  value={data}
-                  ref={ref => inputRefs.current[index] = ref}
-                  onChange={e => handleOtpChange(e.target, index)}
-                  onKeyDown={e => handleOtpKeyDown(e, index)}
-                  onFocus={e => e.target.select()}
-                  className="w-10 h-12 sm:w-12 sm:h-14 bg-transparent border border-zinc-300 dark:border-zinc-700 rounded-lg text-center text-xl font-semibold text-zinc-900 dark:text-white focus:border-sky-500 focus:ring-2 focus:ring-sky-300 outline-none transition-all"
-                />
-              ))}
-            </div>
-
+          <p className="text-xs sm:text-sm text-gray-600 mt-5">
+            Didn't receive the code?{' '}
             <button
-              onClick={handleVerifyOtp}
-              className="w-full bg-[#B7E4FF] hover:bg-sky-300 text-zinc-950 font-bold py-3 rounded-xl shadow-sm transition duration-150"
+              type="button"
+              onClick={handleSendOtp}
+              className="text-sky-600 font-semibold hover:underline cursor-pointer"
             >
-              Verify OTP
+              Resend
             </button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="flex flex-col w-full">
-            <h2 className="text-2xl font-bold text-zinc-950 dark:text-white mb-8 text-center">Create New Password</h2>
-            
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-800 dark:text-zinc-300 mb-1.5 ml-1">New Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="newPassword"
-                    value={passwords.newPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Enter new password"
-                    className="w-full px-4 py-3 pr-10 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm text-zinc-950 dark:text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-sky-300 outline-none transition-all"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
-                    {showPassword ? <FiEye size={18} /> : <FiEyeOff size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-zinc-800 dark:text-zinc-300 mb-1.5 ml-1">Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="confirmPassword"
-                    value={passwords.confirmPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Re-enter password"
-                    className="w-full px-4 py-3 pr-10 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#2a2a2a] text-sm text-zinc-950 dark:text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-sky-300 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleResetPassword}
-              disabled={isLoading}
-              className="w-full bg-[#B7E4FF] hover:bg-sky-300 text-zinc-950 font-bold py-3 rounded-xl shadow-sm transition duration-150 disabled:opacity-70"
-            >
-              {isLoading ? 'Updating...' : 'Confirm Password'}
-            </button>
-          </div>
-        )}
-
-        {errorMessage && (
-          <p className="text-red-500 text-sm mt-4 font-medium text-center">{errorMessage}</p>
-        )}
-
-        <div className="text-center mt-6">
-          <Link to="/login" className="inline-flex items-center justify-center gap-2 text-sm text-sky-500 font-medium hover:text-sky-600 transition-colors outline-none">
-            <FiArrowLeft /> Back to Login
-          </Link>
+          </p>
         </div>
-
-      </div>
-    </div>
+      )}
+    </AuthLayout>
   );
 };
 
