@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import AuthLayout from '../components/layout/AuthLayout';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 import { registerUser } from '../services/authApi';
-import { FiSun, FiEye, FiEyeOff } from "react-icons/fi";
-import { FaMoon } from "react-icons/fa";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -16,43 +15,78 @@ const Signup = () => {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem('frietSyncToken');
-    if (token) {
-      navigate('/dashboard'); 
-    }
-  }, [navigate]);
-
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showRequirements, setShowRequirements] = useState(false);
 
-  const { isDarkMode, setIsDarkMode } = useTheme();
+  const criteria = {
+    minLength: formData.password.length >= 8,
+    hasUpper: /[A-Z]/.test(formData.password),
+    hasLower: /[a-z]/.test(formData.password),
+    hasNumber: /[0-9]/.test(formData.password),
+    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+  };
 
-  const handleInputChange = (e) => {
+  const isPasswordValid = Object.values(criteria).every(Boolean);
+
+  const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData({ ...formData, [id]: value });
+    setFormData((prev) => ({ ...prev, [id]: value }));
 
     if (fieldErrors[id]) {
-      setFieldErrors({ ...fieldErrors, [id]: '' });
+      setFieldErrors((prev) => ({ ...prev, [id]: '' }));
+    }
+    if (errorMessage) {
+      setErrorMessage('');
+    }
+
+    if (id === 'password') {
+      const newCriteria = {
+        minLength: value.length >= 8,
+        hasUpper: /[A-Z]/.test(value),
+        hasLower: /[a-z]/.test(value),
+        hasNumber: /[0-9]/.test(value),
+        hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+      };
+      if (Object.values(newCriteria).every(Boolean)) {
+        setShowRequirements(false);
+      }
     }
   };
 
-  const handleCreateAccount = async () => {
-    const errors = {};
+  const handleSignup = async (e) => {
+    if (e) e.preventDefault();
 
-    if (!formData.name) errors.name = "username is required";
-    if (!formData.email) errors.email = "email is required";
-    if (!formData.password) errors.password = "password is required";
-    if (!formData.confirmPassword) errors.confirmPassword = "password required";
+    const errors = {};
+    if (!formData.name.trim()) errors.name = 'Name is required';
+    if (!formData.email.trim()) errors.email = 'Email is required';
+
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (!isPasswordValid) {
+      errors.password = (
+        <span className="text-red-500 text-xs">
+          Password doesn't meet{' '}
+          <span
+            onClick={() => setShowRequirements((prev) => !prev)}
+            className="underline cursor-pointer hover:text-red-700 font-semibold"
+          >
+            requirements
+          </span>
+        </span>
+      );
+      setShowRequirements(true);
+    }
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Confirm password is required';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setFieldErrors({ confirmPassword: "Passwords do not match!" });
       return;
     }
 
@@ -64,144 +98,118 @@ const Signup = () => {
       await registerUser(formData);
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || 'Failed to create account.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#6BBAEC00] to-[#02A2FF] dark:bg-gradient-to-b dark:from-zinc-900 dark:to-cyan-950 font-sans p-3 sm:p-4 relative overflow-hidden transition-colors duration-300">
+    <AuthLayout showLeftIllustration={true} onBack={() => navigate('/login')}>
+      <div className="text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          Create your account
+        </h2>
 
-      <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 lg:w-96 lg:h-96 bg-pink-100 rounded-full blur-[70px] sm:blur-[100px] opacity-60 dark:opacity-0 transition-opacity"></div>
-
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex items-center gap-2 sm:gap-3 z-50">
-        <span className="text-sm sm:text-sm font-medium text-zinc-900 dark:text-zinc-200">
-          <FiSun />
-        </span>
-
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="relative inline-flex h-6 w-11 sm:w-12 items-center rounded-full bg-zinc-300 dark:bg-zinc-700 transition-colors duration-300 focus:outline-none"
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-300 ease-in-out ${
-              isDarkMode ? 'translate-x-6 sm:translate-x-7' : 'translate-x-1'
-            }`}
-          />
-        </button>
-
-        <span className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200">
-          <FaMoon />
-        </span>
-      </div>
-
-      <div className="text-center mt-20 sm:mt-20 lg:mt-16 px-2 sm:px-4">
-        <button className="bg-gradient-to-r from-blue-300 to-pink-300 text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 rounded-full text-zinc-900 shadow-sm border border-transparent dark:border-zinc-700">
-          Get started in minutes
-        </button>
-
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white mt-4 leading-tight transition-colors">
-          Turn Ideas into Progresss
-        </h1>
-
-        <div className="flex justify-center gap-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 dark:text-white transition-colors">
-            with
-          </h1>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl pb-2 font-extrabold bg-linear-to-r from-[#32a6ea] via-[#3A4BBD] to-[#FD8DAF] bg-clip-text text-transparent">
-            FrietSync
-          </h1>
-        </div>
-      </div>
-
-      <div className="flex justify-center items-start mt-8 sm:mt-10 lg:mt-12 px-0 sm:px-4 relative z-10">
-
-        <div className="bg-white dark:bg-[#1e1e1e] p-5 sm:p-7 md:p-8 lg:p-10 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-[480px] border border-zinc-100 dark:border-zinc-800 transition-colors">
-
-          <h2 className="text-xl sm:text-2xl font-bold text-center text-zinc-950 dark:text-white">
-            Create your account
-          </h2>
-
-          <p className="text-xs sm:text-sm text-center text-zinc-700 dark:text-zinc-400 mt-1 mb-5 sm:mb-6">
-            Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-indigo-700 dark:text-indigo-400 font-semibold hover:underline"
-            >
-              Log in
-            </Link>
-          </p>
-
-          <form
-            className="space-y-3.5 sm:space-y-4"
-            onSubmit={(e) => e.preventDefault()}
+        <p className="text-xs sm:text-sm text-gray-600 mt-1 mb-6">
+          Already have an account?{' '}
+          <Link
+            to="/login"
+            className="text-sky-600 font-semibold hover:underline"
           >
-            {[
-              { label: 'Username*', id: 'name', type: 'text', placeholder: 'Enter username' },
-              { label: 'Email*', id: 'email', type: 'email', placeholder: 'eg: admin@gmail.com' },
-              { label: 'Password*', id: 'password', type: 'password', placeholder: 'Enter Password' },
-              { label: 'Confirm Password*', id: 'confirmPassword', type: 'password', placeholder: 'Re-enter Password' },
-            ].map((field) => (
-              <div key={field.id} className="text-left">
-                <label
-                  htmlFor={field.id}
-                  className="block text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-1.5"
-                >
-                  {field.label}
-                </label>
+            Log in
+          </Link>
+        </p>
 
-                <div className="relative">
-                  <input
-                    type={field.type === 'password' ? (showPassword ? 'text' : 'password') : field.type}
-                    id={field.id}
-                    value={formData[field.id]}
-                    onChange={handleInputChange}
-                    placeholder={field.placeholder}
-                    className={`w-full px-3 sm:px-4 py-2.5 pr-10 rounded-lg border bg-white dark:bg-[#2a2a2a] text-sm sm:text-base text-zinc-950 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-600 outline-none transition ${
-                      fieldErrors[field.id]
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-zinc-300 dark:border-zinc-700 focus:border-indigo-600 dark:focus:border-indigo-500'
-                    }`}
-                  />
+        <form onSubmit={handleSignup} className="space-y-3.5">
+          <Input
+            id="name"
+            label="Name*"
+            type="text"
+            placeholder="Enter Name"
+            value={formData.name}
+            onChange={handleChange}
+            error={fieldErrors.name}
+          />
 
-                  {field.type === 'password' && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                    >
-                      {showPassword ? <FiEye size={18} /> : <FiEyeOff size={18} />}
-                    </button>
-                  )}
+          <Input
+            id="email"
+            label="Email*"
+            type="email"
+            placeholder="Enter email"
+            value={formData.email}
+            onChange={handleChange}
+            error={fieldErrors.email}
+          />
+
+          <div className="relative">
+            <Input
+              id="password"
+              label="Password*"
+              type="password"
+              placeholder="Enter Password"
+              value={formData.password}
+              onChange={handleChange}
+              error={fieldErrors.password}
+            />
+
+            {showRequirements && (
+              <div className="absolute bottom-full right-0 mb-2 w-full sm:w-[330px] bg-white border border-gray-400 rounded-[20px] p-4 shadow-xl z-50 text-left transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-xs sm:text-[13px] font-semibold text-gray-900">
+                    Password must contain at least 8 characters
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowRequirements(false)}
+                    className="text-gray-400 hover:text-gray-700 text-sm font-bold ml-2 cursor-pointer leading-none"
+                  >
+                    ✕
+                  </button>
                 </div>
 
-                {fieldErrors[field.id] && (
-                  <p className="text-red-500 text-xs mt-1.5 font-medium">
-                    {fieldErrors[field.id]}
-                  </p>
-                )}
+                <ul className="text-xs sm:text-[13px] space-y-1.5 pl-5 list-disc text-gray-800">
+                  <li className={criteria.hasUpper ? 'text-green-600 font-medium' : ''}>
+                    One uppercase letter (A–Z)
+                  </li>
+                  <li className={criteria.hasLower ? 'text-green-600 font-medium' : ''}>
+                    One lowercase letter (a–z)
+                  </li>
+                  <li className={criteria.hasNumber ? 'text-green-600 font-medium' : ''}>
+                    One number (0–9)
+                  </li>
+                  <li className={criteria.hasSpecial ? 'text-green-600 font-medium' : ''}>
+                    One special character (!, @, #, $, %, etc.)
+                  </li>
+                </ul>
               </div>
-            ))}
+            )}
+          </div>
 
-            <button
-              onClick={handleCreateAccount}
-              disabled={isLoading}
-              className="w-full bg-[#B7E4FF] hover:bg-sky-300 text-zinc-950 text-sm sm:text-base font-semibold py-2.5 sm:py-3 rounded-lg mt-5 sm:mt-6 shadow-md transition duration-150 disabled:opacity-70"
-            >
-              {isLoading ? 'Creating Account...' : 'Create account'}
-            </button>
-          </form>
+          <Input
+            id="confirmPassword"
+            label="Confirm Password*"
+            type="password"
+            placeholder="Re-enter Password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            error={fieldErrors.confirmPassword}
+          />
 
-          {errorMessage && (
-            <p className="text-red-600 dark:text-red-400 text-xs sm:text-sm mt-4 text-center">
-              {errorMessage}
-            </p>
-          )}
-        </div>
+          <div className="pt-2">
+            <Button type="submit" isLoading={isLoading} onClick={handleSignup}>
+              Create account
+            </Button>
+          </div>
+        </form>
+
+        {errorMessage && (
+          <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+            {errorMessage}
+          </p>
+        )}
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
