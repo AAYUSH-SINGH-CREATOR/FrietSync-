@@ -7,7 +7,6 @@ import { registerUser } from '../services/authApi';
 
 const Signup = () => {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,15 +41,18 @@ const Signup = () => {
     }
 
     if (id === 'password') {
-      const newCriteria = {
+      const updatedCriteria = {
         minLength: value.length >= 8,
         hasUpper: /[A-Z]/.test(value),
         hasLower: /[a-z]/.test(value),
         hasNumber: /[0-9]/.test(value),
         hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(value),
       };
-      if (Object.values(newCriteria).every(Boolean)) {
+
+      if (Object.values(updatedCriteria).every(Boolean)) {
         setShowRequirements(false);
+      } else if (value.length > 0) {
+        setShowRequirements(true);
       }
     }
   };
@@ -66,14 +68,15 @@ const Signup = () => {
       errors.password = 'Password is required';
     } else if (!isPasswordValid) {
       errors.password = (
-        <span className="text-red-500 text-xs">
+        <span>
           Password doesn't meet{' '}
-          <span
+          <button
+            type="button"
             onClick={() => setShowRequirements((prev) => !prev)}
             className="underline cursor-pointer hover:text-red-700 font-semibold"
           >
             requirements
-          </span>
+          </button>
         </span>
       );
       setShowRequirements(true);
@@ -82,7 +85,7 @@ const Signup = () => {
     if (!formData.confirmPassword) {
       errors.confirmPassword = 'Confirm password is required';
     } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      errors.confirmPassword = "Password doesn't match";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -106,12 +109,12 @@ const Signup = () => {
 
   return (
     <AuthLayout showLeftIllustration={true} onBack={() => navigate('/login')}>
-      <div className="text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+      <div className="text-center w-full">
+        <h2 className="text-2xl sm:text-[32px] font-semibold text-gray-900 leading-tight">
           Create your account
         </h2>
 
-        <p className="text-xs sm:text-sm text-gray-600 mt-1 mb-6">
+        <p className="text-xs sm:text-[15px] text-gray-600 mt-1.5 mb-5 sm:mb-6">
           Already have an account?{' '}
           <Link
             to="/login"
@@ -121,7 +124,7 @@ const Signup = () => {
           </Link>
         </p>
 
-        <form onSubmit={handleSignup} className="space-y-3.5">
+        <form onSubmit={handleSignup} className="space-y-3.5 sm:space-y-4">
           <Input
             id="name"
             label="Name*"
@@ -150,11 +153,16 @@ const Signup = () => {
               placeholder="Enter Password"
               value={formData.password}
               onChange={handleChange}
+              onFocus={() => {
+                if (formData.password.length > 0 && !isPasswordValid) {
+                  setShowRequirements(true);
+                }
+              }}
               error={fieldErrors.password}
             />
 
             {showRequirements && (
-              <div className="absolute bottom-full right-0 mb-2 w-full sm:w-[330px] bg-white border border-gray-400 rounded-[20px] p-4 shadow-xl z-50 text-left transition-all">
+              <div className="absolute bottom-full right-0 mb-2 w-full sm:w-[330px] bg-white border border-gray-400 rounded-2xl p-4 shadow-xl z-50 text-left transition-all">
                 <div className="flex justify-between items-start mb-2">
                   <p className="text-xs sm:text-[13px] font-semibold text-gray-900">
                     Password must contain at least 8 characters
@@ -162,13 +170,14 @@ const Signup = () => {
                   <button
                     type="button"
                     onClick={() => setShowRequirements(false)}
-                    className="text-gray-400 hover:text-gray-700 text-sm font-bold ml-2 cursor-pointer leading-none"
+                    className="text-gray-400 hover:text-gray-700 text-sm font-bold ml-2 cursor-pointer leading-none p-0.5"
+                    aria-label="Close requirements"
                   >
                     ✕
                   </button>
                 </div>
 
-                <ul className="text-xs sm:text-[13px] space-y-1.5 pl-5 list-disc text-gray-800">
+                <ul className="text-xs sm:text-[13px] space-y-1.5 pl-5 list-disc text-gray-700">
                   <li className={criteria.hasUpper ? 'text-green-600 font-medium' : ''}>
                     One uppercase letter (A–Z)
                   </li>
@@ -196,7 +205,7 @@ const Signup = () => {
             error={fieldErrors.confirmPassword}
           />
 
-          <div className="pt-2">
+          <div className="pt-2 sm:pt-3">
             <Button type="submit" isLoading={isLoading} onClick={handleSignup}>
               Create account
             </Button>
@@ -204,7 +213,7 @@ const Signup = () => {
         </form>
 
         {errorMessage && (
-          <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+          <p className="text-xs sm:text-sm text-[#FF1100] mt-4 text-center font-medium">
             {errorMessage}
           </p>
         )}

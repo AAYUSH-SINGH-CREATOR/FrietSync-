@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft } from 'react-icons/fi';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import OtpInput from '../components/ui/OtpInput';

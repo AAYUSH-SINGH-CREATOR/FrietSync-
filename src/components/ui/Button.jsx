@@ -11,7 +11,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={`w-full bg-[#87CEFA] hover:bg-[#70c2f7] active:bg-[#5bb7f5] text-gray-900 font-semibold py-2.5 sm:py-3 rounded-xl transition duration-150 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed text-sm sm:text-base ${className}`}
+      className={`w-full bg-[#90D6FF] hover:bg-[#7bc8f8] active:bg-[#68bdf3] text-gray-950 font-semibold py-2.5 sm:py-3 rounded-xl sm:rounded-2xl transition duration-150 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed text-sm sm:text-base shadow-xs ${className}`}
     >
       {isLoading ? 'Please wait...' : children}
     </button>
