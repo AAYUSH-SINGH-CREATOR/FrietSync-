@@ -1,0 +1,19 @@
+<svg width="1440" height="1024" viewBox="0 0 1440 1024" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+<g id="waves" filter="url(#blur_waves)">
+  <path d="M1305.15 152.435L961.966 189.679L877.691 509.16L1125.7 500.153L804.119 798.264L676.486 478.189L365.187 878.585L515.022 1219.67L769.544 1337.57L1490 1040.5L1552.4 611.84L1531 223.965L1305.15 152.435Z" fill="#8CBAFF"/>
+  <path d="M1196.82 22.9349L967.681 77.6208L867.996 101.411L833.856 56.8745L724.706 -85.5183L112.773 228.133L305.941 -117.297L928.534 -628.323L1196.82 22.9349Z" fill="#B7E9FD"/>
+  <path d="M446.502 1337.57L336.972 838.448C411.263 617.538 585.33 222.181 687.264 408.04C789.198 593.898 849.05 393.056 866.233 269.402L961.966 189.679L1058.01 91.6237L967.681 77.6208L867.996 101.411L833.856 56.8745L722.797 39.6571L365.187 298.9L17.4253 298.114L-260.023 748.264L271.235 1210.29L288.018 1421.08L446.502 1337.57Z" fill="#82ECFE"/>
+</g>
+<ellipse cx="582" cy="1028" rx="307" ry="127" fill="#5BC3FF" fill-opacity="0.41" filter="url(#blur_orbs)"/>
+<ellipse cx="901" cy="1083" rx="307" ry="127" fill="#0066FF" fill-opacity="0.26" filter="url(#blur_orbs)"/>
+<ellipse cx="868" cy="-2" rx="307" ry="127" fill="#5BC3FF" fill-opacity="0.26" filter="url(#blur_orbs)"/>
+<ellipse cx="564" cy="-54" rx="307" ry="127" fill="#0066FF" fill-opacity="0.26" filter="url(#blur_orbs)"/>
+<defs>
+  <filter id="blur_waves" x="-460" y="-828" width="2212" height="2466" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feGaussianBlur stdDeviation="120"/>
+  </filter>
+  <filter id="blur_orbs" x="0" y="-200" width="1440" height="1440" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feGaussianBlur stdDeviation="80"/>
+  </filter>
+</defs>
+</svg>

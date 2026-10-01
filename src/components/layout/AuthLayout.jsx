@@ -1,7 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import authBg from '../../assets/authbg.png';
+import circlesSvg from '../../assets/circles.svg';
+import dotsSvg from '../../assets/dots.svg';
+import wavesSvg from '../../assets/waves.svg';
 import signupImg from '../../assets/signupimg.svg';
+import lgtEllipse from "../../assets/lgtEllipse.svg"
+import drkEllipse from  "../../assets/drkEllipse.svg"
+import downelps from "../../assets/dwnelps.svg"
+import downelps1 from "../../assets/dwnelps1.svg"
 
 const AuthLayout = ({
   children,
@@ -23,12 +29,54 @@ const AuthLayout = ({
   };
 
   return (
-    <div
-      className="min-h-screen w-full relative bg-[length:100%_100%] bg-no-repeat bg-center flex items-center justify-center font-sans overflow-x-hidden p-3 sm:p-6 md:p-8"
-      style={{
-        backgroundImage: `url(${authBg})`,
-      }}
-    >
+    <div className="min-h-screen w-full relative bg-[#EBF6FF] flex items-center justify-center font-sans overflow-hidden p-3 sm:p-6 md:p-8">
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none z-0">
+        <img
+          src={wavesSvg}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-90 select-none pointer-events-none"
+        />
+
+        <img
+          src={circlesSvg}
+          alt=""
+          className="absolute -top-15 -left-15 sm:top-0 sm:left-0 w-48 sm:w-72 md:w-[354px] h-auto select-none pointer-events-none"
+        />
+
+        <img src={lgtEllipse} alt="" 
+        className='absolute right-70 select-none pointer-events-none'
+        />
+        <img src={drkEllipse} alt="" 
+        className='absolute left-100 select-none pointer-events-none'
+        />
+        <img src={downelps1} alt="" 
+        className='absolute right-70 bottom-0 select-none pointer-events-none'
+        />
+        <img src={downelps} alt="" 
+        className='absolute left-100 bottom-0 select-none pointer-events-none'
+        />
+
+        
+          
+        <img
+          src={circlesSvg}
+          alt=""
+          className="absolute -bottom-10 -right-10 sm:bottom-0 sm:right-0 w-48 sm:w-72 md:w-[354px] h-auto rotate-180 select-none pointer-events-none"
+        />
+
+        <img
+          src={dotsSvg}
+          alt=""
+          className="absolute top-0 right-0 w-36 sm:w-56 md:w-[271px] h-auto select-none pointer-events-none"
+        />
+
+        <img
+          src={dotsSvg}
+          alt=""
+          className="absolute bottom-0 left-0 w-36 sm:w-56 md:w-[271px] h-auto rotate-180 select-none pointer-events-none"
+        />
+      </div>
+
       <button
         type="button"
         onClick={handleBack}
@@ -46,7 +94,7 @@ const AuthLayout = ({
                 <img
                   src={leftImage}
                   alt="Illustration"
-                  className="w-48 sm:w-60 max-h-40 object-contain select-none pointer-events-none"
+                  className="w-64 sm:w-80 max-h-56 object-contain select-none pointer-events-none"
                 />
               )}
             </div>
