@@ -9,11 +9,14 @@ import ForgotPassword from './pages/ForgotPassword';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/signup" />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/login" element={<Login />} />
-      <Route path='/verify-otp' element={<OtpVerification/>}></Route>
-      <Route path='/forgot-password' element={<ForgotPassword/>} ></Route>
+      <Route element={<PublicRoute />}>
+        <Route path="/" element={<Navigate to="/signup" />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path='/verify-otp' element={<OtpVerification />}></Route>
+        <Route path='/forgot-password' element={<ForgotPassword />} ></Route>
+      </Route>
+
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
       </Route>
