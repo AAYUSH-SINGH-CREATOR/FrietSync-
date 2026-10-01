@@ -88,7 +88,6 @@ const ForgotPassword = () => {
       return;
     }
 
-    // Password requirements check matching the Signup flow
     if (!passwords.newPassword) {
       errors.newPassword = 'New password is required';
     } else if (!isPasswordValid) {
