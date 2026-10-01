@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiArrowLeft } from 'react-icons/fi';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import OtpInput from '../components/ui/OtpInput';
@@ -11,8 +12,13 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
+  const [email, setEmail] = useState(() => {
+    return sessionStorage.getItem('forgot_password_email') || '';
+  });
 
-  const [email, setEmail] = useState('');
+  useEffect(() => {
+    sessionStorage.setItem('forgot_password_email', email);
+  }, [email]);
   const [otp, setOtp] = useState(new Array(6).fill(''));
   const [passwords, setPasswords] = useState({
     newPassword: '',
@@ -22,7 +28,10 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [otpError, setOtpError] = useState('');
+  const [resendStatus, setResendStatus] = useState('');
   const [showRequirements, setShowRequirements] = useState(false);
+
   const criteria = {
     minLength: passwords.newPassword.length >= 8,
     hasUpper: /[A-Z]/.test(passwords.newPassword),
@@ -39,6 +48,8 @@ const ForgotPassword = () => {
       setOtp(new Array(6).fill(''));
       setPasswords({ newPassword: '', confirmPassword: '' });
       setErrorMessage('');
+      setOtpError('');
+      setFieldErrors({});
       setShowRequirements(false);
     } else {
       navigate('/login');
@@ -49,7 +60,7 @@ const ForgotPassword = () => {
     if (e) e.preventDefault();
 
     if (!email.trim()) {
-      setFieldErrors({ email: 'Please enter your registered email' });
+      setFieldErrors({ email: 'Email is required' });
       return;
     }
 
@@ -64,10 +75,11 @@ const ForgotPassword = () => {
       const msg = error.message || 'Failed to send OTP.';
       if (
         msg.toLowerCase().includes('not registered') ||
-        msg.toLowerCase().includes('user') ||
-        msg.toLowerCase().includes('email')
+        msg.toLowerCase().includes('not found') ||
+        msg.toLowerCase().includes('no user') ||
+        msg.toLowerCase().includes('user')
       ) {
-        setFieldErrors({ email: msg });
+        setFieldErrors({ email: 'email not registered' });
       } else {
         setErrorMessage(msg);
       }
@@ -76,14 +88,28 @@ const ForgotPassword = () => {
     }
   };
 
+  const handleResendOtp = async () => {
+    setOtpError('');
+    setErrorMessage('');
+    setResendStatus('Sending new code...');
+    try {
+      await sendForgotPasswordOtp(email);
+      setResendStatus('Code resent successfully!');
+      setTimeout(() => setResendStatus(''), 4000);
+    } catch (err) {
+      setResendStatus('');
+      setErrorMessage(err.message || 'Failed to resend code.');
+    }
+  };
+
   const handleResetPassword = async (e) => {
     if (e) e.preventDefault();
 
     const errors = {};
     const otpString = otp.join('');
-    
+
     if (otpString.length < 6) {
-      setErrorMessage('Please enter the complete 6-digit OTP.');
+      setOtpError('Wrong OTP entered');
       return;
     }
 
@@ -91,14 +117,15 @@ const ForgotPassword = () => {
       errors.newPassword = 'New password is required';
     } else if (!isPasswordValid) {
       errors.newPassword = (
-        <span className="text-red-500 text-xs">
+        <span>
           Password doesn't meet{' '}
-          <span
+          <button
+            type="button"
             onClick={() => setShowRequirements((prev) => !prev)}
             className="underline cursor-pointer hover:text-red-700 font-semibold"
           >
             requirements
-          </span>
+          </button>
         </span>
       );
       setShowRequirements(true);
@@ -107,7 +134,7 @@ const ForgotPassword = () => {
     if (!passwords.confirmPassword) {
       errors.confirmPassword = 'Confirm password is required';
     } else if (passwords.newPassword !== passwords.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match!';
+      errors.confirmPassword = "Password doesn't match";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -116,15 +143,21 @@ const ForgotPassword = () => {
     }
 
     setFieldErrors({});
+    setOtpError('');
     setErrorMessage('');
     setIsLoading(true);
 
     try {
       await resetPassword(email, otpString, passwords.newPassword);
+      sessionStorage.removeItem('forgot_password_email');
       navigate('/login');
     } catch (error) {
-      const msg = error.message || 'Failed to reset password. Please check your OTP.';
-      setErrorMessage(msg);
+      const msg = error.message || 'Failed to reset password.';
+      if (msg.toLowerCase().includes('otp')) {
+        setOtpError('Wrong OTP entered');
+      } else {
+        setErrorMessage(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -132,24 +165,28 @@ const ForgotPassword = () => {
 
   return (
     <AuthLayout
-      showLeftIllustration={step === 1}
+      showLeftIllustration={true}
       leftTitle="Recover your account with"
       leftBrand="Frietsync"
       leftImage={forgetPassImg}
       onBack={handleBack}
     >
       {step === 1 && (
-        <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+        <div className="text-center w-full">
+          <h2 className="text-2xl sm:text-[32px] font-semibold text-gray-900 leading-tight">
             Forgot Password ?
           </h2>
 
-          <form onSubmit={handleSendOtp} className="space-y-5">
+          <p className="text-xs sm:text-[15px] text-gray-600 mt-1.5 mb-5 sm:mb-6">
+            Enter your registered email to receive an OTP.
+          </p>
+
+          <form onSubmit={handleSendOtp} className="space-y-4">
             <Input
               id="email"
               label="Enter email"
               type="email"
-              placeholder="Enter email"
+              placeholder="Enter registered email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -159,7 +196,7 @@ const ForgotPassword = () => {
               error={fieldErrors.email}
             />
 
-            <div className="pt-2">
+            <div className="pt-2 sm:pt-3">
               <Button type="submit" isLoading={isLoading} onClick={handleSendOtp}>
                 Send OTP
               </Button>
@@ -167,37 +204,66 @@ const ForgotPassword = () => {
           </form>
 
           {errorMessage && (
-            <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+            <p className="text-xs sm:text-sm text-[#FF1100] mt-4 text-center font-medium">
               {errorMessage}
             </p>
           )}
+
+          <div className="mt-6">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-sky-600 font-medium hover:text-sky-700 transition"
+            >
+              <FiArrowLeft size={16} /> Back to log in
+            </Link>
+          </div>
         </div>
       )}
 
       {step === 2 && (
-        <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <div className="text-center w-full">
+          <h2 className="text-2xl sm:text-[32px] font-semibold text-gray-900 leading-tight">
             Reset Password
           </h2>
 
-          <p className="text-xs sm:text-sm text-gray-600 mb-6">
-            Enter the code sent to <span className="font-semibold text-gray-900">{email}</span> and your new password.
+          <p className="text-xs sm:text-[15px] text-gray-600 mt-1.5 mb-4 sm:mb-5">
+            Enter code sent to{' '}
+            <span className="font-semibold text-gray-900">{email}</span> and set your new password
           </p>
 
-          <form onSubmit={handleResetPassword} className="space-y-5">
-            <div className="my-2 flex justify-center">
+          <form onSubmit={handleResetPassword} className="space-y-3.5 sm:space-y-4">
+            <div className="my-1 flex justify-center">
               <OtpInput
                 otp={otp}
                 setOtp={(newOtp) => {
                   setOtp(newOtp);
+                  if (otpError) setOtpError('');
                   if (errorMessage) setErrorMessage('');
                 }}
-                error={errorMessage.includes('OTP') ? errorMessage : ''}
+                error={otpError}
                 length={6}
               />
             </div>
 
-            <div className="relative">
+            <div className="-mt-1 mb-1">
+              <p className="text-xs sm:text-sm text-gray-600">
+                Didn't recieve the code ?{' '}
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  className="text-sky-600 font-semibold hover:underline cursor-pointer"
+                >
+                  Resend
+                </button>
+              </p>
+              {resendStatus && (
+                <p className="text-xs text-green-600 font-medium mt-1">
+                  {resendStatus}
+                </p>
+              )}
+            </div>
+
+            <div className="relative text-left">
               <Input
                 id="newPassword"
                 label="New Password"
@@ -205,26 +271,32 @@ const ForgotPassword = () => {
                 placeholder="Enter Password"
                 value={passwords.newPassword}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  setPasswords({ ...passwords, newPassword: value });
-                  if (fieldErrors.newPassword) setFieldErrors({ ...fieldErrors, newPassword: '' });
-                  
+                  const val = e.target.value;
+                  setPasswords((prev) => ({ ...prev, newPassword: val }));
+                  if (fieldErrors.newPassword) {
+                    setFieldErrors((prev) => ({ ...prev, newPassword: '' }));
+                  }
                   const newCriteria = {
-                    minLength: value.length >= 8,
-                    hasUpper: /[A-Z]/.test(value),
-                    hasLower: /[a-z]/.test(value),
-                    hasNumber: /[0-9]/.test(value),
-                    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+                    minLength: val.length >= 8,
+                    hasUpper: /[A-Z]/.test(val),
+                    hasLower: /[a-z]/.test(val),
+                    hasNumber: /[0-9]/.test(val),
+                    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(val),
                   };
                   if (Object.values(newCriteria).every(Boolean)) {
                     setShowRequirements(false);
+                  }
+                }}
+                onFocus={() => {
+                  if (passwords.newPassword.length > 0 && !isPasswordValid) {
+                    setShowRequirements(true);
                   }
                 }}
                 error={fieldErrors.newPassword}
               />
 
               {showRequirements && (
-                <div className="absolute bottom-full right-0 mb-2 w-full sm:w-[330px] bg-white border border-gray-400 rounded-[20px] p-4 shadow-xl z-50 text-left transition-all">
+                <div className="absolute bottom-full right-0 mb-2 w-full sm:w-[330px] bg-white border border-gray-400 rounded-2xl p-4 shadow-xl z-50 text-left transition-all">
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-xs sm:text-[13px] font-semibold text-gray-900">
                       Password must contain at least 8 characters
@@ -232,13 +304,14 @@ const ForgotPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowRequirements(false)}
-                      className="text-gray-400 hover:text-gray-700 text-sm font-bold ml-2 cursor-pointer leading-none"
+                      className="text-gray-400 hover:text-gray-700 text-sm font-bold ml-2 cursor-pointer leading-none p-0.5"
+                      aria-label="Close requirements"
                     >
                       ✕
                     </button>
                   </div>
 
-                  <ul className="text-xs sm:text-[13px] space-y-1.5 pl-5 list-disc text-gray-800">
+                  <ul className="text-xs sm:text-[13px] space-y-1.5 pl-5 list-disc text-gray-700">
                     <li className={criteria.hasUpper ? 'text-green-600 font-medium' : ''}>
                       One uppercase letter (A–Z)
                     </li>
@@ -256,42 +329,46 @@ const ForgotPassword = () => {
               )}
             </div>
 
-            <Input
-              id="confirmPassword"
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm Password"
-              value={passwords.confirmPassword}
-              onChange={(e) => {
-                setPasswords({ ...passwords, confirmPassword: e.target.value });
-                if (fieldErrors.confirmPassword) setFieldErrors({ ...fieldErrors, confirmPassword: '' });
-              }}
-              error={fieldErrors.confirmPassword}
-            />
+            <div className="text-left">
+              <Input
+                id="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                placeholder="Re-enter Password"
+                value={passwords.confirmPassword}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPasswords((prev) => ({ ...prev, confirmPassword: val }));
+                  if (fieldErrors.confirmPassword) {
+                    setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                  }
+                }}
+                error={fieldErrors.confirmPassword}
+              />
+            </div>
 
-            <div className="pt-2">
+            <div className="pt-2 sm:pt-3">
               <Button type="submit" isLoading={isLoading} onClick={handleResetPassword}>
                 Reset Password
               </Button>
             </div>
           </form>
 
-          {errorMessage && !errorMessage.includes('OTP') && (
-            <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+          {errorMessage && (
+            <p className="text-xs sm:text-sm text-[#FF1100] mt-4 text-center font-medium">
               {errorMessage}
             </p>
           )}
 
-          <p className="text-xs sm:text-sm text-gray-600 mt-5">
-            Didn't receive the code?{' '}
+          <div className="mt-6">
             <button
               type="button"
-              onClick={handleSendOtp}
-              className="text-sky-600 font-semibold hover:underline cursor-pointer"
+              onClick={handleBack}
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-sky-600 font-medium hover:text-sky-700 transition cursor-pointer"
             >
-              Resend
+              <FiArrowLeft size={16} /> Back to email entry
             </button>
-          </p>
+          </div>
         </div>
       )}
     </AuthLayout>

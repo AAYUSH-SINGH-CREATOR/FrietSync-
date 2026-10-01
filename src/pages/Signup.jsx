@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
@@ -7,12 +7,20 @@ import { registerUser } from '../services/authApi';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('signup_form');
+      return saved
+        ? JSON.parse(saved)
+        : { name: '', email: '', password: '', confirmPassword: '' };
+    } catch {
+      return { name: '', email: '', password: '', confirmPassword: '' };
+    }
   });
+
+  useEffect(() => {
+    sessionStorage.setItem('signup_form', JSON.stringify(formData));
+  }, [formData]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -99,6 +107,7 @@ const Signup = () => {
 
     try {
       await registerUser(formData);
+      sessionStorage.removeItem('signup_form');
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (error) {
       setErrorMessage(error.message || 'Failed to create account.');

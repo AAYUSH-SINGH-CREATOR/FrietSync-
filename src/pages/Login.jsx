@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { loginUser } from '../services/authApi';
-import loginImg from '../assets/loginimg.svg'
+import loginImg from '../assets/loginimg.svg';
 
 const Login = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('login_form');
+      return saved ? JSON.parse(saved) : { email: '', password: '' };
+    } catch {
+      return { email: '', password: '' };
+    }
   });
+
+  useEffect(() => {
+    sessionStorage.setItem('login_form', JSON.stringify(formData));
+  }, [formData]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -52,17 +60,21 @@ const Login = () => {
 
     try {
       await loginUser(formData);
+      sessionStorage.removeItem('login_form');
       navigate('/dashboard');
     } catch (error) {
       const msg = error.message || 'Login failed';
       if (
-        msg.toLowerCase().includes('email') ||
         msg.toLowerCase().includes('not registered') ||
-        msg.toLowerCase().includes('user')
+        msg.toLowerCase().includes('user not found') ||
+        msg.toLowerCase().includes('no user')
       ) {
-        setFieldErrors({ email: msg });
-      } else if (msg.toLowerCase().includes('password')) {
-        setFieldErrors({ password: msg });
+        setFieldErrors({ email: 'Email not registered' });
+      } else if (
+        msg.toLowerCase().includes('password') ||
+        msg.toLowerCase().includes('invalid credential')
+      ) {
+        setFieldErrors({ password: 'Incorrect password.' });
       } else {
         setErrorMessage(msg);
       }
@@ -73,16 +85,18 @@ const Login = () => {
 
   return (
     <AuthLayout
-      leftTitle = 'Welcome back to Frietsync'
-       leftBrand = ''
-     leftImage={loginImg}
-    showLeftIllustration={true} onBack={() => navigate('/signup')}>
-      <div className="text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+      leftTitle="Welcome back to Frietsync"
+      leftBrand=""
+      leftImage={loginImg}
+      showLeftIllustration={true}
+      onBack={() => navigate('/signup')}
+    >
+      <div className="text-center w-full">
+        <h2 className="text-2xl sm:text-[32px] font-semibold text-gray-900 leading-tight">
           Log back in
         </h2>
 
-        <p className="text-xs sm:text-sm text-gray-600 mt-1 mb-6">
+        <p className="text-xs sm:text-[15px] text-gray-600 mt-1.5 mb-5 sm:mb-6">
           Dont have an account ?{' '}
           <Link
             to="/signup"
@@ -124,7 +138,7 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 sm:pt-3">
             <Button type="submit" isLoading={isLoading} onClick={handleLogin}>
               Login
             </Button>
@@ -132,7 +146,7 @@ const Login = () => {
         </form>
 
         {errorMessage && (
-          <p className="text-xs sm:text-sm text-red-500 mt-4 text-center font-medium">
+          <p className="text-xs sm:text-sm text-[#FF1100] mt-4 text-center font-medium">
             {errorMessage}
           </p>
         )}
