@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { loginUser } from '../services/authApi';
@@ -12,6 +12,13 @@ const Login = () => {
     email: '',
     password: '',
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem('frietSyncToken');
+    if (token) {
+      navigate('/dashboard'); 
+    }
+  }, [navigate]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
