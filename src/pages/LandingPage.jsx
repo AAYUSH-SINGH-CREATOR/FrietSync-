@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import faviconLogo from '../assets/favicon.svg';
+import heroTeamImg from '../assets/hero-team.png';
 
 const LandingPage = () => {
   return (
@@ -46,8 +47,8 @@ const LandingPage = () => {
       </header>
 
       <main className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
-          <div className="max-w-xl text-center lg:text-left">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-[58px] font-bold text-gray-950 leading-[1.12]">
               Turn Ideas Into
               <br />
@@ -56,13 +57,13 @@ const LandingPage = () => {
               Frietsync
             </h1>
 
-            <p className="mt-5 sm:mt-6 text-sm sm:text-[15px] text-gray-700 max-w-[360px] mx-auto lg:mx-0 leading-relaxed">
+            <p className="mt-5 sm:mt-6 text-sm sm:text-[15px] text-gray-700 max-w-[360px] leading-relaxed">
               Frietsync helps teams turn ideas into organized projects,
               track issues, manage tasks, and collaborate seamlessly
               all in one place.
             </p>
 
-            <div className="mt-8 flex items-center justify-center lg:justify-start gap-3.5 sm:gap-4">
+            <div className="mt-8 flex items-center gap-3.5 sm:gap-4">
               <button
                 type="button"
                 className="px-6 sm:px-7 py-3 rounded-2xl bg-white text-gray-950 border border-blue-200/80 shadow-sm font-medium text-sm sm:text-base"
@@ -76,6 +77,16 @@ const LandingPage = () => {
               >
                 Get started
               </Link>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 flex justify-center lg:justify-end">
+            <div className="w-full max-w-[700px] rounded-[32px] sm:rounded-[40px] overflow-hidden shadow-2xl bg-white">
+              <img
+                src={heroTeamImg}
+                alt="Collaborative teamwork around laptop"
+                className="w-full h-auto object-cover"
+              />
             </div>
           </div>
         </div>
