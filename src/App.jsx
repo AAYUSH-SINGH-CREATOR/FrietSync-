@@ -6,14 +6,17 @@ import ProtectedRoute from './components/ProtectedRoute';
 import OtpVerification from './pages/OtpVerification';
 import ForgotPassword from './pages/ForgotPassword';
 import PublicRoute from './components/PublicRoute';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
+
       <Route element={<PublicRoute />}>
         <Route path="/" element={<Navigate to="/signup" />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login />} />https://friet-sync.vercel.app
         <Route path='/verify-otp' element={<OtpVerification />}></Route>
         <Route path='/forgot-password' element={<ForgotPassword />} ></Route>
       </Route>
