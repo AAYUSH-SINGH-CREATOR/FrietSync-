@@ -1,8 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap');
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: "Google Sans Flex", "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Inter", "Google Sans Flex", sans-serif;
+}
+
 body {
-  font-family: "Google Sans Flex", sans-serif;
+  font-family: var(--font-sans);
 }
