@@ -29,7 +29,7 @@ const AuthLayout = ({
   };
 
   return (
-    <div className="min-h-screen w-full relative bg-[#EBF6FF] flex items-center justify-center font-sans overflow-hidden p-3 sm:p-6 md:p-8">
+    <div className="min-h-screen w-full relative bg-[#EBF6FF] flex items-center justify-center font-sans overflow-hidden p-0 sm:p-6 md:p-8">
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none z-0">
         <img
           src={wavesSvg}
@@ -40,7 +40,7 @@ const AuthLayout = ({
         <img
           src={circlesSvg}
           alt=""
-          className="absolute -top-15 -left-15 sm:top-0 sm:left-0 w-48 sm:w-72 md:w-[354px] h-auto select-none pointer-events-none"
+          className="absolute top-0 left-0 sm:top-0 sm:left-0 w-48 sm:w-72 md:w-[354px] h-auto select-none pointer-events-none"
         />
 
         <img src={lgtEllipse} alt="" 
@@ -86,10 +86,10 @@ const AuthLayout = ({
         <FiArrowLeft className="text-base sm:text-xl" />
       </button>
 
-      <div className="w-full max-w-6xl rounded-2xl sm:rounded-3xl bg-[#9EDCFF]/30 border border-[#9EDCFF]/60 shadow-xl backdrop-blur-sm p-3.5 sm:p-6 md:p-8 relative z-10 my-auto">
+      <div className="w-full max-w-6xl rounded-2xl sm:rounded-3xl bg-transparent  sm:border sm:border-[#9EDCFF]/60 shadow-xl sm:backdrop-blur-sm  sm:p-6 md:p-8 relative z-10 my-auto">
         {showLeftIllustration ? (
           <div>
-            <div className="flex lg:hidden flex-col items-center justify-center pt-6 pb-2">
+            <div className="flex lg:hidden flex-col items-center justify-center pt-1 pb-2">
               {leftImage && (
                 <img
                   src={leftImage}

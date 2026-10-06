@@ -74,7 +74,7 @@ const Login = () => {
         msg.toLowerCase().includes('password') ||
         msg.toLowerCase().includes('invalid credential')
       ) {
-        setFieldErrors({ password: 'Incorrect password.' });
+        setFieldErrors({ password: 'Incorrect email or password.' });
       } else {
         setErrorMessage(msg);
       }
