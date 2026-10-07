@@ -12,9 +12,9 @@ import Invite from './pages/Invite';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
 
       <Route element={<PublicRoute />}>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/" element={<Navigate to="/signup" />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
@@ -24,7 +24,7 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path='/invite' element = {<Invite/>} ></Route>
+        <Route path='/invite' element={<Invite />} ></Route>
       </Route>
     </Routes>
   );

@@ -4,7 +4,7 @@ import { FiArrowLeft } from 'react-icons/fi';
 import AuthLayout from '../components/layout/AuthLayout';
 import OtpInput from '../components/ui/OtpInput';
 import Button from '../components/ui/Button';
-import { verifyOtp, sendForgotPasswordOtp } from '../services/authApi';
+import { verifyOtp, sendForgotPasswordOtp, getFriendlyErrorMessage } from '../services/authApi';
 
 const OtpVerification = () => {
   const navigate = useNavigate();
@@ -37,7 +37,18 @@ const OtpVerification = () => {
       await verifyOtp(email, otpString);
       navigate('/login');
     } catch (error) {
-      setErrorMessage(error.message || 'Wrong OTP entered');
+      const status = error.response?.status || error.status;
+      if (status === 400 || status === 401) {
+        setErrorMessage('Wrong OTP entered');
+      } else if (status === 410) {
+        setErrorMessage('This verification code has expired.');
+      } else if (status === 429) {
+        setErrorMessage('Too many attempts. Please wait a moment.');
+      } else if (status >= 500) {
+        setErrorMessage('Something went wrong. Please try again later.');
+      } else {
+        setErrorMessage(getFriendlyErrorMessage(error, 'otp'));
+      }
     } finally {
       setIsLoading(false);
     }

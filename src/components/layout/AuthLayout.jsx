@@ -91,7 +91,7 @@ const AuthLayout = ({
         <FiArrowLeft className="text-base sm:text-xl" />
       </button>
 
-      <div className="w-full flex-1 flex flex-col justify-between sm:block sm:flex-initial sm:max-w-6xl rounded-none sm:rounded-3xl bg-transparent  sm:bg-[#9EDCFF]/30 border-0 sm:border sm:border-[#9EDCFF]/60 shadow-none sm:shadow-xl backdrop-blur-none sm:backdrop-blur-sm p-0  sm:p-6 md:p-8 relative z-10 sm:my-auto">
+      <div className="w-full flex-1 flex flex-col justify-between sm:block sm:flex-initial sm:max-w-7xl rounded-none sm:rounded-3xl bg-transparent  sm:bg-[#9EDCFF]/30 border-0 sm:border sm:border-[#9EDCFF]/60 shadow-none sm:shadow-xl backdrop-blur-none sm:backdrop-blur-sm p-0  sm:p-6 md:p-8 relative z-10 sm:my-auto">
           {showLeftIllustration ? (
             <div className="flex-1 flex flex-col justify-between sm:block">
               <div className="flex sm:hidden flex-col items-center justify-center pt-10 pb-3 px-4 select-none shrink-0">
@@ -115,17 +115,17 @@ const AuthLayout = ({
 
               <div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 lg:grid-cols-2 sm:gap-6 lg:gap-8 items-center">
                 <div className="hidden lg:flex flex-col items-center justify-center text-center px-2 xl:px-4">
-                  <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-extrabold text-gray-950 tracking-tight whitespace-nowrap">
+                <h1 className="text-3xl lg:text-[40px] xl:text-[48px] font-semibold text-gray-950 leading-[100%] tracking-tight whitespace-nowrap font-sans">
                     {leftTitle}
                   </h1>
-                  <h2 className="text-3xl xl:text-4xl 2xl:text-5xl font-extrabold text-gray-950 mt-1 mb-6">
+                  <h2 className="text-3xl lg:text-[40px] xl:text-[48px] font-semibold text-gray-950 leading-[100%] tracking-tight mt-2 mb-6 font-sans">
                     {leftBrand}
                   </h2>
                   {leftImage && (
                     <img
                       src={leftImage}
                       alt="Illustration"
-                      className="w-full max-w-[480px] h-auto object-contain select-none pointer-events-none"
+                    className="w-full max-w-[480px] h-auto object-contain select-none pointer-events-none mt-2"
                     />
                   )}
                 </div>
@@ -152,7 +152,6 @@ const AuthLayout = ({
           )}
         </div>
       </div>
-      // </div>
       );
 };
 
