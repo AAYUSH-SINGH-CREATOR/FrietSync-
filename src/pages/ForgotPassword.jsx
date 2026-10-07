@@ -6,7 +6,7 @@ import Input from '../components/ui/Input';
 import OtpInput from '../components/ui/OtpInput';
 import Button from '../components/ui/Button';
 import forgetPassImg from '../assets/forgetpass.svg';
-import { sendForgotPasswordOtp, resetPassword } from '../services/authApi';
+import { sendForgotPasswordOtp, resetPassword, getFriendlyErrorMessage } from '../services/authApi';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -75,16 +75,20 @@ const ForgotPassword = () => {
       await sendForgotPasswordOtp(email);
       setStep(2);
     } catch (error) {
-      const msg = error.message || 'Failed to send OTP.';
+      const status = error.response?.status || error.status;
+      const rawMsg = (error.data?.message || error.message || '').toLowerCase();
+
       if (
-        msg.toLowerCase().includes('not registered') ||
-        msg.toLowerCase().includes('not found') ||
-        msg.toLowerCase().includes('no user') ||
-        msg.toLowerCase().includes('user')
+        status === 404 ||
+        rawMsg.includes('not registered')
       ) {
         setFieldErrors({ email: 'email not registered' });
+      } else if (status === 429) {
+        setErrorMessage('Too many OTP requests. Please wait a moment');
+      } else if (status >= 500) {
+        setErrorMessage('Something went wrong. Please try again later.');
       } else {
-        setErrorMessage(msg);
+        setErrorMessage(getFriendlyErrorMessage(error, 'forgot-password'));
       }
     } finally {
       setIsLoading(false);
@@ -101,7 +105,14 @@ const ForgotPassword = () => {
       setTimeout(() => setResendStatus(''), 4000);
     } catch (err) {
       setResendStatus('');
-      setErrorMessage(err.message || 'Failed to resend code.');
+        const status = err.response?.status || err.status;
+      if (status === 429) {
+        setErrorMessage('Too many requests. Please wait a moment');
+      } else if (status >= 500) {
+        setErrorMessage('Something went wrong. Please try again later.');
+      } else {
+        setErrorMessage(getFriendlyErrorMessage(err, 'forgot-password'));
+      }
     }
   };
 
@@ -155,11 +166,24 @@ const ForgotPassword = () => {
       sessionStorage.removeItem('forgot_password_email');
       navigate('/login');
     } catch (error) {
-      const msg = error.message || 'Failed to reset password.';
-      if (msg.toLowerCase().includes('otp')) {
+        const status = error.response?.status || error.status;
+      const rawMsg = (error.data?.message || error.message || '').toLowerCase();
+
+      if (
+        status === 400 ||
+        status === 401 ||
+        rawMsg.includes('otp') ||
+        rawMsg.includes('code')
+      ) {
         setOtpError('Wrong OTP entered');
+      } else if (status === 410) {
+        setOtpError('This OTP has expired.');
+      } else if (status === 429) {
+        setErrorMessage('Too many attempts. Please wait a moment and try again.');
+      } else if (status >= 500) {
+        setErrorMessage('Something went wrong. Please try again later.');
       } else {
-        setErrorMessage(msg);
+        setErrorMessage(getFriendlyErrorMessage(error, 'reset-password'));
       }
     } finally {
       setIsLoading(false);

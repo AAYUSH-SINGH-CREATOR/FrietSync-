@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { registerUser } from '../services/authApi';
+import { registerUser , getFriendlyErrorMessage } from '../services/authApi';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -110,7 +110,24 @@ const Signup = () => {
       sessionStorage.removeItem('signup_form');
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to create account.');
+      const status = error.response?.status || error.status;
+      const rawMsg = (error.data?.message || error.message || '').toLowerCase();
+
+      if (
+        status === 409 ||
+        rawMsg.includes('already exist') ||
+        rawMsg.includes('already registered')
+      ) {
+        setFieldErrors({ email: 'Email already exists' });
+      } else if (status === 400 && rawMsg.includes('email')) {
+        setFieldErrors({ email: 'Please enter a valid email address' });
+      } else if (status === 429) {
+        setErrorMessage('Too many signup attempts. Please wait a moment.');
+      } else if (status >= 500) {
+        setErrorMessage('Something went wrong. Please try again later.');
+      } else {
+        setErrorMessage(getFriendlyErrorMessage(error, 'signup'));
+      }
     } finally {
       setIsLoading(false);
     }
