@@ -5,7 +5,7 @@ import dotsSvg from '../../assets/dots.svg';
 import wavesSvg from '../../assets/waves.svg';
 import signupImg from '../../assets/signupimg.svg';
 import lgtEllipse from "../../assets/lgtEllipse.svg"
-import drkEllipse from  "../../assets/drkEllipse.svg"
+import drkEllipse from "../../assets/drkEllipse.svg"
 import downelps from "../../assets/dwnelps.svg"
 import downelps1 from "../../assets/dwnelps1.svg"
 
@@ -25,14 +25,16 @@ const AuthLayout = ({
       onBack();
     }
     else if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1); } 
+      navigate(-1);
+    }
     else {
       navigate(-1);
     }
   };
 
+
   return (
-    <div className="min-h-screen w-full relative bg-[#EBF6FF] flex items-center justify-center font-sans overflow-hidden p-0 sm:p-6 md:p-8">
+    <div className="min-h-screen w-full relative bg-[#EBF6FF] flex flex-col  sm:items-center sm:justify-center font-sans overflow-x-hidden overflow-y-auto sm:overflow-hidden p-0 sm:p-6 md:p-8">
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none z-0">
         <img
           src={wavesSvg}
@@ -46,21 +48,21 @@ const AuthLayout = ({
           className="absolute top-0 left-0 sm:top-0 sm:left-0 w-48 sm:w-72 md:w-[354px] h-auto select-none pointer-events-none"
         />
 
-        <img src={lgtEllipse} alt="" 
-        className='absolute right-70 select-none pointer-events-none'
+        <img src={lgtEllipse} alt=""
+          className='absolute right-70 select-none pointer-events-none'
         />
-        <img src={drkEllipse} alt="" 
-        className='absolute left-100 select-none pointer-events-none'
+        <img src={drkEllipse} alt=""
+          className='absolute left-100 select-none pointer-events-none'
         />
-        <img src={downelps1} alt="" 
-        className='absolute right-70 bottom-0 select-none pointer-events-none'
+        <img src={downelps1} alt=""
+          className='absolute right-70 bottom-0 select-none pointer-events-none'
         />
-        <img src={downelps} alt="" 
-        className='absolute left-100 bottom-0 select-none pointer-events-none'
+        <img src={downelps} alt=""
+          className='absolute left-100 bottom-0 select-none pointer-events-none'
         />
 
-        
-          
+
+
         <img
           src={circlesSvg}
           alt=""
@@ -89,57 +91,69 @@ const AuthLayout = ({
         <FiArrowLeft className="text-base sm:text-xl" />
       </button>
 
-      <div className="w-full max-w-6xl rounded-2xl sm:rounded-3xl bg-transparent  sm:border sm:border-[#9EDCFF]/60 shadow-xl sm:backdrop-blur-sm  sm:p-6 md:p-8 relative z-10 my-auto">
-        {showLeftIllustration ? (
-          <div>
-            <div className="flex lg:hidden flex-col items-center justify-center pt-1 pb-2">
-              {leftImage && (
-                <img
-                  src={leftImage}
-                  alt="Illustration"
-                  className="w-64 sm:w-80 max-h-56 object-contain select-none pointer-events-none"
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center">
-              <div className="hidden lg:flex flex-col items-center justify-center text-center px-2 xl:px-4">
-                <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-extrabold text-gray-950 tracking-tight whitespace-nowrap">
-                  {leftTitle}
-                </h1>
-                <h2 className="text-3xl xl:text-4xl 2xl:text-5xl font-extrabold text-gray-950 mt-1 mb-6">
-                  {leftBrand}
-                </h2>
+      <div className="w-full flex-1 flex flex-col justify-between sm:block sm:flex-initial sm:max-w-6xl rounded-none sm:rounded-3xl bg-transparent  sm:bg-[#9EDCFF]/30 border-0 sm:border sm:border-[#9EDCFF]/60 shadow-none sm:shadow-xl backdrop-blur-none sm:backdrop-blur-sm p-0  sm:p-6 md:p-8 relative z-10 sm:my-auto">
+          {showLeftIllustration ? (
+            <div className="flex-1 flex flex-col justify-between sm:block">
+              <div className="flex sm:hidden flex-col items-center justify-center pt-10 pb-3 px-4 select-none shrink-0">
                 {leftImage && (
                   <img
                     src={leftImage}
                     alt="Illustration"
-                    className="w-full max-w-[480px] h-auto object-contain select-none pointer-events-none"
+                    className="w-48 max-h-36 object-contain pointer-events-none"
+                  />
+                )}
+              </div>
+              <div className="hidden sm:flex lg:hidden flex-col items-center justify-center pt-6 pb-2">
+                {leftImage && (
+                  <img
+                    src={leftImage}
+                    alt="Illustration"
+                    className="w-64 sm:w-80 max-h-56 object-contain select-none pointer-events-none"
                   />
                 )}
               </div>
 
-              <div className="w-full flex justify-center">
+              <div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 lg:grid-cols-2 sm:gap-6 lg:gap-8 items-center">
+                <div className="hidden lg:flex flex-col items-center justify-center text-center px-2 xl:px-4">
+                  <h1 className="text-2xl xl:text-3xl 2xl:text-4xl font-extrabold text-gray-950 tracking-tight whitespace-nowrap">
+                    {leftTitle}
+                  </h1>
+                  <h2 className="text-3xl xl:text-4xl 2xl:text-5xl font-extrabold text-gray-950 mt-1 mb-6">
+                    {leftBrand}
+                  </h2>
+                  {leftImage && (
+                    <img
+                      src={leftImage}
+                      alt="Illustration"
+                      className="w-full max-w-[480px] h-auto object-contain select-none pointer-events-none"
+                    />
+                  )}
+                </div>
+                <div className="w-full flex-1 sm:flex-none flex justify-center">
                 <div
-                  className={`w-full ${cardMaxWidth} bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 shadow-lg border border-gray-100`}
+                  className={`w-full max-w-none sm:${cardMaxWidth} sm:max-w-[440px] flex-1 sm:flex-none bg-white rounded-t-[28px] sm:rounded-3xl rounded-b-none sm:rounded-b-3xl px-5 py-7 sm:p-8 md:p-10 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] sm:shadow-lg border-t sm:border border-gray-100 flex flex-col justify-center sm:block`}
                 >
-                  {children}
+                    {children}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex justify-center items-center py-2 sm:py-6">
-            <div
-              className={`w-full ${cardMaxWidth} bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 shadow-lg border border-gray-100`}
-            >
-              {children}
+          ) : (
+          <div className="w-full flex-1 flex flex-col justify-between sm:justify-center sm:items-center py-0 sm:py-6">
+            <div className="h-14 sm:hidden shrink-0" />
+            <div className="w-full flex-1 sm:flex-none flex justify-center">
+              <div
+                className={`w-full max-w-none sm:${cardMaxWidth} sm:max-w-[440px] flex-1 sm:flex-none bg-white rounded-t-[28px] sm:rounded-3xl rounded-b-none sm:rounded-b-3xl px-5 py-8 sm:p-8 md:p-10 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] sm:shadow-lg border-t sm:border border-gray-100 flex flex-col justify-center sm:block`}
+              >
+                {children}
+              </div>
             </div>
           </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
+      // </div>
+      );
 };
 
-export default AuthLayout;
+      export default AuthLayout;
