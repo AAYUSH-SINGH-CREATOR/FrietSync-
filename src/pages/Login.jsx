@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { loginUser } from '../services/authApi';
+import { loginUser, getFriendlyErrorMessage } from '../services/authApi';
 import loginImg from '../assets/loginimg.svg';
 
 const Login = () => {
@@ -63,20 +63,26 @@ const Login = () => {
       sessionStorage.removeItem('login_form');
       navigate('/dashboard');
     } catch (error) {
-      const msg = error.message || 'Login failed';
+      const status = error.response?.status || error.status;
+      const rawMsg = (error.data?.message || error.message || '').toLowerCase();
+
       if (
-        msg.toLowerCase().includes('not registered') ||
-        msg.toLowerCase().includes('user not found') ||
-        msg.toLowerCase().includes('no user')
+        status === 404 ||
+        rawMsg.includes('not registered')
       ) {
         setFieldErrors({ email: 'Email not registered' });
       } else if (
-        msg.toLowerCase().includes('password') ||
-        msg.toLowerCase().includes('invalid credential')
+        status === 401 ||
+        rawMsg.includes('password') ||
+        rawMsg.includes('invalid credential')
       ) {
         setFieldErrors({ password: 'Incorrect email or password.' });
+      } else if (status === 429) {
+        setErrorMessage('Too many login attempts. Please wait a moment');
+      } else if (status >= 500) {
+        setErrorMessage('Something went wrong. Please try again later.');
       } else {
-        setErrorMessage(msg);
+        setErrorMessage(getFriendlyErrorMessage(error, 'login'));
       }
     } finally {
       setIsLoading(false);
