@@ -157,3 +157,16 @@ export const fetchWithAuth = async (url, options = {}) => {
 
   return response;
 };
+
+
+export const invitemem = async (fromdata) => {
+   try{
+     console.log('api called');
+     console.log(fromdata);
+    const response = await axios.post(`${BASE_URL}/admin/invites`, {fromdata});
+    return response.data
+   }
+   catch(err){
+    throw new Error(err.response?.data?.message || "invitation failed");
+   }
+}

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logoutUser } from '../services/authApi';
+import invite from './Invite';
+// import { invitemem } from '../services/authApi';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +17,15 @@ const Dashboard = () => {
     }
   };
 
+  const invitehandler = () =>{
+    // try{
+    //   await invitemem();
+    // }
+    
+      navigate('/invite')
+    
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-xs">
@@ -28,6 +39,9 @@ const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          <button onClick={invitehandler}>
+            +invite
+          </button>
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
@@ -41,7 +55,7 @@ const Dashboard = () => {
       <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-10">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Welcome to your Dashboard 
+            Welcome to your Dashboard
           </h1>
           <p className="text-gray-600 mb-6">
             You are logged in successfully with FrietSync.
