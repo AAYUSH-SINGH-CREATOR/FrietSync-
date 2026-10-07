@@ -23,7 +23,10 @@ const AuthLayout = ({
   const handleBack = () => {
     if (onBack) {
       onBack();
-    } else {
+    }
+    else if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1); } 
+    else {
       navigate(-1);
     }
   };

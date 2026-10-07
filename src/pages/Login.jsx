@@ -89,7 +89,6 @@ const Login = () => {
       leftBrand=""
       leftImage={loginImg}
       showLeftIllustration={true}
-      onBack={() => navigate('/signup')}
     >
       <div className="text-center w-full">
         <h2 className="text-2xl sm:text-[32px] font-semibold text-gray-900 leading-tight">

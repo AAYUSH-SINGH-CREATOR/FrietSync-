@@ -57,7 +57,7 @@ const OtpVerification = () => {
   };
 
   return (
-    <AuthLayout showLeftIllustration={false} onBack={() => navigate('/signup')}>
+    <AuthLayout showLeftIllustration={false}>
       <div className="text-center">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           Verify your account

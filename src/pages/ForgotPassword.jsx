@@ -51,7 +51,10 @@ const ForgotPassword = () => {
       setOtpError('');
       setFieldErrors({});
       setShowRequirements(false);
-    } else {
+    }
+     else if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1); }  
+    else {
       navigate('/login');
     }
   };

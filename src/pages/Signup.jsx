@@ -117,7 +117,7 @@ const Signup = () => {
   };
 
   return (
-    <AuthLayout showLeftIllustration={true} onBack={() => navigate('/login')}>
+    <AuthLayout showLeftIllustration={true}>
       <div className="text-center w-full">
         <h2 className="text-2xl sm:text-[32px] font-semibold text-gray-900 leading-tight">
           Create your account
