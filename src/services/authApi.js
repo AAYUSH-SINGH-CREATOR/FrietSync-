@@ -24,7 +24,7 @@ export const registerUser = async (userData) => {
     const apiData = { ...userData };
     delete apiData.confirmPassword;
 
-    const response = await axios.post(`${BASE_URL}/signup`, apiData);
+    const response = await axios.post(`${BASE_URL}/auth/signup`, apiData);
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Failed to create account. Please try again.');
@@ -33,7 +33,7 @@ export const registerUser = async (userData) => {
 
 export const loginUser = async (userData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/login`, userData);
+    const response = await axios.post(`${BASE_URL}/auth/login`, userData);
     const data = response.data;
 
     const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
@@ -54,7 +54,7 @@ export const loginUser = async (userData) => {
 
 export const verifyOtp = async (email, otp) => {
   try {
-    const response = await axios.post(`${BASE_URL}/verify-otp`, { email, code: otp });
+    const response = await axios.post(`${BASE_URL}/auth/verify-otp`, { email, code: otp });
     const data = response.data;
 
     const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
@@ -75,7 +75,7 @@ export const verifyOtp = async (email, otp) => {
 
 export const sendForgotPasswordOtp = async (email) => {
   try {
-    const response = await axios.post(`${BASE_URL}/forgot-password`, { email });
+    const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Failed to send OTP.');
@@ -84,7 +84,7 @@ export const sendForgotPasswordOtp = async (email) => {
 
 export const resetPassword = async (email, otp, newPassword) => {
   try {
-    const response = await axios.post(`${BASE_URL}/reset-password`, {
+    const response = await axios.post(`${BASE_URL}/auth/reset-password`, {
       email,
       code: otp,
       newPassword,
@@ -97,7 +97,7 @@ export const resetPassword = async (email, otp, newPassword) => {
 
 export const verifyPasswordResetOtp = async (email, otp) => {
   try {
-    const response = await axios.post(`${BASE_URL}/verify-otp`, { email, code: otp });
+    const response = await axios.post(`${BASE_URL}/auth/verify-otp`, { email, code: otp });
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Invalid OTP.');
@@ -115,7 +115,7 @@ export const refreshAccessToken = async () => {
   }
 
   try {
-    const response = await axios.post(`${BASE_URL}/refresh`, { refreshToken });
+    const response = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
     const data = response.data;
 
     const newToken = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
@@ -141,7 +141,7 @@ export const logoutUser = async () => {
 
   try {
     if (refreshToken) {
-      await axios.post(`${BASE_URL}/logout`, { refreshToken });
+      await axios.post(`${BASE_URL}/auth/logout`, { refreshToken });
     }
   } catch (error) {
     console.error('Logout error:', error);
