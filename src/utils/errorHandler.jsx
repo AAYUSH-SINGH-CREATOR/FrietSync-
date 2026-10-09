@@ -12,6 +12,9 @@ export const getFriendlyErrorMessage = (error, context = '') => {
     return 'Unable to connect to the server. Please check your internet connection.';
   }
   if (status === 400) {
+    if (context === 'invite' && rawMessage.includes('yourself')) {
+      return "You can't invite yourself.";
+    }
     if (context === 'otp' || rawMessage.includes('otp') || rawMessage.includes('code')) {
       return 'Wrong OTP entered. Please check and try again.';
     }
@@ -21,8 +24,16 @@ export const getFriendlyErrorMessage = (error, context = '') => {
     if (rawMessage.includes('missing') || rawMessage.includes('required')) {
       return 'Please fill in all required fields.';
     }
-    const backendMsg = error?.data?.message || error?.message;
+  const backendMsg =
+      error?.data?.message ||
+      error?.data?.error ||
+      error?.data?.msg ||
+      (typeof error?.data === 'string' ? error?.data : null) ||
+      error?.message;
     if (backendMsg && !isTechnicalError(backendMsg)) {
+      if (backendMsg.toLowerCase().includes('yourself')) {
+        return "You can't invite yourself.";
+      }
       return backendMsg;
     }
     return 'Invalid request. Please check your information and try again.';

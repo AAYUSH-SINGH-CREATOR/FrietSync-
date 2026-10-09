@@ -17,7 +17,12 @@ const handleInviteError = (error, defaultMessage) => {
   if (error.response) {
     error.status = error.response.status;
     error.data = error.response.data;
-    error.message = error.response.data?.message || defaultMessage;
+      const serverMsg =
+      error.response.data?.message ||
+      error.response.data?.error ||
+      error.response.data?.msg ||
+      (typeof error.response.data === 'string' ? error.response.data : null);
+    error.message = serverMsg || defaultMessage;
   } else {
     error.status = 0;
     error.response = { status: 0, data: null };
