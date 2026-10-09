@@ -1,20 +1,39 @@
+import { useState } from 'react';
 import DashboardNavbar from '../components/layout/DashboardNavbar';
+import Sidebar from '../components/layout/Sidebar';
+// import {
+//   DashboardOverview,
+//   ProjectsView,
+//   IssuesView,
+//   SprintsView,
+//   MyWorkView,
+//   ChatsView,
+//   InvitesView,
+//   TeamView,
+//   SettingsView,
+// } from '../components/dashboard';
 
 const Dashboard = () => {
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <DashboardNavbar />
+  const [activeTab, setActiveTab] = useState('projects');
+  const [projectFilter, setProjectFilter] = useState('all');
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
 
-      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-10">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Welcome to your Dashboard 
-          </h1>
-          <p className="text-gray-600 mb-6">
-            You are logged in successfully with FrietSync.
-          </p>
-        </div>
-      </main>
+  return (
+    <div className="min-h-screen bg-[#eaedf1] flex flex-col font-sans text-slate-800">
+     <DashboardNavbar />
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        projectFilter={projectFilter}
+        setProjectFilter={setProjectFilter}
+        pendingInviteCount={pendingInviteCount}
+      />
+
+      <div className="flex-1 w-full pl-[84px] sm:pl-[104px] pr-4 sm:pr-8 py-6">
+        <main className="max-w-[1500px] w-full mx-auto">
+                  
+        </main>
+      </div>
     </div>
   );
 };
