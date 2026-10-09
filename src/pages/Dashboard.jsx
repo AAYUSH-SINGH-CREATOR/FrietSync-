@@ -4,8 +4,12 @@ import Sidebar from '../components/layout/Sidebar';
 import InvitesView from '../components/dashboard/InvitesView';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import IssuesView from '../components/dashboard/IssueView';
-import ProjectsView from '../components/invites/ProjectsView';
-import MyWorkView from '../components/invites/MyWorkView';
+import ProjectsView from '../components/dashboard/ProjectsView';
+import MyWorkView from '../components/dashboard/MyWorkView';
+import TeamView from '../components/dashboard/TeamView';
+import ChatsView from '../components/dashboard/ChatsView';
+import SprintsView from '../components/dashboard/SprintsView';
+import SettingsView from '../components/dashboard/SettingsView';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -40,9 +44,14 @@ const Dashboard = () => {
               filter={projectFilter}
               onFilterChange={setProjectFilter}
             />
-          )}  
-           {activeTab === 'my-work' && <MyWorkView />}  
-              </main>
+          )}
+          {activeTab === 'my-work' && <MyWorkView />}
+          {activeTab === 'team' && <TeamView />}
+          {activeTab === 'sprints' && <SprintsView />}
+          {activeTab === 'chats' && <ChatsView />}
+          {activeTab === 'settings' && <SettingsView />}
+
+        </main>
       </div>
     </div>
   );
