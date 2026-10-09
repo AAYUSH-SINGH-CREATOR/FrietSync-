@@ -27,8 +27,23 @@ const handleInviteError = (error, defaultMessage) => {
   throw error;
 };
 
-export const sendInvite = async ({ email, role }) => {
+export const formatExpiryToUtc = (dateStr) => {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 7);
+    return `${d.toISOString().slice(0, 10)}T00:00:00Z`;
+  }
+  return `${dateStr}T00:00:00Z`;
+};
+
+
+export const sendInvite = async ({ email, role, expiresAt}) => {
   try {
+        const payload = {
+      email,
+      role,
+      ...(expiresAt ? { expiresAt } : {}),
+    };
     const response = await axios.post(
       `${BASE_URL}/admin/invites`,
       { email, role },
@@ -38,6 +53,36 @@ export const sendInvite = async ({ email, role }) => {
   } catch (error) {
     handleInviteError(error, 'Failed to send invitation. Please try again.');
   }
+};
+
+export const sendSequentialInvites = async (invitesList, onProgress) => {
+  const successful = [];
+  let failed = null;
+
+  for (let i = 0; i < invitesList.length; i++) {
+    const item = invitesList[i];
+    if (onProgress) {
+      onProgress({ current: i + 1, total: invitesList.length, email: item.email });
+    }
+
+    try {
+      const data = await sendInvite({
+        email: item.email.trim(),
+        role: item.role,
+        expiresAt: formatExpiryToUtc(item.expiresDate || item.expiresAt),
+      });
+      successful.push({ item, data });
+    } catch (error) {
+      failed = {
+        item,
+        error: error.message || 'Failed to send invitation',
+        rawError: error,
+      };
+      break;
+    }
+  }
+
+  return { successful, failed };
 };
 
 export const getMyInvites = async () => {
