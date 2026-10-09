@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiPlus, FiBell, FiLogOut } from 'react-icons/fi';
-import { logoutUser, clearAuthStorage } from '../../services/authApi';
+import { logoutUser } from '../../services/authApi';
 import { getMyInvites } from '../../services/inviteApi';
 import InviteModal from '../invites/InviteModal';
 import InvitesBellModal from '../invites/InvitesBellModal';
-
+import  logo  from '../../assets/logo.svg'
 const DashboardNavbar = () => {
   const navigate = useNavigate();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -45,7 +45,6 @@ const DashboardNavbar = () => {
     setIsLoggingOut(true);
     try {
       await logoutUser();
-      await clearAuthStorage();
     } finally {
       navigate('/login');
     }
@@ -56,13 +55,16 @@ const DashboardNavbar = () => {
       <header className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="flex items-center gap-2 group">
+          <img
+              src={logo}
+              alt="FrietSync Logo"
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain transition-transform duration-200 group-hover:scale-105"
+            />
             <span className="text-2xl font-black text-sky-600 tracking-tight group-hover:text-sky-700 transition">
               FrietSync
             </span>
           </Link>
-          <span className="hidden sm:inline-block text-[11px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-semibold border border-sky-100">
-            Workspace
-          </span>
+         
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
