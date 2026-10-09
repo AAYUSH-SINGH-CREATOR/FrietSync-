@@ -19,12 +19,30 @@ const handleAxiosError = (error, defaultMessage) => {
   throw error;
 };
 
+export const getAccessToken = () => {
+  const rawToken =
+    localStorage.getItem('accessToken')||'';
+  return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
+};
+
 export const registerUser = async (userData) => {
   try {
     const apiData = { ...userData };
     delete apiData.confirmPassword;
 
     const response = await axios.post(`${BASE_URL}/auth/signup`, apiData);
+      const data = response.data;
+
+    const token = data.accessToken;
+    const refreshToken = data.refreshToken || data.data?.refreshToken;
+
+    if (token) {
+      localStorage.setItem('frietSyncToken', token);
+      localStorage.setItem('accessToken', token);
+    }
+    if (refreshToken) {
+      localStorage.setItem('frietSyncRefreshToken', refreshToken);
+    }
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Failed to create account. Please try again.');
@@ -41,6 +59,7 @@ export const loginUser = async (userData) => {
 
     if (token) {
       localStorage.setItem('frietSyncToken', token);
+       localStorage.setItem('accessToken', token);
     }
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
@@ -62,6 +81,7 @@ export const verifyOtp = async (email, otp) => {
 
     if (token) {
       localStorage.setItem('frietSyncToken', token);
+       localStorage.setItem('accessToken', token);
     }
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
@@ -118,7 +138,7 @@ export const refreshAccessToken = async () => {
     const response = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
     const data = response.data;
 
-    const newToken = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+    const newToken = data.accessToken || data.data?.accessToken;
     const newRefreshToken = data.refreshToken || data.data?.refreshToken;
 
     if (newToken) {
@@ -131,6 +151,8 @@ export const refreshAccessToken = async () => {
     return data;
   } catch (error) {
     localStorage.removeItem('frietSyncToken');
+     localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('frietSyncRefreshToken');
     handleAxiosError(error, 'Session expired. Please log in again.');
   }
@@ -147,12 +169,14 @@ export const logoutUser = async () => {
     console.error('Logout error:', error);
   } finally {
     localStorage.removeItem('frietSyncToken');
+        localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('frietSyncRefreshToken');
   }
 };
 
 export const fetchWithAuth = async (url, options = {}) => {
-  let token = localStorage.getItem('frietSyncToken');
+  let token = getAccessToken();
 
   const headers = {
     ...options.headers,
@@ -166,7 +190,7 @@ export const fetchWithAuth = async (url, options = {}) => {
     if (error.response?.status === 401 && localStorage.getItem('frietSyncRefreshToken')) {
       try {
         await refreshAccessToken();
-        token = localStorage.getItem('frietSyncToken');
+        token = getAccessToken();
         const retryHeaders = {
           ...options.headers,
           ...(token && { Authorization: `Bearer ${token}` }),
@@ -183,8 +207,14 @@ export const fetchWithAuth = async (url, options = {}) => {
 };
 
 export const invitemem = async (fromdata) => {
+    const token = getAccessToken();
   try {
-    const response = await axios.post(`${BASE_URL}/admin/invites`, fromdata);
+    const response = await axios.post(`${BASE_URL}/admin/invites`, fromdata, {
+         headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
     return response.data;
   } catch (err) {
     handleAxiosError(err, 'Invitation failed.');

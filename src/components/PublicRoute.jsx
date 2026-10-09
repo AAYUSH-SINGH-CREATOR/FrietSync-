@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
+import { getAccessToken } from '../services/authApi';
 
 const PublicRoute = () => {
-  const token = localStorage.getItem('frietSyncToken');
-  const isAuthenticated = Boolean(token);
+  const isAuthenticated = Boolean(getAccessToken());
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
