@@ -4,7 +4,6 @@ import {
   FiFolder,
   FiRefreshCw,
   FiBriefcase,
-  FiInbox,
   FiUsers,
   FiSettings,
   FiChevronsLeft,
@@ -13,7 +12,37 @@ import {
   FiChevronRight,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
-import { BsChatDots } from 'react-icons/bs';
+import { IoChatboxEllipsesOutline } from "react-icons/io5";
+import { IoMailOutline } from "react-icons/io5";
+
+const NOTCH_BG = '#eaedf1';
+
+const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
+  <>
+    <svg
+      className="absolute top-1/2 -translate-y-1/2 pointer-events-none z-10"
+      style={{ right: '-2px', width: 56, height: 76, color: NOTCH_BG }}
+      viewBox="0 0 56 76"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path d="M 56 0 C 34 6, 4 16, 4 38 C 4 60, 34 70, 56 76 Z" />
+    </svg>
+
+    <div
+      className="absolute top-1/2 -translate-y-1/2 w-[44px] h-[44px] rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-center z-20 pointer-events-none"
+      style={{ right: '-5px' }}
+    >
+      <Icon size={20} className="stroke-[2.2] text-[#0284c7]" />
+      {badge > 0 && (
+        <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+          {badge}
+        </span>
+      )}
+    </div>
+  </>
+);
 
 const Sidebar = ({
   activeTab = 'projects',
@@ -51,8 +80,8 @@ const Sidebar = ({
     { id: 'issues', label: 'Issues', icon: AiOutlineBug },
     { id: 'sprints', label: 'Sprints', icon: FiRefreshCw },
     { id: 'my-work', label: 'My Work', icon: FiBriefcase },
-    { id: 'chats', label: 'Chats', icon: BsChatDots },
-    { id: 'invites', label: 'My Invites', icon: FiInbox, badge: pendingInviteCount },
+    { id: 'chats', label: 'Chats', icon: IoChatboxEllipsesOutline  },
+    { id: 'invites', label: 'My Invites', icon: IoMailOutline, badge: pendingInviteCount },
   ];
 
   const bottomNavItems = [
@@ -69,13 +98,13 @@ const Sidebar = ({
 
   return (
     <>
-      {!isCollapsed && (
-        <div
-          className="fixed inset-0 z-30 bg-slate-900/10 backdrop-blur-[1px] transition-opacity"
-          onClick={() => setIsCollapsed(true)}
-          aria-hidden="true"
-        />
-      )}
+           {!isCollapsed && (
+  <div
+    className="fixed inset-0 z-30 bg-slate-900/20 transition-opacity duration-300"
+    onClick={() => setIsCollapsed(true)}
+    aria-hidden="true"
+  />
+)}
 
       <aside
         aria-label="Sidebar navigation"
@@ -144,29 +173,7 @@ const Sidebar = ({
                       )}
                     </button>
 
-                    {isActive && (
-                      <>
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[44px] h-[80px] pointer-events-none z-10 overflow-hidden">
-                          <svg
-                            className="w-full h-full text-[#eaedf1] fill-current"
-                            viewBox="0 0 44 80"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M 44 0 C 44 20, 4 18, 4 40 C 4 62, 44 60, 44 80 Z" />
-                          </svg>
-                        </div>
-
-                        <div className="absolute right-[-4px] top-1/2 -translate-y-1/2 w-[44px] h-[44px] rounded-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] border border-slate-100 flex items-center justify-center text-sky-600 z-20 pointer-events-none">
-                          <Icon size={21} className="stroke-[2.2] text-[#0284c7]" />
-                          {item.badge > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
-                      </>
-                    )}
+                    {isActive && <ActiveNotch icon={Icon} badge={item.badge} />}
 
                     <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       {item.label}
@@ -273,23 +280,7 @@ const Sidebar = ({
                       <Icon size={21} className="stroke-[1.9]" />
                     </button>
 
-                    {isActive && (
-                      <>
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[44px] h-[80px] pointer-events-none z-10 overflow-hidden">
-                          <svg
-                            className="w-full h-full text-[#eaedf1] fill-current"
-                            viewBox="0 0 44 80"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M 44 0 C 44 20, 4 18, 4 40 C 4 62, 44 60, 44 80 Z" />
-                          </svg>
-                        </div>
-                        <div className="absolute right-[-4px] top-1/2 -translate-y-1/2 w-[44px] h-[44px] rounded-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] border border-slate-100 flex items-center justify-center text-sky-600 z-20 pointer-events-none">
-                          <Icon size={21} className="stroke-[2.2] text-[#0284c7]" />
-                        </div>
-                      </>
-                    )}
+                    {isActive && <ActiveNotch icon={Icon} />}
 
                     <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       {item.label}
