@@ -45,14 +45,14 @@ const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
 );
 
 const Sidebar = ({
-  activeTab = 'projects',
+  activeTab = 'dashboard',
   setActiveTab,
   projectFilter = 'all',
   setProjectFilter,
   pendingInviteCount = 0,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

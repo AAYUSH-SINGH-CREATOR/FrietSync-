@@ -2,8 +2,11 @@ import { useState } from 'react';
 import DashboardNavbar from '../components/layout/DashboardNavbar';
 import Sidebar from '../components/layout/Sidebar';
 import InvitesView from '../components/dashboard/InvitesView';
+import DashboardOverview from '../components/dashboard/DashboardOverview';
+import IssuesView from '../components/dashboard/IssueView';
+
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('projects');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [projectFilter, setProjectFilter] = useState('all');
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
 
@@ -23,6 +26,13 @@ const Dashboard = () => {
                    {activeTab === 'invites' && (
             <InvitesView onInvitesUpdated={setPendingInviteCount} />
           )}
+                    {activeTab === 'dashboard' && (
+            <DashboardOverview
+              onNavigate={setActiveTab}
+              pendingInviteCount={pendingInviteCount}
+            />
+          )}
+               {activeTab === 'issues' && <IssuesView />}
         </main>
       </div>
     </div>
