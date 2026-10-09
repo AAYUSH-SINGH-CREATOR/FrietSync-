@@ -24,6 +24,49 @@ export const getAccessToken = () => {
     localStorage.getItem('accessToken')||'';
   return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
 };
+export const saveUserData = (data, fallbackData = {}) => {
+  const name =
+    data?.name ||
+    data?.user?.name ||
+    data?.data?.name ||
+    data?.data?.user?.name ||
+    data?.userName ||
+    fallbackData?.name ||
+    '';
+
+  const role =
+    data?.role ||
+    data?.user?.role ||
+    data?.data?.role ||
+    data?.data?.user?.role ||
+    '';
+
+  if (name) {
+    localStorage.setItem('frietSyncName', name);
+  }
+  if (role) {
+    localStorage.setItem('frietSyncRole', role);
+  }
+  if (name || role) {
+    let existing = {};
+    try {
+      const parsed = JSON.parse(localStorage.getItem('frietSyncUser') || '{}');
+      if (parsed && typeof parsed === 'object') {
+        existing = parsed;
+      }
+    } catch {
+      // ignore JSON parse error
+    }
+    localStorage.setItem(
+      'frietSyncUser',
+      JSON.stringify({
+        ...existing,
+        name: name || existing.name || '',
+        role: role || existing.role || '',
+      })
+    );
+  }
+};
 
 export const registerUser = async (userData) => {
   try {
@@ -43,6 +86,7 @@ export const registerUser = async (userData) => {
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
     }
+      saveUserData(data, userData);
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Failed to create account. Please try again.');
@@ -64,7 +108,7 @@ export const loginUser = async (userData) => {
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
     }
-
+  saveUserData(data, userData);
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Invalid email or password.');
@@ -86,7 +130,7 @@ export const verifyOtp = async (email, otp) => {
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
     }
-
+  saveUserData(data, userData);
     return response.data;
   } catch (err) {
     handleAxiosError(err, 'Invalid or expired OTP.');
@@ -150,10 +194,7 @@ export const refreshAccessToken = async () => {
 
     return data;
   } catch (error) {
-    localStorage.removeItem('frietSyncToken');
-     localStorage.removeItem('accessToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('frietSyncRefreshToken');
+  clearAuthStorage();
     handleAxiosError(error, 'Session expired. Please log in again.');
   }
 };
@@ -168,10 +209,7 @@ export const logoutUser = async () => {
   } catch (error) {
     console.error('Logout error:', error);
   } finally {
-    localStorage.removeItem('frietSyncToken');
-        localStorage.removeItem('accessToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('frietSyncRefreshToken');
+ clearAuthStorage();
   }
 };
 
@@ -219,4 +257,31 @@ export const invitemem = async (fromdata) => {
   } catch (err) {
     handleAxiosError(err, 'Invitation failed.');
   }
+};
+
+export const getUserProfile = () => {
+  try {
+    const raw = localStorage.getItem('frietSyncUser');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const name = parsed.name || localStorage.getItem('frietSyncName') || '';
+      const role = parsed.role || localStorage.getItem('frietSyncRole') || '';
+      return { name, role };
+    }
+  } catch {
+  }
+  return {
+    name: localStorage.getItem('frietSyncName') || '',
+    role: localStorage.getItem('frietSyncRole') || '',
+  };
+};
+
+export const clearAuthStorage = () => {
+  localStorage.removeItem('frietSyncToken');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('token');
+  localStorage.removeItem('frietSyncRefreshToken');
+  localStorage.removeItem('frietSyncUser');
+  localStorage.removeItem('frietSyncName');
+  localStorage.removeItem('frietSyncRole');
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiPlus, FiBell, FiLogOut } from 'react-icons/fi';
-import { logoutUser } from '../../services/authApi';
+import { logoutUser, clearAuthStorage } from '../../services/authApi';
 import { getMyInvites } from '../../services/inviteApi';
 import InviteModal from '../invites/InviteModal';
 import InvitesBellModal from '../invites/InvitesBellModal';
@@ -45,6 +45,7 @@ const DashboardNavbar = () => {
     setIsLoggingOut(true);
     try {
       await logoutUser();
+      await clearAuthStorage();
     } finally {
       navigate('/login');
     }
