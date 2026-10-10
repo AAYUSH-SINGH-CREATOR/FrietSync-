@@ -5,7 +5,7 @@ import { logoutUser } from '../../services/authApi';
 import { getMyInvites } from '../../services/inviteApi';
 import InviteModal from '../invites/InviteModal';
 import InvitesBellModal from '../invites/InvitesBellModal';
-import  logo  from '../../assets/logo.svg'
+import logo from '../../assets/logo.svg'
 const DashboardNavbar = () => {
   const navigate = useNavigate();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -21,7 +21,7 @@ const DashboardNavbar = () => {
         }
       })
       .catch(() => {
-        
+
       });
   }, []);
 
@@ -45,7 +45,12 @@ const DashboardNavbar = () => {
     setIsLoggingOut(true);
     try {
       await logoutUser();
-    } finally {
+    }
+    catch (err) {
+      console.error('Logout error:', err);
+    }
+    finally {
+      setIsLoggingOut(false);
       navigate('/login');
     }
   };
@@ -55,7 +60,7 @@ const DashboardNavbar = () => {
       <header className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="flex items-center gap-2 group">
-          <img
+            <img
               src={logo}
               alt="FrietSync Logo"
               className="w-7 h-7 sm:w-8 sm:h-8 object-contain transition-transform duration-200 group-hover:scale-105"
@@ -64,11 +69,11 @@ const DashboardNavbar = () => {
               FrietSync
             </span>
           </Link>
-         
+
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-      
+
           <button
             type="button"
             onClick={() => setIsInviteOpen(true)}
