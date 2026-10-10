@@ -1,27 +1,16 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-import axios from 'axios';
+import {
+  apiRequest,
+  getAuthHeaders,
+  getStoredToken,
+  normalizeApiError,
+} from './apiClient';
 import { getFriendlyErrorMessage } from '../utils/errorHandler';
 
 export { getFriendlyErrorMessage };
 
 
-const handleAxiosError = (error, defaultMessage) => {
-  if (error.response) {
-    error.status = error.response.status;
-    error.data = error.response.data;
-    error.message = error.response.data?.message || defaultMessage;
-  } else {
-    error.status = 0;
-    error.response = { status: 0, data: null };
-    error.data = null;
-    error.message = error.message || defaultMessage;
-  }
-  throw error;
-};
-
 export const getAccessToken = () => {
-  const rawToken =
-    localStorage.getItem('accessToken')||'';
+  const rawToken = getStoredToken();
   return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
 };
 export const saveUserData = (data, fallbackData = {}) => {
@@ -69,103 +58,93 @@ export const saveUserData = (data, fallbackData = {}) => {
 };
 
 export const registerUser = async (userData) => {
-  try {
-    const apiData = { ...userData };
-    delete apiData.confirmPassword;
+  const apiData = { ...userData };
+  delete apiData.confirmPassword;
 
-    const response = await axios.post(`${BASE_URL}/auth/signup`, apiData);
-      const data = response.data;
+  const response = await apiRequest('/auth/signup', {
+    method: 'post',
+    data: apiData,
+  }, 'Failed to create account. Please try again.');
+  const data = response.data;
 
-    const token = data.accessToken;
-    const refreshToken = data.refreshToken || data.data?.refreshToken;
+  const token = data.accessToken;
+  const refreshToken = data.refreshToken || data.data?.refreshToken;
 
-    if (token) {
-      localStorage.setItem('frietSyncToken', token);
-      localStorage.setItem('accessToken', token);
-    }
-    if (refreshToken) {
-      localStorage.setItem('frietSyncRefreshToken', refreshToken);
-    }
-      saveUserData(data, userData);
-    return response.data;
-  } catch (error) {
-    handleAxiosError(error, 'Failed to create account. Please try again.');
+  if (token) {
+    localStorage.setItem('frietSyncToken', token);
+    localStorage.setItem('accessToken', token);
   }
+  if (refreshToken) {
+    localStorage.setItem('frietSyncRefreshToken', refreshToken);
+  }
+  saveUserData(data, userData);
+  return response.data;
 };
 
 export const loginUser = async (userData) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/auth/login`, userData);
-    const data = response.data;
+  const response = await apiRequest('/auth/login', {
+    method: 'post',
+    data: userData,
+  }, 'Invalid email or password.');
+  const data = response.data;
 
-    const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
-    const refreshToken = data.refreshToken || data.data?.refreshToken;
+  const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+  const refreshToken = data.refreshToken || data.data?.refreshToken;
 
-    if (token) {
-      localStorage.setItem('frietSyncToken', token);
-       localStorage.setItem('accessToken', token);
-    }
-    if (refreshToken) {
-      localStorage.setItem('frietSyncRefreshToken', refreshToken);
-    }
-  saveUserData(data, userData);
-    return response.data;
-  } catch (error) {
-    handleAxiosError(error, 'Invalid email or password.');
+  if (token) {
+    localStorage.setItem('frietSyncToken', token);
+    localStorage.setItem('accessToken', token);
   }
+  if (refreshToken) {
+    localStorage.setItem('frietSyncRefreshToken', refreshToken);
+  }
+  saveUserData(data, userData);
+  return response.data;
 };
 
 export const verifyOtp = async (email, otp) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/auth/verify-otp`, { email, code: otp });
-    const data = response.data;
+  const response = await apiRequest('/auth/verify-otp', {
+    method: 'post',
+    data: { email, code: otp },
+  }, 'Invalid or expired OTP.');
+  const data = response.data;
 
-    const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
-    const refreshToken = data.refreshToken || data.data?.refreshToken;
+  const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+  const refreshToken = data.refreshToken || data.data?.refreshToken;
 
-    if (token) {
-      localStorage.setItem('frietSyncToken', token);
-       localStorage.setItem('accessToken', token);
-    }
-    if (refreshToken) {
-      localStorage.setItem('frietSyncRefreshToken', refreshToken);
-    }
-    saveUserData(data);
-    return response.data;
-  } catch (err) {
-    handleAxiosError(err, 'Invalid or expired OTP.');
+  if (token) {
+    localStorage.setItem('frietSyncToken', token);
+    localStorage.setItem('accessToken', token);
   }
+  if (refreshToken) {
+    localStorage.setItem('frietSyncRefreshToken', refreshToken);
+  }
+  saveUserData(data);
+  return response.data;
 };
 
 export const sendForgotPasswordOtp = async (email) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
-    return response.data;
-  } catch (error) {
-    handleAxiosError(error, 'Failed to send OTP.');
-  }
+  const response = await apiRequest('/auth/forgot-password', {
+    method: 'post',
+    data: { email },
+  }, 'Failed to send OTP.');
+  return response.data;
 };
 
 export const resetPassword = async (email, otp, newPassword) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/auth/reset-password`, {
-      email,
-      code: otp,
-      newPassword,
-    });
-    return response.data;
-  } catch (error) {
-    handleAxiosError(error, 'Failed to reset password.');
-  }
+  const response = await apiRequest('/auth/reset-password', {
+    method: 'post',
+    data: { email, code: otp, newPassword },
+  }, 'Failed to reset password.');
+  return response.data;
 };
 
 export const verifyPasswordResetOtp = async (email, otp) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/auth/verify-otp`, { email, code: otp });
-    return response.data;
-  } catch (error) {
-    handleAxiosError(error, 'Invalid OTP.');
-  }
+  const response = await apiRequest('/auth/verify-otp', {
+    method: 'post',
+    data: { email, code: otp },
+  }, 'Invalid OTP.');
+  return response.data;
 };
 
 export const refreshAccessToken = async () => {
@@ -179,7 +158,7 @@ export const refreshAccessToken = async () => {
   }
 
   try {
-    const response = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
+    const response = await apiRequest('/auth/refresh', { method: 'post', data: { refreshToken } }, 'Session expired. Please log in again.');
     const data = response.data;
 
     const newToken = data.accessToken || data.data?.accessToken;
@@ -195,8 +174,8 @@ export const refreshAccessToken = async () => {
 
     return data;
   } catch (error) {
-  clearAuthStorage();
-    handleAxiosError(error, 'Session expired. Please log in again.');
+    clearAuthStorage();
+    throw error;
   }
 };
 
@@ -205,7 +184,7 @@ export const logoutUser = async () => {
 
   try {
     if (refreshToken) {
-      await axios.post(`${BASE_URL}/auth/logout`, { refreshToken });
+      await apiRequest('/auth/logout', { method: 'post', data: { refreshToken } }, 'Logout failed.');
     }
   } catch (error) {
     console.error('Logout error:', error);
@@ -223,7 +202,7 @@ export const fetchWithAuth = async (url, options = {}) => {
   };
 
   try {
-    const response = await axios({ url, ...options, headers });
+    const response = await apiRequest(url, { url, ...options, headers });
     return response;
   } catch (error) {
     if (error.response?.status === 401 && localStorage.getItem('frietSyncRefreshToken')) {
@@ -234,30 +213,25 @@ export const fetchWithAuth = async (url, options = {}) => {
           ...options.headers,
           ...(token && { Authorization: `Bearer ${token}` }),
         };
-        return await axios({ url, ...options, headers: retryHeaders });
+        return await apiRequest(url, { url, ...options, headers: retryHeaders });
       } catch {
         await logoutUser();
         window.location.href = '/login';
         throw error;
       }
     }
-    handleAxiosError(error, 'Request failed');
+    throw normalizeApiError(error, 'Request failed');
   }
 };
 
 export const invitemem = async (fromdata) => {
-    const token = getAccessToken();
-  try {
-    const response = await axios.post(`${BASE_URL}/admin/invites`, fromdata, {
-         headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-    return response.data;
-  } catch (err) {
-    handleAxiosError(err, 'Invitation failed.');
-  }
+  const token = getAccessToken();
+  const response = await apiRequest('/admin/invites', {
+    method: 'post',
+    data: fromdata,
+    ...getAuthHeaders(token),
+  }, 'Invitation failed.');
+  return response.data;
 };
 
 export const getUserProfile = () => {

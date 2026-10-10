@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiPlus, FiBell, FiLogOut } from 'react-icons/fi';
 import { logoutUser } from '../../services/authApi';
-import { getMyInvites } from '../../services/inviteApi';
+import { getMyInvitesCount } from '../../services/inviteApi';
 import InviteModal from '../invites/InviteModal';
 import InvitesBellModal from '../invites/InvitesBellModal';
 import  logo  from '../../assets/logo.svg'
@@ -14,11 +14,9 @@ const DashboardNavbar = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const refreshInviteCount = useCallback(() => {
-    getMyInvites()
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setPendingCount(data.length);
-        }
+    getMyInvitesCount()
+      .then((count) => {
+        if (count !== null) setPendingCount(count);
       })
       .catch(() => {
         
@@ -27,11 +25,9 @@ const DashboardNavbar = () => {
 
   useEffect(() => {
     let isMounted = true;
-    getMyInvites()
-      .then((data) => {
-        if (isMounted && Array.isArray(data)) {
-          setPendingCount(data.length);
-        }
+    getMyInvitesCount()
+      .then((count) => {
+        if (isMounted && count !== null) setPendingCount(count);
       })
       .catch(() => {
       });

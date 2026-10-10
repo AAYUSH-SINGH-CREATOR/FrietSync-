@@ -1,35 +1,9 @@
-import axios from 'axios';
+import { apiRequest, getAuthHeaders, getStoredToken } from './apiClient';
 import { getFriendlyErrorMessage } from '../utils/errorHandler';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('frietSyncToken');
-  return {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  };
-};
-
-const handleInviteError = (error, defaultMessage) => {
-  if (error.response) {
-    error.status = error.response.status;
-    error.data = error.response.data;
-      const serverMsg =
-      error.response.data?.message ||
-      error.response.data?.error ||
-      error.response.data?.msg ||
-      (typeof error.response.data === 'string' ? error.response.data : null);
-    error.message = serverMsg || defaultMessage;
-  } else {
-    error.status = 0;
-    error.response = { status: 0, data: null };
-    error.data = null;
-    error.message = error.message || defaultMessage;
-  }
-  throw error;
+const inviteAuthHeaders = () => {
+  const token = getStoredToken('frietSyncToken');
+  return getAuthHeaders(token);
 };
 
 export const formatExpiryToUtc = (dateStr) => {
@@ -42,22 +16,14 @@ export const formatExpiryToUtc = (dateStr) => {
 };
 
 
-export const sendInvite = async ({ email, role, expiresAt}) => {
-  try {
-        const payload = {
-      email,
-      role,
-      ...(expiresAt ? { expiresAt } : {}),
-    };
-    const response = await axios.post(
-      `${BASE_URL}/admin/invites`,
-      { email, role },
-      getAuthHeaders()
-    );
-    return response.data;
-  } catch (error) {
-    handleInviteError(error, 'Failed to send invitation. Please try again.');
-  }
+export const sendInvite = async ({ email, role, expiresAt }) => {
+  void expiresAt;
+  const response = await apiRequest('/admin/invites', {
+    method: 'post',
+    data: { email, role },
+    ...inviteAuthHeaders(),
+  }, 'Failed to send invitation. Please try again.', true);
+  return response.data;
 };
 
 export const sendSequentialInvites = async (invitesList, onProgress) => {
@@ -91,45 +57,38 @@ export const sendSequentialInvites = async (invitesList, onProgress) => {
 };
 
 export const getMyInvites = async () => {
-  try {
-    const response = await axios.get(
-      `${BASE_URL}/invites/me`,
-      getAuthHeaders()
-    );
-    const data = response.data;
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.invites)) return data.invites;
-    if (Array.isArray(data?.data)) return data.data;
-    return data || [];
-  } catch (error) {
-    handleInviteError(error, 'Failed to fetch invitations.');
-  }
+  const response = await apiRequest('/invites/me', {
+    method: 'get',
+    ...inviteAuthHeaders(),
+  }, 'Failed to fetch invitations.', true);
+  const data = response.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.invites)) return data.invites;
+  if (Array.isArray(data?.data)) return data.data;
+  return data || [];
+};
+
+export const getMyInvitesCount = async () => {
+  const invites = await getMyInvites();
+  return Array.isArray(invites) ? invites.length : null;
 };
 
 export const acceptInvite = async (inviteId) => {
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/invites/accept`,
-      { inviteId, id: inviteId },
-      getAuthHeaders()
-    );
-    return response.data;
-  } catch (error) {
-    handleInviteError(error, 'Failed to accept invitation.');
-  }
+  const response = await apiRequest('/invites/accept', {
+    method: 'post',
+    data: { inviteId, id: inviteId },
+    ...inviteAuthHeaders(),
+  }, 'Failed to accept invitation.', true);
+  return response.data;
 };
 
 export const rejectInvite = async (inviteId) => {
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/invites/reject`,
-      { inviteId, id: inviteId },
-      getAuthHeaders()
-    );
-    return response.data;
-  } catch (error) {
-    handleInviteError(error, 'Failed to reject invitation.');
-  }
+  const response = await apiRequest('/invites/reject', {
+    method: 'post',
+    data: { inviteId, id: inviteId },
+    ...inviteAuthHeaders(),
+  }, 'Failed to reject invitation.', true);
+  return response.data;
 };
 
 export { getFriendlyErrorMessage };

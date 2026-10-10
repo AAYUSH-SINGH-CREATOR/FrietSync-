@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from 'react';
 import {
   FiCheck,
   FiXCircle,
@@ -6,103 +5,29 @@ import {
   FiRefreshCw,
   FiAlertCircle,
 } from 'react-icons/fi';
-import {
-  getMyInvites,
-  acceptInvite,
-  rejectInvite,
-  getFriendlyErrorMessage,
-} from '../../services/inviteApi';
+import { useInvitations } from '../../hooks/useInvitations';
 import MultiInviteForm from '../invites/MultiInviteForm';
 
+const INVITE_SUCCESS_MESSAGES = {
+  accept: (invite) => `Accepted invitation to join as ${invite.role || 'Member'}!`,
+  reject: () => 'Invitation declined.',
+};
+
 const InvitesView = ({ onInvitesUpdated }) => {
-  const [invites, setInvites] = useState([]);
-  const [isLoadingInvites, setIsLoadingInvites] = useState(false);
-  const [inviteError, setInviteError] = useState('');
-  const [processingId, setProcessingId] = useState(null);
-  const [actionSuccess, setActionSuccess] = useState('');
-
-  const fetchInvites = useCallback(() => {
-    setIsLoadingInvites(true);
-    setInviteError('');
-    getMyInvites()
-      .then((data) => {
-        setInvites(Array.isArray(data) ? data : []);
-        if (onInvitesUpdated && Array.isArray(data)) {
-          onInvitesUpdated(data.length);
-        }
-      })
-      .catch((err) => {
-        setInviteError(getFriendlyErrorMessage(err, 'invites'));
-      })
-      .finally(() => {
-        setIsLoadingInvites(false);
-      });
-  }, [onInvitesUpdated]);
-
-  useEffect(() => {
-    let isMounted = true;
-    getMyInvites()
-      .then((data) => {
-        if (isMounted) {
-          const list = Array.isArray(data) ? data : [];
-          setInvites(list);
-          setIsLoadingInvites(false);
-          if (onInvitesUpdated) onInvitesUpdated(list.length);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setInviteError(getFriendlyErrorMessage(err, 'invites'));
-          setIsLoadingInvites(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [onInvitesUpdated]);
-
-
-
-  const handleAccept = async (invite) => {
-    const inviteId = invite._id || invite.id || invite.inviteId;
-    setProcessingId(inviteId);
-    setInviteError('');
-    setActionSuccess('');
-    try {
-      await acceptInvite(inviteId);
-      setActionSuccess(`Accepted invitation to join as ${invite.role || 'Member'}!`);
-      setInvites((prev) => {
-        const updated = prev.filter((item) => (item._id || item.id || item.inviteId) !== inviteId);
-        if (onInvitesUpdated) onInvitesUpdated(updated.length);
-        return updated;
-      });
-    } catch (err) {
-      setInviteError(getFriendlyErrorMessage(err, 'accept-invite'));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleReject = async (invite) => {
-    const inviteId = invite._id || invite.id || invite.inviteId;
-    setProcessingId(inviteId);
-    setInviteError('');
-    setActionSuccess('');
-    try {
-      await rejectInvite(inviteId);
-      setActionSuccess('Invitation declined.');
-      setInvites((prev) => {
-        const updated = prev.filter((item) => (item._id || item.id || item.inviteId) !== inviteId);
-        if (onInvitesUpdated) onInvitesUpdated(updated.length);
-        return updated;
-      });
-    } catch (err) {
-      setInviteError(getFriendlyErrorMessage(err, 'reject-invite'));
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  const {
+    invites,
+    isLoading: isLoadingInvites,
+    errorMessage: inviteError,
+    processingId,
+    actionSuccess,
+    loadInvites: fetchInvites,
+    acceptInvitation: handleAccept,
+    rejectInvitation: handleReject,
+  } = useInvitations({
+    onInvitesUpdated,
+    clearSuccessOnFetch: false,
+    successMessages: INVITE_SUCCESS_MESSAGES,
+  });
 
   return (
     <div className="space-y-6 animate-fadeIn">

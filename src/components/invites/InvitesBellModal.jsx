@@ -1,50 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { FiX, FiCheck, FiXCircle, FiInbox, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
-import { getMyInvites, acceptInvite, rejectInvite, getFriendlyErrorMessage } from '../../services/inviteApi';
+import { useInvitations } from '../../hooks/useInvitations';
+
+const INVITE_SUCCESS_MESSAGES = {
+  accept: (invite) => `Accepted invitation to join as ${invite.role || 'Member'}!`,
+  reject: () => 'Invitation declined.',
+};
 
 const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
-  const [invites, setInvites] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [processingId, setProcessingId] = useState(null);
-  const [actionSuccess, setActionSuccess] = useState('');
-
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    setErrorMessage('');
-    setActionSuccess('');
-    try {
-      const data = await getMyInvites();
-      setInvites(Array.isArray(data) ? data : []);
-    } catch (error) {
-      setErrorMessage(getFriendlyErrorMessage(error, 'invites'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    let isMounted = true;
-    getMyInvites()
-      .then((data) => {
-        if (isMounted) {
-          setInvites(Array.isArray(data) ? data : []);
-          setIsLoading(false);
-        }
-      })
-      .catch((error) => {
-        if (isMounted) {
-          setErrorMessage(getFriendlyErrorMessage(error, 'invites'));
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen]);
+  const {
+    invites,
+    isLoading,
+    errorMessage,
+    processingId,
+    actionSuccess,
+    loadInvites: handleRefresh,
+    acceptInvitation: handleAccept,
+    rejectInvitation: handleReject,
+  } = useInvitations({
+    enabled: isOpen,
+    initialLoading: true,
+    onInviteAction,
+    clearSuccessOnAction: false,
+    successMessages: INVITE_SUCCESS_MESSAGES,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -57,38 +36,6 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const handleAccept = async (invite) => {
-    const inviteId = invite._id || invite.id || invite.inviteId;
-    setProcessingId(inviteId);
-    setErrorMessage('');
-    try {
-      await acceptInvite(inviteId);
-      setActionSuccess(`Accepted invitation to join as ${invite.role || 'Member'}!`);
-      setInvites((prev) => prev.filter((item) => (item._id || item.id || item.inviteId) !== inviteId));
-      if (onInviteAction) onInviteAction();
-    } catch (error) {
-      setErrorMessage(getFriendlyErrorMessage(error, 'accept-invite'));
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleReject = async (invite) => {
-    const inviteId = invite._id || invite.id || invite.inviteId;
-    setProcessingId(inviteId);
-    setErrorMessage('');
-    try {
-      await rejectInvite(inviteId);
-      setActionSuccess('Invitation declined.');
-      setInvites((prev) => prev.filter((item) => (item._id || item.id || item.inviteId) !== inviteId));
-      if (onInviteAction) onInviteAction();
-    } catch (error) {
-      setErrorMessage(getFriendlyErrorMessage(error, 'reject-invite'));
-    } finally {
-      setProcessingId(null);
-    }
-  };
 
   return (
     <div
