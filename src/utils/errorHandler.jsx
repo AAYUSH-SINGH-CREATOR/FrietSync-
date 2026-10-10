@@ -1,3 +1,32 @@
+export const isTechnicalError = (msg) => {
+  if (!msg || typeof msg !== 'string') return true;
+  const lower = msg.toLowerCase();
+  const technicalKeywords = [
+    'mongoservererror',
+    'e11000',
+    'sql',
+    'database',
+    'syntaxerror',
+    'typeerror',
+    'referenceerror',
+    'internal server error',
+    'econnrefused',
+    'enotfound',
+    'jwt malformed',
+    'jwt expired',
+    'token expired',
+    'at ',
+    'cast to objectid',
+    'validation failed:',
+    'uncaught',
+    'exception',
+    'stack',
+    'prisma',
+    'sequel',
+  ];
+  return technicalKeywords.some((keyword) => lower.includes(keyword));
+};
+
 export const getFriendlyErrorMessage = (error, context = '') => {
   const status = error?.response?.status || error?.status;
   const rawMessage = (error?.data?.message || error?.message || '').toLowerCase();
@@ -24,7 +53,7 @@ export const getFriendlyErrorMessage = (error, context = '') => {
     if (rawMessage.includes('missing') || rawMessage.includes('required')) {
       return 'Please fill in all required fields.';
     }
-  const backendMsg =
+    const backendMsg =
       error?.data?.message ||
       error?.data?.error ||
       error?.data?.msg ||

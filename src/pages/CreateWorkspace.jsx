@@ -23,6 +23,28 @@ const CreateWorkspace = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+    useEffect(() => {
+    let isMounted = true;
+    getMyWorkspace()
+      .then((ws) => {
+        if (isMounted) {
+          if (ws && (ws.name || ws.id || ws._id)) {
+            setExistingWorkspace(ws);
+          }
+          setIsCheckingExisting(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsCheckingExisting(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
 
   const handleCreate = async (e) => {
     e.preventDefault();
