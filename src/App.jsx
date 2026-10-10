@@ -8,6 +8,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import PublicRoute from './components/PublicRoute';
 import LandingPage from './pages/LandingPage';
 import Invite from './pages/Invite';
+import CreateWorkspace from './pages/CreateWorkspace';
+
 
 function App() {
   return (
@@ -24,6 +26,7 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/create-workspace" element={<CreateWorkspace />} />
         <Route path='/invite' element={<Invite />} ></Route>
       </Route>
     </Routes>

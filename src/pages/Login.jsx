@@ -5,6 +5,8 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { loginUser, getFriendlyErrorMessage } from '../services/authApi';
 import loginImg from '../assets/loginimg.svg';
+import { getMyWorkspace } from '../services/workspaceApi';
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -61,8 +63,16 @@ const Login = () => {
     try {
       await loginUser(formData);
       sessionStorage.removeItem('login_form');
-      navigate('/dashboard');
-    } catch (error) {
+  try {
+        const ws = await getMyWorkspace();
+        if (ws && (ws.name || ws.id || ws._id)) {
+          navigate('/dashboard');
+        } else {
+          navigate('/create-workspace');
+        }
+      } catch {
+        navigate('/create-workspace');
+      }    } catch (error) {
       const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 
