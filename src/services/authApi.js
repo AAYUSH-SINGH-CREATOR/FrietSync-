@@ -255,6 +255,10 @@ export const fetchWithAuth = async (url, options = {}) => {
 export const invitemem = async (fromdata) => {
   const token = getAccessToken();
   try {
+    //  const payload = {
+    //   purpose: 'WORKSPACE_INVITE',
+    //   ...fromdata,
+    // };
     const response = await axios.post(`${BASE_URL}/admin/invites`, fromdata, {
       headers: {
         'Content-Type': 'application/json',

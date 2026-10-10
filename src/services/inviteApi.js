@@ -17,7 +17,7 @@ const handleInviteError = (error, defaultMessage) => {
   if (error.response) {
     error.status = error.response.status;
     error.data = error.response.data;
-      const serverMsg =
+    const serverMsg =
       error.response.data?.message ||
       error.response.data?.error ||
       error.response.data?.msg ||
@@ -42,11 +42,12 @@ export const formatExpiryToUtc = (dateStr) => {
 };
 
 
-export const sendInvite = async ({ email, role, expiresAt}) => {
+export const sendInvite = async ({ email, role, expiresAt }) => {
   try {
-        const payload = {
+    const payload = {
       email,
       role,
+      // purpose: purpose || 'WORKSPACE_INVITE',
       ...(expiresAt ? { expiresAt } : {}),
     };
     const response = await axios.post(
@@ -74,6 +75,7 @@ export const sendSequentialInvites = async (invitesList, onProgress) => {
       const data = await sendInvite({
         email: item.email.trim(),
         role: item.role,
+        purpose: item.purpose || 'WORKSPACE_INVITE',
         expiresAt: formatExpiryToUtc(item.expiresDate || item.expiresAt),
       });
       successful.push({ item, data });
