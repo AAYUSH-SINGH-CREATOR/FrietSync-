@@ -232,7 +232,7 @@ const Signup = () => {
           />
 
           <div className="pt-2 sm:pt-3">
-            <Button type="submit" isLoading={isLoading} onClick={handleSignup}>
+            <Button type="submit" isLoading={isLoading}>
               Create account
             </Button>
           </div>

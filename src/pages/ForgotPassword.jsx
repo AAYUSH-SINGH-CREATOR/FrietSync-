@@ -224,7 +224,7 @@ const ForgotPassword = () => {
             />
 
             <div className="pt-2 sm:pt-3">
-              <Button type="submit" isLoading={isLoading} onClick={handleSendOtp}>
+              <Button type="submit" isLoading={isLoading}>
                 Send OTP
               </Button>
             </div>
@@ -375,7 +375,7 @@ const ForgotPassword = () => {
             </div>
 
             <div className="pt-2 sm:pt-3">
-              <Button type="submit" isLoading={isLoading} onClick={handleResetPassword}>
+              <Button type="submit" isLoading={isLoading}>
                 Reset Password
               </Button>
             </div>

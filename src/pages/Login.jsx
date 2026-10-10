@@ -144,7 +144,7 @@ const Login = () => {
           </div>
 
           <div className="pt-2 sm:pt-3">
-            <Button type="submit" isLoading={isLoading} onClick={handleLogin}>
+            <Button type="submit" isLoading={isLoading}>
               Login
             </Button>
           </div>

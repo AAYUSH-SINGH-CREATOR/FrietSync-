@@ -130,7 +130,7 @@ export const verifyOtp = async (email, otp) => {
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
     }
-  saveUserData(data, userData);
+    saveUserData(data);
     return response.data;
   } catch (err) {
     handleAxiosError(err, 'Invalid or expired OTP.');
@@ -187,6 +187,7 @@ export const refreshAccessToken = async () => {
 
     if (newToken) {
       localStorage.setItem('frietSyncToken', newToken);
+      localStorage.setItem('accessToken', newToken);
     }
     if (newRefreshToken) {
       localStorage.setItem('frietSyncRefreshToken', newRefreshToken);

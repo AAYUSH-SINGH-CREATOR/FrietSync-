@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiX, FiBarChart2 } from 'react-icons/fi';
 import { BsLightningChargeFill } from 'react-icons/bs';
@@ -10,6 +11,7 @@ import { getAccessToken } from '../services/authApi';
 
 
 const LandingPage = () => {
+    const [showDemoModal, setShowDemoModal] = useState(false);
     const isAuthenticated = Boolean(getAccessToken());
 
     const features = [
@@ -165,6 +167,33 @@ const LandingPage = () => {
                     </div>
                 </div>
             </main>
+            {showDemoModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4"
+                    role="presentation"
+                    onClick={() => setShowDemoModal(false)}
+                >
+                    <div
+                        className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="demo-modal-title"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setShowDemoModal(false)}
+                            aria-label="Close demo dialog"
+                            className="ml-auto flex text-gray-500 hover:text-gray-900"
+                        >
+                            <FiX size={20} />
+                        </button>
+                        <h2 id="demo-modal-title" className="text-xl font-semibold text-gray-900">
+                            Demo coming soon
+                        </h2>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

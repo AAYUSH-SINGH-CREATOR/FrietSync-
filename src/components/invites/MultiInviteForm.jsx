@@ -112,7 +112,6 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
 
         if (failed) {
             const successCount = successful.length;
-            const failedEmail = failed.item.email;
             const failedTargetEmail = failed.item.email.trim();
             const friendlyErr = getFriendlyErrorMessage(failed.rawError, 'invite');
 
@@ -133,10 +132,6 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
             setStatusMessage({
                 type: 'error',
                 text: errorDisplay,
-                text:
-                    successCount > 0
-                        ? `Sent ${successCount} invite(s). Failed to invite ${failedEmail}: ${friendlyErr}`
-                        : `Failed to invite ${failedEmail}: ${friendlyErr}`,
             });
             setFailedEmail(failedTargetEmail);
 
