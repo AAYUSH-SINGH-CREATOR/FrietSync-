@@ -18,6 +18,25 @@ const getAuthHeaders = () => {
   };
 };
 
+export const getMyProjects = async () => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/projects/me`,
+      getAuthHeaders()
+    );
+    const data = response.data;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.projects)) return data.projects;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.projects)) return data.data.projects;
+
+    return data || [];
+  } catch (error) {
+    handleProjectError(error, 'Failed to load projects.');
+  }
+};
+
 const handleProjectError = (error, defaultMessage) => {
   if (error.response) {
     error.status = error.response.status;
