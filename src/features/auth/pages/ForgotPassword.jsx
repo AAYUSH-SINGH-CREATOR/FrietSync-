@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import AuthLayout from '../components/layout/AuthLayout';
-import Input from '../components/ui/Input';
-import OtpInput from '../components/ui/OtpInput';
-import Button from '../components/ui/Button';
-import forgetPassImg from '../assets/forgetpass.svg';
+import AuthLayout from '../../../components/layout/AuthLayout';
+import Input from '../../../components/ui/Input';
+import OtpInput from '../../../components/ui/OtpInput';
+import Button from '../../../components/ui/Button';
+import forgetPassImg from '../../../assets/forgetpass.svg';
 import { sendForgotPasswordOtp, resetPassword, getFriendlyErrorMessage } from '../services/authApi';
 
 const ForgotPassword = () => {

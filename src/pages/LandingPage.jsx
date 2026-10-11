@@ -6,7 +6,7 @@ import faviconLogo from '../assets/favicon.svg';
 import heroTeamImg from '../assets/hero-team.png';
 import wavesSvg from '../assets/waves.svg';
 import { FaCirclePlay } from "react-icons/fa6";
-import { getAccessToken } from '../services/authApi';
+import { getAccessToken } from '../features/auth/services/authApi';
 
 
 const LandingPage = () => {

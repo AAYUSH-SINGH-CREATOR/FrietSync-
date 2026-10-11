@@ -16,7 +16,7 @@ import {
   updateWorkspace,
   leaveWorkspace,
   getFriendlyErrorMessage,
-} from '../../services/workspaceApi';
+} from '../../../services/workspaceApi';
 
 const SettingsView = () => {
   const navigate = useNavigate();

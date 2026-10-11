@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiCheck, FiXCircle, FiInbox, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
-import { getMyInvites, acceptInvite, rejectInvite, getFriendlyErrorMessage } from '../../services/inviteApi';
+import { getMyInvites, acceptInvite, rejectInvite, getFriendlyErrorMessage } from '../services/inviteApi';
 
 const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
   const [invites, setInvites] = useState([]);

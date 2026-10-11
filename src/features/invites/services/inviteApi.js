@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getFriendlyErrorMessage } from '../utils/errorHandler';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -42,7 +42,7 @@ export const formatExpiryToUtc = (dateStr) => {
 };
 
 
-export const sendInvite = async ({ email, role, expiresAt }) => {
+export const sendInvite = async ({ email, role, expiresAt,   purpose = 'WORKSPACE_INVITE' }) => {
   try {
     const payload = {
       email,
@@ -50,11 +50,11 @@ export const sendInvite = async ({ email, role, expiresAt }) => {
       purpose: purpose || 'WORKSPACE_INVITE',
       ...(expiresAt ? { expiresAt } : {}),
     };
-    const response = await axios.post(
-      `${BASE_URL}/admin/invites`,
-      { email, role },
-      getAuthHeaders()
-    );
+   const response = await axios.post(
+  `${BASE_URL}/admin/invites`,
+  payload,
+  getAuthHeaders()
+);
     return response.data;
   } catch (error) {
     handleInviteError(error, 'Failed to send invitation. Please try again.');

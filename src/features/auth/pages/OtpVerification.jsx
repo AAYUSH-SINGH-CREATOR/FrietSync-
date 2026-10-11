@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import AuthLayout from '../components/layout/AuthLayout';
-import OtpInput from '../components/ui/OtpInput';
-import Button from '../components/ui/Button';
+import AuthLayout from '../../../components/layout/AuthLayout';
+import OtpInput from '../../../components/ui/OtpInput';
+import Button from '../../../components/ui/Button';
 import { verifyOtp, sendForgotPasswordOtp, getFriendlyErrorMessage } from '../services/authApi';
 
 const OtpVerification = () => {

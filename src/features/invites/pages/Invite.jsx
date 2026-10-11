@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import MultiInviteForm from '../components/invites/MultiInviteForm';
+import MultiInviteForm from '../components/MultiInviteForm';
 
 export default function Invite() {
   const navigate = useNavigate();

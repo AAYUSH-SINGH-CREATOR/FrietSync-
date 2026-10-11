@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import {useState, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   FiHome,
   FiFolder,
@@ -12,8 +13,7 @@ import {
   FiChevronRight,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
-import { IoChatboxEllipsesOutline } from "react-icons/io5";
-import { IoMailOutline } from "react-icons/io5";
+import { IoChatboxEllipsesOutline, IoMailOutline } from 'react-icons/io5';
 
 const NOTCH_BG = '#eaedf1';
 
@@ -45,12 +45,12 @@ const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
 );
 
 const Sidebar = ({
-  activeTab = 'dashboard',
-  setActiveTab,
   projectFilter = 'all',
   setProjectFilter,
   pendingInviteCount = 0,
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
 
@@ -65,9 +65,10 @@ const Sidebar = ({
   }, [isCollapsed]);
 
   const mainNavItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiHome },
+    { id: 'dashboard', to: '/dashboard', end: true, label: 'Dashboard', icon: FiHome },
     {
       id: 'projects',
+      to: '/dashboard/projects',
       label: 'Projects',
       icon: FiFolder,
       hasSubmenu: true,
@@ -77,34 +78,34 @@ const Sidebar = ({
         { id: 'completed', label: 'Completed' },
       ],
     },
-    { id: 'issues', label: 'Issues', icon: AiOutlineBug },
-    { id: 'sprints', label: 'Sprints', icon: FiRefreshCw },
-    { id: 'my-work', label: 'My Work', icon: FiBriefcase },
-    { id: 'chats', label: 'Chats', icon: IoChatboxEllipsesOutline  },
-    { id: 'invites', label: 'My Invites', icon: IoMailOutline, badge: pendingInviteCount },
+    { id: 'issues', to: '/dashboard/issues', label: 'Issues', icon: AiOutlineBug },
+    { id: 'sprints', to: '/dashboard/sprints', label: 'Sprints', icon: FiRefreshCw },
+    { id: 'my-work', to: '/dashboard/my-work', label: 'My Work', icon: FiBriefcase },
+    { id: 'chats', to: '/dashboard/chats', label: 'Chats', icon: IoChatboxEllipsesOutline },
+    { id: 'invites', to: '/dashboard/invites', label: 'My Invites', icon: IoMailOutline, badge: pendingInviteCount },
   ];
 
   const bottomNavItems = [
-    { id: 'team', label: 'Team', icon: FiUsers },
-    { id: 'settings', label: 'Settings', icon: FiSettings },
+    { id: 'team', to: '/dashboard/team', label: 'Team', icon: FiUsers },
+    { id: 'settings', to: '/dashboard/settings', label: 'Settings', icon: FiSettings },
   ];
 
-  const handleItemClick = (id) => {
-    setActiveTab(id);
-    if (id === 'projects' && !isCollapsed) {
-      setIsProjectsExpanded((prev) => !prev);
+  const checkIsActive = (item) => {
+    if (item.end) {
+      return location.pathname === item.to;
     }
+    return location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
   };
 
   return (
     <>
-           {!isCollapsed && (
-  <div
-    className="fixed inset-0 z-30 bg-slate-900/20 transition-opacity duration-300"
-    onClick={() => setIsCollapsed(true)}
-    aria-hidden="true"
-  />
-)}
+      {!isCollapsed && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/20 transition-opacity duration-300"
+          onClick={() => setIsCollapsed(true)}
+          aria-hidden="true"
+        />
+      )}
 
       <aside
         aria-label="Sidebar navigation"
@@ -151,29 +152,35 @@ const Sidebar = ({
           >
             {mainNavItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isItemActive = checkIsActive(item);
 
               if (isCollapsed) {
                 return (
                   <div key={item.id} className="relative w-full flex justify-center py-0.5 group">
-                    <button
-                      type="button"
-                      onClick={() => handleItemClick(item.id)}
+                    <NavLink
+                      to={item.to}
+                      end={item.end}
                       aria-label={item.label}
-                      className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                        isActive
-                          ? 'text-sky-600 z-30 font-bold opacity-0'
-                          : 'text-slate-800 hover:text-sky-600 hover:bg-slate-50'
-                      }`}
+                      className={({ isActive }) =>
+                        `relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                          isActive
+                            ? 'text-sky-600 z-30 font-bold opacity-0'
+                            : 'text-slate-800 hover:text-sky-600 hover:bg-slate-50'
+                        }`
+                      }
                     >
-                      <Icon size={21} className="stroke-[1.9]" />
+                      {({ isActive }) => (
+                        <>
+                          <Icon size={21} className="stroke-[1.9]" />
 
-                      {item.badge > 0 && !isActive && (
-                        <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                          {item.badge > 0 && !isActive && (
+                            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                          )}
+                        </>
                       )}
-                    </button>
+                    </NavLink>
 
-                    {isActive && <ActiveNotch icon={Icon} badge={item.badge} />}
+                    {isItemActive && <ActiveNotch icon={Icon} badge={item.badge} />}
 
                     <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       {item.label}
@@ -185,52 +192,63 @@ const Sidebar = ({
 
               return (
                 <div key={item.id} className="w-full">
-                  <button
-                    type="button"
-                    onClick={() => handleItemClick(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
-                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                    }`}
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    onClick={() => {
+                      if (item.hasSubmenu) {
+                        setIsProjectsExpanded((prev) => !prev);
+                      }
+                    }}
+                    className={({ isActive }) =>
+                      `w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
+                          : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                      }`
+                    }
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        size={19}
-                        className={isActive ? 'text-sky-600 stroke-[2.2]' : 'text-slate-500'}
-                      />
-                      <span>{item.label}</span>
-                    </div>
+                    {({ isActive }) => (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <Icon
+                            size={19}
+                            className={isActive ? 'text-sky-600 stroke-[2.2]' : 'text-slate-500'}
+                          />
+                          <span>{item.label}</span>
+                        </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {item.badge > 0 && (
-                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-sky-100 text-sky-700">
-                          {item.badge}
-                        </span>
-                      )}
-                      {item.hasSubmenu && (
-                        <span className="text-slate-400">
-                          {isProjectsExpanded ? (
-                            <FiChevronDown size={15} />
-                          ) : (
-                            <FiChevronRight size={15} />
+                        <div className="flex items-center gap-1.5">
+                          {item.badge > 0 && (
+                            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-sky-100 text-sky-700">
+                              {item.badge}
+                            </span>
                           )}
-                        </span>
-                      )}
-                    </div>
-                  </button>
+                          {item.hasSubmenu && (
+                            <span className="text-slate-400">
+                              {isProjectsExpanded ? (
+                                <FiChevronDown size={15} />
+                              ) : (
+                                <FiChevronRight size={15} />
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </NavLink>
 
                   {item.hasSubmenu && isProjectsExpanded && (
                     <div className="pl-9 pr-2 py-1 space-y-1">
                       {item.subItems.map((sub) => {
-                        const isSubActive = isActive && projectFilter === sub.id;
+                        const isSubActive = isItemActive && projectFilter === sub.id;
                         return (
                           <button
                             key={sub.id}
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveTab('projects');
+                              navigate('/dashboard/projects');
                               if (setProjectFilter) setProjectFilter(sub.id);
                             }}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer text-left ${
@@ -262,25 +280,27 @@ const Sidebar = ({
           >
             {bottomNavItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isItemActive = checkIsActive(item);
 
               if (isCollapsed) {
                 return (
                   <div key={item.id} className="relative w-full flex justify-center py-0.5 group">
-                    <button
-                      type="button"
-                      onClick={() => handleItemClick(item.id)}
+                    <NavLink
+                      to={item.to}
+                      end={item.end}
                       aria-label={item.label}
-                      className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                        isActive
-                          ? 'text-sky-600 z-30 font-bold opacity-0'
-                          : 'text-slate-800 hover:text-sky-600 hover:bg-slate-50'
-                      }`}
+                      className={({ isActive }) =>
+                        `relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                          isActive
+                            ? 'text-sky-600 z-30 font-bold opacity-0'
+                            : 'text-slate-800 hover:text-sky-600 hover:bg-slate-50'
+                        }`
+                      }
                     >
                       <Icon size={21} className="stroke-[1.9]" />
-                    </button>
+                    </NavLink>
 
-                    {isActive && <ActiveNotch icon={Icon} />}
+                    {isItemActive && <ActiveNotch icon={Icon} />}
 
                     <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       {item.label}
@@ -288,23 +308,30 @@ const Sidebar = ({
                   </div>
                 );
               }
+
               return (
-                <button
+                <NavLink
                   key={item.id}
-                  type="button"
-                  onClick={() => handleItemClick(item.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
-                      : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                    }`
+                  }
                 >
-                  <Icon
-                    size={19}
-                    className={isActive ? 'text-sky-600 stroke-[2.2]' : 'text-slate-500'}
-                  />
-                  <span>{item.label}</span>
-                </button>
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        size={19}
+                        className={isActive ? 'text-sky-600 stroke-[2.2]' : 'text-slate-500'}
+                      />
+                      <span>{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
               );
             })}
           </div>

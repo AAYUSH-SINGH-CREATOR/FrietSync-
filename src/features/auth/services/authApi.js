@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 import axios from 'axios';
-import { getFriendlyErrorMessage } from '../utils/errorHandler';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 export { getFriendlyErrorMessage };
 
@@ -255,10 +255,10 @@ export const fetchWithAuth = async (url, options = {}) => {
 export const invitemem = async (fromdata) => {
   const token = getAccessToken();
   try {
-    //  const payload = {
-    //   purpose: 'WORKSPACE_INVITE',
-    //   ...fromdata,
-    // };
+     const payload = {
+      purpose: 'WORKSPACE_INVITE',
+      ...fromdata,
+    };
     const response = await axios.post(`${BASE_URL}/admin/invites`, fromdata, {
       headers: {
         'Content-Type': 'application/json',

@@ -10,7 +10,7 @@ import {
 import {
     sendSequentialInvites,
     getFriendlyErrorMessage,
-} from '../../services/inviteApi';
+} from '../services/inviteApi';
 
 const ROLE_OPTIONS = [
     { value: 'CONTRIBUTOR', label: 'Contributor' },
@@ -126,8 +126,8 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                     ? `Sent ${successCount} invite(s). Failed for ${failedTargetEmail}: You can't invite yourself.`
                     : "You can't invite yourself."
                 : successCount > 0
-                    ? `Sent ${successCount} invite(s). Failed to invite ${failedTargetEmail}: ${friendlyErr}`
-                    : `Failed to invite ${failedTargetEmail}: ${friendlyErr}`;
+                    ? `Sent ${successCount} invite(s). Failed to invite1 ${failedTargetEmail}: ${friendlyErr}`
+                    : `Failed to invite2 ${failedTargetEmail}: ${friendlyErr}`;
 
 
             setStatusMessage({
@@ -135,8 +135,8 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                 text: errorDisplay,
                 text:
                     successCount > 0
-                        ? `Sent ${successCount} invite(s). Failed to invite ${failedEmail}: ${friendlyErr}`
-                        : `Failed to invite ${failedEmail}: ${friendlyErr}`,
+                        ? `Sent ${successCount} invite(s). Failed to invite3 ${failedEmail}: ${friendlyErr}`
+                        : `Failed to invite4 ${failedEmail}: ${friendlyErr}`,
             });
             setFailedEmail(failedTargetEmail);
 
@@ -194,8 +194,12 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                         key={member.id}
                         className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
                     >
-                        <div className="flex-1 flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-100 transition shadow-2xs">
-                            <input
+                        <div
+                            className={`flex-1 flex items-center border rounded-xl bg-white overflow-hidden transition shadow-2xs ${failedEmail && member.email.trim() === failedEmail
+                                    ? 'border-red-400 ring-2 ring-red-100 bg-red-50/15'
+                                    : 'border-slate-300 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-100'
+                                }`}
+                        >                            <input
                                 type="email"
                                 placeholder="Add email here"
                                 value={member.email}

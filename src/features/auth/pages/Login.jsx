@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AuthLayout from '../components/layout/AuthLayout';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
+import AuthLayout from '../../../components/layout/AuthLayout';
+import Input from '../../../components/ui/Input';
+import Button from '../../../components/ui/Button';
 import { loginUser, getFriendlyErrorMessage } from '../services/authApi';
-import loginImg from '../assets/loginimg.svg';
-import { getMyWorkspace } from '../services/workspaceApi';
+import loginImg from '../../../assets/loginimg.svg';
+import { getMyWorkspace } from '../../../services/workspaceApi';
 
 
 const Login = () => {

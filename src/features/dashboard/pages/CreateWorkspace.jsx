@@ -12,8 +12,8 @@ import {
   createWorkspace,
   getMyWorkspace,
   getFriendlyErrorMessage,
-} from '../services/workspaceApi';
-import logo from '../assets/logo.svg';
+} from '../../../services/workspaceApi';
+import logo from '../../../assets/logo.svg';
 
 const CreateWorkspace = () => {
   const navigate = useNavigate();
