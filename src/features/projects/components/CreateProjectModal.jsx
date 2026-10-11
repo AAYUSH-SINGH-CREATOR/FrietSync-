@@ -1,165 +1,141 @@
 import { useState, useEffect } from 'react';
 import {
-  FiCalendar,
+  FiX,
   FiFolder,
-  FiLayers,
+  FiCalendar,
   FiMail,
   FiShield,
-  FiX,
+  FiAlertCircle,
 } from 'react-icons/fi';
+import {
+  createProject,
+  getFriendlyErrorMessage,
+} from '../services/projectApi';
 
 const STATUS_OPTIONS = [
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'PLANNING', label: 'Planning' },
-  { value: 'COMPLETED', label: 'Completed' },
-  { value: 'ON_HOLD', label: 'On Hold' },
+  { value: 'ACTIVE', label: 'Active', badge: 'bg-emerald-100 text-emerald-800' },
+  { value: 'PLANNING', label: 'Planning', badge: 'bg-amber-100 text-amber-800' },
+  { value: 'COMPLETED', label: 'Completed', badge: 'bg-blue-100 text-blue-800' },
+  { value: 'ON_HOLD', label: 'On Hold', badge: 'bg-slate-100 text-slate-700' },
 ];
 
-const toDateInputValue = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+const getTodayString = () => new Date().toISOString().slice(0, 10);
+
+const getDefaultDeadline = (daysAhead = 60) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  return d.toISOString().slice(0, 10);
 };
-
-const getInitialFormData = () => {
-  const today = new Date();
-  const deadline = new Date(today);
-  deadline.setDate(deadline.getDate() + 60);
-
-  return {
-    name: '',
-    description: '',
-    workspaceId: '',
-    status: 'ACTIVE',
-    startDate: toDateInputValue(today),
-    deadline: toDateInputValue(deadline),
-    projectManagerEmail: '',
-    teamLeadEmail: '',
-  };
-};
-
-const inputClassName =
-  'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100';
-
-const Field = ({ label, htmlFor, required = false, children }) => (
-  <div>
-    <label
-      htmlFor={htmlFor}
-      className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-700"
-    >
-      {label} {required && <span className="text-rose-500">*</span>}
-    </label>
-    {children}
-  </div>
-);
-
-const IconInput = ({ icon: Icon, className = '', ...props }) => (
-  <div className="relative">
-    <Icon
-      size={15}
-      aria-hidden="true"
-      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-    />
-    <input className={`${inputClassName} pl-10 ${className}`} {...props} />
-  </div>
-);
 
 const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
-  const [formData, setFormData] = useState(getInitialFormData);
+  const todayStr = getTodayString();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    status: 'ACTIVE',
+    startDate: todayStr,
+    deadline: getDefaultDeadline(60),
+    projectManagerEmail: '',
+    teamLeadEmail: '',
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    if (!isOpen) return undefined;
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setErrorMessage('');
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((current) => ({ ...current, [name]: value }));
-    setErrorMessage('');
+  const handleStatusChange = (newStatus) => {
+    setFormData((prev) => ({
+      ...prev,
+      status: newStatus,
+      startDate: newStatus === 'ACTIVE' && !prev.startDate ? todayStr : prev.startDate,
+    }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errorMessage) setErrorMessage('');
+  };
 
-    const name = formData.name.trim();
-    if (!name) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
       setErrorMessage('Project name is required.');
       return;
     }
 
-    if (!formData.workspaceId.trim()) {
-      setErrorMessage('Workspace ID is required.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (
+      formData.projectManagerEmail.trim() &&
+      !emailRegex.test(formData.projectManagerEmail.trim())
+    ) {
+      setErrorMessage('Please enter a valid Project Manager email.');
+      return;
+    }
+    if (
+      formData.teamLeadEmail.trim() &&
+      !emailRegex.test(formData.teamLeadEmail.trim())
+    ) {
+      setErrorMessage('Please enter a valid Team Lead email.');
       return;
     }
 
-    if (
-      formData.startDate &&
-      formData.deadline &&
-      formData.deadline < formData.startDate
-    ) {
+    if (formData.startDate && formData.deadline && formData.deadline < formData.startDate) {
       setErrorMessage('Deadline cannot be earlier than the start date.');
       return;
     }
 
-    const project = {
-      ...formData,
-      name,
-      description: formData.description.trim(),
-      projectManagerEmail: formData.projectManagerEmail.trim(),
-      teamLeadEmail: formData.teamLeadEmail.trim(),
-      id: `project-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-
-    onProjectCreated?.(project);
-    setFormData(getInitialFormData());
+    setIsSubmitting(true);
     setErrorMessage('');
-    onClose();
+
+    try {
+      const response = await createProject(formData);
+      if (onProjectCreated) {
+        onProjectCreated(response);
+      }
+      onClose();
+    } catch (error) {
+      setErrorMessage(getFriendlyErrorMessage(error, 'project'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      role="presentation"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/45 backdrop-blur-xs animate-fadeIn"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="project-modal-title"
-        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-2xl sm:p-8"
+      <div
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 sm:p-8 max-h-[92vh] overflow-y-auto transition-all text-left"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-6 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
-              <FiFolder size={21} />
+        <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-6">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shadow-2xs shrink-0">
+              <FiFolder size={24} />
             </div>
             <div>
-              <h2
-                id="project-modal-title"
-                className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl"
-              >
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
                 Create New Project
               </h2>
-              <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                Add project details, dates, and team contacts.
+              <p className="text-sm sm:text-base text-gray-500 mt-1">
+                Define your project details, roadmap dates, and leadership.
               </p>
             </div>
           </div>
@@ -167,153 +143,208 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer shrink-0 ml-4"
           >
-            <FiX size={20} />
+            <FiX size={22} />
           </button>
         </div>
 
         {errorMessage && (
-          <p
-            role="alert"
-            className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-          >
-            {errorMessage}
-          </p>
+          <div className="mb-5 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm sm:text-base flex items-center gap-3">
+            <FiAlertCircle className="shrink-0 text-red-500" size={19} />
+            <span className="font-medium">{errorMessage}</span>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <Field label="Project Name" htmlFor="project-name" required>
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+          <div>
+            <label
+              htmlFor="project-name"
+              className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+            >
+              Project Name <span className="text-red-500">*</span>
+            </label>
             <input
               id="project-name"
               name="name"
+              type="text"
+              required
+              placeholder="e.g. FrietSync"
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g. FrietSync"
-              required
-              autoFocus
-              className={inputClassName}
+              className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 text-sm sm:text-base focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition placeholder:text-slate-400"
             />
-          </Field>
-
-          <Field label="Description" htmlFor="project-description">
+          </div>
+          <div>
+            <label
+              htmlFor="project-desc"
+              className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+            >
+              Description
+            </label>
             <textarea
-              id="project-description"
+              id="project-desc"
               name="description"
               rows={3}
+              placeholder="Project management and issue tracking platform..."
               value={formData.description}
               onChange={handleChange}
-              placeholder="What is this project about?"
-              className={`${inputClassName} resize-y`}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm sm:text-base focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition placeholder:text-slate-400 resize-none leading-relaxed"
             />
-          </Field>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Workspace ID" htmlFor="workspace-id" required>
-              <IconInput
-                icon={FiLayers}
-                id="workspace-id"
-                name="workspaceId"
-                value={formData.workspaceId}
-                onChange={handleChange}
-                placeholder="Enter workspace ID"
-                required
-              />
-            </Field>
-
-            <Field label="Status" htmlFor="project-status">
-              <div className="relative">
-                <FiShield
-                  size={15}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <select
-                  id="project-status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className={`${inputClassName} appearance-none pl-10`}
-                >
-                  {STATUS_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+          </div>
+          <div>
+            <label
+              htmlFor="project-status"
+              className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+            >
+              Status
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <FiShield size={18} />
+              </span>
+              <select
+                id="project-status"
+                name="status"
+                value={formData.status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                className="w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-xl border border-slate-200 text-sm sm:text-base font-medium bg-white focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition cursor-pointer appearance-none"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 text-sm">
+                ▼
               </div>
-            </Field>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div>
+              <label
+                htmlFor="start-date"
+                className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+              >
+                Start Date {formData.status === 'ACTIVE' && <span className="text-emerald-600 font-normal text-xs sm:text-sm lowercase">(starts today)</span>}
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiCalendar size={18} />
+                </span>
+                <input
+                  id="start-date"
+                  name="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 text-sm sm:text-base focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="deadline"
+                className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+              >
+                Deadline
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiCalendar size={18} />
+                </span>
+                <input
+                  id="deadline"
+                  name="deadline"
+                  type="date"
+                  min={formData.startDate || todayStr}
+                  value={formData.deadline}
+                  onChange={handleChange}
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 text-sm sm:text-base focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition cursor-pointer"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Start Date" htmlFor="project-start-date">
-              <IconInput
-                icon={FiCalendar}
-                id="project-start-date"
-                name="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={handleChange}
-              />
-            </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div>
+              <label
+                htmlFor="pm-email"
+                className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+              >
+                Project Manager Email
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiMail size={18} />
+                </span>
+                <input
+                  id="pm-email"
+                  name="projectManagerEmail"
+                  type="email"
+                  placeholder="pm@example.com"
+                  value={formData.projectManagerEmail}
+                  onChange={handleChange}
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 text-sm sm:text-base focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition placeholder:text-slate-400"
+                />
+              </div>
+            </div>
 
-            <Field label="Deadline" htmlFor="project-deadline">
-              <IconInput
-                icon={FiCalendar}
-                id="project-deadline"
-                name="deadline"
-                type="date"
-                min={formData.startDate || undefined}
-                value={formData.deadline}
-                onChange={handleChange}
-              />
-            </Field>
+            <div>
+              <label
+                htmlFor="lead-email"
+                className="block text-sm sm:text-base font-semibold text-slate-800 mb-2"
+              >
+                Team Lead Email
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiMail size={18} />
+                </span>
+                <input
+                  id="lead-email"
+                  name="teamLeadEmail"
+                  type="email"
+                  placeholder="lead@example.com"
+                  value={formData.teamLeadEmail}
+                  onChange={handleChange}
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 text-sm sm:text-base focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition placeholder:text-slate-400"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Project Manager Email" htmlFor="project-manager-email">
-              <IconInput
-                icon={FiMail}
-                id="project-manager-email"
-                name="projectManagerEmail"
-                type="email"
-                value={formData.projectManagerEmail}
-                onChange={handleChange}
-                placeholder="pm@example.com"
-              />
-            </Field>
-
-            <Field label="Team Lead Email" htmlFor="team-lead-email">
-              <IconInput
-                icon={FiMail}
-                id="team-lead-email"
-                name="teamLeadEmail"
-                type="email"
-                value={formData.teamLeadEmail}
-                onChange={handleChange}
-                placeholder="lead@example.com"
-              />
-            </Field>
-          </div>
-
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
+          <div className="flex items-center justify-end gap-3.5 pt-5 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+              disabled={isSubmitting}
+              className="px-5 py-3 rounded-xl text-sm sm:text-base font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-sm sm:text-base shadow-md shadow-sky-600/20 transition cursor-pointer disabled:opacity-50"
             >
-              Create Project
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Creating Project...</span>
+                </>
+              ) : (
+                'Create Project'
+              )}
             </button>
           </div>
         </form>
-      </section>
+      </div>
     </div>
   );
 };
 
 export default CreateProjectModal;
+

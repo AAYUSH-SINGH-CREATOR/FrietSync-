@@ -120,7 +120,13 @@ export const verifyOtp = async (email, otp) => {
     const response = await axios.post(`${BASE_URL}/auth/verify-otp`, { email, code: otp });
     const data = response.data;
 
-    const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+    const token =
+      data.token ||
+      data.accessToken ||
+      data.jwt ||
+      data.data?.token ||
+      data.data?.accessToken ||
+      data.data?.jwt;
     const refreshToken = data.refreshToken || data.data?.refreshToken;
 
     if (token) {
@@ -130,7 +136,7 @@ export const verifyOtp = async (email, otp) => {
     if (refreshToken) {
       localStorage.setItem('frietSyncRefreshToken', refreshToken);
     }
-    saveUserData(data, userData);
+    saveUserData(data, { email });
     return response.data;
   } catch (err) {
     handleAxiosError(err, 'Invalid or expired OTP.');

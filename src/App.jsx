@@ -23,11 +23,11 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/verify-otp" element={<OtpVerification />} />
 
       <Route element={<PublicRoute />}>
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/verify-otp" element={<OtpVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
 
