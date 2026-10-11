@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 
 import {
   FiFolder,
@@ -14,7 +14,19 @@ import { getUserProfile } from '../../auth/services/authApi';
 import { getMyWorkspace } from '../../../services/workspaceApi';
 
 
-const DashboardOverview = ({ onNavigate, pendingInviteCount = 0 }) => {
+const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) => {
+  const navigate = useNavigate();
+  const outletContext = useOutletContext() || {};
+  const pendingInviteCount = propInviteCount ?? outletContext.pendingInviteCount ?? 0;
+
+  const handleNavigate = (target) => {
+    if (onNavigate) {
+      onNavigate(target);
+    } else {
+      navigate(target === 'dashboard' ? '/dashboard' : `/dashboard/${target}`);
+    }
+  };
+
     const [workspace, setWorkspace] = useState(null);
   const [userProfile] = useState(() => getUserProfile());
   const userName = userProfile?.name?.trim();
@@ -104,7 +116,7 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount = 0 }) => {
         return (
             <div
               key={card.id}
-              onClick={() => onNavigate && onNavigate(card.id)}
+              onClick={() => handleNavigate(card.id)}
               className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-sky-300 hover:shadow-md transition cursor-pointer"
             >
               <div
@@ -150,7 +162,7 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount = 0 }) => {
           ) : (
             <button
               type="button"
-              onClick={() => onNavigate && onNavigate('settings')}
+              onClick={() => handleNavigate('settings')}
               className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2"
             >
               <FiSettings size={16} />
@@ -160,7 +172,7 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount = 0 }) => {
 
           <button
             type="button"
-            onClick={() => onNavigate && onNavigate('invites')}
+            onClick={() => handleNavigate('invites')}
             className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer flex items-center gap-2"
           >
             <FiLayers size={17} />

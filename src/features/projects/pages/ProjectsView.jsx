@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+
 import {
   FiCalendar,
   FiClock,
@@ -189,8 +191,10 @@ const ProjectCard = ({ project }) => {
   );
 };
 
-const ProjectsView = ({ filter = 'all', onFilterChange }) => {
-  const [projects, setProjects] = useState(INITIAL_PROJECTS);
+const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
+  const outletContext = useOutletContext() || {};
+  const filter = propFilter || outletContext.projectFilter || 'all';
+  const onFilterChange = propOnFilterChange || outletContext.setProjectFilter;  const [projects, setProjects] = useState(INITIAL_PROJECTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(filter);

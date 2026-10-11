@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
+
 import {
   FiCheck,
   FiXCircle,
@@ -14,8 +16,9 @@ import {
 } from '../services/inviteApi';
 import MultiInviteForm from './MultiInviteForm';
 
-const InvitesView = ({ onInvitesUpdated }) => {
-  const [invites, setInvites] = useState([]);
+const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
+  const outletContext = useOutletContext() || {};
+  const onInvitesUpdated = propOnInvitesUpdated || outletContext.setPendingInviteCount;  const [invites, setInvites] = useState([]);
   const [isLoadingInvites, setIsLoadingInvites] = useState(false);
   const [inviteError, setInviteError] = useState('');
   const [processingId, setProcessingId] = useState(null);
