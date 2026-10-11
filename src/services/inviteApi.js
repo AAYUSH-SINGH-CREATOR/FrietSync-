@@ -47,7 +47,7 @@ export const sendInvite = async ({ email, role, expiresAt }) => {
     const payload = {
       email,
       role,
-      // purpose: purpose || 'WORKSPACE_INVITE',
+      purpose: purpose || 'WORKSPACE_INVITE',
       ...(expiresAt ? { expiresAt } : {}),
     };
     const response = await axios.post(
