@@ -1,15 +1,16 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Signup from './pages/Signup';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import ProtectedRoute from './components/ProtectedRoute';
-import OtpVerification from './pages/OtpVerification';
-import ForgotPassword from './pages/ForgotPassword';
-import PublicRoute from './components/PublicRoute';
+import { Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
-import Invite from './pages/Invite';
-import CreateWorkspace from './pages/CreateWorkspace';
+import Signup from './features/auth/pages/Signup';
+import Login from './features/auth/pages/Login';
+import Dashboard from './features/dashboard/pages/Dashboard';
+import ProtectedRoute from './features/auth/components/ProtectedRoute';
+import PublicRoute from './features/auth/components/PublicRoute';
+import OtpVerification from './features/auth/pages/OtpVerification';
+import ForgotPassword from './features/auth/pages/ForgotPassword';
 
+import Team from './features/dashboard/pages/Team';
+import Invite from './features/invites/pages/Invite';
+import CreateWorkspace from './features/dashboard/pages/CreateWorkspace';
 
 function App() {
   return (
