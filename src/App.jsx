@@ -7,8 +7,6 @@ import ProtectedRoute from './features/auth/components/ProtectedRoute';
 import PublicRoute from './features/auth/components/PublicRoute';
 import OtpVerification from './features/auth/pages/OtpVerification';
 import ForgotPassword from './features/auth/pages/ForgotPassword';
-
-import Team from './features/dashboard/pages/Team';
 import Invite from './features/invites/pages/Invite';
 import CreateWorkspace from './features/dashboard/pages/CreateWorkspace';
 

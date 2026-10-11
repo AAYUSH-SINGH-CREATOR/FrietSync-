@@ -6,7 +6,7 @@ import Input from '../../../components/ui/Input';
 import OtpInput from '../../../components/ui/OtpInput';
 import Button from '../../../components/ui/Button';
 import forgetPassImg from '../../../assets/forgetpass.svg';
-import { sendForgotPasswordOtp, resetPassword, getFriendlyErrorMessage } from '../../../services/authApi';
+import { sendForgotPasswordOtp, resetPassword, getFriendlyErrorMessage } from '../services/authApi';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
