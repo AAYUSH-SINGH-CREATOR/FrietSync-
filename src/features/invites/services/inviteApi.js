@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getFriendlyErrorMessage } from '../utils/errorHandler';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -75,7 +75,7 @@ export const sendSequentialInvites = async (invitesList, onProgress) => {
       const data = await sendInvite({
         email: item.email.trim(),
         role: item.role,
-        purpose: item.purpose || 'WORKSPACE_INVITE',
+                purpose: item.purpose || 'WORKSPACE_INVITE',
         expiresAt: formatExpiryToUtc(item.expiresDate || item.expiresAt),
       });
       successful.push({ item, data });

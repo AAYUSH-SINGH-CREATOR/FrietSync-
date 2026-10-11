@@ -11,8 +11,8 @@ import {
   acceptInvite,
   rejectInvite,
   getFriendlyErrorMessage,
-} from '../../services/inviteApi';
-import MultiInviteForm from '../invites/MultiInviteForm';
+} from '../services/inviteApi';
+import MultiInviteForm from './MultiInviteForm';
 
 const InvitesView = ({ onInvitesUpdated }) => {
   const [invites, setInvites] = useState([]);
