@@ -8,7 +8,7 @@ import {
   FiSearch,
   FiUser,
 } from 'react-icons/fi';
-import CreateProjectModal from './CreateProjectModal';
+import CreateProjectModal from '../components/CreateProjectModal';
 
 const INITIAL_PROJECTS = [
   {

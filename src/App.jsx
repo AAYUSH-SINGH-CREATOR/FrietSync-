@@ -16,7 +16,6 @@ function App() {
 
       <Route element={<PublicRoute />}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/" element={<Navigate to="/signup" />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path='/verify-otp' element={<OtpVerification />}></Route>

@@ -10,8 +10,8 @@ import {
   FiSettings,
 } from 'react-icons/fi';
 import { BsChatDots } from 'react-icons/bs';
-import { getUserProfile } from '../../services/authApi';
-import { getMyWorkspace } from '../../services/workspaceApi';
+import { getUserProfile } from '../../auth/services/authApi';
+import { getMyWorkspace } from '../../../services/workspaceApi';
 
 
 const DashboardOverview = ({ onNavigate, pendingInviteCount = 0 }) => {

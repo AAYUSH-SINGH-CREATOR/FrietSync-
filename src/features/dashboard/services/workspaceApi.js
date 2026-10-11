@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getFriendlyErrorMessage } from '../utils/errorHandler';
+import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 

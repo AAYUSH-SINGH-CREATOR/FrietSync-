@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import DashboardNavbar from '../components/layout/DashboardNavbar';
-import Sidebar from '../components/layout/Sidebar';
-import InvitesView from '../components/dashboard/InvitesView';
-import DashboardOverview from '../components/dashboard/DashboardOverview';
-import IssuesView from '../components/dashboard/IssueView';
-import ProjectsView from '../components/dashboard/ProjectsView';
-import MyWorkView from '../components/dashboard/MyWorkView';
-import TeamView from '../components/dashboard/TeamView';
-import ChatsView from '../components/dashboard/ChatsView';
-import SprintsView from '../components/dashboard/SprintsView';
-import SettingsView from '../components/dashboard/SettingsView';
+import DashboardNavbar from '../../../components/layout/DashboardNavbar';
+import Sidebar from '../../../components/layout/Sidebar';
+import InvitesView from '../../invites/components/InvitesView';
+import DashboardOverview from '../components/DashboardOverview';
+import IssuesView from '../components/IssueView';
+import ProjectsView from '../../projects/pages/ProjectsView';
+import MyWorkView from '../components/MyWorkView';
+import TeamView from '../components/TeamView';
+import ChatsView from '../components/ChatsView';
+import SprintsView from '../components/SprintsView';
+import SettingsView from '../components/SettingsView';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');

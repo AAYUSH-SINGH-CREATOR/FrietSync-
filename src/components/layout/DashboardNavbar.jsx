@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FiPlus, FiBell, FiLogOut } from 'react-icons/fi';
-import { logoutUser } from '../../services/authApi';
-import { getMyInvites } from '../../services/inviteApi';
-import InviteModal from '../invites/InviteModal';
-import InvitesBellModal from '../invites/InvitesBellModal';
-import logo from '../../assets/logo.svg'
+import { FiPlus, FiBell, FiLogOut, FiSearch, FiSun, FiMoon } from 'react-icons/fi';
+import { logoutUser, getUserProfile } from '../../features/auth/services/authApi';
+import { getMyInvites } from '../../features/invites/services/inviteApi';
+import { getMyWorkspace } from '../../features/dashboard/services/workspaceApi';
+import { useTheme } from '../../context/ThemeContext';
+import InviteModal from '../../features/invites/components/InviteModal';
+import InvitesBellModal from '../../features/invites/components/InvitesBellModal';
+import logo from '../../assets/logo.svg';
+
 const DashboardNavbar = () => {
   const navigate = useNavigate();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
