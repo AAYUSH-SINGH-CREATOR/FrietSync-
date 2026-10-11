@@ -126,8 +126,8 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                     ? `Sent ${successCount} invite(s). Failed for ${failedTargetEmail}: You can't invite yourself.`
                     : "You can't invite yourself."
                 : successCount > 0
-                    ? `Sent ${successCount} invite(s). Failed to invite ${failedTargetEmail}: ${friendlyErr}`
-                    : `Failed to invite ${failedTargetEmail}: ${friendlyErr}`;
+                    ? `Sent ${successCount} invite(s). Failed to invite1 ${failedTargetEmail}: ${friendlyErr}`
+                    : `Failed to invite2 ${failedTargetEmail}: ${friendlyErr}`;
 
 
             setStatusMessage({
@@ -135,8 +135,8 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                 text: errorDisplay,
                 text:
                     successCount > 0
-                        ? `Sent ${successCount} invite(s). Failed to invite ${failedEmail}: ${friendlyErr}`
-                        : `Failed to invite ${failedEmail}: ${friendlyErr}`,
+                        ? `Sent ${successCount} invite(s). Failed to invite3 ${failedEmail}: ${friendlyErr}`
+                        : `Failed to invite4 ${failedEmail}: ${friendlyErr}`,
             });
             setFailedEmail(failedTargetEmail);
 
