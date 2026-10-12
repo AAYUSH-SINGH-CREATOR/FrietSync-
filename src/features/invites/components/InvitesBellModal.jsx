@@ -91,21 +91,21 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/45 backdrop-blur-xs animate-fadeIn"
+   <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/45 dark:bg-black/60 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-100 p-7 sm:p-9 md:p-10 max-h-[88vh] flex flex-col transition-all"
+        className="relative w-full max-w-2xl bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#293548] p-7 sm:p-9 md:p-10 max-h-[88vh] flex flex-col transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-5 border-b border-gray-100">
+        <div className="flex items-center justify-between pb-5 border-b border-gray-100 dark:border-[#293548]">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Invitations</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F1F5F9] tracking-tight">Invitations</h2>
             {invites.length > 0 && (
-              <span className="px-3 py-1 text-xs font-bold rounded-full bg-sky-100 text-sky-800 tracking-wide">
+              <span className="px-3 py-1 text-xs font-bold rounded-full bg-sky-100 dark:bg-blue-900/40 text-sky-800 dark:text-[#93C5FD] border border-transparent dark:border-blue-800/50 tracking-wide">
                 {invites.length} PENDING
               </span>
             )}
@@ -116,7 +116,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
               onClick={handleRefresh}
               disabled={isLoading}
               title="Refresh invitations"
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer disabled:opacity-50"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#94A3B8] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#1E293B] transition cursor-pointer disabled:opacity-50"
             >
               <FiRefreshCw size={17} className={isLoading ? 'animate-spin' : ''} />
             </button>
@@ -124,7 +124,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
               type="button"
               onClick={onClose}
               aria-label="Close modal"
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer ml-1"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#94A3B8] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#1E293B] transition cursor-pointer ml-1"
             >
               <FiX size={20} />
             </button>
@@ -132,32 +132,32 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
         </div>
 
         {actionSuccess && (
-          <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center gap-2.5">
-            <FiCheck className="shrink-0 text-emerald-600" size={18} />
+          <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-[#34D399] text-sm flex items-center gap-2.5">
+            <FiCheck className="shrink-0 text-emerald-600 dark:text-[#34D399]" size={18} />
             <span className="font-medium">{actionSuccess}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="mt-4 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2.5">
-            <FiAlertCircle size={18} className="shrink-0 text-red-500" />
+          <div className="mt-4 p-3.5 rounded-2xl bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800/60 text-red-700 dark:text-[#F87171] text-sm flex items-center gap-2.5">
+            <FiAlertCircle size={18} className="shrink-0 text-red-500 dark:text-[#F87171]" />
             <span className="font-medium">{errorMessage}</span>
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto mt-6 space-y-4 pr-1 sm:pr-2">
           {isLoading && invites.length === 0 ? (
-            <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-gray-400">
-              <span className="w-8 h-8 border-3 border-sky-600/30 border-t-sky-600 rounded-full animate-spin mb-4" />
-              <p className="text-sm font-medium text-gray-600">Loading your invitations...</p>
+            <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-gray-400 dark:text-[#94A3B8]">
+              <span className="w-8 h-8 border-3 border-sky-600/30 dark:border-blue-500/30 border-t-sky-600 dark:border-t-blue-500 rounded-full animate-spin mb-4" />
+              <p className="text-sm font-medium text-gray-600 dark:text-[#CBD5E1]">Loading your invitations...</p>
             </div>
           ) : invites.length === 0 ? (
-            <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-gray-400 text-center px-4">
-              <div className="w-16 h-16 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center mb-4 shadow-xs">
+            <div className="py-16 sm:py-20 flex flex-col items-center justify-center text-gray-400 dark:text-[#94A3B8] text-center px-4">
+              <div className="w-16 h-16 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-500 dark:text-blue-400 border border-transparent dark:border-blue-800/40 flex items-center justify-center mb-4 shadow-xs">
                 <FiInbox size={30} />
               </div>
-              <p className="text-base font-semibold text-gray-800">No invitations right now</p>
-              <p className="text-sm text-gray-500 mt-1.5 max-w-sm leading-relaxed">
+              <p className="text-base font-semibold text-gray-800 dark:text-[#F1F5F9]">No invitations right now</p>
+              <p className="text-sm text-gray-500 dark:text-[#94A3B8] mt-1.5 max-w-sm leading-relaxed">
                 When someone invites you to collaborate on FrietSync, it will show up here.
               </p>
             </div>
@@ -169,24 +169,24 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
               return (
                 <div
                   key={inviteId}
-                  className="p-5 sm:p-6 rounded-2xl border border-gray-200/90 bg-white hover:border-sky-300 hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-5 sm:p-6 rounded-2xl border border-gray-200/90 dark:border-[#293548] bg-white dark:bg-[#1E293B]/60 hover:border-sky-300 dark:hover:border-[#3B4B63] hover:shadow-md dark:hover:bg-[#1E293B] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="text-left flex-1">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <p className="text-base font-bold text-gray-900">
+                      <p className="text-base font-bold text-gray-900 dark:text-[#F1F5F9]">
                         {invite.workspaceName || invite.senderEmail || invite.email || 'Workspace Invite'}
                       </p>
-                      <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-sky-50 text-sky-700 border border-sky-100">
+                      <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-sky-50 dark:bg-blue-950/50 text-sky-700 dark:text-[#93C5FD] border border-sky-100 dark:border-blue-800/40">
                         {invite.role || 'CONTRIBUTOR'}
                       </span>
                     </div>
                     {invite.senderEmail && (
-                      <p className="text-sm text-gray-600 mt-2">
-                        Invited by: <span className="text-gray-900 font-semibold">{invite.senderEmail}</span>
+                      <p className="text-sm text-gray-600 dark:text-[#CBD5E1] mt-2">
+                        Invited by: <span className="text-gray-900 dark:text-[#F1F5F9] font-semibold">{invite.senderEmail}</span>
                       </p>
                     )}
                     {invite.createdAt && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-[#94A3B8] mt-1">
                         Received on {new Date(invite.createdAt).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -201,7 +201,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
                       type="button"
                       disabled={isProcessing}
                       onClick={() => handleReject(invite)}
-                      className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-[#CBD5E1] bg-white dark:bg-[#172033] hover:bg-red-50 dark:hover:bg-rose-950/30 hover:text-red-600 dark:hover:text-[#F87171] border border-gray-200 dark:border-[#334155] hover:border-red-200 dark:hover:border-rose-800/50 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
                       <FiXCircle size={16} />
                       Decline
@@ -210,7 +210,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
                       type="button"
                       disabled={isProcessing}
                       onClick={() => handleAccept(invite)}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 shadow-md shadow-sky-600/25 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 shadow-md shadow-sky-600/25 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
                       {isProcessing ? (
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

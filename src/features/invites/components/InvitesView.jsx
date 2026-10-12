@@ -108,31 +108,31 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+     <div className="space-y-6 animate-fadeIn">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
           Workspace Invitations
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-500 dark:text-[#94A3B8] mt-1">
           Invite new team members and review pending invitations to collaborate on FrietSync.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-md shadow-slate-200/50">
-          <h2 className="text-lg font-bold text-slate-900 mb-1">Invite Team Members</h2>
-          <p className="text-xs text-slate-500 mb-5">
+        <div className="lg:col-span-6 bg-white dark:bg-[#172033] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#293548] shadow-md dark:shadow-none shadow-slate-200/50">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9] mb-1">Invite Team Members</h2>
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8] mb-5">
             Add up to 6 members at once with assigned roles and expiration dates.
           </p>
 
           <MultiInviteForm onSuccess={() => fetchInvites()} />
         </div>
 
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-md shadow-slate-200/50 flex flex-col">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <div className="lg:col-span-6 bg-white dark:bg-[#172033] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#293548] shadow-md dark:shadow-none shadow-slate-200/50 flex flex-col">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#293548] mb-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Received Invitations</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Received Invitations</h2>
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                 Invitations sent to your email to join workspaces.
               </p>
             </div>
@@ -141,39 +141,39 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
               onClick={fetchInvites}
               disabled={isLoadingInvites}
               title="Refresh invites"
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 dark:text-[#94A3B8] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-50 dark:hover:bg-[#1E293B] transition cursor-pointer"
             >
               <FiRefreshCw size={16} className={isLoadingInvites ? 'animate-spin' : ''} />
             </button>
           </div>
 
           {actionSuccess && (
-            <div className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-2">
-              <FiCheck size={16} className="text-emerald-600" />
+            <div className="mb-4 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-[#34D399] text-xs sm:text-sm flex items-center gap-2">
+              <FiCheck size={16} className="text-emerald-600 dark:text-[#34D399]" />
               <span>{actionSuccess}</span>
             </div>
           )}
 
           {inviteError && (
-            <div className="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm flex items-center gap-2">
-              <FiAlertCircle size={16} className="text-red-500" />
+            <div className="mb-4 p-3 rounded-2xl bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800/60 text-red-700 dark:text-[#F87171] text-xs sm:text-sm flex items-center gap-2">
+              <FiAlertCircle size={16} className="text-red-500 dark:text-[#F87171]" />
               <span>{inviteError}</span>
             </div>
           )}
 
           <div className="flex-1 space-y-3">
             {isLoadingInvites && invites.length === 0 ? (
-              <div className="py-16 text-center text-slate-400">
-                <span className="w-7 h-7 border-2 border-sky-600/30 border-t-sky-600 rounded-full animate-spin inline-block mb-3" />
-                <p className="text-sm">Loading invitations...</p>
+              <div className="py-16 text-center text-slate-400 dark:text-[#94A3B8]">
+                <span className="w-7 h-7 border-2 border-sky-600/30 dark:border-blue-500/30 border-t-sky-600 dark:border-t-blue-500 rounded-full animate-spin inline-block mb-3" />
+                <p className="text-sm font-medium text-slate-600 dark:text-[#CBD5E1]">Loading invitations...</p>
               </div>
             ) : invites.length === 0 ? (
-              <div className="py-16 text-center text-slate-400">
-                <div className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-500 mx-auto flex items-center justify-center mb-3">
+              <div className="py-16 text-center text-slate-400 dark:text-[#94A3B8]">
+                <div className="w-14 h-14 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-500 dark:text-blue-400 border border-transparent dark:border-blue-800/40 mx-auto flex items-center justify-center mb-3">
                   <FiInbox size={26} />
                 </div>
-                <p className="text-sm font-semibold text-slate-700">No pending invitations</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                <p className="text-sm font-semibold text-slate-700 dark:text-[#F1F5F9]">No pending invitations</p>
+                <p className="text-xs text-slate-400 dark:text-[#94A3B8] mt-1 max-w-xs mx-auto">
                   When a team lead or project manager invites you, it will appear here.
                 </p>
               </div>
@@ -185,24 +185,24 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
                 return (
                   <div
                     key={inviteId}
-                    className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-sky-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-[#293548] bg-slate-50/50 dark:bg-[#1E293B]/60 hover:bg-white dark:hover:bg-[#1E293B] hover:border-sky-200 dark:hover:border-[#3B4B63] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-slate-900 text-sm">
+                        <span className="font-bold text-slate-900 dark:text-[#F1F5F9] text-sm">
                           {invite.workspaceName || invite.senderEmail || 'Workspace Invite'}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800">
+                        <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-sky-100 dark:bg-blue-950/50 text-sky-800 dark:text-[#93C5FD] border border-transparent dark:border-blue-800/40">
                           {invite.role || 'CONTRIBUTOR'}
                         </span>
                       </div>
                       {invite.senderEmail && (
-                        <p className="text-xs text-slate-500 mt-1">
-                          Invited by: <span className="text-slate-700 font-medium">{invite.senderEmail}</span>
+                        <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-1">
+                          Invited by: <span className="text-slate-700 dark:text-[#CBD5E1] font-medium">{invite.senderEmail}</span>
                         </p>
                       )}
                       {invite.createdAt && (
-                        <p className="text-[11px] text-slate-400 mt-0.5">
+                        <p className="text-[11px] text-slate-400 dark:text-[#64748B] mt-0.5">
                           {new Date(invite.createdAt).toLocaleDateString()}
                         </p>
                       )}
@@ -213,7 +213,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
                         type="button"
                         disabled={isProcessing}
                         onClick={() => handleReject(invite)}
-                        className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                        className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-[#CBD5E1] bg-white dark:bg-[#172033] hover:bg-red-50 dark:hover:bg-rose-950/30 hover:text-red-600 dark:hover:text-[#F87171] border border-slate-200 dark:border-[#334155] hover:border-red-200 dark:hover:border-rose-800/50 transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
                       >
                         <FiXCircle size={14} />
                         Decline
@@ -222,7 +222,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
                         type="button"
                         disabled={isProcessing}
                         onClick={() => handleAccept(invite)}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 shadow-sm shadow-sky-600/20 transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 shadow-sm shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50 flex items-center gap-1"
                       >
                         {isProcessing ? (
                           <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -24,13 +24,13 @@ const InviteModal = ({ isOpen, onClose, onInviteSent }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/45 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/45 dark:bg-black/60 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 sm:p-8 max-h-[92vh] overflow-y-auto transition-all"
+        className="relative w-full max-w-2xl bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#293548] p-6 sm:p-8 max-h-[92vh] overflow-y-auto transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-5">
@@ -46,7 +46,7 @@ const InviteModal = ({ isOpen, onClose, onInviteSent }) => {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer shrink-0 ml-4"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#94A3B8] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#1E293B] transition cursor-pointer shrink-0 ml-4"
           >
             <FiX size={20} />
           </button>

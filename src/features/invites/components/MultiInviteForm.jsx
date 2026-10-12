@@ -112,7 +112,6 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
 
         if (failed) {
             const successCount = successful.length;
-            const failedEmail = failed.item.email;
             const failedTargetEmail = failed.item.email.trim();
             const friendlyErr = getFriendlyErrorMessage(failed.rawError, 'invite');
 
@@ -126,20 +125,15 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                     ? `Sent ${successCount} invite(s). Failed for ${failedTargetEmail}: You can't invite yourself.`
                     : "You can't invite yourself."
                 : successCount > 0
-                    ? `Sent ${successCount} invite(s). Failed to invite1 ${failedTargetEmail}: ${friendlyErr}`
-                    : `Failed to invite2 ${failedTargetEmail}: ${friendlyErr}`;
+                    ? `Sent ${successCount} invite(s). Failed to invite ${failedTargetEmail}: ${friendlyErr}`
+                    : `Failed to invite ${failedTargetEmail}: ${friendlyErr}`;
 
 
             setStatusMessage({
                 type: 'error',
                 text: errorDisplay,
-                text:
-                    successCount > 0
-                        ? `Sent ${successCount} invite(s). Failed to invite3 ${failedEmail}: ${friendlyErr}`
-                        : `Failed to invite4 ${failedEmail}: ${friendlyErr}`,
             });
             setFailedEmail(failedTargetEmail);
-
 
             const successfulEmails = successful.map((s) => s.item.email.trim());
             setMembers((prev) => {
@@ -175,14 +169,14 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
             {statusMessage.text && (
                 <div
                     className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all ${statusMessage.type === 'success'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        : 'bg-red-50 text-red-700 border border-red-200'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-[#34D399] border border-emerald-200 dark:border-emerald-800/60'
+                        : 'bg-red-50 dark:bg-rose-950/40 text-red-700 dark:text-[#F87171] border border-red-200 dark:border-rose-800/60'
                         }`}
                 >
                     {statusMessage.type === 'success' ? (
-                        <FiCheckCircle className="shrink-0 text-emerald-600" size={17} />
+                        <FiCheckCircle className="shrink-0 text-emerald-600 dark:text-[#34D399]" size={17} />
                     ) : (
-                        <FiAlertCircle className="shrink-0 text-red-500" size={17} />
+                        <FiAlertCircle className="shrink-0 text-red-500 dark:text-[#F87171]" size={17} />
                     )}
                     <span className="font-medium">{statusMessage.text}</span>
                 </div>
@@ -195,46 +189,47 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                         className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
                     >
                         <div
-                            className={`flex-1 flex items-center border rounded-xl bg-white overflow-hidden transition shadow-2xs ${failedEmail && member.email.trim() === failedEmail
-                                    ? 'border-red-400 ring-2 ring-red-100 bg-red-50/15'
-                                    : 'border-slate-300 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-100'
+                            className={`flex-1 flex items-center border rounded-xl bg-white dark:bg-[#1E293B] overflow-hidden transition shadow-2xs ${failedEmail && member.email.trim() === failedEmail
+                                    ? 'border-red-400 dark:border-rose-500/80 ring-2 ring-red-100 dark:ring-rose-950/50 bg-red-50/15 dark:bg-rose-950/20'
+                                    : 'border-slate-300 dark:border-[#334155] focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/50'
                                 }`}
-                        >                            <input
+                        >
+                            <input
                                 type="email"
                                 placeholder="Add email here"
                                 value={member.email}
                                 disabled={isSubmitting}
                                 onChange={(e) => handleMemberChange(index, 'email', e.target.value)}
-                                className="flex-1 min-w-0 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 bg-transparent outline-none"
+                                className="flex-1 min-w-0 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] bg-transparent outline-none"
                             />
 
-                            <div className="h-6 w-px bg-slate-200 shrink-0" />
+                            <div className="h-6 w-px bg-slate-200 dark:bg-[#334155] shrink-0" />
 
                             <div className="relative shrink-0">
                                 <select
                                     value={member.role}
                                     disabled={isSubmitting}
                                     onChange={(e) => handleMemberChange(index, 'role', e.target.value)}
-                                    className="px-3 sm:px-3.5 py-2.5 pr-7 text-xs sm:text-sm font-semibold text-slate-700 bg-transparent outline-none cursor-pointer appearance-none hover:bg-slate-50 transition"
+                                    className="px-3 sm:px-3.5 py-2.5 pr-7 text-xs sm:text-sm font-semibold text-slate-700 dark:text-[#CBD5E1] bg-transparent outline-none cursor-pointer appearance-none hover:bg-slate-50 dark:hover:bg-[#253247]/50 transition"
                                 >
                                     {ROLE_OPTIONS.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
+                                        <option key={opt.value} value={opt.value} className="bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9]">
                                             {opt.label}
                                         </option>
                                     ))}
                                 </select>
                                 <FiChevronDown
-                                    className="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"
+                                    className="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B] pointer-events-none text-xs"
                                 />
                             </div>
                         </div>
 
                         <div
                             title="Invitation Expiration Date (Sent in UTC)"
-                            className="flex items-center border border-slate-300 rounded-xl px-2.5 sm:px-3 py-2 bg-white focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-100 transition shadow-2xs shrink-0 sm:w-44"
+                            className="flex items-center border border-slate-300 dark:border-[#334155] rounded-xl px-2.5 sm:px-3 py-2 bg-white dark:bg-[#1E293B] focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/50 transition shadow-2xs shrink-0 sm:w-44"
                         >
-                            <FiCalendar className="text-slate-400 mr-2 shrink-0" size={15} />
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase mr-1.5 shrink-0">
+                            <FiCalendar className="text-slate-400 dark:text-[#64748B] mr-2 shrink-0" size={15} />
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-[#94A3B8] uppercase mr-1.5 shrink-0">
                                 Expires:
                             </span>
                             <input
@@ -243,7 +238,7 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                                 min={todayStr}
                                 disabled={isSubmitting}
                                 onChange={(e) => handleMemberChange(index, 'expiresDate', e.target.value)}
-                                className="w-full text-xs font-medium text-slate-700 outline-none bg-transparent cursor-pointer"
+                                className="w-full text-xs font-medium text-slate-700 dark:text-[#F1F5F9] outline-none bg-transparent cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
                             />
                         </div>
 
@@ -254,7 +249,7 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                                 disabled={isSubmitting}
                                 title="Remove invitation"
                                 aria-label="Remove invitation"
-                                className="self-center p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer shrink-0 disabled:opacity-40"
+                                className="self-center p-2 rounded-xl text-slate-400 dark:text-[#64748B] hover:text-red-500 dark:hover:text-[#F87171] hover:bg-red-50 dark:hover:bg-rose-950/30 transition cursor-pointer shrink-0 disabled:opacity-40"
                             >
                                 <FiTrash2 size={16} />
                             </button>
@@ -268,12 +263,12 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                     type="button"
                     onClick={handleAddMember}
                     disabled={members.length >= MAX_MEMBERS || isSubmitting}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-[#1E293B] hover:bg-slate-200 dark:hover:bg-[#253247] active:bg-slate-300 dark:active:bg-[#293548] text-slate-700 dark:text-[#CBD5E1] border border-transparent dark:border-[#334155] text-xs sm:text-sm font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none"
                 >
                     <FiPlus size={14} className="stroke-[2.5]" />
                     <span>Add another</span>
                     {members.length >= MAX_MEMBERS && (
-                        <span className="text-[11px] text-slate-400 font-normal ml-0.5">
+                        <span className="text-[11px] text-slate-400 dark:text-[#64748B] font-normal ml-0.5">
                             (Max {MAX_MEMBERS})
                         </span>
                     )}
@@ -285,7 +280,7 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                             type="button"
                             onClick={onCancel}
                             disabled={isSubmitting}
-                            className="px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition cursor-pointer disabled:opacity-50"
+                            className="px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer disabled:opacity-50"
                         >
                             Cancel
                         </button>
@@ -294,7 +289,7 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-xs sm:text-sm shadow-md shadow-sky-600/20 transition cursor-pointer disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50"
                     >
                         {isSubmitting ? (
                             <>
