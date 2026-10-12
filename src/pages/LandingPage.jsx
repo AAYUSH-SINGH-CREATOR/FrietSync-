@@ -7,6 +7,7 @@ import heroTeamImg from '../assets/hero-team.png';
 import wavesSvg from '../assets/waves.svg';
 import { FaCirclePlay } from "react-icons/fa6";
 import { getAccessToken } from '../features/auth/services/authApi';
+import logo from "../assets/logo.svg"
 
 
 const LandingPage = () => {
@@ -50,7 +51,7 @@ const LandingPage = () => {
                     <div className="flex items-center gap-8 lg:gap-14">
                         <Link to="/" className="flex items-center gap-3 group">
                             <img
-                                src={faviconLogo}
+                                src={logo}
                                 alt="Frietsync Logo"
                                 className="w-9 h-9 sm:w-11 sm:h-11 object-contain transition-transform group-hover:scale-105"
                             />
