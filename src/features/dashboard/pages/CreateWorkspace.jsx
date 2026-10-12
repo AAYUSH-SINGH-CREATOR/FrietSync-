@@ -67,49 +67,49 @@ const CreateWorkspace = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#eaedf1] flex flex-col justify-center items-center px-4 py-8 font-sans">
+    <div className="min-h-screen bg-[#eaedf1] dark:bg-[#0B1120] flex flex-col justify-center items-center px-4 py-8 font-sans transition-colors duration-200">
       <div className="flex items-center gap-2.5 mb-8">
         <img src={logo} alt="FrietSync Logo" className="w-9 h-9 object-contain" />
-        <span className="text-2xl font-black text-sky-600 tracking-tight">
+        <span className="text-2xl font-black text-sky-600 dark:text-[#60A5FA] tracking-tight">
           FrietSync
         </span>
       </div>
 
-      <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200/80 animate-fadeIn">
+      <div className="w-full max-w-lg bg-white dark:bg-[#172033] rounded-3xl p-6 sm:p-10 shadow-xl dark:shadow-none border border-slate-200/80 dark:border-[#293548] animate-fadeIn">
         {isCheckingExisting ? (
           <div className="py-12 text-center space-y-4">
-            <div className="w-10 h-10 border-4 border-sky-600/30 border-t-sky-600 rounded-full animate-spin mx-auto" />
-            <p className="text-sm font-medium text-slate-500">
+            <div className="w-10 h-10 border-4 border-sky-600/30 border-t-sky-600 dark:border-blue-400/30 dark:border-t-[#60A5FA] rounded-full animate-spin mx-auto" />
+            <p className="text-sm font-medium text-slate-500 dark:text-[#94A3B8]">
               Checking workspace status...
             </p>
           </div>
         ) : existingWorkspace ? (
           <div className="text-center space-y-5">
-            <div className="w-16 h-16 rounded-3xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center shadow-xs">
+            <div className="w-16 h-16 rounded-3xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#FBBF24] mx-auto flex items-center justify-center shadow-xs">
               <FiLock size={28} />
             </div>
 
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
                 Active Workspace Detected
               </h2>
-              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+              <p className="text-sm text-slate-500 dark:text-[#94A3B8] mt-2 leading-relaxed">
                 You are currently a member of{' '}
-                <span className="font-semibold text-slate-800">
+                <span className="font-semibold text-slate-800 dark:text-[#F1F5F9]">
                   &ldquo;{existingWorkspace.name || 'Unnamed Workspace'}&rdquo;
                 </span>
                 . In FrietSync, each user can only belong to one workspace at a time.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-600 space-y-1">
-              <div className="flex items-center gap-2 font-semibold text-slate-700">
-                <FiCheckCircle className="text-emerald-500" size={14} />
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1E293B]/70 border border-slate-200 dark:border-[#293548] text-left text-xs text-slate-600 dark:text-[#CBD5E1] space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-slate-700 dark:text-[#F1F5F9]">
+                <FiCheckCircle className="text-emerald-500 dark:text-[#34D399]" size={14} />
                 <span>To create a new workspace:</span>
               </div>
-              <p className="pl-5 text-slate-500">
-                Go to <span className="font-medium text-slate-700">Settings</span> on your dashboard and click{' '}
-                <span className="font-medium text-rose-600">&ldquo;Leave Workspace&rdquo;</span>. Once you leave, you can create a new one.
+              <p className="pl-5 text-slate-500 dark:text-[#94A3B8]">
+                Go to <span className="font-medium text-slate-700 dark:text-[#CBD5E1]">Settings</span> on your dashboard and click{' '}
+                <span className="font-medium text-rose-600 dark:text-[#F87171]">&ldquo;Leave Workspace&rdquo;</span>. Once you leave, you can create a new one.
               </p>
             </div>
 
@@ -117,7 +117,7 @@ const CreateWorkspace = () => {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-600/20 transition cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
               >
                 <FiHome size={16} />
                 <span>Go to Dashboard</span>
@@ -127,20 +127,20 @@ const CreateWorkspace = () => {
         ) : (
           <div>
             <div className="text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-600 mx-auto flex items-center justify-center mb-3 shadow-2xs">
+              <div className="w-14 h-14 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] mx-auto flex items-center justify-center mb-3 shadow-2xs">
                 <FiLayers size={24} />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
                 Create Your Workspace
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] mt-1 max-w-sm mx-auto">
                 Set up a centralized hub for your team to collaborate on projects, sprints, and tasks.
               </p>
             </div>
 
             {errorMessage && (
-              <div className="mb-5 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm flex items-center gap-2.5">
-                <FiAlertCircle className="shrink-0 text-red-500" size={17} />
+              <div className="mb-5 p-3.5 rounded-2xl bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800/60 text-red-700 dark:text-[#F87171] text-xs sm:text-sm flex items-center gap-2.5">
+                <FiAlertCircle className="shrink-0 text-red-500 dark:text-[#F87171]" size={17} />
                 <span className="font-medium">{errorMessage}</span>
               </div>
             )}
@@ -149,7 +149,7 @@ const CreateWorkspace = () => {
               <div>
                 <label
                   htmlFor="workspace-name"
-                  className="block text-xs font-semibold uppercase text-slate-700 mb-1.5"
+                  className="block text-xs font-semibold uppercase text-slate-700 dark:text-[#CBD5E1] mb-1.5"
                 >
                   Workspace Name <span className="text-red-500">*</span>
                 </label>
@@ -163,7 +163,7 @@ const CreateWorkspace = () => {
                     setWorkspaceName(e.target.value);
                     if (errorMessage) setErrorMessage('');
                   }}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition placeholder:text-slate-400"
+                  className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#334155] text-slate-800 dark:text-[#F1F5F9] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#64748B]"
                 />
               </div>
 
@@ -171,7 +171,7 @@ const CreateWorkspace = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !workspaceName.trim()}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-sm shadow-md shadow-sky-600/20 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
@@ -191,7 +191,7 @@ const CreateWorkspace = () => {
             <div className="mt-6 text-center">
               <Link
                 to="/dashboard"
-                className="text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                className="text-xs font-medium text-slate-500 dark:text-[#94A3B8] hover:text-slate-800 dark:hover:text-[#F1F5F9] transition"
               >
                 Skip for now &rarr; Go to Dashboard
               </Link>
