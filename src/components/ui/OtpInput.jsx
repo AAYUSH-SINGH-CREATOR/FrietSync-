@@ -53,15 +53,16 @@ const OtpInput = ({ otp, setOtp, error, length = 6 }) => {
             onChange={(e) => handleChange(e, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onFocus={(e) => e.target.select()}
-            className={`w-11 h-13 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border ${
-              error ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-900'
-            } bg-white outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition`}
+            className={`w-11 h-13 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border ${error
+                ? 'border-[#FF1100] dark:border-[#F87171] text-[#FF1100] dark:text-[#F87171]'
+                : 'border-gray-300 dark:border-[#334155] text-gray-900 dark:text-[#F1F5F9] focus:border-sky-400 dark:focus:border-[#60A5FA]'
+              } bg-white dark:bg-[#1E293B] outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-blue-900/30 transition`}
           />
         ))}
       </div>
 
       {error && (
-        <p className="text-xs sm:text-sm text-red-500 text-center font-medium mt-1 mb-2">
+        <p className="text-xs sm:text-sm text-[#FF1100] dark:text-[#F87171] text-center font-medium mt-1 mb-2">
           {error}
         </p>
       )}
