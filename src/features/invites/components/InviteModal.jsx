@@ -33,12 +33,12 @@ const InviteModal = ({ isOpen, onClose, onInviteSent }) => {
         className="relative w-full max-w-2xl bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#293548] p-6 sm:p-8 max-h-[92vh] overflow-y-auto transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-5">
+        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#293548] mb-5">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-[#F1F5F9] tracking-tight">
               Invite Team Members
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-[#94A3B8] mt-1 leading-relaxed">
               Add up to 6 members at once with assigned roles and expiration dates.
             </p>
           </div>

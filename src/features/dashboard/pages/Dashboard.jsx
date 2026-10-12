@@ -8,7 +8,7 @@ const Dashboard = () => {
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
 
   return (
-    <div className="min-h-screen bg-[#eaedf1] flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-[#eaedf1] dark:bg-[#0F172A] flex flex-col font-sans text-slate-800 dark:text-[#F1F5F9] transition-colors duration-200">
       <DashboardNavbar />
 
       <Sidebar
