@@ -1,4 +1,4 @@
-import {useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   FiHome,
@@ -15,13 +15,11 @@ import {
 import { AiOutlineBug } from 'react-icons/ai';
 import { IoChatboxEllipsesOutline, IoMailOutline } from 'react-icons/io5';
 
-const NOTCH_BG = '#eaedf1';
-
 const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
   <>
     <svg
-      className="absolute top-1/2 -translate-y-1/2 pointer-events-none z-10"
-      style={{ right: '-2px', width: 56, height: 76, color: NOTCH_BG }}
+      className="absolute top-1/2 -translate-y-1/2 pointer-events-none z-10 text-[#eaedf1] dark:text-[#0F172A]"
+      style={{ right: '-2px', width: 56, height: 76 }}
       viewBox="0 0 56 76"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
@@ -31,10 +29,10 @@ const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
     </svg>
 
     <div
-      className="absolute top-1/2 -translate-y-1/2 w-[44px] h-[44px] rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-center z-20 pointer-events-none"
+      className="absolute top-1/2 -translate-y-1/2 w-[44px] h-[44px] rounded-full bg-white dark:bg-[#172033] shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.4)] dark:border dark:border-[#3B4B63] flex items-center justify-center z-20 pointer-events-none"
       style={{ right: '-5px' }}
     >
-      <Icon size={20} className="stroke-[2.2] text-[#0284c7]" />
+      <Icon size={20} className="stroke-[2.2] text-[#0284c7] dark:text-[#60A5FA]" />
       {badge > 0 && (
         <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
           {badge}
@@ -101,7 +99,7 @@ const Sidebar = ({
     <>
       {!isCollapsed && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/20 transition-opacity duration-300"
+          className="fixed inset-0 z-30 bg-slate-900/20 dark:bg-black/40 transition-opacity duration-300"
           onClick={() => setIsCollapsed(true)}
           aria-hidden="true"
         />
@@ -114,21 +112,21 @@ const Sidebar = ({
         }`}
       >
         <div
-          className={`bg-white border border-slate-200/90 flex flex-col justify-between transition-all duration-300 relative h-full ${
+          className={`bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-[#293548] flex flex-col justify-between transition-all duration-300 relative h-full ${
             isCollapsed
-              ? 'rounded-[36px] py-4 px-0 items-center shadow-lg shadow-slate-300/40'
-              : 'rounded-3xl p-5 shadow-2xl shadow-slate-400/30'
+              ? 'rounded-[36px] py-4 px-0 items-center shadow-lg shadow-slate-300/40 dark:shadow-black/60'
+              : 'rounded-3xl p-5 shadow-2xl shadow-slate-400/30 dark:shadow-black/60'
           }`}
         >
           <div
             className={`flex items-center w-full ${
-              isCollapsed ? 'justify-center pb-3' : 'justify-between pb-4 border-b border-slate-100'
+              isCollapsed ? 'justify-center pb-3' : 'justify-between pb-4 border-b border-slate-100 dark:border-[#293548]'
             }`}
           >
             {!isCollapsed && (
               <div className="flex items-center gap-2 pl-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
                   Workspace
                 </span>
               </div>
@@ -164,8 +162,8 @@ const Sidebar = ({
                       className={({ isActive }) =>
                         `relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
                           isActive
-                            ? 'text-sky-600 z-30 font-bold opacity-0'
-                            : 'text-slate-800 hover:text-sky-600 hover:bg-slate-50'
+                            ? 'text-sky-600 dark:text-[#93C5FD] z-30 font-bold opacity-0'
+                            : 'text-slate-800 dark:text-[#CBD5E1] hover:text-sky-600 dark:hover:text-[#F1F5F9] hover:bg-slate-50 dark:hover:bg-[#1E293B]'
                         }`
                       }
                     >
@@ -174,7 +172,7 @@ const Sidebar = ({
                           <Icon size={21} className="stroke-[1.9]" />
 
                           {item.badge > 0 && !isActive && (
-                            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-[#111827]" />
                           )}
                         </>
                       )}
@@ -182,7 +180,7 @@ const Sidebar = ({
 
                     {isItemActive && <ActiveNotch icon={Icon} badge={item.badge} />}
 
-                    <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-[#1E293B] text-white dark:text-[#F1F5F9] dark:border dark:border-[#3B4B63] text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       {item.label}
                       {item.badge > 0 && ` (${item.badge})`}
                     </div>
@@ -203,8 +201,8 @@ const Sidebar = ({
                     className={({ isActive }) =>
                       `w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
-                          : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                          ? 'bg-sky-50 dark:bg-[#1E3A5F] text-sky-700 dark:text-[#93C5FD] font-semibold shadow-xs'
+                          : 'text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
                       }`
                     }
                   >
@@ -213,19 +211,19 @@ const Sidebar = ({
                         <div className="flex items-center gap-3">
                           <Icon
                             size={19}
-                            className={isActive ? 'text-sky-600 stroke-[2.2]' : 'text-slate-500'}
+                            className={isActive ? 'text-sky-600 dark:text-[#93C5FD] stroke-[2.2]' : 'text-slate-500 dark:text-[#94A3B8]'}
                           />
                           <span>{item.label}</span>
                         </div>
 
                         <div className="flex items-center gap-1.5">
                           {item.badge > 0 && (
-                            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-sky-100 text-sky-700">
+                            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-sky-100 dark:bg-[#1E3A5F] text-sky-700 dark:text-[#93C5FD]">
                               {item.badge}
                             </span>
                           )}
                           {item.hasSubmenu && (
-                            <span className="text-slate-400">
+                            <span className="text-slate-400 dark:text-[#94A3B8]">
                               {isProjectsExpanded ? (
                                 <FiChevronDown size={15} />
                               ) : (
@@ -253,13 +251,13 @@ const Sidebar = ({
                             }}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer text-left ${
                               isSubActive
-                                ? 'text-sky-600 bg-sky-50/80 font-bold'
-                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                ? 'text-sky-600 dark:text-[#93C5FD] bg-sky-50/80 dark:bg-[#1E3A5F]/60 font-bold'
+                                : 'text-slate-500 dark:text-[#94A3B8] hover:text-slate-800 dark:hover:text-[#F1F5F9] hover:bg-slate-50 dark:hover:bg-[#1E293B]'
                             }`}
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
-                                isSubActive ? 'bg-sky-600' : 'bg-slate-300'
+                                isSubActive ? 'bg-sky-600 dark:bg-[#60A5FA]' : 'bg-slate-300 dark:bg-[#334155]'
                               }`}
                             />
                             <span>{sub.label}</span>
@@ -274,7 +272,7 @@ const Sidebar = ({
           </div>
 
           <div
-            className={`w-full pt-3 border-t border-slate-100 flex flex-col ${
+            className={`w-full pt-3 border-t border-slate-100 dark:border-[#293548] flex flex-col ${
               isCollapsed ? 'items-center gap-1.5' : 'gap-1'
             }`}
           >
@@ -292,8 +290,8 @@ const Sidebar = ({
                       className={({ isActive }) =>
                         `relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
                           isActive
-                            ? 'text-sky-600 z-30 font-bold opacity-0'
-                            : 'text-slate-800 hover:text-sky-600 hover:bg-slate-50'
+                            ? 'text-sky-600 dark:text-[#93C5FD] z-30 font-bold opacity-0'
+                            : 'text-slate-800 dark:text-[#CBD5E1] hover:text-sky-600 dark:hover:text-[#F1F5F9] hover:bg-slate-50 dark:hover:bg-[#1E293B]'
                         }`
                       }
                     >
@@ -302,7 +300,7 @@ const Sidebar = ({
 
                     {isItemActive && <ActiveNotch icon={Icon} />}
 
-                    <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    <div className="absolute left-[70px] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-[#1E293B] text-white dark:text-[#F1F5F9] dark:border dark:border-[#3B4B63] text-xs font-medium whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       {item.label}
                     </div>
                   </div>
@@ -317,8 +315,8 @@ const Sidebar = ({
                   className={({ isActive }) =>
                     `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
-                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'bg-sky-50 dark:bg-[#1E3A5F] text-sky-700 dark:text-[#93C5FD] font-semibold shadow-xs'
+                        : 'text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
                     }`
                   }
                 >
@@ -326,7 +324,7 @@ const Sidebar = ({
                     <>
                       <Icon
                         size={19}
-                        className={isActive ? 'text-sky-600 stroke-[2.2]' : 'text-slate-500'}
+                        className={isActive ? 'text-sky-600 dark:text-[#93C5FD] stroke-[2.2]' : 'text-slate-500 dark:text-[#94A3B8]'}
                       />
                       <span>{item.label}</span>
                     </>
