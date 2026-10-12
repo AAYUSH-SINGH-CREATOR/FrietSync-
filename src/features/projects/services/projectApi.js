@@ -56,21 +56,12 @@ const handleProjectError = (error, defaultMessage) => {
   throw error;
 };
 
-export const getStoredWorkspaceId = () => {
-  return (
-    localStorage.getItem('frietSyncWorkspaceId') ||
-    localStorage.getItem('workspaceId') ||
-    localStorage.getItem('currentWorkspaceId') ||
-    'c56a4180-65aa-42ec-a945-5fd21dec0538'
-  );
-};
 
 export const createProject = async (projectData) => {
   try {
     const payload = {
       name: projectData.name?.trim(),
       description: projectData.description?.trim() || '',
-      workspaceId: projectData.workspaceId?.trim() || getStoredWorkspaceId(),
       status: projectData.status || 'ACTIVE',
       startDate: projectData.startDate || new Date().toISOString().slice(0, 10),
       deadline: projectData.deadline || '',
