@@ -16,6 +16,7 @@ import ChatsView from './features/chat/pages/ChatView';
 import TeamView from './features/dashboard/components/TeamView';
 import SettingsView from './features/dashboard/components/SettingsView';
 import ProjectsView from './features/projects/pages/ProjectsView';
+import ProjectDetailsView from './features/projects/pages/ProjectDetailsView';
 import InvitesView from './features/invites/components/InvitesView';
 import Invite from './features/invites/pages/Invite';
 
@@ -35,6 +36,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />}>
           <Route index element={<DashboardOverview />} />
           <Route path="projects" element={<ProjectsView />} />
+          <Route path="projects/:projectId" element={<ProjectDetailsView />} />
           <Route path="issues" element={<IssuesView />} />
           <Route path="sprints" element={<SprintsView />} />
           <Route path="my-work" element={<MyWorkView />} />
