@@ -5,6 +5,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const getAuthHeaders = () => {
   const rawToken =
+    localStorage.getItem('frietSyncToken') ||
     localStorage.getItem('accessToken') ||
     localStorage.getItem('token') ||
     '';
@@ -16,25 +17,6 @@ const getAuthHeaders = () => {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   };
-};
-
-export const getMyProjects = async () => {
-  try {
-    const response = await axios.get(
-      `${BASE_URL}/projects/me`,
-      getAuthHeaders()
-    );
-    const data = response.data;
-
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.projects)) return data.projects;
-    if (Array.isArray(data?.data)) return data.data;
-    if (Array.isArray(data?.data?.projects)) return data.data.projects;
-
-    return data || [];
-  } catch (error) {
-    handleProjectError(error, 'Failed to load projects.');
-  }
 };
 
 const handleProjectError = (error, defaultMessage) => {
@@ -56,6 +38,40 @@ const handleProjectError = (error, defaultMessage) => {
   throw error;
 };
 
+export const getMyProjects = async () => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/projects/me`,
+      getAuthHeaders()
+    );
+    const data = response.data;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.projects)) return data.projects;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.projects)) return data.data.projects;
+
+    return data || [];
+  } catch (error) {
+    handleProjectError(error, 'Failed to load projects.');
+  }
+};
+
+export const getProjectById = async (projectId) => {
+  if (!projectId) {
+    throw new Error('Project ID is required.');
+  }
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/projects/${projectId}`,
+      getAuthHeaders()
+    );
+    const data = response.data;
+    return data?.project || data?.data?.project || data?.data || data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to load project details.');
+  }
+};
 
 export const createProject = async (projectData) => {
   try {
@@ -85,5 +101,108 @@ export const createProject = async (projectData) => {
   }
 };
 
-export { getFriendlyErrorMessage };
+export const updateProject = async (projectId, projectData) => {
+  if (!projectId) {
+    throw new Error('Project ID is required.');
+  }
+  try {
+    const payload = {
+      name: projectData.name?.trim(),
+      description: projectData.description !== undefined ? projectData.description.trim() : '',
+      status: projectData.status || 'ACTIVE',
+      startDate: projectData.startDate || '',
+      deadline: projectData.deadline || '',
+      projectManagerEmail: projectData.projectManagerEmail ? projectData.projectManagerEmail.trim() : '',
+      teamLeadEmail: projectData.teamLeadEmail ? projectData.teamLeadEmail.trim() : '',
+    };
 
+    if (projectData.workspaceId) {
+      payload.workspaceId = projectData.workspaceId;
+    }
+
+    const response = await axios.put(
+      `${BASE_URL}/projects/${projectId}`,
+      payload,
+      getAuthHeaders()
+    );
+    return response.data?.project || response.data?.data || response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to update project.');
+  }
+};
+
+export const deleteProject = async (projectId) => {
+  if (!projectId) {
+    throw new Error('Project ID is required.');
+  }
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/projects/${projectId}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to delete project.');
+  }
+};
+
+export const getProjectMembers = async (projectId) => {
+  if (!projectId) return [];
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/projects/${projectId}/members`,
+      getAuthHeaders()
+    );
+    const data = response.data;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.members)) return data.members;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.members)) return data.data.members;
+
+    return [];
+  } catch (error) {
+    handleProjectError(error, 'Failed to load project members.');
+  }
+};
+
+export const addProjectMember = async (projectId, { email, role }) => {
+  if (!projectId) {
+    throw new Error('Project ID is required.');
+  }
+  try {
+    const payload = {
+      email: email?.trim(),
+      role: role || 'CONTRIBUTOR',
+    };
+
+    const response = await axios.post(
+      `${BASE_URL}/projects/${projectId}/members`,
+      payload,
+      getAuthHeaders()
+    );
+    return response.data?.member || response.data?.data || response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to add project member.');
+  }
+};
+
+export const removeProjectMember = async (projectId, memberUserId) => {
+  if (!projectId) {
+    throw new Error('Project ID is required.');
+  }
+  if (!memberUserId) {
+    throw new Error('Member user ID is required.');
+  }
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/projects/${projectId}/members/${memberUserId}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to remove project member.');
+  }
+};
+
+export { getFriendlyErrorMessage };

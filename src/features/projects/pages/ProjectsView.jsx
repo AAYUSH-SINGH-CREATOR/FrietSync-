@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   FiFolder,
   FiPlus,
@@ -14,90 +14,13 @@ import {
 } from 'react-icons/fi';
 import { getMyProjects, getFriendlyErrorMessage } from '../services/projectApi';
 import CreateProjectModal from '../components/CreateProjectModal';
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return 'Not set';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return dateStr;
-  }
-};
-
-const getStatusBadge = (status) => {
-  const norm = (status || '').toUpperCase();
-  switch (norm) {
-    case 'ACTIVE':
-      return {
-        bg: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#34D399] border-emerald-200 dark:border-emerald-800/60',
-        dot: 'bg-emerald-500',
-        label: 'Active',
-      };
-    case 'PLANNING':
-      return {
-        bg: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-[#FBBF24] border-amber-200 dark:border-amber-800/60',
-        dot: 'bg-amber-500',
-        label: 'Planning',
-      };
-    case 'COMPLETED':
-      return {
-        bg: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-[#60A5FA] border-blue-200 dark:border-blue-800/60',
-        dot: 'bg-blue-500',
-        label: 'Completed',
-      };
-    case 'ON_HOLD':
-      return {
-        bg: 'bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]',
-        dot: 'bg-slate-500',
-        label: 'On Hold',
-      };
-    default:
-      return {
-        bg: 'bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]',
-        dot: 'bg-slate-400',
-        label: status || 'General',
-      };
-  }
-};
-
-const getRemainingDaysInfo = (deadlineStr, status) => {
-  if (!deadlineStr || (status || '').toUpperCase() === 'COMPLETED') return null;
-  try {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const deadline = new Date(deadlineStr);
-    deadline.setHours(0, 0, 0, 0);
-    if (isNaN(deadline.getTime())) return null;
-
-    const diffDays = Math.round((deadline - now) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) {
-      return {
-        text: `${Math.abs(diffDays)}d overdue`,
-        className: 'text-rose-600 dark:text-[#F87171] bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60',
-      };
-    }
-    if (diffDays === 0) {
-      return {
-        text: 'Due today',
-        className: 'text-amber-600 dark:text-[#FBBF24] bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60',
-      };
-    }
-    return {
-      text: `${diffDays}d left`,
-      className: 'text-sky-600 dark:text-[#60A5FA] bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800/60',
-    };
-  } catch {
-    return null;
-  }
-};
-
+import {
+  formatDate,
+  getStatusBadge,
+  getRemainingDaysInfo,
+} from '../utils/projectUtils';
 const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
+  const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
   const filter = propFilter || outletContext.projectFilter || 'all';
   const onFilterChange = propOnFilterChange || outletContext.setProjectFilter;
@@ -427,6 +350,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
       {!isLoading && filteredProjects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {filteredProjects.map((project, idx) => {
+            const projectId = project.id || project._id || project.projectId;
             const statusBadge = getStatusBadge(project.status);
             const remainingInfo = getRemainingDaysInfo(project.deadline, project.status);
             const pmEmail =
@@ -438,10 +362,25 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               project.teamLead?.email ||
               '';
 
+            const handleCardClick = () => {
+              if (projectId) {
+                navigate(`/dashboard/projects/${projectId}`);
+              }
+            };
+
             return (
               <div
-                key={project.id || project._id || idx}
-                className="bg-white dark:bg-[#172033] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#293548] shadow-xs hover:shadow-md dark:hover:border-[#3B4B63] transition-all duration-200 flex flex-col justify-between group"
+                key={projectId || idx}
+                role="button"
+                tabIndex={0}
+                onClick={handleCardClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardClick();
+                  }
+                }}
+                className="bg-white dark:bg-[#172033] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#293548] shadow-xs hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-500/50 transition-all duration-200 flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
               >
                 <div>
                   {/* Card Header: Icon + Name + Status */}
