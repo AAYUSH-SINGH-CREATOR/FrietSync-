@@ -12,7 +12,7 @@ import DashboardOverview from './features/dashboard/components/DashboardOverview
 import IssuesView from './features/dashboard/components/IssueView';
 import SprintsView from './features/dashboard/components/SprintsView';
 import MyWorkView from './features/dashboard/components/MyWorkView';
-import ChatsView from './features/chat/components/ChatsView';
+import ChatsView from './features/chat/pages/ChatView';
 import TeamView from './features/dashboard/components/TeamView';
 import SettingsView from './features/dashboard/components/SettingsView';
 import ProjectsView from './features/projects/pages/ProjectsView';
