@@ -30,16 +30,16 @@ const ChatSidebar = ({
       <div className="bg-white dark:bg-[#172033] rounded-3xl p-3.5 sm:p-4 border border-slate-200/80 dark:border-[#293548] shadow-xs shrink-0">
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center">
+            {/* <div className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center">
               <FiFolder size={15} />
-            </div>
-            <h2 className="text-sm font-bold text-slate-800 dark:text-[#F1F5F9] tracking-tight">
+            </div> */}
+            {/* <h2 className="text-sm font-bold text-slate-800 dark:text-[#F1F5F9] tracking-tight">
               Project Channels
-            </h2>
+            </h2> */}
           </div>
-          <span className="text-[11px] font-semibold text-slate-400 dark:text-[#94A3B8] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B]">
+          {/* <span className="text-[11px] font-semibold text-slate-400 dark:text-[#94A3B8] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B]">
             {channelList.length} {channelList.length === 1 ? 'project' : 'projects'}
-          </span>
+          </span> */}
         </div>
 
         <div className="relative flex items-center">
@@ -107,11 +107,10 @@ const ChatSidebar = ({
                     <button
                       type="button"
                       onClick={() => onSelectConversation(project.id)}
-                      className={`w-full flex items-center gap-3 p-2.5 rounded-2xl text-left transition cursor-pointer ${
-                        isSelected
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-2xl text-left transition cursor-pointer ${isSelected
                           ? 'bg-sky-50/80 dark:bg-[#1E3A5F]/50 border border-sky-200/80 dark:border-blue-700/60 shadow-2xs'
                           : 'hover:bg-slate-50 dark:hover:bg-[#1E293B]/70 border border-transparent'
-                      }`}
+                        }`}
                     >
                       <div className="relative shrink-0">
                         <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
@@ -126,11 +125,10 @@ const ChatSidebar = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline justify-between gap-1 mb-0.5">
                           <p
-                            className={`text-sm font-bold truncate ${
-                              isSelected
+                            className={`text-sm font-bold truncate ${isSelected
                                 ? 'text-sky-950 dark:text-[#F1F5F9]'
                                 : 'text-slate-900 dark:text-[#F1F5F9]'
-                            }`}
+                              }`}
                           >
                             {project.name}
                           </p>
@@ -140,11 +138,10 @@ const ChatSidebar = ({
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <p
-                            className={`text-xs truncate ${
-                              isSelected
+                            className={`text-xs truncate ${isSelected
                                 ? 'text-sky-800/80 dark:text-[#CBD5E1]'
                                 : 'text-slate-500 dark:text-[#94A3B8]'
-                            }`}
+                              }`}
                           >
                             {project.lastMessage || 'Team discussion channel'}
                           </p>
