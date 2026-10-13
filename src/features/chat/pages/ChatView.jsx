@@ -1,58 +1,165 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   getProjectChatMessages,
   getCurrentChatUser,
   formatMessageTime,
-} from '../../chat/services/chatApi';
+  getFriendlyErrorMessage,
+} from '../services/chatApi';
+import { getMyProjects } from '../../projects/services/projectApi';
+import { StompChatClient } from '../services/stompClient';
 
-import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiCheckCircle, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
-import AddMemberModal from '../components/AddMemberModal';
-import CreateGroupModal from '../components/CreateGroupModal';
-import { StompChatClient } from '../../chat/services/stompClient';
 
 const ChatsView = () => {
-  const [groups, setGroups] = useState([]);
-  const [people, setPeople] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlProjectId = searchParams.get('projectId');
+
+  const [projects, setProjects] = useState([]);
   const [messagesMap, setMessagesMap] = useState({});
-  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [activeConversationId, setActiveConversationId] = useState(urlProjectId || null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
 
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [toastNotice, setToastNotice] = useState(null); // { type: 'success' | 'error', message: string }
+  const [toastNotice, setToastNotice] = useState(null);
 
   const stompClientRef = useRef(null);
   const unsubscribeRef = useRef(null);
 
-  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [isGroupDetailsOpen, setIsGroupDetailsOpen] = useState(false);
+  const currentUser = useMemo(() => getCurrentChatUser(), []);
 
-const currentUser = "aayush"
-
-  const showToast = (type, message) => {
+  const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
     setTimeout(() => {
       setToastNotice(null);
     }, 4000);
+  }, []);
+
+  const isOutgoingMessage = useCallback((msg) => {
+    if (!msg) return false;
+    if (msg.isOutgoing) return true;
+    if (msg.sender === 'You') return true;
+    if (currentUser.userId && msg.senderId && String(msg.senderId) === String(currentUser.userId)) {
+      return true;
+    }
+    if (currentUser.email && msg.senderEmail && msg.senderEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+      return true;
+    }
+    if (currentUser.name && msg.senderName && msg.senderName.toLowerCase() === currentUser.name.toLowerCase()) {
+      return true;
+    }
+    return false;
+  }, [currentUser]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getMyProjects()
+      .then((data) => {
+        if (!isMounted) return;
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.projects)
+          ? data.projects
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        const normalized = list.map((p) => {
+          const id = String(p.id || p.projectId || p._id || '');
+          return {
+            id,
+            name: p.name || 'Untitled Project',
+            description: p.description || '',
+            status: p.status || 'ACTIVE',
+            isProject: true,
+            isGroup: true,
+            members: Array.isArray(p.members) ? p.members : [],
+            lastMessage: '',
+            timestamp: '',
+            raw: p,
+          };
+        });
+
+        setProjects(normalized);
+
+        setActiveConversationId((prev) => {
+          if (urlProjectId && normalized.some((p) => p.id === urlProjectId)) {
+            return urlProjectId;
+          }
+          if (prev && normalized.some((p) => p.id === prev)) {
+            return prev;
+          }
+          return normalized.length > 0 ? normalized[0].id : null;
+        });
+      })
+      .catch((err) => {
+        console.warn('Failed to load projects for chat:', err);
+        if (isMounted) {
+          showToast('error', getFriendlyErrorMessage(err, 'project'));
+          setProjects([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingChannels(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [urlProjectId, showToast]);
+
+  const handleRefreshProjects = () => {
+    setIsLoadingChannels(true);
+    getMyProjects()
+      .then((data) => {
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.projects)
+          ? data.projects
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        const normalized = list.map((p) => {
+          const id = String(p.id || p.projectId || p._id || '');
+          return {
+            id,
+            name: p.name || 'Untitled Project',
+            description: p.description || '',
+            status: p.status || 'ACTIVE',
+            isProject: true,
+            isGroup: true,
+            members: Array.isArray(p.members) ? p.members : [],
+            lastMessage: '',
+            timestamp: '',
+            raw: p,
+          };
+        });
+
+        setProjects(normalized);
+      })
+      .catch((err) => {
+        showToast('error', getFriendlyErrorMessage(err, 'project'));
+      })
+      .finally(() => {
+        setIsLoadingChannels(false);
+      });
   };
 
-
   const activeChat = useMemo(() => {
-    if (!activeConversationId) return groups[0] || people[0] || null;
-    const foundGroup = groups.find((g) => g.id === activeConversationId);
-    if (foundGroup) return foundGroup;
-    const foundPerson = people.find((p) => p.id === activeConversationId);
-    if (foundPerson) return foundPerson;
-    return groups[0] || people[0] || null;
-  }, [activeConversationId, groups, people]);
+    if (!activeConversationId) return projects[0] || null;
+    return projects.find((p) => p.id === String(activeConversationId)) || projects[0] || null;
+  }, [activeConversationId, projects]);
 
-  const activeProjectId = activeChat?.isProject ? activeChat.id : null;
+  const activeProjectId = activeChat?.id || null;
 
   const activeMessages = useMemo(() => {
     if (!activeChat) return [];
@@ -81,18 +188,15 @@ const currentUser = "aayush"
 
         if (Array.isArray(serverMessages)) {
           const normalized = serverMessages.map((msg) => {
-            const isOutgoing =
-              (msg.senderId && currentUser.userId && msg.senderId === currentUser.userId) ||
-              (msg.senderName && currentUser.name && msg.senderName.toLowerCase() === currentUser.name.toLowerCase()) ||
-              msg.senderName === 'You';
-
+            const outgoing = isOutgoingMessage(msg);
             return {
               id: msg.id || `${Date.now()}-${Math.random()}`,
-              sender: isOutgoing ? 'You' : msg.senderName || 'Member',
+              sender: outgoing ? 'You' : msg.senderName || msg.senderEmail || 'Member',
               senderId: msg.senderId,
-              text: msg.content,
-              timestamp: formatMessageTime(msg.createdAt),
-              isOutgoing,
+              senderEmail: msg.senderEmail,
+              text: msg.content || msg.message || '',
+              timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
+              isOutgoing: outgoing,
             };
           });
 
@@ -113,11 +217,11 @@ const currentUser = "aayush"
 
           if (normalized.length > 0) {
             const last = normalized[normalized.length - 1];
-            setGroups((prev) =>
-              prev.map((g) =>
-                g.id === projectId
-                  ? { ...g, lastMessage: last.text, timestamp: last.timestamp }
-                  : g
+            setProjects((prev) =>
+              prev.map((p) =>
+                p.id === projectId
+                  ? { ...p, lastMessage: last.text, timestamp: last.timestamp }
+                  : p
               )
             );
           }
@@ -149,24 +253,20 @@ const currentUser = "aayush"
     });
 
     stompClientRef.current = client;
-
     client.connect();
 
     const unsub = client.subscribe(`/topic/projects/${projectId}/chat`, (receivedMsg) => {
       if (!isMounted || !receivedMsg) return;
 
-      const isOutgoing =
-        (receivedMsg.senderId && currentUser.userId && receivedMsg.senderId === currentUser.userId) ||
-        (receivedMsg.senderName && currentUser.name && receivedMsg.senderName.toLowerCase() === currentUser.name.toLowerCase()) ||
-        receivedMsg.senderName === 'You';
-
+      const outgoing = isOutgoingMessage(receivedMsg);
       const formatted = {
         id: receivedMsg.id || `${Date.now()}-${Math.random()}`,
-        sender: isOutgoing ? 'You' : receivedMsg.senderName || 'Member',
+        sender: outgoing ? 'You' : receivedMsg.senderName || receivedMsg.senderEmail || 'Member',
         senderId: receivedMsg.senderId,
-        text: receivedMsg.content,
-        timestamp: formatMessageTime(receivedMsg.createdAt),
-        isOutgoing,
+        senderEmail: receivedMsg.senderEmail,
+        text: receivedMsg.content || receivedMsg.message || '',
+        timestamp: formatMessageTime(receivedMsg.createdAt || receivedMsg.timestamp),
+        isOutgoing: outgoing,
       };
 
       setMessagesMap((prev) => {
@@ -179,11 +279,12 @@ const currentUser = "aayush"
           [projectId]: [...currentList, formatted],
         };
       });
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === projectId
-            ? { ...g, lastMessage: formatted.text, timestamp: formatted.timestamp }
-            : g
+
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId
+            ? { ...p, lastMessage: formatted.text, timestamp: formatted.timestamp }
+            : p
         )
       );
     });
@@ -201,10 +302,11 @@ const currentUser = "aayush"
         stompClientRef.current = null;
       }
     };
-  }, [activeProjectId, currentUser.userId, currentUser.name]);
+  }, [activeProjectId, isOutgoingMessage]);
 
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
+    setSearchParams({ projectId: id });
     setIsMobileThreadOpen(true);
     if (!messagesMap[id]) {
       setIsLoadingMessages(true);
@@ -215,160 +317,41 @@ const currentUser = "aayush"
     if (!activeChat || !text || !text.trim()) return;
 
     const trimmedText = text.trim();
-    const time = formatMessageTime(new Date());
 
-    if (activeChat.isProject) {
-      if (stompClientRef.current && stompClientRef.current.connected) {
-        try {
-          stompClientRef.current.publish(`/app/projects/${activeChat.id}/chat`, {
-            content: trimmedText,
-          });
-          return;
-        } catch (publishErr) {
-          console.warn('Failed to publish STOMP message:', publishErr);
-        }
-      } else {
-        console.warn('Cannot send message: WebSocket is connecting or offline.');
-        return;
-      }
-    }
-
-    const newMsg = {
-      id: Date.now(),
-      sender: 'You',
-      text: trimmedText,
-      timestamp: time,
-      isOutgoing: true,
-    };
-
-    setMessagesMap((prev) => ({
-      ...prev,
-      [activeChat.id]: [...(prev[activeChat.id] || []), newMsg],
-    }));
-
-    setPeople((prev) =>
-      prev.map((p) =>
-        p.id === activeChat.id ? { ...p, lastMessage: trimmedText, timestamp: time } : p
-      )
-    );
-  };
-
-  const handleCreateGroup = async (newGroupData) => {
-    try {
-      const created = await createProject({
-        name: newGroupData.name,
-        description: newGroupData.description || '',
-        status: newGroupData.status || 'ACTIVE',
-      });
-
-      const newPid = created?.id || created?._id || created?.projectId || `proj-${Date.now()}`;
-      const newChannel = {
-        id: newPid,
-        name: created?.name || newGroupData.name,
-        description: created?.description || newGroupData.description || '',
-        status: created?.status || 'ACTIVE',
-        isGroup: true,
-        isProject: true,
-        members: [{ name: 'You', email: currentUser.email, role: 'ADMIN', userId: currentUser.userId }],
-        unreadCount: 0,
-        lastMessage: 'Group created. Say hello to start chatting!',
-        timestamp: formatMessageTime(new Date()),
-        createdAt: formatMessageTime(new Date()),
-        rawProject: created,
-      };
-
-      setGroups((prev) => [newChannel, ...prev]);
-      setActiveConversationId(newPid);
-      setIsMobileThreadOpen(true);
-      showToast('success', `Group "${newChannel.name}" was created successfully.`);
-    } catch (err) {
-      showToast('error', getFriendlyErrorMessage(err, 'project'));
-      throw err;
-    }
-  };
-
-  const handleAddMembers = async ({ email, role }) => {
-    const targetGroup = activeChat?.isGroup ? activeChat : groups[0];
-    if (!targetGroup) return;
-
-    try {
-      if (targetGroup.isProject) {
-        await addProjectMember(targetGroup.id, { email, role: role || 'CONTRIBUTOR' });
-
-        const updatedMembers = await getProjectMembers(targetGroup.id);
-        const finalMembers = Array.isArray(updatedMembers) ? updatedMembers : [];
-
-        setGroups((prev) =>
-          prev.map((g) => (g.id === targetGroup.id ? { ...g, members: finalMembers } : g))
-        );
-
-        setPeople((prev) => {
-          if (prev.some((p) => p.email?.toLowerCase() === email.toLowerCase())) return prev;
-          return [
-            ...prev,
-            {
-              id: email,
-              name: email.split('@')[0],
-              email,
-              role: role || 'Contributor',
-              status: 'Online',
-              lastSeen: 'Active teammate',
-              lastMessage: `${role || 'Member'} • ${email}`,
-              timestamp: '',
-              unreadCount: 0,
-              isGroup: false,
-              isProject: false,
-            },
-          ];
+    if (stompClientRef.current && stompClientRef.current.connected) {
+      try {
+        stompClientRef.current.publish(`/app/projects/${activeChat.id}/chat`, {
+          content: trimmedText,
         });
-
-        showToast('success', `${email} was added to ${targetGroup.name}.`);
+      } catch (publishErr) {
+        console.warn('Failed to publish STOMP message:', publishErr);
+        showToast('error', 'Failed to send message. Please check connection.');
       }
-    } catch (err) {
-      showToast('error', getFriendlyErrorMessage(err, 'project'));
-      throw err;
+    } else {
+      showToast('error', 'Cannot send message: Chat WebSocket is connecting or offline.');
     }
   };
-
-  const handleRemoveMember = async (groupId, memberUserId) => {
-    try {
-      const targetGroup = groups.find((g) => g.id === groupId);
-      if (targetGroup?.isProject && memberUserId) {
-        await removeProjectMember(groupId, memberUserId);
-      }
-
-      setGroups((prev) =>
-        prev.map((g) => {
-          if (g.id !== groupId) return g;
-          return {
-            ...g,
-            members: (g.members || []).filter(
-              (m) => (m.userId || m.email || m) !== memberUserId
-            ),
-          };
-        })
-      );
-
-      showToast('success', 'Member was removed from the group.');
-    } catch (err) {
-      showToast('error', getFriendlyErrorMessage(err, 'project'));
-      throw err;
-    }
-  };
-
-  const targetGroupForAddMember = activeChat?.isGroup ? activeChat : groups[0] || null;
 
   return (
     <div className="h-[calc(100vh-8rem)] min-h-[640px] flex flex-col gap-3.5 animate-fadeIn">
       <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
-            Chats
+            Project Chat
           </h1>
           <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
-            Real-time group and team messaging.
+            Real-time messaging for all members of your projects.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleRefreshProjects}
+          title="Refresh projects"
+          className="p-2 rounded-xl bg-white dark:bg-[#172033] border border-slate-200/80 dark:border-[#293548] text-slate-600 dark:text-[#CBD5E1] hover:text-sky-600 dark:hover:text-[#60A5FA] transition shadow-xs cursor-pointer"
+        >
+          <FiRefreshCw size={15} />
+        </button>
       </div>
 
       {toastNotice && (
@@ -397,24 +380,18 @@ const currentUser = "aayush"
         </div>
       )}
 
-<div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-5">
-      
-       <div
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div
           className={`h-full min-h-0 lg:col-span-5 xl:col-span-4 ${
             isMobileThreadOpen ? 'hidden lg:block' : 'block'
           }`}
         >
           <ChatSidebar
-            groups={groups}
-            people={people}
+            projects={projects}
             activeConversationId={activeConversationId}
             onSelectConversation={handleSelectConversation}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
-            onOpenAddMember={() => setIsAddMemberOpen(true)}
             isLoadingChannels={isLoadingChannels}
           />
         </div>
@@ -429,27 +406,11 @@ const currentUser = "aayush"
             messages={activeMessages}
             onSendMessage={handleSendMessage}
             onBackToList={() => setIsMobileThreadOpen(false)}
-            onOpenGroupDetails={() => setIsGroupDetailsOpen(true)}
-            onOpenAddMember={() => setIsAddMemberOpen(true)}
             connectionStatus={connectionStatus}
             isLoadingMessages={isLoadingMessages}
           />
         </div>
-            <AddMemberModal
-        isOpen={isAddMemberOpen}
-        onClose={() => setIsAddMemberOpen(false)}
-        activeChat={targetGroupForAddMember}
-        allPeople={people}
-        onAddMembers={handleAddMembers}
-      />
-
-       <CreateGroupModal
-        isOpen={isCreateGroupOpen}
-        onClose={() => setIsCreateGroupOpen(false)}
-        onCreateGroup={handleCreateGroup}
-      />
       </div>
-    
     </div>
   );
 };
