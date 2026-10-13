@@ -65,8 +65,7 @@ const CreateGroupModal = ({ isOpen, onClose, onCreateGroup }) => {
         className="relative w-full max-w-md bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-slate-100 dark:border-[#293548] p-6 sm:p-7 max-h-[92vh] overflow-y-auto no-scrollbar transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#293548] mb-5">
+\        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#293548] mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shadow-2xs shrink-0">
               <FiFolderPlus size={20} />
@@ -90,7 +89,6 @@ const CreateGroupModal = ({ isOpen, onClose, onCreateGroup }) => {
           </button>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="mb-4 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-[#F87171] text-xs flex items-center gap-2">
             <FiAlertCircle size={16} className="shrink-0" />
@@ -99,7 +97,6 @@ const CreateGroupModal = ({ isOpen, onClose, onCreateGroup }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Group Name */}
           <div>
             <label
               htmlFor="group-name"
@@ -122,7 +119,6 @@ const CreateGroupModal = ({ isOpen, onClose, onCreateGroup }) => {
             />
           </div>
 
-          {/* Description */}
           <div>
             <label
               htmlFor="group-desc"
@@ -140,7 +136,6 @@ const CreateGroupModal = ({ isOpen, onClose, onCreateGroup }) => {
             />
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-[#293548]">
             <button
               type="button"
