@@ -4,6 +4,8 @@ import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
 import AddMemberModal from '../components/AddMemberModal';
+import CreateGroupModal from '../components/CreateGroupModal';
+
 const ChatsView = () => {
   const [groups, setGroups] = useState([]);
   const [people, setPeople] = useState([]);
@@ -434,6 +436,12 @@ const currentUser = "aayush"
         activeChat={targetGroupForAddMember}
         allPeople={people}
         onAddMembers={handleAddMembers}
+      />
+
+       <CreateGroupModal
+        isOpen={isCreateGroupOpen}
+        onClose={() => setIsCreateGroupOpen(false)}
+        onCreateGroup={handleCreateGroup}
       />
       </div>
     
