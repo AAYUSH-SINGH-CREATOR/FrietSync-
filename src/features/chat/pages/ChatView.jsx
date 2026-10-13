@@ -1,10 +1,16 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import {
+  getProjectChatMessages,
+  getCurrentChatUser,
+  formatMessageTime,
+} from '../../chat/services/chatApi';
 
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
 import AddMemberModal from '../components/AddMemberModal';
 import CreateGroupModal from '../components/CreateGroupModal';
+import { StompChatClient } from '../../chat/services/stompClient';
 
 const ChatsView = () => {
   const [groups, setGroups] = useState([]);
@@ -27,7 +33,6 @@ const ChatsView = () => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isGroupDetailsOpen, setIsGroupDetailsOpen] = useState(false);
 
-//   const currentUser = useMemo(() => getCurrentChatUser(), []);
 const currentUser = "aayush"
 
   const showToast = (type, message) => {
