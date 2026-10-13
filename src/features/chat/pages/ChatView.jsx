@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
-
+import AddMemberModal from '../components/AddMemberModal';
 const ChatsView = () => {
   const [groups, setGroups] = useState([]);
   const [people, setPeople] = useState([]);
@@ -411,7 +411,7 @@ const currentUser = "aayush"
             isLoadingChannels={isLoadingChannels}
           />
         </div>
-        
+
         <div
           className={`h-full min-h-0 lg:col-span-7 xl:col-span-8 ${
             isMobileThreadOpen ? 'block' : 'hidden lg:block'
@@ -428,6 +428,13 @@ const currentUser = "aayush"
             isLoadingMessages={isLoadingMessages}
           />
         </div>
+            <AddMemberModal
+        isOpen={isAddMemberOpen}
+        onClose={() => setIsAddMemberOpen(false)}
+        activeChat={targetGroupForAddMember}
+        allPeople={people}
+        onAddMembers={handleAddMembers}
+      />
       </div>
     
     </div>

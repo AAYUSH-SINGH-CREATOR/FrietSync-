@@ -106,7 +106,7 @@ const ChatSidebar = ({
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-200 dark:hover:bg-[#253247] border border-transparent dark:border-[#334155] text-xs font-medium transition cursor-pointer"
             >
               <FiPlus size={13} />
-              <span className="hidden sm:inline">+ Group</span>
+              <span className="hidden sm:inline">Group</span>
             </button>
             <button
               type="button"
@@ -115,7 +115,7 @@ const ChatSidebar = ({
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] hover:bg-slate-200 dark:hover:bg-[#253247] border border-transparent dark:border-[#334155] text-xs font-medium transition cursor-pointer"
             >
               <FiUserPlus size={13} />
-              <span className="hidden sm:inline">+ Member</span>
+              <span className="hidden sm:inline">member</span>
             </button>
           </div>
         </div>
