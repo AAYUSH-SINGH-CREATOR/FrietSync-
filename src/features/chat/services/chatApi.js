@@ -1,11 +1,20 @@
 import axios from 'axios';
-import { getAccessToken } from '../../auth/services/authApi';
+import { getUserProfile } from '../../auth/services/authApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+export const getAuthToken = () => {
+  const rawToken =
+    localStorage.getItem('frietSyncToken') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('token') ||
+    '';
+  return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
+};
 
 const getAuthHeaders = () => {
-  const token = getAccessToken();
+  const token = getAuthToken();
   return {
     headers: {
       'Content-Type': 'application/json',
@@ -14,15 +23,78 @@ const getAuthHeaders = () => {
   };
 };
 
-
 export const getCurrentChatUser = () => {
-  const user = getCurrentUser();
-  return {
-    userId: user.userId,
-    name: user.name || (user.email ? user.email.split('@')[0] : 'You'),
-    email: user.email,
-    role: user.role,
-  };
+  let profile;
+  try {
+    profile = getUserProfile() || {};
+  } catch {
+    profile = {};
+  }
+
+  let storedUser;
+  try {
+    const raw = localStorage.getItem('frietSyncUser');
+    storedUser = raw ? JSON.parse(raw) : {};
+  } catch {
+    storedUser = {};
+  }
+
+  let decoded;
+  try {
+    const token = getAuthToken();
+    if (token) {
+      const parts = token.split('.');
+      if (parts.length >= 2) {
+        const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        decoded = JSON.parse(jsonPayload);
+      } else {
+        decoded = {};
+      }
+    } else {
+      decoded = {};
+    }
+  } catch {
+    decoded = {};
+  }
+
+  const userId =
+    storedUser.userId ||
+    storedUser.id ||
+    decoded.userId ||
+    decoded.id ||
+    decoded.sub ||
+    localStorage.getItem('frietSyncUserId') ||
+    '';
+
+  const email =
+    storedUser.email ||
+    decoded.email ||
+    (typeof decoded.sub === 'string' && decoded.sub.includes('@') ? decoded.sub : '') ||
+    localStorage.getItem('frietSyncEmail') ||
+    localStorage.getItem('email') ||
+    '';
+
+  const name =
+    profile.name ||
+    storedUser.name ||
+    decoded.name ||
+    (email ? email.split('@')[0] : '') ||
+    'You';
+
+  const role =
+    profile.role ||
+    storedUser.role ||
+    decoded.role ||
+    localStorage.getItem('frietSyncRole') ||
+    '';
+
+  return { userId, email, name, role };
 };
 
 export const formatMessageTime = (dateStr) => {

@@ -2,17 +2,28 @@ import { getAccessToken } from '../../auth/services/authApi';
 
 const DEFAULT_HTTP_BASE = import.meta.env.VITE_BASE_URL;
 
-
 export const getWebSocketUrl = () => {
   if (import.meta.env.VITE_WS_URL) {
     return import.meta.env.VITE_WS_URL;
   }
-  return DEFAULT_HTTP_BASE
-    .replace(/^http:/i, 'ws:')
-    .replace(/^https:/i, 'wss:')
-    .replace(/\/api\/v1\/?$/, '/ws');
+  const base = DEFAULT_HTTP_BASE || 'https://frietsync.live/api/v1';
+  let wsUrl = base.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
+  if (wsUrl.includes('/api/v1')) {
+    wsUrl = wsUrl.replace(/\/api\/v1\/?$/, '/ws');
+  } else if (!wsUrl.endsWith('/ws')) {
+    wsUrl = wsUrl.replace(/\/+$/, '') + '/ws';
+  }
+  return wsUrl;
 };
 
+const getToken = () => {
+  const rawToken =
+    localStorage.getItem('frietSyncToken') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('token') ||
+    '';
+  return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : getAccessToken() || '';
+};
 
 export class StompChatClient {
   constructor(options = {}) {
@@ -42,7 +53,7 @@ export class StompChatClient {
     this.intentionalClose = false;
     this.clearReconnectTimer();
 
-    const token = getAccessToken();
+    const token = getToken();
     if (!token) {
       this.updateStatus('unauthorized');
       if (this.onError) this.onError(new Error('No access token available for chat authentication'));
@@ -64,7 +75,8 @@ export class StompChatClient {
         'CONNECT',
         'accept-version:1.2',
         `Authorization:Bearer ${token}`,
-        'heart-beat:10000,10000',
+        `passcode:${token}`,
+        'heart-beat:0,0',
         '',
         '',
       ].join('\n') + '\0';
@@ -174,6 +186,7 @@ export class StompChatClient {
         try {
           parsedBody = JSON.parse(body);
         } catch {
+          // Keep raw string body if JSON parsing fails
         }
 
         for (const [id, sub] of this.subscriptions.entries()) {
@@ -236,6 +249,7 @@ export class StompChatClient {
         try {
           this.ws.send(unsubFrame);
         } catch {
+          // Socket might already be closed
         }
       }
       this.subscriptions.delete(subId);
@@ -274,6 +288,7 @@ export class StompChatClient {
         }
         this.ws.close();
       } catch {
+        // Socket might already be closed
       }
       this.ws = null;
     }
