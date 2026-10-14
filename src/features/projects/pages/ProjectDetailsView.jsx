@@ -336,14 +336,14 @@ const ProjectDetailsView = () => {
                     </span>
                   )}
                 </div>
-                {project.workspaceId && (
+                {/* {project.workspaceId && (
                   <span
                     className="text-xs font-mono text-slate-400 dark:text-[#64748B] block mt-1"
                     title={`Workspace: ${project.workspaceId}`}
                   >
                     Workspace: {project.workspaceId}
                   </span>
-                )}
+                )} */}
               </div>
             </div>
           </div>
