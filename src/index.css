@@ -87,3 +87,19 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #3B4B63;
 }
+
+.auththeme {
+  color-scheme: light;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.auththeme input {
+  background-color: #ffffff;
+  color: #1f2937;
+  border-color: #d1d5db;
+}
+
+.auththeme input::placeholder {
+  color: #9ca3af;
+}

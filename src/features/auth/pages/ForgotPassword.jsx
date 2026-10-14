@@ -52,8 +52,9 @@ const ForgotPassword = () => {
       setFieldErrors({});
       setShowRequirements(false);
     }
-     else if (window.history.state && window.history.state.idx > 0) {
-      navigate(-1); }  
+    else if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    }
     else {
       navigate('/login');
     }
@@ -105,7 +106,7 @@ const ForgotPassword = () => {
       setTimeout(() => setResendStatus(''), 4000);
     } catch (err) {
       setResendStatus('');
-        const status = err.response?.status || err.status;
+      const status = err.response?.status || err.status;
       if (status === 429) {
         setErrorMessage('Too many requests. Please wait a moment');
       } else if (status >= 500) {
@@ -166,7 +167,7 @@ const ForgotPassword = () => {
       sessionStorage.removeItem('forgot_password_email');
       navigate('/login');
     } catch (error) {
-        const status = error.response?.status || error.status;
+      const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 
       if (
@@ -221,6 +222,7 @@ const ForgotPassword = () => {
                 if (errorMessage) setErrorMessage('');
               }}
               error={fieldErrors.email}
+              className='auththeme'
             />
 
             <div className="pt-2 sm:pt-3">
@@ -292,6 +294,7 @@ const ForgotPassword = () => {
 
             <div className="relative text-left">
               <Input
+                className='auththeme'
                 id="newPassword"
                 label="New Password"
                 type="password"
@@ -358,6 +361,7 @@ const ForgotPassword = () => {
 
             <div className="text-left">
               <Input
+                className='auththeme'
                 id="confirmPassword"
                 label="Confirm Password"
                 type="password"

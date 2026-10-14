@@ -159,6 +159,7 @@ const Signup = () => {
             value={formData.name}
             onChange={handleChange}
             error={fieldErrors.name}
+            className='auththeme'
           />
 
           <Input
@@ -169,6 +170,7 @@ const Signup = () => {
             value={formData.email}
             onChange={handleChange}
             error={fieldErrors.email}
+            className='auththeme'
           />
 
           <div className="relative">
@@ -179,6 +181,7 @@ const Signup = () => {
               placeholder="Enter Password"
               value={formData.password}
               onChange={handleChange}
+              className='auththeme'
               onFocus={() => {
                 if (formData.password.length > 0 && !isPasswordValid) {
                   setShowRequirements(true);
@@ -228,6 +231,7 @@ const Signup = () => {
             placeholder="Re-enter Password"
             value={formData.confirmPassword}
             onChange={handleChange}
+            className='auththeme'
             error={fieldErrors.confirmPassword}
           />
 

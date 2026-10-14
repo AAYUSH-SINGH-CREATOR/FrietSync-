@@ -63,7 +63,7 @@ const Login = () => {
     try {
       await loginUser(formData);
       sessionStorage.removeItem('login_form');
-  try {
+      try {
         const ws = await getMyWorkspace();
         if (ws && (ws.name || ws.id || ws._id)) {
           navigate('/dashboard');
@@ -72,7 +72,8 @@ const Login = () => {
         }
       } catch {
         navigate('/create-workspace');
-      }    } catch (error) {
+      }
+    } catch (error) {
       const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 
@@ -130,6 +131,7 @@ const Login = () => {
             value={formData.email}
             onChange={handleChange}
             error={fieldErrors.email}
+            className='auththeme'
           />
 
           <div>
@@ -141,6 +143,8 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               error={fieldErrors.password}
+              className='auththeme'
+
             />
 
             <div className="text-right mt-1.5">
