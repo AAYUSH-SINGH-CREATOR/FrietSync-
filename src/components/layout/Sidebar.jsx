@@ -17,15 +17,15 @@ import { IoChatboxEllipsesOutline, IoMailOutline } from 'react-icons/io5';
 
 const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
   <>
-    <svg
+      <svg
       className="absolute top-1/2 -translate-y-1/2 pointer-events-none z-10 text-[#eaedf1] dark:text-[#0F172A]"
-      style={{ right: '-2px', width: 56, height: 76 }}
-      viewBox="0 0 56 76"
+      style={{ right: '-2px', width: 60, height: 96 }}
+      viewBox="0 0 60 96"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <path d="M 56 0 C 34 6, 4 16, 4 38 C 4 60, 34 70, 56 76 Z" />
+      <path d="M 60 4.1 L 58 4.1 A 14 14 0 0 1 43.05 18.07 A 30 30 0 1 0 43.05 77.93 A 14 14 0 0 1 58 91.9 L 60 91.9 Z" />
     </svg>
 
     <div
