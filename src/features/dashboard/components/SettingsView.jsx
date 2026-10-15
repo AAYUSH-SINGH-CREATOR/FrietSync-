@@ -25,7 +25,6 @@ const SettingsView = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-
   const [renameInput, setRenameInput] = useState('');
   const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 

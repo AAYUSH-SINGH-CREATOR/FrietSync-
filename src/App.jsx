@@ -9,7 +9,7 @@ import PublicRoute from './features/auth/components/PublicRoute';
 import Dashboard from './features/dashboard/pages/Dashboard';
 import CreateWorkspace from './features/dashboard/pages/CreateWorkspace';
 import DashboardOverview from './features/dashboard/components/DashboardOverview';
-import IssuesView from './features/dashboard/components/IssueView';
+import IssuesView from './features/dashboard/components/IssuesView';
 import SprintsView from './features/dashboard/components/SprintsView';
 import MyWorkView from './features/dashboard/components/MyWorkView';
 import ChatsView from './features/chat/pages/ChatView';
