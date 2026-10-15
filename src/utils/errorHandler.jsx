@@ -38,7 +38,7 @@ export const getFriendlyErrorMessage = (error, context = '') => {
     rawMessage.includes('failed to fetch') ||
     rawMessage.includes('network')
   ) {
-    return 'Unablee to connect to the server. Please check your internet connectionn.';
+    return 'Unable to connect to the server. Please check your internet connection.';
   }
   if (status === 400) {
     if (context === 'invite' && rawMessage.includes('yourself')) {
