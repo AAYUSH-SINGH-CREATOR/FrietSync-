@@ -103,7 +103,7 @@ export const leaveWorkspace = async () => {
   try {
     const headers = getAuthHeaders();
     try {
-      const response = await axios.post(
+      const response = await axios.delete(
         `${BASE_URL}/users/workspace/leave`,
         {},
         headers

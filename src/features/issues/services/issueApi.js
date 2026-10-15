@@ -3,7 +3,8 @@ import { getAccessToken } from '../../auth/services/authApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-etAuthHeaders = (params = {}) => {
+
+const getAuthHeaders = (params = {}) => {
   const token = getAccessToken();
   return {
     headers: {

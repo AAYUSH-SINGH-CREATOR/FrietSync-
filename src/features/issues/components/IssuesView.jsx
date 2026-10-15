@@ -39,7 +39,6 @@ const IssuesView = () => {
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoadingProjects(true);
 
     getMyProjects()
       .then((projectList) => {
@@ -71,72 +70,93 @@ const IssuesView = () => {
     return map;
   }, [projects]);
 
-  const loadIssues = useCallback(async () => {
-    if (isLoadingProjects) return;
-
-    setIsLoadingIssues(true);
-    setError('');
-
-    try {
-      if (selectedProjectId === 'all') {
-        if (projects.length === 0) {
-          setIssues([]);
-          setIsLoadingIssues(false);
-          return;
-        }
-
-        const fetchPromises = projects.map(async (p) => {
-          const pid = p.id || p._id || p.projectId;
-          if (!pid) return [];
-          try {
-            const list = await getProjectIssues(pid);
-            const safeList = Array.isArray(list) ? list : [];
-            return safeList.map((item) => ({
-              ...item,
-              projectId: pid,
-              projectName: p.name || 'Project',
-            }));
-          } catch {
-            return [];
-          }
-        });
-
-        const results = await Promise.allSettled(fetchPromises);
-        const aggregated = [];
-        results.forEach((res) => {
-          if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-            aggregated.push(...res.value);
-          }
-        });
-
-        setIssues(aggregated);
-      } else {
-        const list = await getProjectIssues(selectedProjectId);
-        const safeList = Array.isArray(list) ? list : [];
-        const currentProjectName = projectMap.get(String(selectedProjectId)) || 'Project';
-        const formatted = safeList.map((item) => ({
-          ...item,
-          projectId: selectedProjectId,
-          projectName: currentProjectName,
-        }));
-        setIssues(formatted);
-      }
-    } catch (err) {
-      setIssues([]);
-      setError(getFriendlyErrorMessage(err, 'issue'));
-    } finally {
-      setIsLoadingIssues(false);
-    }
-  }, [projects, selectedProjectId, isLoadingProjects, projectMap]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
+    if (isLoadingProjects) return;
+    let isMounted = true;
 
-  const handleIssueCreated = (created, createdProjectId) => {
+    const fetchIssues = async () => {
+      try {
+        if (selectedProjectId === 'all') {
+          if (projects.length === 0) {
+            await Promise.resolve();
+            if (isMounted) {
+              setIssues([]);
+              setIsLoadingIssues(false);
+            }
+            return;
+          }
+
+          const fetchPromises = projects.map(async (p) => {
+            const pid = p.id || p._id || p.projectId;
+            if (!pid) return [];
+            try {
+              const list = await getProjectIssues(pid);
+              const safeList = Array.isArray(list) ? list : [];
+              return safeList.map((item) => ({
+                ...item,
+                projectId: pid,
+                projectName: p.name || 'Project',
+              }));
+            } catch {
+              return [];
+            }
+          });
+
+          const results = await Promise.allSettled(fetchPromises);
+          if (!isMounted) return;
+
+          const aggregated = [];
+          results.forEach((res) => {
+            if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+              aggregated.push(...res.value);
+            }
+          });
+
+          setIssues(aggregated);
+          setError('');
+        } else {
+          const list = await getProjectIssues(selectedProjectId);
+          if (!isMounted) return;
+
+          const safeList = Array.isArray(list) ? list : [];
+          const currentProjectName = projectMap.get(String(selectedProjectId)) || 'Project';
+          const formatted = safeList.map((item) => ({
+            ...item,
+            projectId: selectedProjectId,
+            projectName: currentProjectName,
+          }));
+          setIssues(formatted);
+          setError('');
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setIssues([]);
+        setError(getFriendlyErrorMessage(err, 'issue'));
+      } finally {
+        if (isMounted) {
+          setIsLoadingIssues(false);
+        }
+      }
+    };
+
+    fetchIssues();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [projects, selectedProjectId, isLoadingProjects, projectMap, refreshTrigger]);
+
+  const handleRefreshIssues = () => {
+    setIsLoadingIssues(true);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleIssueCreated = (created) => {
     const title = created?.title || 'New issue';
     showToast('success', `"${title}" was created successfully!`);
-    loadIssues();
+    handleRefreshIssues();
   };
 
   const counts = useMemo(() => {
@@ -202,7 +222,7 @@ const IssuesView = () => {
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
-            onClick={loadIssues}
+            onClick={handleRefreshIssues}
             disabled={isLoadingIssues}
             title="Refresh issues"
             className="w-10 h-10 rounded-2xl bg-white dark:bg-[#172033] border border-slate-200/90 dark:border-[#293548] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] flex items-center justify-center shadow-xs transition cursor-pointer disabled:opacity-50"
@@ -258,7 +278,7 @@ const IssuesView = () => {
           </div>
           <button
             type="button"
-            onClick={loadIssues}
+            onClick={handleRefreshIssues}
             className="text-xs font-semibold underline text-rose-700 dark:text-[#F87171] hover:text-rose-900 cursor-pointer"
           >
             Retry
@@ -368,8 +388,8 @@ const IssuesView = () => {
         </div>
       ) : filteredIssues.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredIssues.map((issue) => {
-            const issueKey = issue.id || issue._id || issue.issueId || `${issue.title}-${Math.random()}`;
+          {filteredIssues.map((issue, idx) => {
+            const issueKey = issue.id || issue._id || issue.issueId || `${issue.title || 'issue'}-${idx}`;
             return (
               <IssueCard
                 key={issueKey}
