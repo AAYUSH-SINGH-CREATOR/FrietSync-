@@ -4,8 +4,49 @@ import {
   FiSend,
   FiArrowLeft,
   FiFolder,
+  FiPaperclip,
+  FiSearch,
+  FiMoreVertical,
   FiExternalLink,
 } from 'react-icons/fi';
+import chatBackground from '../../../assets/chatbgellipse.svg';
+
+const SENDER_AVATAR_COLORS = [
+  'bg-[#6366f1]', // indigo
+  'bg-[#2563eb]', // blue
+  'bg-[#0284c7]', // sky
+  'bg-[#0d9488]', // teal
+  'bg-[#16a34a]', // green
+  'bg-[#ea580c]', // orange
+  'bg-[#db2777]', // pink
+  'bg-[#9333ea]', // purple
+];
+
+const getSenderAvatarColor = (str = '') => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return SENDER_AVATAR_COLORS[Math.abs(hash) % SENDER_AVATAR_COLORS.length];
+};
+
+const getInitials = (name = '') => {
+  if (!name || typeof name !== 'string') return '?';
+  const clean = name.trim();
+  if (!clean) return '?';
+  const parts = clean.split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const formatMessageTimestamp = (timeStr) => {
+  if (!timeStr) return '';
+  if (typeof timeStr !== 'string') return String(timeStr);
+  if (timeStr.includes(',')) {
+    return timeStr.split(',')[1].trim();
+  }
+  return timeStr;
+};
 
 const ChatArea = ({
   activeChat,
@@ -14,13 +55,19 @@ const ChatArea = ({
   onBackToList,
   connectionStatus = 'disconnected',
   isLoadingMessages = false,
+  currentUser,
 }) => {
   const navigate = useNavigate();
   const [inputText, setInputText] = useState('');
-  const messagesEndRef = useRef(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const messagesContainerRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const messageHistory = messagesContainerRef.current;
+    messageHistory?.scrollTo({
+      top: messageHistory.scrollHeight,
+      behavior: 'smooth',
+    });
   }, [messages, activeChat?.id]);
 
   const handleSend = (e) => {
@@ -42,198 +89,273 @@ const ChatArea = ({
 
   if (!activeChat) {
     return (
-      <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl border border-slate-200/80 dark:border-[#303030] h-full flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-500 dark:text-[#60A5FA] flex items-center justify-center mb-4">
+      <div className="relative bg-white dark:bg-[#161822] rounded-3xl border border-slate-200/80 dark:border-[#232838] shadow-xs h-full flex flex-col items-center justify-center p-8 text-center transition-colors">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 overflow-hidden z-0"
+        >
+          <div
+            className="absolute -top-16 -right-16 w-[450px] sm:w-[540px] h-[360px] sm:h-[430px] opacity-20 dark:opacity-25 select-none"
+            style={{
+              backgroundImage: `url(${chatBackground})`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'top right',
+              backgroundSize: 'contain',
+            }}
+          />
+        </div>
+        <div className="relative z-10 w-16 h-16 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-500 dark:text-[#38bdf8] flex items-center justify-center mb-4 shadow-sm">
           <FiFolder size={28} />
         </div>
-        <h3 className="text-lg font-bold text-slate-800 dark:text-[#F1F5F9]">Select a project channel</h3>
-        <p className="text-xs text-slate-400 dark:text-[#b3b3b3] mt-1 max-w-sm">
+        <h3 className="relative z-10 text-lg font-bold text-slate-800 dark:text-white">Select a project channel</h3>
+        <p className="relative z-10 text-xs text-slate-400 dark:text-[#94a3b8] mt-1 max-w-sm">
           Choose a project from the sidebar to chat live with project members.
         </p>
       </div>
     );
   }
 
-  const initials = (activeChat.name || 'PR')
-    .trim()
-    .split(/\s+/)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const projectInitials = getInitials(activeChat.name || 'PR');
+  const userInitials = getInitials(currentUser?.name || 'You');
 
   return (
-    <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl border border-slate-200/80 dark:border-[#303030] shadow-xs flex flex-col h-full overflow-hidden transition-colors">
+    <div className="relative bg-white dark:bg-[#161822] rounded-3xl border border-slate-200/80 dark:border-[#232838] shadow-xs flex flex-col h-full min-h-0 overflow-hidden transition-colors">
+      {/* Background Glow from chatbgellipse.svg */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden z-0 select-none"
+      >
+        <div
+          className="absolute -top-16 -right-16 w-[480px] sm:w-[560px] h-[380px] sm:h-[450px] opacity-25 dark:opacity-35 select-none transition-opacity"
+          style={{
+            backgroundImage: `url(${chatBackground})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'top right',
+            backgroundSize: 'contain',
+          }}
+        />
+      </div>
+
       {/* Header */}
-      <div className="px-5 py-3.5 border-b border-slate-100 dark:border-[#303030] flex items-center justify-between shrink-0">
+      <div className="relative z-20 px-4 sm:px-6 py-3.5 border-b border-slate-200/80 dark:border-[#232838] bg-white/90 dark:bg-[#161822]/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           {onBackToList && (
             <button
               type="button"
               onClick={onBackToList}
-              className="lg:hidden p-1.5 -ml-1 text-slate-500 dark:text-[#b3b3b3] hover:text-slate-800 dark:hover:text-[#F1F5F9] rounded-xl hover:bg-slate-100 dark:hover:bg-[#242424] cursor-pointer"
-              title="Back to channel list"
+              className="md:hidden p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-[#20232c] cursor-pointer"
+              title="Back to conversation list"
             >
               <FiArrowLeft size={18} />
             </button>
           )}
 
+          {/* Project Avatar */}
           <div className="relative shrink-0">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-              {initials}
+              {projectInitials}
             </div>
-            <span
-              title={connectionStatus === 'connected' ? 'Connected' : 'Offline'}
-              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#1d1d1d] ${
-                connectionStatus === 'connected'
-                  ? 'bg-emerald-500'
-                  : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
-                  ? 'bg-amber-500'
-                  : 'bg-slate-400'
-              }`}
-            />
           </div>
 
+          {/* Project Details */}
           <div className="min-w-0 text-left">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9] truncate">
-                {activeChat.name}
-              </h2>
-              {/* <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-[#C084FC] border border-purple-100 dark:border-purple-800/40">
-                Project
-              </span> */}
-
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate tracking-tight">
+              {activeChat.name}
+            </h2>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5">
+              {activeChat.members?.length > 0 && (
+                <span>{activeChat.members.length} Members</span>
+              )}
+              {activeChat.members?.length > 0 && <span className="opacity-60">•</span>}
               {connectionStatus === 'connected' ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#34D399] border border-emerald-200 dark:border-emerald-800/60 text-[10px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live
+                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-[#34d399] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  online
                 </span>
               ) : connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-[#FBBF24] border border-amber-200 dark:border-amber-800/60 text-[10px] font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                  Connecting...
+                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-[#fbbf24] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  connecting
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#242424] text-slate-500 dark:text-[#b3b3b3] text-[10px]">
-                  Offline
+                <span className="inline-flex items-center gap-1 text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  offline
                 </span>
               )}
             </div>
-
-            <p className="text-xs text-slate-400 dark:text-[#b3b3b3] truncate mt-0.5">
-              {activeChat.description || 'Project team channel'}
-            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Header Right Actions */}
+        <div className="relative flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={() => navigate(`/dashboard/projects/${activeChat.id}`)}
-            title="Open project details"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#242424] dark:hover:bg-[#303030] text-slate-700 dark:text-[#e0e0e0] text-xs font-semibold border border-transparent dark:border-[#3a3a3a] transition cursor-pointer"
+            title="Search in conversation"
+            aria-label="Search in conversation"
+            className="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 dark:text-[#94a3b8] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#20232c] flex items-center justify-center transition cursor-pointer"
           >
-            <FiExternalLink size={13} />
-            <span className="hidden sm:inline">Project Details</span>
+            <FiSearch size={18} />
           </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMenu((prev) => !prev)}
+              title="More options"
+              aria-label="More options"
+              className="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 dark:text-[#94a3b8] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#20232c] flex items-center justify-center transition cursor-pointer"
+            >
+              <FiMoreVertical size={18} />
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-[#1f2128] border border-slate-200 dark:border-[#2d303b] shadow-xl py-1.5 z-30 animate-fadeIn">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    navigate(`/dashboard/projects/${activeChat.id}`);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#282b36] transition cursor-pointer"
+                >
+                  <FiExternalLink size={14} className="text-sky-500 dark:text-[#38bdf8]" />
+                  Project Details
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-4 sm:p-6 space-y-4">
+      {/* Messages Scroll Area */}
+      <div ref={messagesContainerRef} className="relative z-10 flex-1 min-h-0 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-4 sm:p-6 space-y-5">
         {isLoadingMessages ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 dark:text-[#b3b3b3]">
-            <span className="w-6 h-6 border-2 border-sky-600/30 dark:border-blue-500/30 border-t-sky-600 dark:border-t-blue-500 rounded-full animate-spin mb-2" />
-            <p className="text-xs">Loading project messages...</p>
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 dark:text-[#94a3b8]">
+            <span className="w-6 h-6 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-2" />
+            <p className="text-xs">Loading messages...</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-500 dark:text-[#60A5FA] mx-auto flex items-center justify-center mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#20232c] text-sky-500 dark:text-[#38bdf8] mx-auto flex items-center justify-center mb-3">
               <FiFolder size={22} />
             </div>
-            <p className="text-sm font-semibold text-slate-700 dark:text-[#F1F5F9]">
+            <p className="text-sm font-semibold text-slate-800 dark:text-white">
               No messages yet
             </p>
-            <p className="text-xs text-slate-400 dark:text-[#b3b3b3] mt-1 max-w-xs">
+            <p className="text-xs text-slate-400 dark:text-[#94a3b8] mt-1 max-w-xs">
               Say hello to start the discussion with members of {activeChat.name}!
             </p>
           </div>
         ) : (
           messages.map((msg) => {
             const isOutgoing = !!msg.isOutgoing;
+            const senderInitial = isOutgoing
+              ? userInitials
+              : getInitials(msg.sender || 'Member');
+            const avatarColorClass = isOutgoing
+              ? 'bg-[#c026d3]'
+              : getSenderAvatarColor(msg.sender || 'Member');
+
+            if (isOutgoing) {
+              return (
+                <div key={msg.id} className="flex min-w-0 items-start justify-end gap-2.5 sm:gap-3 ml-auto max-w-[90%] sm:max-w-[75%]">
+                  <div className="flex flex-col items-end min-w-0">
+                    <div className="flex items-center gap-2 mb-1 mr-1">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        You
+                      </span>
+                      <span className="text-[11px] text-slate-400 dark:text-[#858585]">
+                        {formatMessageTimestamp(msg.timestamp)}
+                      </span>
+                    </div>
+                    <div className="min-w-0 max-w-full bg-slate-100 dark:bg-[#232733] border border-slate-200/80 dark:border-[#2e3444]/60 text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tr-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                    </div>
+                  </div>
+
+                  {/* Outgoing Avatar */}
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 mt-0.5 shadow-2xs ${avatarColorClass}`}
+                  >
+                    {senderInitial}
+                  </div>
+                </div>
+              );
+            }
 
             return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${isOutgoing ? 'items-end' : 'items-start'}`}
-              >
-                {!isOutgoing && msg.sender && (
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-[#b3b3b3] mb-1 ml-2">
-                    {msg.sender}
-                  </span>
-                )}
-
+              <div key={msg.id} className="flex min-w-0 items-start gap-2.5 sm:gap-3 max-w-[90%] sm:max-w-[75%]">
+                {/* Incoming Avatar */}
                 <div
-                  className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words shadow-2xs max-w-[85%] sm:max-w-[70%] ${
-                    isOutgoing
-                      ? 'bg-sky-600 dark:bg-blue-600 text-white rounded-tr-xs'
-                      : 'bg-slate-100 dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] rounded-tl-xs'
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 mt-0.5 shadow-2xs ${avatarColorClass}`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  {senderInitial}
                 </div>
 
-                <span
-                  className={`text-[11px] text-slate-400 dark:text-[#b3b3b3] mt-1 ${
-                    isOutgoing ? 'mr-1 text-right' : 'ml-1 text-left'
-                  }`}
-                >
-                  {msg.timestamp}
-                </span>
+                <div className="flex min-w-0 max-w-full flex-col items-start">
+                  <div className="flex items-center gap-2 mb-1 ml-1">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {msg.sender}
+                    </span>
+                    <span className="text-[11px] text-slate-400 dark:text-[#858585]">
+                      {formatMessageTimestamp(msg.timestamp)}
+                    </span>
+                  </div>
+                  <div className="min-w-0 max-w-full bg-slate-100 dark:bg-[#232733] border border-slate-200/80 dark:border-[#2e3444]/60 text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tl-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                  </div>
+                </div>
               </div>
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-3 sm:p-4 border-t border-slate-100 dark:border-[#303030] bg-white dark:bg-[#1d1d1d]">
+      {/* Composer */}
+      <div className="relative z-20 shrink-0 p-3.5 sm:p-4 pb-[max(0.85rem,env(safe-area-inset-bottom))] border-t border-slate-200/80 dark:border-[#232838] bg-white/95 dark:bg-[#161822]/95 backdrop-blur-md">
         <form
           onSubmit={handleSend}
-          className="flex items-center gap-2 bg-slate-50 dark:bg-[#242424] border border-slate-200 dark:border-[#3a3a3a] rounded-2xl p-1.5 sm:p-2 pl-3.5 sm:pl-4 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/40 transition"
+          className="flex items-center gap-2.5 bg-slate-100 dark:bg-[#1c1f2b] border border-slate-200 dark:border-[#2d3448] rounded-full px-4 py-2 sm:py-2.5 focus-within:border-sky-500 dark:focus-within:border-[#38bdf8]/60 focus-within:ring-2 focus-within:ring-sky-500/10 dark:focus-within:ring-[#38bdf8]/20 transition-all shadow-inner"
         >
+          <button
+            type="button"
+            title="Attach file (not configured)"
+            aria-label="Attach file"
+            className="text-slate-400 dark:text-[#858585] hover:text-slate-600 dark:hover:text-slate-200 transition p-1 cursor-pointer shrink-0"
+          >
+            <FiPaperclip size={18} />
+          </button>
+
           <input
             type="text"
             maxLength={2000}
             placeholder={
               connectionStatus !== 'connected'
                 ? `Connecting to project chat (${connectionStatus})...`
-                : `Message #${activeChat.name}...`
+                : 'Type here....'
             }
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent px-2 py-1 text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] outline-none"
+            className="flex-1 bg-transparent px-1 py-1 text-xs sm:text-sm text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#6b7280] outline-none"
           />
 
-          {inputText.length > 1800 && (
-            <span className="text-[10px] text-slate-400 shrink-0">
-              {inputText.length}/2000
-            </span>
-          )}
+          <span className="text-[10px] text-slate-400 dark:text-[#858585] shrink-0 tabular-nums whitespace-nowrap">
+            {inputText.length} / 2000
+          </span>
 
           <button
             type="submit"
             disabled={!inputText.trim() || connectionStatus !== 'connected'}
             title={
               connectionStatus !== 'connected'
-                ? `Connecting to project chat (${connectionStatus})...`
+                ? `Connecting (${connectionStatus})...`
                 : 'Send message'
             }
-            className="p-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white shadow-sm shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            aria-label="Send message"
+            className="p-1.5 text-sky-500 dark:text-[#38bdf8] hover:text-sky-600 dark:hover:text-[#7dd3fc] active:scale-95 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           >
-            <FiSend size={16} />
+            <FiSend size={18} />
           </button>
         </form>
       </div>
@@ -242,3 +364,4 @@ const ChatArea = ({
 };
 
 export default ChatArea;
+

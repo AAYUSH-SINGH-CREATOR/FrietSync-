@@ -9,7 +9,7 @@ import {
 import { getMyProjects } from '../../projects/services/projectApi';
 import { StompChatClient } from '../services/stompClient';
 
-import { FiCheckCircle, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
 
@@ -21,7 +21,7 @@ const ChatsView = () => {
   const [messagesMap, setMessagesMap] = useState({});
   const [activeConversationId, setActiveConversationId] = useState(urlProjectId || null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
+  const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(Boolean(urlProjectId));
 
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -333,30 +333,10 @@ const ChatsView = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] min-h-[640px] flex flex-col gap-3.5 animate-fadeIn">
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
-            Project Chat
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-0.5">
-            Real-time messaging for all members of your projects.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleRefreshProjects}
-          title="Refresh projects"
-          className="p-2 rounded-xl bg-white dark:bg-[#1d1d1d] border border-slate-200/80 dark:border-[#303030] text-slate-600 dark:text-[#e0e0e0] hover:text-sky-600 dark:hover:text-[#60A5FA] transition shadow-xs cursor-pointer"
-        >
-          <FiRefreshCw size={15} />
-        </button>
-      </div>
-
+    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] flex flex-col animate-fadeIn  bg-[#171717] rounded-2xl p-2 overflow-y-hidden">
       {toastNotice && (
         <div
-          className={`p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${
+          className={`mb-3 p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${
             toastNotice.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-[#34D399]'
               : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-[#F87171]'
@@ -380,10 +360,10 @@ const ChatsView = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4 sm:gap-5">
         <div
-          className={`h-full min-h-0 lg:col-span-5 xl:col-span-4 ${
-            isMobileThreadOpen ? 'hidden lg:block' : 'block'
+          className={`h-full min-h-0 w-full md:w-[310px] lg:w-[330px] shrink-0 ${
+            isMobileThreadOpen ? 'hidden md:flex' : 'flex'
           }`}
         >
           <ChatSidebar
@@ -393,12 +373,13 @@ const ChatsView = () => {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             isLoadingChannels={isLoadingChannels}
+            onRefresh={handleRefreshProjects}
           />
         </div>
 
         <div
-          className={`h-full min-h-0 lg:col-span-7 xl:col-span-8 ${
-            isMobileThreadOpen ? 'block' : 'hidden lg:block'
+          className={`h-full min-h-0 flex-1 min-w-0 ${
+            isMobileThreadOpen ? 'flex' : 'hidden md:flex'
           }`}
         >
           <ChatArea
@@ -408,6 +389,7 @@ const ChatsView = () => {
             onBackToList={() => setIsMobileThreadOpen(false)}
             connectionStatus={connectionStatus}
             isLoadingMessages={isLoadingMessages}
+            currentUser={currentUser}
           />
         </div>
       </div>
