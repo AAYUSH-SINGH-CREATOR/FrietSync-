@@ -123,7 +123,7 @@ const ProfileView = () => {
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn max-w-[1098px] mx-auto pb-12">
+    <div className="w-full min-w-0 space-y-4 animate-fadeIn pb-12">
       <div>
         <Link
           to="/dashboard/settings"
@@ -149,8 +149,8 @@ const ProfileView = () => {
         <form onSubmit={handleSubmit} className="px-6 sm:px-10 lg:px-16 pb-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             <div className="lg:col-span-4 flex flex-col items-center lg:items-start">
-              <div className="-mt-[88px] relative w-[247px] shrink-0 pb-7">
-                <div className="w-[247px] h-[327px] rounded-2xl overflow-hidden relative border border-white/10 shadow-2xl bg-[#1e293b]">
+              <div className="-mt-[88px] relative w-full max-w-[247px] shrink-0 pb-7">
+                <div className="w-full h-[327px] rounded-2xl overflow-hidden relative border border-white/10 shadow-2xl bg-[#1e293b]">
                   <img
                     src={profile.avatarUrl || defaultAvatar}
                     alt={profile.fullName || 'User Portrait'}
@@ -187,7 +187,7 @@ const ProfileView = () => {
                 </div>
               </div>
 
-              <div className="w-[247px] mt-4">
+              <div className="w-full max-w-[247px] mt-4">
                 <div className="flex items-center gap-2 text-white font-semibold text-lg mb-3">
                   <FiStar size={18} className="text-white" />
                   <span>Skills</span>
