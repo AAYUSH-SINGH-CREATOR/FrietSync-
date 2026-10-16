@@ -5,7 +5,7 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { loginUser, getFriendlyErrorMessage } from '../services/authApi';
 import loginImg from '../../../assets/loginimg.svg';
-import { getMyWorkspace } from '../../../services/workspaceApi';
+import { getMyWorkspace } from '../../dashboard/services/workspaceApi';
 
 
 const Login = () => {

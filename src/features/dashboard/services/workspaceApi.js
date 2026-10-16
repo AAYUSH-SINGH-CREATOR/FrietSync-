@@ -48,7 +48,10 @@ export const createWorkspace = async ({ name }) => {
       payload,
       getAuthHeaders()
     );
-    return response.data?.workspace || response.data?.data || response.data;
+    const workspace = response.data?.workspace || response.data?.data || response.data;
+    const workspaceId = workspace?.id || workspace?._id || workspace?.workspaceId;
+    if (workspaceId) localStorage.setItem('frietSyncWorkspaceId', workspaceId);
+    return workspace;
   } catch (error) {
     handleWorkspaceError(error, 'Failed to create workspace.');
   }
@@ -61,7 +64,10 @@ export const getMyWorkspace = async () => {
       getAuthHeaders()
     );
     const data = response.data;
-    return data?.workspace || data?.data || data || null;
+    const workspace = data?.workspace || data?.data || data || null;
+    const workspaceId = workspace?.id || workspace?._id || workspace?.workspaceId;
+    if (workspaceId) localStorage.setItem('frietSyncWorkspaceId', workspaceId);
+    return workspace;
   } catch (error) {
     if (error.response?.status === 404) {
       return null;
@@ -70,30 +76,36 @@ export const getMyWorkspace = async () => {
   }
 };
 
+export const getWorkspaceById = async (workspaceId) => {
+  if (!workspaceId) throw new Error('Workspace ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/workspaces/${workspaceId}`, getAuthHeaders());
+    return response.data?.workspace || response.data?.data || response.data;
+  } catch (error) { handleWorkspaceError(error, 'Failed to load workspace.'); }
+};
+
+export const getWorkspaceMembers = async (workspaceId) => {
+  if (!workspaceId) throw new Error('Workspace ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/workspaces/${workspaceId}/members`, getAuthHeaders());
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.members)) return data.members;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.members)) return data.data.members;
+    return [];
+  } catch (error) { handleWorkspaceError(error, 'Failed to load workspace members.'); }
+};
+
 export const updateWorkspace = async ({ name, workspaceId }) => {
   try {
     const payload = {
       name: name?.trim(),
     };
-    const headers = getAuthHeaders();
-    try {
-      const response = await axios.patch(
-        `${BASE_URL}/workspaces`,
-        payload,
-        headers
-      );
-      return response.data?.workspace || response.data?.data || response.data;
-    } catch (err) {
-      if (err.response?.status === 404 && workspaceId) {
-        const response = await axios.patch(
-          `${BASE_URL}/workspaces/${workspaceId}`,
-          payload,
-          headers
-        );
-        return response.data?.workspace || response.data?.data || response.data;
-      }
-      throw err;
-    }
+    const id = workspaceId || localStorage.getItem('frietSyncWorkspaceId');
+    if (!id) throw new Error('Workspace ID is required to update the workspace.');
+    const response = await axios.patch(`${BASE_URL}/workspaces/${id}`, payload, getAuthHeaders());
+    return response.data?.workspace || response.data?.data || response.data;
   } catch (error) {
     handleWorkspaceError(error, 'Failed to update workspace name.');
   }
@@ -101,24 +113,8 @@ export const updateWorkspace = async ({ name, workspaceId }) => {
 
 export const leaveWorkspace = async () => {
   try {
-    const headers = getAuthHeaders();
-    try {
-      const response = await axios.delete(
-        `${BASE_URL}/users/workspace/leave`,
-        {},
-        headers
-      );
-      return response.data;
-    } catch (err) {
-      if (err.response?.status === 405) {
-        const response = await axios.delete(
-          `${BASE_URL}/users/workspace/leave`,
-          headers
-        );
-        return response.data;
-      }
-      throw err;
-    }
+    const response = await axios.delete(`${BASE_URL}/users/workspace/leave`, getAuthHeaders());
+    return response.data;
   } catch (error) {
     handleWorkspaceError(error, 'Failed to leave workspace.');
   }

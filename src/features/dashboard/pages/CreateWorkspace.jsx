@@ -12,7 +12,7 @@ import {
   createWorkspace,
   getMyWorkspace,
   getFriendlyErrorMessage,
-} from '../../../services/workspaceApi';
+} from '../services/workspaceApi';
 import logo from '../../../assets/logo.svg';
 
 const CreateWorkspace = () => {

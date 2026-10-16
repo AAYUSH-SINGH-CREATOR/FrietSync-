@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fi';
 import { BsChatDots } from 'react-icons/bs';
 import { getUserProfile } from '../../auth/services/authApi';
-import { getMyWorkspace } from '../../../services/workspaceApi';
+import { getMyWorkspace } from '../services/workspaceApi';
 
 
 const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) => {
