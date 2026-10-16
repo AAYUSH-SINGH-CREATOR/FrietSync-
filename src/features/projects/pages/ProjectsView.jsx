@@ -404,6 +404,8 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             const rawProgress = project.progress ?? 40;
             const parsedProgress = rawProgress === '' ? Number.NaN : Number(rawProgress);
             const progress = Number.isFinite(parsedProgress) ? Math.min(100, Math.max(0, parsedProgress)) : 40;
+            const description = String(project.description || 'No description provided.');
+            const cardDescription = description.length > 50 ? `${description.slice(0, 50).trimEnd()}...` : description;
 
             const handleCardClick = () => {
               if (projectId) {
@@ -423,7 +425,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                     handleCardClick();
                   }
                 }}
-                className="flex h-[184px] w-full max-w-[341px] flex-col rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 group cursor-pointer hover:border-sky-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-[#293548] dark:bg-[#172033] dark:hover:border-sky-500/50"
+                className="flex h-[184px] w-full max-w-[300px]  flex-col rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 group cursor-pointer hover:border-sky-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-[#293548] dark:bg-[#172033] dark:hover:border-sky-500/50 "
               >
                 <div className="flex items-start gap-3">
                   <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-700 transition-transform group-hover:scale-105 dark:bg-indigo-950/70 dark:text-indigo-200">
@@ -433,8 +435,8 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                     <h3 className="truncate font-sans text-[20px] font-medium leading-normal tracking-tight text-slate-900 dark:text-white" title={project.name}>
                       {project.name || 'Untitled Project'}
                     </h3>
-                    <p className="mt-1 line-clamp-2 font-sans text-[12px] font-light leading-normal text-slate-600 dark:text-[#CBD5E1]">
-                      {project.description || 'No description provided.'}
+                    <p className="mt-1 font-sans text-[12px] font-light leading-normal text-slate-600 dark:text-[#CBD5E1]" title={description}>
+                      {cardDescription}
                     </p>
                   </div>
                 </div>
