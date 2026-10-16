@@ -473,8 +473,8 @@ const ProjectDetailsView = () => {
 
       {/* Project Issues Section */}
       {!isLoadingProject && project && (
-        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#293548] dark:bg-[#172033] sm:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#293548]">
+        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#303030]">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Project issues <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]">{issueTotal}</span></h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Issues created for {project.name || 'this project'}.</p>
