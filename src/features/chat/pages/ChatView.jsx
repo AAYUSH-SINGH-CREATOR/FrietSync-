@@ -333,7 +333,7 @@ const ChatsView = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] flex flex-col animate-fadeIn  bg-[#171717] rounded-2xl p-2 overflow-y-hidden">
+    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] flex flex-col animate-fadeIn  dark:bg-[#171717] rounded-2xl p-2 overflow-y-hidden">
       {toastNotice && (
         <div
           className={`mb-3 p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${

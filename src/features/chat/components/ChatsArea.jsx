@@ -119,7 +119,7 @@ const ChatArea = ({
   const userInitials = getInitials(currentUser?.name || 'You');
 
   return (
-    <div className="relative bg-white dark:bg-[#161822] rounded-3xl border border-slate-200/80 dark:border-[#232838] shadow-xs flex flex-col h-full min-h-0 overflow-hidden transition-colors">
+    <div className="relative bg-white dark:bg-[#161822] rounded-3xl border border-slate-200/80 dark:border-[#232838] shadow-xs flex flex-col h-full min-h-0 overflow-hidden  transition-colors rounded-4xl ">
       {/* Background Glow from chatbgellipse.svg */}
       <div
         aria-hidden="true"
@@ -317,14 +317,14 @@ const ChatArea = ({
           onSubmit={handleSend}
           className="flex items-center gap-2.5 bg-slate-100 dark:bg-[#1c1f2b] border border-slate-200 dark:border-[#2d3448] rounded-full px-4 py-2 sm:py-2.5 focus-within:border-sky-500 dark:focus-within:border-[#38bdf8]/60 focus-within:ring-2 focus-within:ring-sky-500/10 dark:focus-within:ring-[#38bdf8]/20 transition-all shadow-inner"
         >
-          <button
+          {/* <button
             type="button"
             title="Attach file (not configured)"
             aria-label="Attach file"
             className="text-slate-400 dark:text-[#858585] hover:text-slate-600 dark:hover:text-slate-200 transition p-1 cursor-pointer shrink-0"
           >
             <FiPaperclip size={18} />
-          </button>
+          </button> */}
 
           <input
             type="text"
@@ -340,10 +340,6 @@ const ChatArea = ({
             className="flex-1 bg-transparent px-1 py-1 text-xs sm:text-sm text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#6b7280] outline-none"
           />
 
-          <span className="text-[10px] text-slate-400 dark:text-[#858585] shrink-0 tabular-nums whitespace-nowrap">
-            {inputText.length} / 2000
-          </span>
-
           <button
             type="submit"
             disabled={!inputText.trim() || connectionStatus !== 'connected'}
@@ -355,7 +351,7 @@ const ChatArea = ({
             aria-label="Send message"
             className="p-1.5 text-sky-500 dark:text-[#38bdf8] hover:text-sky-600 dark:hover:text-[#7dd3fc] active:scale-95 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           >
-            <FiSend size={18} />
+            <FiSend size={20} />
           </button>
         </form>
       </div>
