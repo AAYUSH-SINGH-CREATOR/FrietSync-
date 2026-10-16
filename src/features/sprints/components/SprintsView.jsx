@@ -22,7 +22,7 @@ import {
   updateSprint,
 } from '../services/sprintsApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
-// import DashboardDialog from './DashboardDialog';
+import DashboardDialog from '../../dashboard/components/DashboardDialog';
 
 const getCollection = (value, keys) => {
   const containers = [value, value?.data, value?.result];
@@ -78,73 +78,103 @@ const SprintsView = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [busyAction, setBusyAction] = useState('');
   const [notice, setNotice] = useState('');
+  const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(0);
+  const [sprintRefreshTrigger, setSprintRefreshTrigger] = useState(0);
+  const [detailRefreshTrigger, setDetailRefreshTrigger] = useState(0);
 
   const currentProject = projects.find((project) => String(getProjectId(project)) === projectId);
 
-  const loadProjects = useCallback(async () => {
+  useEffect(() => {
+    let isMounted = true;
+    getMyProjects()
+      .then((response) => {
+        if (!isMounted) return;
+        const records = getCollection(response, ['projects', 'items', 'content', 'results']);
+        setProjects(records);
+        setProjectId((currentId) =>
+          currentId && records.some((project) => String(getProjectId(project)) === currentId)
+            ? currentId
+            : getProjectId(records[0])
+            ? String(getProjectId(records[0]))
+            : ''
+        );
+        setProjectsError('');
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setProjects([]);
+        setProjectsError(getFriendlyErrorMessage(error, 'project'));
+      })
+      .finally(() => {
+        if (isMounted) setProjectsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [projectRefreshTrigger]);
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    let isMounted = true;
+    getProjectSprints(projectId)
+      .then((response) => {
+        if (!isMounted) return;
+        setSprints(getCollection(response, ['sprints', 'items', 'content', 'results']));
+        setSprintsError('');
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setSprints([]);
+        setSprintsError(getFriendlyErrorMessage(error, 'sprint'));
+      })
+      .finally(() => {
+        if (isMounted) setSprintsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [projectId, sprintRefreshTrigger]);
+
+  useEffect(() => {
+    if (!selectedSprintId) return;
+
+    let isMounted = true;
+    getSprintById(selectedSprintId)
+      .then((response) => {
+        if (!isMounted) return;
+        setSelectedSprint(unwrapRecord(response));
+        setDetailError('');
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setDetailError(getFriendlyErrorMessage(error, 'sprint'));
+      })
+      .finally(() => {
+        if (isMounted) setDetailLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedSprintId, detailRefreshTrigger]);
+
+  const loadProjects = useCallback(() => {
     setProjectsLoading(true);
-    setProjectsError('');
-    try {
-      const response = await getMyProjects();
-      const records = getCollection(response, ['projects', 'items', 'content', 'results']);
-      setProjects(records);
-      setProjectId((currentId) => currentId && records.some((project) => String(getProjectId(project)) === currentId)
-        ? currentId
-        : getProjectId(records[0]) ? String(getProjectId(records[0])) : '');
-    } catch (error) {
-      setProjects([]);
-      setProjectsError(getFriendlyErrorMessage(error, 'project'));
-    } finally {
-      setProjectsLoading(false);
-    }
+    setProjectRefreshTrigger((v) => v + 1);
   }, []);
 
-  const loadSprints = useCallback(async () => {
-    if (!projectId) {
-      setSprints([]);
-      setSprintsError('');
-      return;
-    }
+  const loadSprints = useCallback(() => {
     setSprintsLoading(true);
-    setSprintsError('');
-    try {
-      const response = await getProjectSprints(projectId);
-      setSprints(getCollection(response, ['sprints', 'items', 'content', 'results']));
-    } catch (error) {
-      setSprints([]);
-      setSprintsError(getFriendlyErrorMessage(error, 'sprint'));
-    } finally {
-      setSprintsLoading(false);
-    }
-  }, [projectId]);
+    setSprintRefreshTrigger((v) => v + 1);
+  }, []);
 
-  useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
-
-  useEffect(() => {
-    loadSprints();
-  }, [loadSprints]);
-
-  const loadSprintDetails = useCallback(async () => {
-    if (!selectedSprintId) return;
+  const loadSprintDetails = useCallback(() => {
     setDetailLoading(true);
-    setDetailError('');
-    try {
-      const response = await getSprintById(selectedSprintId);
-      setSelectedSprint(unwrapRecord(response));
-    } catch (error) {
-      setSelectedSprint(null);
-      setDetailError(getFriendlyErrorMessage(error, 'sprint'));
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [selectedSprintId]);
-
-  useEffect(() => {
-    if (!selectedSprintId) return;
-    loadSprintDetails();
-  }, [loadSprintDetails, selectedSprintId]);
+    setDetailRefreshTrigger((v) => v + 1);
+  }, []);
 
   const openCreateForm = () => {
     setEditingSprintId('');
@@ -153,8 +183,11 @@ const SprintsView = () => {
     setFormOpen(true);
   };
 
+  const sprintStatus = String(selectedSprint?.status || selectedSprint?.state || '').trim().toUpperCase();
+  const isCompleted = ['COMPLETED', 'CLOSED', 'DONE'].includes(sprintStatus);
+
   const openEditForm = () => {
-    if (!selectedSprint) return;
+    if (!selectedSprint || isCompleted) return;
     setEditingSprintId(selectedSprintId);
     setForm({
       name: selectedSprint.name || '',
@@ -279,7 +312,7 @@ const SprintsView = () => {
                     const id = getSprintId(sprint);
                     const selected = String(id) === selectedSprintId;
                     return <li key={id || `${index}-${sprint.name || 'sprint'}`}>
-                      <button type="button" className={`flex w-full items-start justify-between gap-4 px-4 py-4 text-left transition sm:px-5 ${selected ? 'bg-sky-50/70 dark:bg-[#1E3A5F]/40' : 'hover:bg-slate-50 dark:hover:bg-[#1E293B]/60'}`} onClick={() => { if (id) { setSelectedSprint(null); setSelectedSprintId(String(id)); setDetailLoading(true); } }} disabled={!id}>
+                      <button type="button" className={`flex w-full items-start justify-between gap-4 px-4 py-4 text-left transition sm:px-5 ${selected ? 'bg-sky-50/70 dark:bg-[#1E3A5F]/40' : 'hover:bg-slate-50 dark:hover:bg-[#1E293B]/60'}`} onClick={() => { if (id) { setSelectedSprint(sprint); setSelectedSprintId(String(id)); setDetailLoading(true); } }} disabled={!id}>
                         <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 dark:text-[#F1F5F9]">{sprint.name || 'Untitled sprint'}</span><span className="mt-1 block text-sm text-slate-500 dark:text-[#94A3B8]">{sprint.goal || 'No goal provided.'}</span><span className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-[#94A3B8]"><span className="inline-flex items-center gap-1"><FiCalendar size={13} />{formatDate(sprint.startDate)} – {formatDate(sprint.endDate)}</span>{sprint.milestoneName && <span className="inline-flex items-center gap-1"><FiFlag size={13} />{sprint.milestoneName}</span>}</span></span>
                         <span className="flex shrink-0 items-center gap-2">{(sprint.status || sprint.state) && <span className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 dark:border-[#334155] dark:text-[#CBD5E1]">{sprint.status || sprint.state}</span>}<FiChevronRight className="text-slate-400" size={16} /></span>
                       </button>
@@ -288,7 +321,7 @@ const SprintsView = () => {
                 </ul>}
       </section>
 
-      {/* <DashboardDialog isOpen={formOpen} onClose={() => setFormOpen(false)} ariaLabel={editingSprintId ? 'Edit sprint' : 'Create sprint'} showHeader={false} size="max-w-2xl" closeDisabled={isSaving}>
+      <DashboardDialog isOpen={formOpen} onClose={() => setFormOpen(false)} ariaLabel={editingSprintId ? 'Edit sprint' : 'Create sprint'} showHeader={false} size="max-w-2xl" closeDisabled={isSaving}>
       {formOpen && <section className={`${panelClass} p-5 sm:p-6`}>
         <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900 dark:text-[#F1F5F9]">{editingSprintId ? 'Edit sprint' : 'Create sprint'}</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#94A3B8]">{currentProject?.name || 'Selected project'}</p></div><button type="button" className={buttonClass} onClick={() => setFormOpen(false)} aria-label="Close sprint form" disabled={isSaving}><FiX size={16} /></button></div>
         {formError && <p className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" role="alert">{formError}</p>}
@@ -306,13 +339,35 @@ const SprintsView = () => {
       <DashboardDialog isOpen={Boolean(selectedSprintId) && !formOpen} onClose={() => { setSelectedSprintId(''); setSelectedSprint(null); }} ariaLabel={selectedSprint?.name || 'Sprint details'} showHeader={false} size="max-w-3xl" closeDisabled={Boolean(busyAction)}>
       {selectedSprintId && !formOpen && <section className={`${panelClass} overflow-hidden`}>
         <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-[#293548] sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Sprint details</p><h2 className="mt-1 break-words text-xl font-semibold text-slate-900 dark:text-[#F1F5F9]">{selectedSprint?.name || 'Loading sprint…'}</h2><p className="mt-1 break-all font-mono text-xs text-slate-500 dark:text-[#94A3B8]">{selectedSprintId}</p></div>
-          <div className="flex flex-wrap gap-2"><button type="button" className={buttonClass} onClick={loadSprintDetails} disabled={detailLoading || Boolean(busyAction)}><FiRefreshCw className={detailLoading ? 'animate-spin' : ''} size={14} />Refresh</button><button type="button" className={buttonClass} onClick={openEditForm} disabled={!selectedSprint || Boolean(busyAction)}><FiEdit2 size={14} />Edit</button><button type="button" className={buttonClass} onClick={() => runLifecycleAction(startSprint, 'Sprint started.')} disabled={Boolean(busyAction)}><FiCheck size={14} />{busyAction === 'lifecycle' ? 'Working…' : 'Start'}</button><button type="button" className={buttonClass} onClick={() => runLifecycleAction(completeSprint, 'Sprint completed.', 'Complete this sprint?')} disabled={Boolean(busyAction)}><FiCheck size={14} />Complete</button><button type="button" className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={handleDelete} disabled={Boolean(busyAction)}><FiTrash2 size={14} />Delete</button><button type="button" className={buttonClass} onClick={() => { setSelectedSprintId(''); setSelectedSprint(null); }} aria-label="Close sprint details" disabled={Boolean(busyAction)}><FiX size={15} />Close</button></div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Sprint details</p>
+              {isCompleted && (
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                  Completed
+                </span>
+              )}
+            </div>
+            <h2 className="mt-1 break-words text-xl font-semibold text-slate-900 dark:text-[#F1F5F9]">{selectedSprint?.name || 'Loading sprint…'}</h2>
+            <p className="mt-1 break-all font-mono text-xs text-slate-500 dark:text-[#94A3B8]">{selectedSprintId}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={buttonClass} onClick={loadSprintDetails} disabled={detailLoading || Boolean(busyAction)}><FiRefreshCw className={detailLoading ? 'animate-spin' : ''} size={14} />Refresh</button>
+            {!isCompleted && (
+              <>
+                <button type="button" className={buttonClass} onClick={openEditForm} disabled={!selectedSprint || Boolean(busyAction)}><FiEdit2 size={14} />Edit</button>
+                <button type="button" className={buttonClass} onClick={() => runLifecycleAction(startSprint, 'Sprint started.')} disabled={Boolean(busyAction)}><FiCheck size={14} />{busyAction === 'lifecycle' ? 'Working…' : 'Start'}</button>
+                <button type="button" className={buttonClass} onClick={() => runLifecycleAction(completeSprint, 'Sprint completed.', 'Complete this sprint?')} disabled={Boolean(busyAction)}><FiCheck size={14} />Complete</button>
+                <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={handleDelete} disabled={Boolean(busyAction)}><FiTrash2 size={14} />Delete</button>
+              </>
+            )}
+            <button type="button" className={buttonClass} onClick={() => { setSelectedSprintId(''); setSelectedSprint(null); }} aria-label="Close sprint details" disabled={Boolean(busyAction)}><FiX size={15} />Close</button>
+          </div>
         </div>
         {detailError && <div className="mx-5 mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" role="alert">{detailError}</div>}
         {detailLoading ? <p className="p-5 text-sm text-slate-500 dark:text-[#94A3B8]" role="status">Loading sprint details…</p> : detailError ? <div className="p-5"><button type="button" className={buttonClass} onClick={loadSprintDetails}>Retry</button></div> : selectedSprint && <div className="grid gap-4 p-5 sm:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#1E293B]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Goal</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.goal || 'No goal provided.'}</p></div><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#1E293B]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Schedule</p><p className="mt-2 text-sm text-slate-800 dark:text-[#F1F5F9]">{formatDate(selectedSprint.startDate)} – {formatDate(selectedSprint.endDate)}</p>{selectedSprint.milestoneId && <p className="mt-2 break-all text-xs text-slate-500 dark:text-[#94A3B8]">Milestone: {selectedSprint.milestoneId}</p>}</div>{(selectedSprint.status || selectedSprint.state) && <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#1E293B]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Status</p><p className="mt-2 text-sm font-medium text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.status || selectedSprint.state}</p></div>}</div>}
       </section>}
-      </DashboardDialog> */}
+      </DashboardDialog>
     </div>
   );
 };
