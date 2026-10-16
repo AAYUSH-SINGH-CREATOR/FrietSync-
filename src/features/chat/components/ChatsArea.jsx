@@ -4,12 +4,11 @@ import {
   FiSend,
   FiArrowLeft,
   FiFolder,
-  FiPaperclip,
   FiSearch,
   FiMoreVertical,
   FiExternalLink,
 } from 'react-icons/fi';
-import chatBackground from '../../../assets/chatbgellipse.svg';
+import chatFrame from '../../../assets/chatframe.png';
 
 const SENDER_AVATAR_COLORS = [
   'bg-[#6366f1]', // indigo
@@ -89,21 +88,11 @@ const ChatArea = ({
 
   if (!activeChat) {
     return (
-      <div className="relative bg-white dark:bg-[#161822] rounded-3xl border border-slate-200/80 dark:border-[#232838] shadow-xs h-full flex flex-col items-center justify-center p-8 text-center transition-colors">
+      <div className="relative w-full max-w-[720px] bg-[#e9e9e9] dark:bg-[#030b17] rounded-2xl border border-slate-200 dark:border-[#42617a] shadow-xs h-full flex flex-col items-center justify-center p-8 text-center transition-colors overflow-hidden" style={{ backgroundImage: `url(${chatFrame})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden z-0"
-        >
-          <div
-            className="absolute -top-16 -right-16 w-[450px] sm:w-[540px] h-[360px] sm:h-[430px] opacity-20 dark:opacity-25 select-none"
-            style={{
-              backgroundImage: `url(${chatBackground})`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'top right',
-              backgroundSize: 'contain',
-            }}
-          />
-        </div>
+          className="pointer-events-none absolute inset-0 z-0 bg-white/80 dark:bg-[#030b17]/10"
+        />
         <div className="relative z-10 w-16 h-16 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-500 dark:text-[#38bdf8] flex items-center justify-center mb-4 shadow-sm">
           <FiFolder size={28} />
         </div>
@@ -119,25 +108,14 @@ const ChatArea = ({
   const userInitials = getInitials(currentUser?.name || 'You');
 
   return (
-    <div className="relative bg-white dark:bg-[#161822] rounded-3xl border border-slate-200/80 dark:border-[#232838] shadow-xs flex flex-col h-full min-h-0 overflow-hidden  transition-colors rounded-4xl ">
-      {/* Background Glow from chatbgellipse.svg */}
+    <div className="relative w-full max-w-[720px] bg-[#e9e9e9] dark:bg-[#030b17] rounded-2xl border border-slate-200 dark:border-[#42617a] shadow-xs flex flex-col h-full min-h-0 overflow-hidden transition-colors" style={{ backgroundImage: `url(${chatFrame})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden z-0 select-none"
-      >
-        <div
-          className="absolute -top-16 -right-16 w-[480px] sm:w-[560px] h-[380px] sm:h-[450px] opacity-25 dark:opacity-35 select-none transition-opacity"
-          style={{
-            backgroundImage: `url(${chatBackground})`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'top right',
-            backgroundSize: 'contain',
-          }}
-        />
-      </div>
+        className="pointer-events-none absolute inset-0 z-0 bg-white/100 dark:bg-[#030b17]/10"
+      />
 
       {/* Header */}
-      <div className="relative z-20 px-4 sm:px-6 py-3.5 border-b border-slate-200/80 dark:border-[#232838] bg-white/90 dark:bg-[#161822]/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+      <div className="relative z-20 mx-1 mt-1 px-4 sm:px-6 py-3.5 rounded-xl bg-white/90 dark:bg-[#1d1d1d]/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           {onBackToList && (
             <button
@@ -268,7 +246,7 @@ const ChatArea = ({
                         {formatMessageTimestamp(msg.timestamp)}
                       </span>
                     </div>
-                    <div className="min-w-0 max-w-full bg-slate-100 dark:bg-[#232733] border border-slate-200/80 dark:border-[#2e3444]/60 text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tr-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
+                    <div className="min-w-0 max-w-full bg-sky-100 dark:bg-[#222222] border border-sky-200 dark:border-[#343434] text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tr-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
                       <p className="whitespace-pre-wrap">{msg.text}</p>
                     </div>
                   </div>
@@ -301,7 +279,7 @@ const ChatArea = ({
                       {formatMessageTimestamp(msg.timestamp)}
                     </span>
                   </div>
-                  <div className="min-w-0 max-w-full bg-slate-100 dark:bg-[#232733] border border-slate-200/80 dark:border-[#2e3444]/60 text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tl-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
+                  <div className="min-w-0 max-w-full bg-white dark:bg-[#222222] border border-slate-200 dark:border-[#343434] text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tl-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
                     <p className="whitespace-pre-wrap">{msg.text}</p>
                   </div>
                 </div>
@@ -312,10 +290,10 @@ const ChatArea = ({
       </div>
 
       {/* Composer */}
-      <div className="relative z-20 shrink-0 p-3.5 sm:p-4 pb-[max(0.85rem,env(safe-area-inset-bottom))] border-t border-slate-200/80 dark:border-[#232838] bg-white/95 dark:bg-[#161822]/95 backdrop-blur-md">
+      <div className="relative z-20 mx-1 mb-1 shrink-0 p-3.5 sm:p-4 pb-[max(0.85rem,env(safe-area-inset-bottom))] rounded-xl bg-white/90 dark:bg-[#1d1d1d]/95 backdrop-blur-md">
         <form
           onSubmit={handleSend}
-          className="flex items-center gap-2.5 bg-slate-100 dark:bg-[#1c1f2b] border border-slate-200 dark:border-[#2d3448] rounded-full px-4 py-2 sm:py-2.5 focus-within:border-sky-500 dark:focus-within:border-[#38bdf8]/60 focus-within:ring-2 focus-within:ring-sky-500/10 dark:focus-within:ring-[#38bdf8]/20 transition-all shadow-inner"
+          className="flex items-center gap-2.5 bg-slate-100 dark:bg-[#292929] border border-slate-200 dark:border-[#3a3a3a] rounded-full px-4 py-2 sm:py-2.5 focus-within:border-sky-500 dark:focus-within:border-[#38bdf8]/60 focus-within:ring-2 focus-within:ring-sky-500/10 dark:focus-within:ring-[#38bdf8]/20 transition-all shadow-inner"
         >
           {/* <button
             type="button"

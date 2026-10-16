@@ -318,22 +318,22 @@ const SettingsView = () => {
       )}
 
       {/* Main Settings Category List */}
-      <div className="space-y-3 bg-[#1d1d1d] p-2 sm:p-2.5 rounded-b-xl sm:rounded-b-2xl">
+      <div className="space-y-3 bg-slate-100 dark:bg-[#1d1d1d] p-2 sm:p-2.5 rounded-b-xl sm:rounded-b-2xl">
         {/* Category 1: Account (Navigates to Profile) */}
         <button
           type="button"
           onClick={() => navigate('/dashboard/settings/profile')}
-          className="w-full bg-[#2a2a2a] hover:bg-[#303030] rounded-xl p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 transition-all cursor-pointer text-left group"
+          className="w-full bg-white dark:bg-[#2a2a2a] hover:bg-slate-50 dark:hover:bg-[#303030] rounded-xl p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 transition-all cursor-pointer text-left group"
         >
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-full text-slate-600 dark:text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <FiUser size={20} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-white truncate">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white truncate">
                 Account
               </h2>
-              <p className="text-sm text-white/80 truncate">
+              <p className="text-sm text-slate-500 dark:text-white/80 truncate">
                 Profile and personal info
               </p>
             </div>
@@ -341,26 +341,26 @@ const SettingsView = () => {
         </button>
 
         {/* Category 2: Notifications (Expandable) */}
-        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('notifications')}
-            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full text-slate-600 dark:text-white flex items-center justify-center shrink-0">
                 <FiBell size={20} />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-semibold text-white truncate">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white truncate">
                   Notifications
                 </h2>
-                <p className="text-sm text-white/80 truncate">
+                <p className="text-sm text-slate-500 dark:text-white/80 truncate">
                   Alerts and notification preferences
                 </p>
               </div>
             </div>
-            <div className="text-white/80">
+            <div className="text-slate-500 dark:text-white/80">
               <FiChevronDown size={18} className={expandedSection.notifications ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
@@ -458,26 +458,26 @@ const SettingsView = () => {
         </div>
 
         {/* Category 3: Privacy & Security (Expandable) */}
-        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('security')}
-            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full text-slate-600 dark:text-white flex items-center justify-center shrink-0">
                 <FiShield size={20} />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-semibold text-white truncate">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white truncate">
                   Privacy & Security
                 </h2>
-                <p className="text-sm text-white/80 truncate">
+                <p className="text-sm text-slate-500 dark:text-white/80 truncate">
                   Privacy controls and account security
                 </p>
               </div>
             </div>
-            <div className="text-white/80">
+            <div className="text-slate-500 dark:text-white/80">
               <FiChevronDown size={18} className={expandedSection.security ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
@@ -506,26 +506,26 @@ const SettingsView = () => {
         </div>
 
         {/* Category 4: Connected Accounts (Expandable) */}
-        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('connected')}
-            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full text-slate-600 dark:text-white flex items-center justify-center shrink-0">
                 <FiLink size={20} />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-semibold text-white truncate">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white truncate">
                   Connected Accounts
                 </h2>
-                <p className="text-sm text-white/80 truncate">
+                <p className="text-sm text-slate-500 dark:text-white/80 truncate">
                   Linked accounts and integrations
                 </p>
               </div>
             </div>
-            <div className="text-white/80">
+            <div className="text-slate-500 dark:text-white/80">
               <FiChevronDown size={18} className={expandedSection.connected ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
@@ -546,11 +546,11 @@ const SettingsView = () => {
         </div>
 
         {/* Category 5: Danger Zone (Expandable - LOGOUT ONLY, no fake deactivation/deletion) */}
-        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('danger')}
-            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-11 h-11 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-[#F87171] flex items-center justify-center shrink-0 shadow-2xs">
@@ -600,11 +600,11 @@ const SettingsView = () => {
         </div>
 
         {/* Category 6: Workspace Settings (Preserves Workspace Features) */}
-        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
+        <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('workspace')}
-            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-[#242428] text-slate-700 dark:text-[#e0e0e0] flex items-center justify-center shrink-0 shadow-2xs">

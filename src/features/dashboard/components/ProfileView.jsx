@@ -127,7 +127,7 @@ const ProfileView = () => {
       <div>
         <Link
           to="/dashboard/settings"
-          className="inline-flex items-center gap-2 text-sm font-normal text-slate-300 hover:text-white transition group cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-normal text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition group cursor-pointer"
         >
           <FiArrowLeft
             size={16}
@@ -137,7 +137,7 @@ const ProfileView = () => {
         </Link>
       </div>
 
-      <div className="bg-[#171717] rounded-2xl border border-white/5 shadow-2xl overflow-hidden transition-all text-white">
+      <div className="bg-white dark:bg-[#171717] rounded-2xl border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden transition-all text-slate-900 dark:text-white">
         <div className="relative h-[185px] w-full overflow-hidden bg-[#0C101B]">
           <img
             src={profileBanner}
@@ -188,8 +188,8 @@ const ProfileView = () => {
               </div>
 
               <div className="w-full max-w-[247px] mt-4">
-                <div className="flex items-center gap-2 text-white font-semibold text-lg mb-3">
-                  <FiStar size={18} className="text-white" />
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-lg mb-3">
+                  <FiStar size={18} className="text-slate-600 dark:text-white" />
                   <span>Skills</span>
                 </div>
 
@@ -212,7 +212,7 @@ const ProfileView = () => {
                   ))}
 
                   {isAddingSkill ? (
-                    <div className="col-span-1 h-7 bg-[#171717] border border-sky-400 rounded-full px-1.5 flex items-center justify-between">
+                    <div className="col-span-1 h-7 bg-slate-50 dark:bg-[#171717] border border-sky-400 rounded-full px-1.5 flex items-center justify-between">
                       <input
                         type="text"
                         value={newSkillText}
@@ -223,7 +223,7 @@ const ProfileView = () => {
                           if (e.key === 'Enter') handleAddSkill(e);
                           if (e.key === 'Escape') setIsAddingSkill(false);
                         }}
-                        className="w-10 bg-transparent text-white text-[11px] focus:outline-none px-0.5"
+                        className="w-10 bg-transparent text-slate-900 dark:text-white text-[11px] focus:outline-none px-0.5"
                       />
                       <button
                         type="button"
@@ -248,13 +248,13 @@ const ProfileView = () => {
 
             <div className="lg:col-span-8 space-y-6 pt-4 lg:pt-6">
               <div className="space-y-4">
-                <h2 className="text-2xl font-semibold text-white tracking-tight">
+                <h2 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
                   Personal Information
                 </h2>
 
                 <div className="space-y-3.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                    <label className="text-sm font-normal text-white sm:w-24 shrink-0">
+                    <label className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">
                       Full Name
                     </label>
                     <input
@@ -263,13 +263,13 @@ const ProfileView = () => {
                       onChange={(e) => handleChange('fullName', e.target.value)}
                       placeholder="Enter full name"
                       disabled={isLoading}
-                      className="flex-1 h-9 px-4 rounded-full bg-[#171717] border border-white/20 hover:border-white/30 text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
+                      className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
                       required
                     />
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                    <label className="text-sm font-normal text-white sm:w-24 shrink-0">
+                    <label className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">
                       Email
                     </label>
                     <input
@@ -278,13 +278,13 @@ const ProfileView = () => {
                       onChange={(e) => handleChange('email', e.target.value)}
                       placeholder="Enter email address"
                       disabled={isLoading}
-                      className="flex-1 h-9 px-4 rounded-full bg-[#171717] border border-white/20 hover:border-white/30 text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
+                      className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
                       required
                     />
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                    <label className="text-sm font-normal text-white sm:w-24 shrink-0">
+                    <label className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">
                       Job title
                     </label>
                     <input
@@ -293,12 +293,12 @@ const ProfileView = () => {
                       onChange={(e) => handleChange('jobTitle', e.target.value)}
                       placeholder="e.g. Backend Developer"
                       disabled={isLoading}
-                      className="flex-1 h-9 px-4 rounded-full bg-[#171717] border border-white/20 hover:border-white/30 text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
+                      className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
                     />
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                    <label className="text-sm font-normal text-white sm:w-24 shrink-0">
+                    <label className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">
                       Role
                     </label>
                     <div className="relative flex-1">
@@ -306,32 +306,32 @@ const ProfileView = () => {
                         value={profile.role}
                         onChange={(e) => handleChange('role', e.target.value)}
                         disabled={isLoading}
-                        className="w-full h-9 appearance-none px-4 pr-10 rounded-full bg-[#171717] border border-white/20 hover:border-white/30 text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner cursor-pointer"
+                        className="w-full h-9 appearance-none px-4 pr-10 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner cursor-pointer"
                       >
                         {ROLE_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt} className="bg-[#171717] text-white">
+                        <option key={opt} value={opt} className="bg-white dark:bg-[#171717] text-slate-900 dark:text-white">
                             {opt}
                           </option>
                         ))}
                       </select>
                       <FiChevronDown
                         size={15}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white pointer-events-none"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-white pointer-events-none"
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-5 sm:p-6 rounded-2xl bg-[#252525] border border-white/5 space-y-2 shadow-xs">
-                <h3 className="text-base font-semibold text-white">About</h3>
+              <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-[#252525] border border-slate-200 dark:border-white/5 space-y-2 shadow-xs">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">About</h3>
                 <textarea
                   rows={4}
                   value={profile.about}
                   onChange={(e) => handleChange('about', e.target.value)}
                   placeholder="Tell the team about yourself, your expertise, and interests..."
                   disabled={isLoading}
-                  className="w-full bg-transparent text-xs sm:text-sm text-slate-300 focus:outline-none focus:ring-0 resize-none leading-relaxed placeholder:text-slate-500"
+                  className="w-full bg-transparent text-xs sm:text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-0 resize-none leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 

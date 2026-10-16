@@ -34,7 +34,7 @@ const AuthLayout = ({
 
 
   return (
-    <div className="min-h-screen w-full relative bg-[#EBF6FF] flex flex-col  sm:items-center sm:justify-center font-sans overflow-x-hidden overflow-y-auto sm:overflow-hidden p-0 sm:p-6 md:p-8">
+    <div className="auth-page min-h-screen w-full relative bg-[#EBF6FF] flex flex-col sm:items-center sm:justify-center font-sans overflow-x-hidden overflow-y-auto sm:overflow-hidden p-0 sm:p-6 md:p-8">
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none z-0">
         <img
           src={wavesSvg}

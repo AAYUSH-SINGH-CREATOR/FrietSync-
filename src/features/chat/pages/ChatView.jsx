@@ -333,7 +333,7 @@ const ChatsView = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] flex flex-col animate-fadeIn  dark:bg-[#171717] rounded-2xl p-2 overflow-y-hidden">
+    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 overflow-y-hidden">
       {toastNotice && (
         <div
           className={`mb-3 p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${
@@ -360,9 +360,9 @@ const ChatsView = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4 sm:gap-5">
+      <div className="flex-1 min-h-0 min-w-0 w-full max-w-[1012px] mx-auto flex flex-col md:flex-row gap-2.5 sm:gap-3">
         <div
-          className={`h-full min-h-0 w-full md:w-[310px] lg:w-[330px] shrink-0 ${
+          className={`h-full min-h-0 min-w-0 w-full md:w-[330px] max-w-full shrink-0 ${
             isMobileThreadOpen ? 'hidden md:flex' : 'flex'
           }`}
         >
@@ -378,7 +378,7 @@ const ChatsView = () => {
         </div>
 
         <div
-          className={`h-full min-h-0 flex-1 min-w-0 ${
+          className={`h-full min-h-0 flex-1 min-w-0 flex justify-center ${
             isMobileThreadOpen ? 'flex' : 'hidden md:flex'
           }`}
         >

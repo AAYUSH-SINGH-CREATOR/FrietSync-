@@ -67,10 +67,9 @@ const ChatSidebar = ({
   }, [channelList, searchQuery, activeFilter]);
 
   return (
-    <div className="flex flex-col w-full h-full min-h-0 bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200/80 dark:border-[#262833] p-4 sm:p-5 shadow-xs transition-colors">
-      {/* Top Header */}
+    <div className="flex flex-col w-full h-full min-h-0 bg-[#fcf6f6] dark:bg-[#2a2a2a] rounded-xl border border-slate-200/80 dark:border-transparent p-2 sm:p-2.5 shadow-xs transition-colors w-[350px]">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Chats
         </h2>
         <button
@@ -120,8 +119,8 @@ const ChatSidebar = ({
               onClick={() => setActiveFilter(tab.key)}
               className={`px-3.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                 isActive
-                  ? 'bg-slate-200 dark:bg-[#282b36] text-slate-900 dark:text-white border border-slate-300 dark:border-[#3b4050] shadow-xs'
-                  : 'text-slate-500 dark:text-[#94a3b8] hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#20232c]'
+                  ? 'bg-slate-200 dark:bg-[#353535] text-slate-900 dark:text-white border border-slate-300 dark:border-[#484848] shadow-xs'
+                  : 'text-slate-500 dark:text-[#b3b3b3] hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#333333]'
               }`}
             >
               {tab.label}
@@ -178,16 +177,16 @@ const ChatSidebar = ({
                 key={project.id}
                 type="button"
                 onClick={() => onSelectConversation(project.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-sky-50/90 dark:bg-[#1a2336] border border-sky-400/50 dark:border-[#38bdf8]/60 shadow-xs'
-                    : 'border border-transparent hover:bg-slate-100/70 dark:hover:bg-[#20232c]/80'
+                    ? 'bg-sky-50/90 dark:bg-[#1d2b37] border border-sky-400/70 dark:border-[#38bdf8]/70 shadow-xs'
+                    : 'bg-white dark:bg-[#1d1d1d] border border-transparent hover:bg-slate-100/70 dark:hover:bg-[#252525]'
                 }`}
               >
                 {/* Project Avatar */}
                 <div className="relative shrink-0">
                   <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-xs ${getAvatarGradient(
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-xs ${getAvatarGradient(
                       project.name
                     )}`}
                   >

@@ -69,6 +69,10 @@
   color-scheme: dark;
 }
 
+.auth-page {
+  color-scheme: light;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-app);
@@ -93,18 +97,6 @@ body {
 
 .auththeme {
   color-scheme: light;
-  background: #ffffff;
-  color: #1f2937;
-}
-
-.auththeme input {
-  background-color: #ffffff;
-  color: #1f2937;
-  border-color: #d1d5db;
-}
-
-.auththeme input::placeholder {
-  color: #9ca3af;
 }
 .action-secondary,
 .action-primary,
