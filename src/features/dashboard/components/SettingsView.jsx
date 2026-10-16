@@ -1,38 +1,183 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  FiSettings,
+  FiUser,
+  FiBell,
+  FiShield,
+  FiLink,
+  FiAlertTriangle,
+  FiLogOut,
+  FiChevronRight,
+  FiChevronDown,
   FiLayers,
   FiEdit2,
-  FiLogOut,
-  FiAlertTriangle,
   FiCheckCircle,
   FiAlertCircle,
-  FiPlus,
   FiRefreshCw,
 } from 'react-icons/fi';
+import logo from '../../../assets/logo.svg';
+import { logoutUser } from '../../auth/services/authApi';
 import {
   getMyWorkspace,
   updateWorkspace,
   leaveWorkspace,
   getFriendlyErrorMessage,
 } from '../services/workspaceApi';
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+} from '../services/notificationApi';
+
+const DEFAULT_PREFERENCES = [
+  {
+    type: 'PROJECT_UPDATES',
+    title: 'Project updates',
+    description: 'Notifications when milestones, sprints, or project statuses change.',
+    inApp: true,
+    email: false,
+  },
+  {
+    type: 'TASK_ASSIGNMENT',
+    title: 'Task assignment',
+    description: 'Alerts when issues or tasks are assigned to you or updated.',
+    inApp: true,
+    email: true,
+  },
+  {
+    type: 'MENTIONS',
+    title: 'Mentions',
+    description: 'When teammates mention you in project comments or chats.',
+    inApp: true,
+    email: false,
+  },
+  {
+    type: 'COMMENTS',
+    title: 'Comments',
+    description: 'Activity and replies on issues and sprints you are following.',
+    inApp: true,
+    email: false,
+  },
+  {
+    type: 'EMAIL_NOTIFICATIONS',
+    title: 'Email Notification',
+    description: 'Weekly digest summaries and important workspace updates.',
+    inApp: false,
+    email: true,
+  },
+];
 
 const SettingsView = () => {
   const navigate = useNavigate();
+
+  // Expanded categories state
+  const [expandedSection, setExpandedSection] = useState({
+    notifications: false,
+    security: false,
+    connected: false,
+    danger: false,
+    workspace: false,
+  });
+
+  // Notification Preferences State
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+  const [updatingPrefKey, setUpdatingPrefKey] = useState(null);
+
+  // Workspace Management State
   const [workspace, setWorkspace] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
   const [renameInput, setRenameInput] = useState('');
+  const [isUpdatingWorkspace, setIsUpdatingWorkspace] = useState(false);
+  const [isLeavingWorkspace, setIsLeavingWorkspace] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
+  // Account State
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
-  const fetchWorkspaceData = useCallback(() => {
-    setIsLoading(true);
-    setStatusMessage({ type: '', text: '' });
+  // Load Notification Preferences
+  const loadPreferences = useCallback(async () => {
+    setIsLoadingPreferences(true);
+    try {
+      const serverPrefs = await getNotificationPreferences();
+      if (Array.isArray(serverPrefs) && serverPrefs.length > 0) {
+        setPreferences((prev) =>
+          prev.map((item) => {
+            const found = serverPrefs.find((sp) => sp.type === item.type);
+            return found
+              ? {
+                  ...item,
+                  inApp: found.inApp ?? item.inApp,
+                  email: found.email ?? item.email,
+                }
+              : item;
+          })
+        );
+      }
+    } catch (err) {
+      console.warn('Failed to fetch notification preferences:', err);
+    } finally {
+      setIsLoadingPreferences(false);
+    }
+  }, []);
+
+  const toggleSection = (key) => {
+    setExpandedSection((prev) => {
+      const nextState = !prev[key];
+      if (key === 'notifications' && nextState) {
+        loadPreferences();
+      }
+      return {
+        ...prev,
+        [key]: nextState,
+      };
+    });
+  };
+
+  // Handle Toggle Notification Preference
+  const handleTogglePreference = async (type, channel) => {
+    const prevPreferences = [...preferences];
+    const key = `${type}-${channel}`;
+    setUpdatingPrefKey(key);
+
+    // Optimistic update
+    const updated = preferences.map((p) => {
+      if (p.type === type) {
+        return {
+          ...p,
+          [channel]: !p[channel],
+        };
+      }
+      return p;
+    });
+    setPreferences(updated);
+
+    try {
+      // Call PUT /notifications/preferences
+      const payload = updated.map((p) => ({
+        type: p.type,
+        inApp: p.inApp,
+        email: p.email,
+      }));
+      await updateNotificationPreferences(payload);
+    } catch (err) {
+      console.error('Failed to update preference:', err);
+      // Rollback on failure
+      setPreferences(prevPreferences);
+      setStatusMessage({
+        type: 'error',
+        text: 'Failed to update notification preference. Please try again.',
+      });
+    } finally {
+      setUpdatingPrefKey(null);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
     getMyWorkspace()
       .then((ws) => {
+        if (!isMounted) return;
         if (ws && (ws.name || ws.id || ws._id)) {
           setWorkspace(ws);
           setRenameInput(ws.name || '');
@@ -42,38 +187,11 @@ const SettingsView = () => {
         }
       })
       .catch((err) => {
-        setStatusMessage({
-          type: 'error',
-          text: getFriendlyErrorMessage(err, 'workspace'),
-        });
+        console.warn('Failed to load workspace:', err);
       })
       .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    getMyWorkspace()
-      .then((ws) => {
         if (isMounted) {
-          if (ws && (ws.name || ws.id || ws._id)) {
-            setWorkspace(ws);
-            setRenameInput(ws.name || '');
-          } else {
-            setWorkspace(null);
-            setRenameInput('');
-          }
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setStatusMessage({
-            type: 'error',
-            text: getFriendlyErrorMessage(err, 'workspace'),
-          });
-          setIsLoading(false);
+          setIsLoadingWorkspace(false);
         }
       });
 
@@ -82,7 +200,8 @@ const SettingsView = () => {
     };
   }, []);
 
-  const handleUpdateName = async (e) => {
+  // Rename Workspace
+  const handleUpdateWorkspaceName = async (e) => {
     e.preventDefault();
     if (!renameInput.trim()) {
       setStatusMessage({ type: 'error', text: 'Workspace name cannot be empty.' });
@@ -94,7 +213,7 @@ const SettingsView = () => {
       return;
     }
 
-    setIsUpdating(true);
+    setIsUpdatingWorkspace(true);
     setStatusMessage({ type: '', text: '' });
 
     try {
@@ -114,12 +233,13 @@ const SettingsView = () => {
         text: getFriendlyErrorMessage(err, 'workspace'),
       });
     } finally {
-      setIsUpdating(false);
+      setIsUpdatingWorkspace(false);
     }
   };
 
+  // Leave Workspace
   const handleLeaveWorkspace = async () => {
-    setIsLeaving(true);
+    setIsLeavingWorkspace(true);
     setStatusMessage({ type: '', text: '' });
 
     try {
@@ -128,252 +248,476 @@ const SettingsView = () => {
       setShowLeaveConfirm(false);
       setStatusMessage({
         type: 'success',
-        text: 'You have left the workspace. You can now create or join a new workspace.',
+        text: 'You have left the workspace.',
       });
       setTimeout(() => {
         navigate('/create-workspace');
-      }, 1200);
+      }, 1000);
     } catch (err) {
       setStatusMessage({
         type: 'error',
         text: getFriendlyErrorMessage(err, 'workspace'),
       });
     } finally {
-      setIsLeaving(false);
+      setIsLeavingWorkspace(false);
     }
   };
 
-   return (
-    <div className="space-y-6 animate-fadeIn pb-12 max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
-            Workspace Settings
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-[#b3b3b3] mt-1">
-            Manage your workspace name, preferences, and membership.
-          </p>
-        </div>
+  // Handle Logout
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setIsLoggingOut(false);
+      navigate('/login');
+    }
+  };
 
-        <button
-          type="button"
-          onClick={fetchWorkspaceData}
-          disabled={isLoading}
-          title="Refresh workspace details"
-          className="w-10 h-10 rounded-2xl bg-white dark:bg-[#1d1d1d] border border-slate-200 dark:border-[#303030] hover:bg-slate-50 dark:hover:bg-[#242424] text-slate-600 dark:text-[#e0e0e0] flex items-center justify-center shadow-xs transition cursor-pointer self-start sm:self-auto disabled:opacity-50"
-        >
-          <FiRefreshCw
-            size={16}
-            className={isLoading ? 'animate-spin text-sky-600 dark:text-[#60A5FA]' : ''}
-          />
-        </button>
+  return (
+    <div className="space-y-6 animate-fadeIn pb-12 max-w-4xl mx-auto">
+      {/* Branded Header Banner */}
+      <div className="bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200/80 dark:border-[#262833] p-6 sm:p-8 shadow-xs relative overflow-hidden transition-colors">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-800/50 flex items-center justify-center shrink-0 shadow-xs">
+              <img src={logo} alt="FrietSync Logo" className="w-7 h-7 object-contain" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Settings
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94a3b8] mt-1">
+                Manage your preferences, account details, and workspace settings.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Status Notice */}
       {statusMessage.text && (
         <div
-          className={`p-4 rounded-2xl text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn ${
+          className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn ${
             statusMessage.type === 'success'
               ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-[#34D399]'
-              : statusMessage.type === 'error'
-              ? 'bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800/60 text-red-700 dark:text-[#F87171]'
-              : 'bg-sky-50 dark:bg-blue-950/40 border border-sky-200 dark:border-blue-800/60 text-sky-800 dark:text-[#60A5FA]'
+              : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-[#F87171]'
           }`}
         >
           <div className="flex items-center gap-2">
             {statusMessage.type === 'success' ? (
               <FiCheckCircle className="shrink-0 text-emerald-600 dark:text-[#34D399]" size={17} />
-            ) : statusMessage.type === 'error' ? (
-              <FiAlertCircle className="shrink-0 text-red-500 dark:text-[#F87171]" size={17} />
             ) : (
-              <FiSettings className="shrink-0 text-sky-600 dark:text-[#60A5FA]" size={17} />
+              <FiAlertCircle className="shrink-0 text-rose-600 dark:text-[#F87171]" size={17} />
             )}
             <span className="font-medium">{statusMessage.text}</span>
           </div>
           <button
             type="button"
             onClick={() => setStatusMessage({ type: '', text: '' })}
-            className="text-xs font-semibold hover:underline cursor-pointer"
+            className="text-xs font-semibold opacity-75 hover:opacity-100 cursor-pointer"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {isLoading && (
-        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 border border-slate-200/80 dark:border-[#303030] shadow-xs animate-pulse space-y-4">
-          <div className="h-6 w-44 bg-slate-100 dark:bg-[#242424] rounded-lg" />
-          <div className="h-4 w-72 bg-slate-100 dark:bg-[#242424] rounded-md" />
-          <div className="h-28 bg-slate-50 dark:bg-[#242424]/60 rounded-2xl mt-4" />
-        </div>
-      )}
-
-      {!isLoading && !workspace && (
-        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-[#303030] shadow-md shadow-slate-200/50 dark:shadow-none text-center">
-          <div className="w-16 h-16 rounded-3xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] mx-auto flex items-center justify-center mb-4 shadow-xs">
-            <FiLayers size={28} />
+      {/* Main Settings Category List */}
+      <div className="space-y-3">
+        {/* Category 1: Account (Navigates to Profile) */}
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/settings/profile')}
+          className="w-full bg-white dark:bg-[#181a20] hover:bg-slate-50 dark:hover:bg-[#1d2028] border border-slate-200/80 dark:border-[#262833] rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition-all cursor-pointer text-left shadow-xs group"
+        >
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-[#38bdf8] flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <FiUser size={20} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                Account
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                Profile and personal info
+              </p>
+            </div>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9] mb-2">
-            No Active Workspace Found
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#b3b3b3] max-w-md mx-auto leading-relaxed mb-6">
-            You do not currently belong to any workspace. Create a new workspace to
-            organize projects and collaborate with teammates.
-          </p>
-          <Link
-            to="/create-workspace"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
-          >
-            <FiPlus size={16} />
-            <span>Create Workspace</span>
-          </Link>
-        </div>
-      )}
+          <div className="flex items-center gap-2 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition">
+            <span className="text-xs hidden sm:inline font-medium">Manage Profile</span>
+            <FiChevronRight size={18} />
+          </div>
+        </button>
 
-      {!isLoading && workspace && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#303030] shadow-xs">
-            <div className="flex items-center gap-3 pb-5 border-b border-slate-100 dark:border-[#303030] mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shadow-2xs">
-                <FiLayers size={22} />
+        {/* Category 2: Notifications (Expandable) */}
+        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+          <button
+            type="button"
+            onClick={() => toggleSection('notifications')}
+            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-[#818cf8] flex items-center justify-center shrink-0 shadow-2xs">
+                <FiBell size={20} />
               </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
-                  {workspace.name || 'Current Workspace'}
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                  Notifications
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-0.5">
-                  Single active workspace configuration
+                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                  Alerts and notification preferences
                 </p>
               </div>
             </div>
+            <div className="text-slate-400">
+              {expandedSection.notifications ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            </div>
+          </button>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#242424]/70 border border-slate-100 dark:border-[#303030]">
-                <span className="text-[11px] font-semibold uppercase text-slate-400 dark:text-[#858585] block mb-1">
-                  Workspace Name
-                </span>
-                <span className="font-bold text-slate-800 dark:text-[#F1F5F9] text-base">
-                  {workspace.name || 'Untitled Workspace'}
-                </span>
+          {expandedSection.notifications && (
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Preferences
+                  </h3>
+                </div>
+                <div className="flex items-center gap-6 text-[11px] font-semibold text-slate-400 uppercase pr-2">
+                  <span>In-App</span>
+                  <span>Email</span>
+                </div>
               </div>
 
-              {(workspace.id || workspace._id) && (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#242424]/70 border border-slate-100 dark:border-[#303030]">
-                  <span className="text-[11px] font-semibold uppercase text-slate-400 dark:text-[#858585] block mb-1">
-                    Workspace ID
-                  </span>
-                  <span className="font-mono text-slate-700 dark:text-[#e0e0e0] text-xs break-all">
-                    {workspace.id || workspace._id}
-                  </span>
+              {isLoadingPreferences ? (
+                <div className="p-6 text-center text-slate-400 dark:text-[#858585] flex flex-col items-center justify-center">
+                  <FiRefreshCw size={20} className="animate-spin mb-2" />
+                  <span className="text-xs">Loading preferences...</span>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {preferences.map((item) => {
+                    const isUpdatingInApp = updatingPrefKey === `${item.type}-inApp`;
+                    const isUpdatingEmail = updatingPrefKey === `${item.type}-email`;
+
+                    return (
+                      <div
+                        key={item.type}
+                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                            {item.title}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 leading-normal">
+                            {item.description}
+                          </p>
+                        </div>
+
+                        {/* Toggle Switches */}
+                        <div className="flex items-center gap-6 shrink-0">
+                          {/* In-App Toggle */}
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.inApp}
+                            title={`${item.title} in-app alerts`}
+                            disabled={isUpdatingInApp}
+                            onClick={() => handleTogglePreference(item.type, 'inApp')}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                              item.inApp
+                                ? 'bg-sky-600 dark:bg-blue-600'
+                                : 'bg-slate-200 dark:bg-[#2b2e38]'
+                            } ${isUpdatingInApp ? 'opacity-50 cursor-wait' : ''}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                item.inApp ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+
+                          {/* Email Toggle */}
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.email}
+                            title={`${item.title} email notifications`}
+                            disabled={isUpdatingEmail}
+                            onClick={() => handleTogglePreference(item.type, 'email')}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                              item.email
+                                ? 'bg-sky-600 dark:bg-blue-600'
+                                : 'bg-slate-200 dark:bg-[#2b2e38]'
+                            } ${isUpdatingEmail ? 'opacity-50 cursor-wait' : ''}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                item.email ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          </div>
+          )}
+        </div>
 
-          <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#303030] shadow-xs">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] flex items-center justify-center">
-                <FiEdit2 size={18} />
+        {/* Category 3: Privacy & Security (Expandable) */}
+        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+          <button
+            type="button"
+            onClick={() => toggleSection('security')}
+            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-[#34d399] flex items-center justify-center shrink-0 shadow-2xs">
+                <FiShield size={20} />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
-                  Rename Workspace
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-[#b3b3b3]">
-                  Update the display name of your team workspace.
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                  Privacy & Security
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                  Privacy controls and account security
                 </p>
               </div>
             </div>
+            <div className="text-slate-400">
+              {expandedSection.security ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            </div>
+          </button>
 
-            <form onSubmit={handleUpdateName} className="space-y-4 max-w-lg mt-4">
-              <div>
-                <label
-                  htmlFor="rename-workspace"
-                  className="block text-xs font-semibold uppercase text-slate-700 dark:text-[#e0e0e0] mb-1.5"
-                >
-                  Workspace Name
-                </label>
-                <input
-                  id="rename-workspace"
-                  type="text"
-                  required
-                  value={renameInput}
-                  onChange={(e) => setRenameInput(e.target.value)}
-                  placeholder="e.g. Platform Engineering"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#242424] border border-slate-200 dark:border-[#3a3a3a] text-slate-800 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#858585]"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isUpdating || !renameInput.trim()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50"
-              >
-                {isUpdating ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </button>
-            </form>
-          </div>
-
-          <div className="bg-rose-50/40 dark:bg-rose-950/20 rounded-3xl p-6 sm:p-8 border border-rose-200/80 dark:border-rose-900/40">
-            <div className="flex items-start justify-between gap-4 flex-col sm:flex-row sm:items-center">
-              <div>
-                <div className="flex items-center gap-2 text-rose-700 dark:text-[#F87171] font-bold text-base mb-1">
-                  <FiAlertTriangle size={18} />
-                  <span>Leave Workspace</span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-[#e0e0e0] max-w-xl leading-relaxed">
-                  Leaving this workspace will remove your access to all projects, tasks,
-                  and sprint boards. In FrietSync you cannot create another workspace until
-                  you leave your current one.
+          {expandedSection.security && (
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn space-y-3">
+              <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Authentication & Password
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
+                  Your credentials and tokens are secured via FrietSync JWT authentication. Password resets and verification are handled through the email OTP service.
                 </p>
               </div>
 
-              {!showLeaveConfirm ? (
+              <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Two-Factor Authentication (2FA)
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
+                  Multi-Factor Authentication and session revocation features are scheduled for the next workspace security update.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Category 4: Connected Accounts (Expandable) */}
+        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+          <button
+            type="button"
+            onClick={() => toggleSection('connected')}
+            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#fbbf24] flex items-center justify-center shrink-0 shadow-2xs">
+                <FiLink size={20} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                  Connected Accounts
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                  Linked accounts and integrations
+                </p>
+              </div>
+            </div>
+            <div className="text-slate-400">
+              {expandedSection.connected ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            </div>
+          </button>
+
+          {expandedSection.connected && (
+            <div className="p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn text-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#20232c] text-slate-400 dark:text-[#94a3b8] mx-auto flex items-center justify-center mb-3">
+                <FiLink size={20} />
+              </div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                No Accounts Connected
+              </p>
+              <p className="text-xs text-slate-400 dark:text-[#858585] mt-1 max-w-sm mx-auto leading-relaxed">
+                You do not currently have any third-party accounts linked. Third-party integrations with GitHub, GitLab, and Slack are in development.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Category 5: Danger Zone (Expandable - LOGOUT ONLY, no fake deactivation/deletion) */}
+        <div className="bg-rose-50/30 dark:bg-rose-950/10 border border-rose-200/80 dark:border-rose-900/30 rounded-2xl overflow-hidden transition-colors">
+          <button
+            type="button"
+            onClick={() => toggleSection('danger')}
+            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 transition cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-[#F87171] flex items-center justify-center shrink-0 shadow-2xs">
+                <FiAlertTriangle size={20} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-rose-900 dark:text-rose-400 truncate">
+                  Danger Zone
+                </h2>
+                <p className="text-xs text-rose-700/80 dark:text-rose-400/80 mt-0.5 truncate">
+                  Account actions and logout
+                </p>
+              </div>
+            </div>
+            <div className="text-rose-400">
+              {expandedSection.danger ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            </div>
+          </button>
+
+          {expandedSection.danger && (
+            <div className="p-4 sm:p-6 border-t border-rose-100 dark:border-rose-900/30 bg-rose-50/40 dark:bg-rose-950/20 animate-fadeIn space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-white dark:bg-[#181a20] border border-rose-200/60 dark:border-rose-900/40">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Sign Out
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5">
+                    Sign out of your active FrietSync account session on this device.
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setShowLeaveConfirm(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs sm:text-sm shadow-md shadow-rose-600/20 transition cursor-pointer shrink-0"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-rose-600/20 transition cursor-pointer disabled:opacity-50 shrink-0"
                 >
                   <FiLogOut size={16} />
-                  <span>Leave Workspace</span>
+                  <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
                 </button>
-              ) : (
-                <div className="flex items-center gap-2 shrink-0 animate-fadeIn">
-                  <button
-                    type="button"
-                    onClick={() => setShowLeaveConfirm(false)}
-                    disabled={isLeaving}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-[#e0e0e0] hover:bg-white dark:hover:bg-[#242424] transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleLeaveWorkspace}
-                    disabled={isLeaving}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs shadow-md shadow-rose-600/20 transition cursor-pointer disabled:opacity-50"
-                  >
-                    {isLeaving ? (
-                      <>
-                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Leaving...</span>
-                      </>
-                    ) : (
-                      'Confirm & Leave'
-                    )}
-                  </button>
+              </div>
+
+              <div className="p-3 text-[11px] text-rose-600/80 dark:text-rose-400/80 bg-rose-100/50 dark:bg-rose-950/30 rounded-xl leading-normal">
+                Note: Permanent account deactivation and deletion must be authorized by your workspace administrator.
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Category 6: Workspace Settings (Preserves Workspace Features) */}
+        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+          <button
+            type="button"
+            onClick={() => toggleSection('workspace')}
+            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-[#242428] text-slate-700 dark:text-[#e0e0e0] flex items-center justify-center shrink-0 shadow-2xs">
+                <FiLayers size={20} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                  Workspace Settings
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                  {workspace?.name || 'Workspace details and membership'}
+                </p>
+              </div>
+            </div>
+            <div className="text-slate-400">
+              {expandedSection.workspace ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            </div>
+          </button>
+
+          {expandedSection.workspace && (
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn space-y-5">
+              {isLoadingWorkspace ? (
+                <div className="p-6 text-center text-slate-400">
+                  <FiRefreshCw size={20} className="animate-spin mb-2 mx-auto" />
+                  <span className="text-xs">Loading workspace details...</span>
                 </div>
+              ) : !workspace ? (
+                <div className="p-4 text-center">
+                  <p className="text-xs text-slate-500">No active workspace found.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Rename Workspace Form */}
+                  <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] space-y-3">
+                    <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-sm">
+                      <FiEdit2 size={16} />
+                      <span>Rename Workspace</span>
+                    </div>
+                    <form onSubmit={handleUpdateWorkspaceName} className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        required
+                        value={renameInput}
+                        onChange={(e) => setRenameInput(e.target.value)}
+                        placeholder="Workspace name"
+                        className="flex-1 px-4 py-2 rounded-xl bg-slate-50 dark:bg-[#131418] border border-slate-200 dark:border-[#2a2c36] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isUpdatingWorkspace || !renameInput.trim()}
+                        className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition cursor-pointer disabled:opacity-50 shrink-0"
+                      >
+                        {isUpdatingWorkspace ? 'Saving...' : 'Rename'}
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Leave Workspace */}
+                  <div className="p-4 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-rose-800 dark:text-[#F87171]">
+                        Leave Workspace
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 max-w-md">
+                        Leaving removes your membership and access to all its projects, tasks, and boards.
+                      </p>
+                    </div>
+
+                    {!showLeaveConfirm ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowLeaveConfirm(true)}
+                        className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition cursor-pointer shrink-0"
+                      >
+                        Leave
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setShowLeaveConfirm(false)}
+                          className="px-3 py-1.5 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#20232c] cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleLeaveWorkspace}
+                          disabled={isLeavingWorkspace}
+                          className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+                        >
+                          {isLeavingWorkspace ? 'Leaving...' : 'Confirm'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

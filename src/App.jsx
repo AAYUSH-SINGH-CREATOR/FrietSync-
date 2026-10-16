@@ -15,6 +15,7 @@ import MyWorkView from './features/dashboard/components/MyWorkView';
 import ChatsView from './features/chat/pages/ChatView';
 import TeamView from './features/dashboard/components/TeamView';
 import SettingsView from './features/dashboard/components/SettingsView';
+import ProfileView from './features/dashboard/components/ProfileView';
 import ProjectsView from './features/projects/pages/ProjectsView';
 import ProjectDetailsView from './features/projects/pages/ProjectDetailsView';
 import InvitesView from './features/invites/components/InvitesView';
@@ -44,6 +45,8 @@ function App() {
           <Route path="invites" element={<InvitesView />} />
           <Route path="team" element={<TeamView />} />
           <Route path="settings" element={<SettingsView />} />
+          <Route path="settings/profile" element={<ProfileView />} />
+          <Route path="profile" element={<Navigate to="/dashboard/settings/profile" replace />} />
         </Route>
 
         <Route path="/create-workspace" element={<CreateWorkspace />} />
