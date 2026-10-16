@@ -47,6 +47,16 @@ export const normalizeIssueList = (data) => {
   return [];
 };
 
+export const normalizeIssuePage = (data, fallback = {}) => {
+  const body = data?.data && !Array.isArray(data.data) ? data.data : data;
+  const items = normalizeIssueList(body);
+  const page = Number(body?.number ?? body?.page ?? fallback.page ?? 0);
+  const size = Number(body?.size ?? body?.pageSize ?? fallback.size ?? items.length);
+  const totalElements = Number(body?.totalElements ?? body?.totalCount ?? body?.total ?? items.length);
+  const totalPages = Number(body?.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : 1));
+  return { items, page, size, totalElements, totalPages, first: body?.first ?? page === 0, last: body?.last ?? page + 1 >= totalPages };
+};
+
 /**
  * Safely extracts an issue detail object from various API response shapes.
  */
@@ -81,7 +91,7 @@ export const createIssue = async (projectId, issueData) => {
     const response = await axios.post(
       `${BASE_URL}/projects/${projectId}/issues`,
       payload,
-      getAuthHeaders({ projectId })
+      getAuthHeaders()
     );
 
     return normalizeIssueDetails(response.data) || response.data;
@@ -90,16 +100,16 @@ export const createIssue = async (projectId, issueData) => {
   }
 };
 
-export const getProjectIssues = async (projectId) => {
-  if (!projectId) return [];
+export const getProjectIssues = async (projectId, { page = 0, size = 20 } = {}) => {
+  if (!projectId) return normalizeIssuePage(null, { page, size });
 
   try {
     const response = await axios.get(
       `${BASE_URL}/projects/${projectId}/issues`,
-      getAuthHeaders({ projectId })
+      getAuthHeaders({ page, size })
     );
 
-    return normalizeIssueList(response.data);
+    return normalizeIssuePage(response.data, { page, size });
   } catch (error) {
     handleIssueError(error, `Failed to fetch issues for project ${projectId}.`);
   }
@@ -121,6 +131,55 @@ export const getIssueDetails = async (issueId) => {
     handleIssueError(error, 'Failed to load issue details.');
   }
 };
+
+const issueRequest = async (method, path, payload, config = {}, fallback = 'Issue request failed.') => {
+  try {
+    const response = await axios({ method, url: `${BASE_URL}${path}`, data: payload, ...getAuthHeaders(), ...config });
+    return response.data === undefined ? null : response.data;
+  } catch (error) {
+    handleIssueError(error, fallback);
+  }
+};
+
+export const updateIssue = (id, fields) => issueRequest('patch', `/issues/${id}`, fields, {}, 'Failed to update issue.');
+export const deleteIssue = (id) => issueRequest('delete', `/issues/${id}`, undefined, {}, 'Failed to delete issue.');
+export const assignIssue = (id, userIds) => issueRequest('post', `/issues/${id}/assign`, { userIds }, {}, 'Failed to assign issue.');
+export const resolveIssue = (id) => issueRequest('post', `/issues/${id}/resolve`, {}, {}, 'Failed to resolve issue.');
+export const reviewIssue = (id, decision, comment = '') => issueRequest('post', `/issues/${id}/review/${decision}`, comment.trim() ? { comment: comment.trim() } : {}, {}, `Failed to ${decision} issue review.`);
+export const getIssueHistory = (id, { page = 0, size = 20 } = {}) => issueRequest('get', `/issues/${id}/history`, undefined, { params: { page, size } }, 'Failed to load issue history.');
+export const getIssueLabels = (id) => issueRequest('get', `/issues/${id}/labels`, undefined, {}, 'Failed to load issue labels.');
+export const attachIssueLabel = (id, labelId) => issueRequest('post', `/issues/${id}/labels`, { labelId }, {}, 'Failed to attach label.');
+export const removeIssueLabel = (id, labelId) => issueRequest('delete', `/issues/${id}/labels/${labelId}`, undefined, {}, 'Failed to remove label.');
+export const getIssueLinks = (id) => issueRequest('get', `/issues/${id}/links`, undefined, {}, 'Failed to load issue links.');
+export const createIssueLink = (id, targetIssueId, type) => issueRequest('post', `/issues/${id}/links`, { targetIssueId, type }, {}, 'Failed to create issue link.');
+export const deleteIssueLink = (linkId) => issueRequest('delete', `/issue-links/${linkId}`, undefined, {}, 'Failed to remove issue link.');
+export const getIssueDependencies = (id) => issueRequest('get', `/issues/${id}/dependencies`, undefined, {}, 'Failed to load issue dependencies.');
+export const getIssueImpact = (id) => issueRequest('get', `/issues/${id}/impact`, undefined, {}, 'Failed to load issue impact.');
+export const getProjectDependencyGraph = (id) => issueRequest('get', `/projects/${id}/dependency-graph`, undefined, {}, 'Failed to load dependency graph.');
+export const getIssueAttachments = (id) => issueRequest('get', `/issues/${id}/attachments`, undefined, {}, 'Failed to load attachments.');
+export const uploadIssueAttachment = async (id, file) => {
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const token = getAccessToken();
+    const response = await axios.post(`${BASE_URL}/issues/${id}/attachments`, form, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    return response.data;
+  } catch (error) { handleIssueError(error, 'Failed to upload attachment.'); }
+};
+export const downloadIssueAttachment = async (id) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/attachments/${id}/download`, { ...getAuthHeaders(), responseType: 'blob' });
+    return response.data;
+  } catch (error) { handleIssueError(error, 'Failed to download attachment.'); }
+};
+export const deleteIssueAttachment = (id) => issueRequest('delete', `/attachments/${id}`, undefined, {}, 'Failed to delete attachment.');
+export const requestIssueAssignment = (id, message = '') => issueRequest('post', `/issues/${id}/request`, message.trim() ? { message: message.trim() } : {}, {}, 'Failed to request issue assignment.');
+export const getMyIssueAssignmentRequest = (id) => issueRequest('get', `/issues/${id}/request`, undefined, {}, 'Failed to load assignment request.');
+export const cancelIssueAssignmentRequest = (id) => issueRequest('delete', `/issues/${id}/request`, undefined, {}, 'Failed to cancel assignment request.');
+export const getProjectIssueRequests = (id, status) => issueRequest('get', `/projects/${id}/issue-requests`, undefined, { params: status ? { status } : {} }, 'Failed to load assignment requests.');
+export const createProjectIssueRequest = (id, payload) => issueRequest('post', `/issues/${id}/issue-requests`, payload, {}, 'Failed to create assignment request.');
+export const manageProjectIssueRequest = (issueId, requestId, approve) => issueRequest('post', `/issues/${issueId}/issue-requests`, { requestId, approve }, {}, 'Failed to update assignment request.');
+export const deleteProjectIssueRequest = (projectId, requestId) => issueRequest('delete', `/projects/${projectId}/issue-requests`, undefined, { params: { requestId } }, 'Failed to remove assignment request.');
 
 export { getFriendlyErrorMessage };
 
