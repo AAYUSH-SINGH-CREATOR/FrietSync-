@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 
 import {
@@ -88,16 +88,16 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
       <div>
                 <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-[#F1F5F9]">
             Hello {userName || 'there'},
           </h1>
           {userRole && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-800 border border-sky-200">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-800 border border-sky-200 dark:border-sky-800/60 dark:bg-sky-950/50 dark:text-sky-200">
               {userRole}
             </span>
              )}
             {workspace?.name && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-200">
                 <FiLayers size={13} className="text-emerald-600" />
                 <span>Workspace: <strong className="font-bold">{workspace.name}</strong></span>
               </span>
@@ -105,7 +105,7 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
           </div>
        
         </div>
-        <p className="text-base font-medium text-slate-600 mt-1">
+        <p className="text-base font-medium text-slate-600 mt-1 dark:text-[#b3b3b3]">
           Welcome to FrietSync! Here is a high-level overview of your workspace.
         </p>
       </div>
@@ -117,21 +117,21 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
             <div
               key={card.id}
               onClick={() => handleNavigate(card.id)}
-              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-sky-300 hover:shadow-md transition cursor-pointer"
+              className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-sky-300 hover:shadow-md transition cursor-pointer dark:border-[#303030] dark:bg-[#1d1d1d] dark:hover:border-sky-500/50 dark:hover:bg-[#242424]"
             >
               <div
                 className={`w-10 h-10 rounded-xl ${card.color} flex items-center justify-center mb-3`}
               >
                 <Icon size={20} />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">{card.title}</h3>
-              <p className="text-xs text-slate-500 mt-1">{card.desc}</p>
+              <h3 className="font-bold text-slate-900 text-base dark:text-[#F1F5F9]">{card.title}</h3>
+              <p className="text-xs text-slate-500 mt-1 dark:text-[#b3b3b3]">{card.desc}</p>
             </div>
           );
         })}
       </div>
 
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-md shadow-slate-200/50 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-md shadow-slate-200/50 flex flex-col md:flex-row items-center justify-between gap-6 dark:border-[#303030] dark:bg-[#1d1d1d] dark:shadow-black/20">
         <div>
           <div className="flex items-center gap-2.5 mb-1.5">
             <span
@@ -139,11 +139,11 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
                 workspace?.name ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
               }`}
             />
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
               {workspace?.name ? `${workspace.name}` : 'No Active Workspace'}
             </h2>
           </div>
-          <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+          <p className="text-sm text-slate-500 max-w-xl leading-relaxed dark:text-[#b3b3b3]">
             {workspace?.name
               ? `Your workspace "${workspace.name}" is active. Use the floating sidebar on the left to navigate between Projects, Sprints, My Work, and Invitations.`
               : 'You have not created or joined a workspace yet. Create your workspace to begin organizing projects, sprints, and team members.'}
@@ -163,7 +163,7 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
             <button
               type="button"
               onClick={() => handleNavigate('settings')}
-              className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2"
+              className="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 dark:bg-[#303030] dark:text-[#e0e0e0] dark:hover:bg-[#383838]"
             >
               <FiSettings size={16} />
               <span>Workspace Settings</span>
@@ -173,7 +173,7 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
           <button
             type="button"
             onClick={() => handleNavigate('invites')}
-            className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer flex items-center gap-2"
+            className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer flex items-center gap-2 dark:bg-[#303030] dark:text-[#e0e0e0] dark:hover:bg-[#383838]"
           >
             <FiLayers size={17} />
             <span>Go to Invitations</span>
