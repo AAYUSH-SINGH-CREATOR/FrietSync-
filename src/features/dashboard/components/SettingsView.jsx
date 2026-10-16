@@ -7,7 +7,6 @@ import {
   FiLink,
   FiAlertTriangle,
   FiLogOut,
-  FiChevronRight,
   FiChevronDown,
   FiLayers,
   FiEdit2,
@@ -15,7 +14,7 @@ import {
   FiAlertCircle,
   FiRefreshCw,
 } from 'react-icons/fi';
-import logo from '../../../assets/logo.svg';
+import profileBanner from '../../../assets/profile-banner.png';
 import { logoutUser } from '../../auth/services/authApi';
 import {
   getMyWorkspace,
@@ -29,41 +28,41 @@ import {
 } from '../services/notificationApi';
 
 const DEFAULT_PREFERENCES = [
-  {
-    type: 'PROJECT_UPDATES',
-    title: 'Project updates',
-    description: 'Notifications when milestones, sprints, or project statuses change.',
-    inApp: true,
-    email: false,
-  },
-  {
-    type: 'TASK_ASSIGNMENT',
-    title: 'Task assignment',
-    description: 'Alerts when issues or tasks are assigned to you or updated.',
-    inApp: true,
-    email: true,
-  },
-  {
-    type: 'MENTIONS',
-    title: 'Mentions',
-    description: 'When teammates mention you in project comments or chats.',
-    inApp: true,
-    email: false,
-  },
-  {
-    type: 'COMMENTS',
-    title: 'Comments',
-    description: 'Activity and replies on issues and sprints you are following.',
-    inApp: true,
-    email: false,
-  },
-  {
-    type: 'EMAIL_NOTIFICATIONS',
-    title: 'Email Notification',
-    description: 'Weekly digest summaries and important workspace updates.',
-    inApp: false,
-    email: true,
-  },
+  // {
+  //   type: 'PROJECT_UPDATES',
+  //   title: 'Project updates',
+  //   description: 'Notifications when milestones, sprints, or project statuses change.',
+  //   inApp: true,
+  //   email: false,
+  // },
+  // {
+  //   type: 'TASK_ASSIGNMENT',
+  //   title: 'Task assignment',
+  //   description: 'Alerts when issues or tasks are assigned to you or updated.',
+  //   inApp: true,
+  //   email: true,
+  // },
+  // {
+  //   type: 'MENTIONS',
+  //   title: 'Mentions',
+  //   description: 'When teammates mention you in project comments or chats.',
+  //   inApp: true,
+  //   email: false,
+  // },
+  // {
+  //   type: 'COMMENTS',
+  //   title: 'Comments',
+  //   description: 'Activity and replies on issues and sprints you are following.',
+  //   inApp: true,
+  //   email: false,
+  // },
+  // {
+  //   type: 'EMAIL_NOTIFICATIONS',
+  //   title: 'Email Notification',
+  //   description: 'Weekly digest summaries and important workspace updates.',
+  //   inApp: false,
+  //   email: true,
+  // },
 ];
 
 const SettingsView = () => {
@@ -277,23 +276,17 @@ const SettingsView = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 max-w-4xl mx-auto">
+    <div className="w-full min-w-0 space-y-0 animate-fadeIn pb-12">
       {/* Branded Header Banner */}
-      <div className="bg-white dark:bg-[#181a20] rounded-3xl border border-slate-200/80 dark:border-[#262833] p-6 sm:p-8 shadow-xs relative overflow-hidden transition-colors">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-800/50 flex items-center justify-center shrink-0 shadow-xs">
-              <img src={logo} alt="FrietSync Logo" className="w-7 h-7 object-contain" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                Settings
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94a3b8] mt-1">
-                Manage your preferences, account details, and workspace settings.
-              </p>
-            </div>
-          </div>
+      <div
+        className="min-h-[126px] sm:min-h-[128px] rounded-t-xl sm:rounded-t-2xl px-4 sm:px-5 py-5 sm:py-6 flex items-center relative overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: `url(${profileBanner})` }}
+      >
+        <div className="relative z-10 max-w-[58%]">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Settings</h1>
+          <p className="text-xs text-white/90 mt-1">
+            Manage your preferences, account details, and workspace settings.
+          </p>
         </div>
       </div>
 
@@ -325,54 +318,50 @@ const SettingsView = () => {
       )}
 
       {/* Main Settings Category List */}
-      <div className="space-y-3">
+      <div className="space-y-3 bg-[#1d1d1d] p-2 sm:p-2.5 rounded-b-xl sm:rounded-b-2xl">
         {/* Category 1: Account (Navigates to Profile) */}
         <button
           type="button"
           onClick={() => navigate('/dashboard/settings/profile')}
-          className="w-full bg-white dark:bg-[#181a20] hover:bg-slate-50 dark:hover:bg-[#1d2028] border border-slate-200/80 dark:border-[#262833] rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition-all cursor-pointer text-left shadow-xs group"
+          className="w-full bg-[#2a2a2a] hover:bg-[#303030] rounded-xl p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 transition-all cursor-pointer text-left group"
         >
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-[#38bdf8] flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <FiUser size={20} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+              <h2 className="text-base font-semibold text-white truncate">
                 Account
               </h2>
-              <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+              <p className="text-sm text-white/80 truncate">
                 Profile and personal info
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition">
-            <span className="text-xs hidden sm:inline font-medium">Manage Profile</span>
-            <FiChevronRight size={18} />
-          </div>
         </button>
 
         {/* Category 2: Notifications (Expandable) */}
-        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('notifications')}
-            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-[#818cf8] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0">
                 <FiBell size={20} />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                <h2 className="text-base font-semibold text-white truncate">
                   Notifications
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                <p className="text-sm text-white/80 truncate">
                   Alerts and notification preferences
                 </p>
               </div>
             </div>
-            <div className="text-slate-400">
-              {expandedSection.notifications ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            <div className="text-white/80">
+              <FiChevronDown size={18} className={expandedSection.notifications ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
 
@@ -469,27 +458,27 @@ const SettingsView = () => {
         </div>
 
         {/* Category 3: Privacy & Security (Expandable) */}
-        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('security')}
-            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-[#34d399] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0">
                 <FiShield size={20} />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                <h2 className="text-base font-semibold text-white truncate">
                   Privacy & Security
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                <p className="text-sm text-white/80 truncate">
                   Privacy controls and account security
                 </p>
               </div>
             </div>
-            <div className="text-slate-400">
-              {expandedSection.security ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            <div className="text-white/80">
+              <FiChevronDown size={18} className={expandedSection.security ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
 
@@ -517,27 +506,27 @@ const SettingsView = () => {
         </div>
 
         {/* Category 4: Connected Accounts (Expandable) */}
-        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('connected')}
-            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#fbbf24] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0">
                 <FiLink size={20} />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                <h2 className="text-base font-semibold text-white truncate">
                   Connected Accounts
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 truncate">
+                <p className="text-sm text-white/80 truncate">
                   Linked accounts and integrations
                 </p>
               </div>
             </div>
-            <div className="text-slate-400">
-              {expandedSection.connected ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+            <div className="text-white/80">
+              <FiChevronDown size={18} className={expandedSection.connected ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
 
@@ -557,11 +546,11 @@ const SettingsView = () => {
         </div>
 
         {/* Category 5: Danger Zone (Expandable - LOGOUT ONLY, no fake deactivation/deletion) */}
-        <div className="bg-rose-50/30 dark:bg-rose-950/10 border border-rose-200/80 dark:border-rose-900/30 rounded-2xl overflow-hidden transition-colors">
+        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('danger')}
-            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-11 h-11 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-[#F87171] flex items-center justify-center shrink-0 shadow-2xs">
@@ -577,7 +566,7 @@ const SettingsView = () => {
               </div>
             </div>
             <div className="text-rose-400">
-              {expandedSection.danger ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+              <FiChevronDown size={18} className={expandedSection.danger ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
 
@@ -611,11 +600,11 @@ const SettingsView = () => {
         </div>
 
         {/* Category 6: Workspace Settings (Preserves Workspace Features) */}
-        <div className="bg-white dark:bg-[#181a20] border border-slate-200/80 dark:border-[#262833] rounded-2xl overflow-hidden shadow-xs transition-colors">
+        <div className="bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
             onClick={() => toggleSection('workspace')}
-            className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#1d2028] transition cursor-pointer text-left"
+            className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-[#303030] transition cursor-pointer text-left"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-[#242428] text-slate-700 dark:text-[#e0e0e0] flex items-center justify-center shrink-0 shadow-2xs">
@@ -631,7 +620,7 @@ const SettingsView = () => {
               </div>
             </div>
             <div className="text-slate-400">
-              {expandedSection.workspace ? <FiChevronDown size={18} /> : <FiChevronRight size={18} />}
+              <FiChevronDown size={18} className={expandedSection.workspace ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </div>
           </button>
 
