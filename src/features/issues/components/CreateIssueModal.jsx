@@ -144,11 +144,11 @@ const CreateIssueModal = ({
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-slate-100 dark:border-[#293548] p-6 sm:p-7 max-h-[92vh] overflow-y-auto no-scrollbar transition-all text-left"
+        className="relative w-full max-w-lg bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-slate-100 dark:border-[#303030] p-6 sm:p-7 max-h-[92vh] overflow-y-auto no-scrollbar transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#293548] mb-5">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#303030] mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shadow-2xs shrink-0">
               <FiPlus size={20} />
@@ -157,7 +157,7 @@ const CreateIssueModal = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
                 Create New Issue
               </h2>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+              <p className="text-xs text-slate-500 dark:text-[#b3b3b3]">
                 Add a task, bug report, or feature request to your project.
               </p>
             </div>
@@ -166,7 +166,7 @@ const CreateIssueModal = ({
             type="button"
             onClick={handleClose}
             aria-label="Close modal"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 dark:text-[#94A3B8] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer shrink-0 ml-4"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 dark:text-[#b3b3b3] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer shrink-0 ml-4"
           >
             <FiX size={19} />
           </button>
@@ -185,12 +185,12 @@ const CreateIssueModal = ({
           <div>
             <label
               htmlFor="issue-project"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-1.5"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1.5"
             >
               Project <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                 <FiFolder size={16} />
               </span>
               <select
@@ -206,8 +206,8 @@ const CreateIssueModal = ({
                 className={`w-full pl-10 pr-9 py-2.5 rounded-xl border ${
                   fieldErrors.projectId
                     ? 'border-rose-500 dark:border-rose-500'
-                    : 'border-slate-200 dark:border-[#334155]'
-                } bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer`}
+                    : 'border-slate-200 dark:border-[#3a3a3a]'
+                } bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer`}
               >
                 {availableProjects.length === 0 ? (
                   <option value="">
@@ -217,7 +217,7 @@ const CreateIssueModal = ({
                   availableProjects.map((p) => {
                     const pid = p.id || p._id || p.projectId;
                     return (
-                      <option key={pid} value={pid} className="dark:bg-[#1E293B]">
+                      <option key={pid} value={pid} className="dark:bg-[#242424]">
                         {p.name || 'Untitled Project'}
                       </option>
                     );
@@ -234,7 +234,7 @@ const CreateIssueModal = ({
           <div>
             <label
               htmlFor="issue-title"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-1.5"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1.5"
             >
               Title <span className="text-rose-500">*</span>
             </label>
@@ -255,8 +255,8 @@ const CreateIssueModal = ({
               className={`w-full px-3.5 py-2.5 rounded-xl border ${
                 fieldErrors.title
                   ? 'border-rose-500 dark:border-rose-500'
-                  : 'border-slate-200 dark:border-[#334155]'
-              } bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition`}
+                  : 'border-slate-200 dark:border-[#3a3a3a]'
+              } bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition`}
             />
             {fieldErrors.title && (
               <p className="text-[11px] text-rose-500 mt-1">{fieldErrors.title}</p>
@@ -267,7 +267,7 @@ const CreateIssueModal = ({
           <div>
             <label
               htmlFor="issue-description"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-1.5"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1.5"
             >
               Description <span className="text-slate-400 lowercase font-normal">(optional)</span>
             </label>
@@ -278,7 +278,7 @@ const CreateIssueModal = ({
               value={description}
               disabled={isSubmitting}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition resize-y"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition resize-y"
             />
           </div>
 
@@ -288,12 +288,12 @@ const CreateIssueModal = ({
             <div>
               <label
                 htmlFor="issue-priority"
-                className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-1.5"
+                className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1.5"
               >
                 Priority
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                   <FiFlag size={15} />
                 </span>
                 <select
@@ -301,10 +301,10 @@ const CreateIssueModal = ({
                   value={priority}
                   disabled={isSubmitting}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer"
+                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer"
                 >
                   {PRIORITY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="dark:bg-[#1E293B]">
+                    <option key={opt.value} value={opt.value} className="dark:bg-[#242424]">
                       {opt.label}
                     </option>
                   ))}
@@ -316,12 +316,12 @@ const CreateIssueModal = ({
             <div>
               <label
                 htmlFor="issue-hours"
-                className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-1.5"
+                className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1.5"
               >
                 Estimated Hours <span className="text-slate-400 lowercase font-normal">(optional)</span>
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                   <FiClock size={15} />
                 </span>
                 <input
@@ -333,7 +333,7 @@ const CreateIssueModal = ({
                   value={estimatedHours}
                   disabled={isSubmitting}
                   onChange={(e) => setEstimatedHours(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
                 />
               </div>
             </div>
@@ -342,12 +342,12 @@ const CreateIssueModal = ({
           <div>
             <label
               htmlFor="issue-due-date"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-1.5"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1.5"
             >
               Due Date <span className="text-slate-400 lowercase font-normal">(optional)</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                 <FiCalendar size={15} />
               </span>
               <input
@@ -356,17 +356,17 @@ const CreateIssueModal = ({
                 value={dueDate}
                 disabled={isSubmitting}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#293548]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#303030]">
             <button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] text-slate-600 dark:text-[#e0e0e0] hover:bg-slate-50 dark:hover:bg-[#242424] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

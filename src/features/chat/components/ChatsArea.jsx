@@ -42,12 +42,12 @@ const ChatArea = ({
 
   if (!activeChat) {
     return (
-      <div className="bg-white dark:bg-[#172033] rounded-3xl border border-slate-200/80 dark:border-[#293548] h-full flex flex-col items-center justify-center p-8 text-center">
+      <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl border border-slate-200/80 dark:border-[#303030] h-full flex flex-col items-center justify-center p-8 text-center">
         <div className="w-16 h-16 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-500 dark:text-[#60A5FA] flex items-center justify-center mb-4">
           <FiFolder size={28} />
         </div>
         <h3 className="text-lg font-bold text-slate-800 dark:text-[#F1F5F9]">Select a project channel</h3>
-        <p className="text-xs text-slate-400 dark:text-[#94A3B8] mt-1 max-w-sm">
+        <p className="text-xs text-slate-400 dark:text-[#b3b3b3] mt-1 max-w-sm">
           Choose a project from the sidebar to chat live with project members.
         </p>
       </div>
@@ -63,15 +63,15 @@ const ChatArea = ({
     .toUpperCase();
 
   return (
-    <div className="bg-white dark:bg-[#172033] rounded-3xl border border-slate-200/80 dark:border-[#293548] shadow-xs flex flex-col h-full overflow-hidden transition-colors">
+    <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl border border-slate-200/80 dark:border-[#303030] shadow-xs flex flex-col h-full overflow-hidden transition-colors">
       {/* Header */}
-      <div className="px-5 py-3.5 border-b border-slate-100 dark:border-[#293548] flex items-center justify-between shrink-0">
+      <div className="px-5 py-3.5 border-b border-slate-100 dark:border-[#303030] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           {onBackToList && (
             <button
               type="button"
               onClick={onBackToList}
-              className="lg:hidden p-1.5 -ml-1 text-slate-500 dark:text-[#94A3B8] hover:text-slate-800 dark:hover:text-[#F1F5F9] rounded-xl hover:bg-slate-100 dark:hover:bg-[#1E293B] cursor-pointer"
+              className="lg:hidden p-1.5 -ml-1 text-slate-500 dark:text-[#b3b3b3] hover:text-slate-800 dark:hover:text-[#F1F5F9] rounded-xl hover:bg-slate-100 dark:hover:bg-[#242424] cursor-pointer"
               title="Back to channel list"
             >
               <FiArrowLeft size={18} />
@@ -84,7 +84,7 @@ const ChatArea = ({
             </div>
             <span
               title={connectionStatus === 'connected' ? 'Connected' : 'Offline'}
-              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#172033] ${
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#1d1d1d] ${
                 connectionStatus === 'connected'
                   ? 'bg-emerald-500'
                   : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
@@ -114,13 +114,13 @@ const ChatArea = ({
                   Connecting...
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-500 dark:text-[#94A3B8] text-[10px]">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#242424] text-slate-500 dark:text-[#b3b3b3] text-[10px]">
                   Offline
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-400 dark:text-[#94A3B8] truncate mt-0.5">
+            <p className="text-xs text-slate-400 dark:text-[#b3b3b3] truncate mt-0.5">
               {activeChat.description || 'Project team channel'}
             </p>
           </div>
@@ -131,7 +131,7 @@ const ChatArea = ({
             type="button"
             onClick={() => navigate(`/dashboard/projects/${activeChat.id}`)}
             title="Open project details"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1E293B] dark:hover:bg-[#253247] text-slate-700 dark:text-[#CBD5E1] text-xs font-semibold border border-transparent dark:border-[#334155] transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#242424] dark:hover:bg-[#303030] text-slate-700 dark:text-[#e0e0e0] text-xs font-semibold border border-transparent dark:border-[#3a3a3a] transition cursor-pointer"
           >
             <FiExternalLink size={13} />
             <span className="hidden sm:inline">Project Details</span>
@@ -142,7 +142,7 @@ const ChatArea = ({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-4 sm:p-6 space-y-4">
         {isLoadingMessages ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 dark:text-[#94A3B8]">
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 dark:text-[#b3b3b3]">
             <span className="w-6 h-6 border-2 border-sky-600/30 dark:border-blue-500/30 border-t-sky-600 dark:border-t-blue-500 rounded-full animate-spin mb-2" />
             <p className="text-xs">Loading project messages...</p>
           </div>
@@ -154,7 +154,7 @@ const ChatArea = ({
             <p className="text-sm font-semibold text-slate-700 dark:text-[#F1F5F9]">
               No messages yet
             </p>
-            <p className="text-xs text-slate-400 dark:text-[#94A3B8] mt-1 max-w-xs">
+            <p className="text-xs text-slate-400 dark:text-[#b3b3b3] mt-1 max-w-xs">
               Say hello to start the discussion with members of {activeChat.name}!
             </p>
           </div>
@@ -168,7 +168,7 @@ const ChatArea = ({
                 className={`flex flex-col ${isOutgoing ? 'items-end' : 'items-start'}`}
               >
                 {!isOutgoing && msg.sender && (
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-[#94A3B8] mb-1 ml-2">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-[#b3b3b3] mb-1 ml-2">
                     {msg.sender}
                   </span>
                 )}
@@ -177,14 +177,14 @@ const ChatArea = ({
                   className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words shadow-2xs max-w-[85%] sm:max-w-[70%] ${
                     isOutgoing
                       ? 'bg-sky-600 dark:bg-blue-600 text-white rounded-tr-xs'
-                      : 'bg-slate-100 dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] rounded-tl-xs'
+                      : 'bg-slate-100 dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] rounded-tl-xs'
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{msg.text}</p>
                 </div>
 
                 <span
-                  className={`text-[11px] text-slate-400 dark:text-[#94A3B8] mt-1 ${
+                  className={`text-[11px] text-slate-400 dark:text-[#b3b3b3] mt-1 ${
                     isOutgoing ? 'mr-1 text-right' : 'ml-1 text-left'
                   }`}
                 >
@@ -198,10 +198,10 @@ const ChatArea = ({
       </div>
 
       {/* Input */}
-      <div className="p-3 sm:p-4 border-t border-slate-100 dark:border-[#293548] bg-white dark:bg-[#172033]">
+      <div className="p-3 sm:p-4 border-t border-slate-100 dark:border-[#303030] bg-white dark:bg-[#1d1d1d]">
         <form
           onSubmit={handleSend}
-          className="flex items-center gap-2 bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-[#334155] rounded-2xl p-1.5 sm:p-2 pl-3.5 sm:pl-4 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/40 transition"
+          className="flex items-center gap-2 bg-slate-50 dark:bg-[#242424] border border-slate-200 dark:border-[#3a3a3a] rounded-2xl p-1.5 sm:p-2 pl-3.5 sm:pl-4 focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/40 transition"
         >
           <input
             type="text"
@@ -214,7 +214,7 @@ const ChatArea = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent px-2 py-1 text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] outline-none"
+            className="flex-1 bg-transparent px-2 py-1 text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] outline-none"
           />
 
           {inputText.length > 1800 && (

@@ -102,10 +102,10 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-2xl bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#293548] p-6 sm:p-8 max-h-[92vh] overflow-y-auto transition-all text-left"
+        className="relative w-full max-w-2xl bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#303030] p-6 sm:p-8 max-h-[92vh] overflow-y-auto transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#293548] mb-6">
+        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#303030] mb-6">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shadow-2xs shrink-0">
               <FiFolder size={24} />
@@ -114,7 +114,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
               <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F1F5F9] tracking-tight">
                 Edit Project
               </h2>
-              <p className="text-sm text-gray-500 dark:text-[#94A3B8] mt-1">
+              <p className="text-sm text-gray-500 dark:text-[#b3b3b3] mt-1">
                 Update project details, roadmap milestones, and team leads.
               </p>
             </div>
@@ -123,7 +123,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#94A3B8] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#1E293B] transition cursor-pointer shrink-0 ml-4"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#b3b3b3] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#242424] transition cursor-pointer shrink-0 ml-4"
           >
             <FiX size={22} />
           </button>
@@ -140,7 +140,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
           <div>
             <label
               htmlFor="edit-project-name"
-              className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+              className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
             >
               Project Name <span className="text-red-500">*</span>
             </label>
@@ -152,14 +152,14 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
               placeholder="e.g. FrietSync"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#64748B]"
+              className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#858585]"
             />
           </div>
 
           <div>
             <label
               htmlFor="edit-project-desc"
-              className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+              className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
             >
               Description
             </label>
@@ -170,19 +170,19 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
               placeholder="Project management and issue tracking platform..."
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#64748B] resize-none leading-relaxed"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#858585] resize-none leading-relaxed"
             />
           </div>
 
           <div>
             <label
               htmlFor="edit-project-status"
-              className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+              className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
             >
               Status
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">
                 <FiShield size={18} />
               </span>
               <select
@@ -190,19 +190,19 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#334155] text-sm sm:text-base font-medium bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer appearance-none"
+                className="w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] text-sm sm:text-base font-medium bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer appearance-none"
               >
                 {PROJECT_STATUS_OPTIONS.map((opt) => (
                   <option
                     key={opt.value}
                     value={opt.value}
-                    className="bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9]"
+                    className="bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9]"
                   >
                     {opt.label}
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B] text-sm">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 dark:text-[#858585] text-sm">
                 ▼
               </div>
             </div>
@@ -212,12 +212,12 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
             <div>
               <label
                 htmlFor="edit-start-date"
-                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
               >
                 Start Date
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">
                   <FiCalendar size={18} />
                 </span>
                 <input
@@ -226,7 +226,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
                   type="date"
                   value={formData.startDate}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -234,12 +234,12 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
             <div>
               <label
                 htmlFor="edit-deadline"
-                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
               >
                 Deadline
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">
                   <FiCalendar size={18} />
                 </span>
                 <input
@@ -249,7 +249,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
                   min={formData.startDate || ''}
                   value={formData.deadline}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -259,12 +259,12 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
             <div>
               <label
                 htmlFor="edit-pm-email"
-                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
               >
                 Project Manager Email
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">
                   <FiMail size={18} />
                 </span>
                 <input
@@ -274,7 +274,7 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
                   placeholder="pm@example.com"
                   value={formData.projectManagerEmail}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#64748B]"
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#858585]"
                 />
               </div>
             </div>
@@ -282,12 +282,12 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
             <div>
               <label
                 htmlFor="edit-lead-email"
-                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#CBD5E1] mb-2"
+                className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
               >
                 Team Lead Email
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">
                   <FiMail size={18} />
                 </span>
                 <input
@@ -297,18 +297,18 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
                   placeholder="lead@example.com"
                   value={formData.teamLeadEmail}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#64748B]"
+                  className="w-full pl-11 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#858585]"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3.5 pt-5 border-t border-slate-100 dark:border-[#293548]">
+          <div className="flex items-center justify-end gap-3.5 pt-5 border-t border-slate-100 dark:border-[#303030]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-5 py-3 rounded-xl text-sm sm:text-base font-medium text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer disabled:opacity-50"
+              className="px-5 py-3 rounded-xl text-sm sm:text-base font-medium text-slate-600 dark:text-[#e0e0e0] hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

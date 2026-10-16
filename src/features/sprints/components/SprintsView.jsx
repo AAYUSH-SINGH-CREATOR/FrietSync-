@@ -54,9 +54,9 @@ const formatDate = (value) => {
     : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-const panelClass = 'rounded-2xl border border-slate-200 bg-white dark:border-[#293548] dark:bg-[#172033]';
-const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F1F5F9] dark:placeholder:text-[#64748B] dark:focus:border-[#60A5FA] dark:focus:ring-blue-900/30';
-const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#334155] dark:text-[#CBD5E1] dark:hover:bg-[#1E293B]';
+const panelClass = 'rounded-2xl border border-slate-200 bg-white dark:border-[#303030] dark:bg-[#1d1d1d]';
+const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-[#3a3a3a] dark:bg-[#242424] dark:text-[#F1F5F9] dark:placeholder:text-[#858585] dark:focus:border-[#60A5FA] dark:focus:ring-blue-900/30';
+const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#3a3a3a] dark:text-[#e0e0e0] dark:hover:bg-[#242424]';
 const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-lg bg-sky-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500';
 
 const SprintsView = () => {
@@ -281,7 +281,7 @@ const SprintsView = () => {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">Planning</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F1F5F9] sm:text-3xl">Sprints</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#94A3B8]">Plan a focused delivery window for a project.</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">Plan a focused delivery window for a project.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" className={buttonClass} onClick={() => Promise.all([loadProjects(), loadSprints()])} disabled={projectsLoading || sprintsLoading}><FiRefreshCw className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} size={15} />Refresh</button>
@@ -293,8 +293,8 @@ const SprintsView = () => {
       {projectsError && <div className={`${panelClass} flex items-center justify-between gap-3 p-4`} role="alert"><p className="flex items-center gap-2 text-sm text-rose-700 dark:text-rose-300"><FiAlertCircle />{projectsError}</p><button type="button" className={buttonClass} onClick={loadProjects}>Retry</button></div>}
 
       <section className={`${panelClass} overflow-hidden`}>
-        <div className="border-b border-slate-200 p-4 dark:border-[#293548]">
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-[#CBD5E1] sm:flex-row sm:items-center">
+        <div className="border-b border-slate-200 p-4 dark:border-[#303030]">
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-[#e0e0e0] sm:flex-row sm:items-center">
             Project
             <select className={`${inputClass} sm:w-80`} value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedSprintId(''); setSelectedSprint(null); }} disabled={projectsLoading || projects.length === 0} aria-label="Select project">
               {!projects.length && <option value="">No projects available</option>}
@@ -303,18 +303,18 @@ const SprintsView = () => {
           </label>
         </div>
 
-        {!projectId && !projectsLoading ? <div className="px-6 py-14 text-center"><h2 className="font-semibold text-slate-800 dark:text-[#F1F5F9]">Create a project to plan sprints</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#94A3B8]">Sprints are organized inside a project.</p></div>
-          : sprintsLoading ? <p className="px-6 py-14 text-center text-sm text-slate-500 dark:text-[#94A3B8]" role="status">Loading sprints…</p>
+        {!projectId && !projectsLoading ? <div className="px-6 py-14 text-center"><h2 className="font-semibold text-slate-800 dark:text-[#F1F5F9]">Create a project to plan sprints</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">Sprints are organized inside a project.</p></div>
+          : sprintsLoading ? <p className="px-6 py-14 text-center text-sm text-slate-500 dark:text-[#b3b3b3]" role="status">Loading sprints…</p>
             : sprintsError ? <div className="flex flex-col items-center gap-3 px-6 py-14 text-center" role="alert"><p className="text-sm text-rose-700 dark:text-rose-300">{sprintsError}</p><button type="button" className={buttonClass} onClick={loadSprints}>Retry</button></div>
-              : sprints.length === 0 ? <div className="px-6 py-14 text-center"><h2 className="font-semibold text-slate-800 dark:text-[#F1F5F9]">No sprints yet</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#94A3B8]">Create a sprint to plan a project delivery window.</p><button type="button" className={`${primaryButtonClass} mt-4`} onClick={openCreateForm}><FiPlus size={15} />New sprint</button></div>
-                : <ul className="divide-y divide-slate-100 dark:divide-[#293548]">
+              : sprints.length === 0 ? <div className="px-6 py-14 text-center"><h2 className="font-semibold text-slate-800 dark:text-[#F1F5F9]">No sprints yet</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">Create a sprint to plan a project delivery window.</p><button type="button" className={`${primaryButtonClass} mt-4`} onClick={openCreateForm}><FiPlus size={15} />New sprint</button></div>
+                : <ul className="divide-y divide-slate-100 dark:divide-[#303030]">
                   {sprints.map((sprint, index) => {
                     const id = getSprintId(sprint);
                     const selected = String(id) === selectedSprintId;
                     return <li key={id || `${index}-${sprint.name || 'sprint'}`}>
-                      <button type="button" className={`flex w-full items-start justify-between gap-4 px-4 py-4 text-left transition sm:px-5 ${selected ? 'bg-sky-50/70 dark:bg-[#1E3A5F]/40' : 'hover:bg-slate-50 dark:hover:bg-[#1E293B]/60'}`} onClick={() => { if (id) { setSelectedSprint(sprint); setSelectedSprintId(String(id)); setDetailLoading(true); } }} disabled={!id}>
-                        <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 dark:text-[#F1F5F9]">{sprint.name || 'Untitled sprint'}</span><span className="mt-1 block text-sm text-slate-500 dark:text-[#94A3B8]">{sprint.goal || 'No goal provided.'}</span><span className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-[#94A3B8]"><span className="inline-flex items-center gap-1"><FiCalendar size={13} />{formatDate(sprint.startDate)} – {formatDate(sprint.endDate)}</span>{sprint.milestoneName && <span className="inline-flex items-center gap-1"><FiFlag size={13} />{sprint.milestoneName}</span>}</span></span>
-                        <span className="flex shrink-0 items-center gap-2">{(sprint.status || sprint.state) && <span className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 dark:border-[#334155] dark:text-[#CBD5E1]">{sprint.status || sprint.state}</span>}<FiChevronRight className="text-slate-400" size={16} /></span>
+                      <button type="button" className={`flex w-full items-start justify-between gap-4 px-4 py-4 text-left transition sm:px-5 ${selected ? 'bg-sky-50/70 dark:bg-[#302477]/40' : 'hover:bg-slate-50 dark:hover:bg-[#242424]/60'}`} onClick={() => { if (id) { setSelectedSprint(sprint); setSelectedSprintId(String(id)); setDetailLoading(true); } }} disabled={!id}>
+                        <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 dark:text-[#F1F5F9]">{sprint.name || 'Untitled sprint'}</span><span className="mt-1 block text-sm text-slate-500 dark:text-[#b3b3b3]">{sprint.goal || 'No goal provided.'}</span><span className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-[#b3b3b3]"><span className="inline-flex items-center gap-1"><FiCalendar size={13} />{formatDate(sprint.startDate)} – {formatDate(sprint.endDate)}</span>{sprint.milestoneName && <span className="inline-flex items-center gap-1"><FiFlag size={13} />{sprint.milestoneName}</span>}</span></span>
+                        <span className="flex shrink-0 items-center gap-2">{(sprint.status || sprint.state) && <span className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 dark:border-[#3a3a3a] dark:text-[#e0e0e0]">{sprint.status || sprint.state}</span>}<FiChevronRight className="text-slate-400" size={16} /></span>
                       </button>
                     </li>;
                   })}
@@ -323,14 +323,14 @@ const SprintsView = () => {
 
       <DashboardDialog isOpen={formOpen} onClose={() => setFormOpen(false)} ariaLabel={editingSprintId ? 'Edit sprint' : 'Create sprint'} showHeader={false} size="max-w-2xl" closeDisabled={isSaving}>
       {formOpen && <section className={`${panelClass} p-5 sm:p-6`}>
-        <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900 dark:text-[#F1F5F9]">{editingSprintId ? 'Edit sprint' : 'Create sprint'}</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#94A3B8]">{currentProject?.name || 'Selected project'}</p></div><button type="button" className={buttonClass} onClick={() => setFormOpen(false)} aria-label="Close sprint form" disabled={isSaving}><FiX size={16} /></button></div>
+        <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900 dark:text-[#F1F5F9]">{editingSprintId ? 'Edit sprint' : 'Create sprint'}</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">{currentProject?.name || 'Selected project'}</p></div><button type="button" className={buttonClass} onClick={() => setFormOpen(false)} aria-label="Close sprint form" disabled={isSaving}><FiX size={16} /></button></div>
         {formError && <p className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" role="alert">{formError}</p>}
         <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2">
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">Sprint name <span className="text-rose-600">*</span></span><input className={inputClass} required maxLength={120} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">Goal</span><textarea className={`${inputClass} resize-y`} rows={3} value={form.goal} onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))} /></label>
-          <label><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">Start date <span className="text-rose-600">*</span></span><input type="date" className={inputClass} required value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} /></label>
-          <label><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">End date <span className="text-rose-600">*</span></span><input type="date" className={inputClass} required value={form.endDate} onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))} /></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#CBD5E1]">Milestone ID <span className="text-slate-400">(optional)</span></span><input className={inputClass} value={form.milestoneId} onChange={(event) => setForm((current) => ({ ...current, milestoneId: event.target.value }))} /></label>
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Sprint name <span className="text-rose-600">*</span></span><input className={inputClass} required maxLength={120} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Goal</span><textarea className={`${inputClass} resize-y`} rows={3} value={form.goal} onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))} /></label>
+          <label><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Start date <span className="text-rose-600">*</span></span><input type="date" className={inputClass} required value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} /></label>
+          <label><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">End date <span className="text-rose-600">*</span></span><input type="date" className={inputClass} required value={form.endDate} onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))} /></label>
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Milestone ID <span className="text-slate-400">(optional)</span></span><input className={inputClass} value={form.milestoneId} onChange={(event) => setForm((current) => ({ ...current, milestoneId: event.target.value }))} /></label>
           <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" className={buttonClass} onClick={() => setFormOpen(false)} disabled={isSaving}>Cancel</button><button type="submit" className={primaryButtonClass} disabled={isSaving}>{isSaving ? 'Saving…' : 'Save sprint'}</button></div>
         </form>
       </section>}
@@ -338,10 +338,10 @@ const SprintsView = () => {
 
       <DashboardDialog isOpen={Boolean(selectedSprintId) && !formOpen} onClose={() => { setSelectedSprintId(''); setSelectedSprint(null); }} ariaLabel={selectedSprint?.name || 'Sprint details'} showHeader={false} size="max-w-3xl" closeDisabled={Boolean(busyAction)}>
       {selectedSprintId && !formOpen && <section className={`${panelClass} overflow-hidden`}>
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-[#293548] sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-[#303030] sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Sprint details</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Sprint details</p>
               {isCompleted && (
                 <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                   Completed
@@ -349,7 +349,7 @@ const SprintsView = () => {
               )}
             </div>
             <h2 className="mt-1 break-words text-xl font-semibold text-slate-900 dark:text-[#F1F5F9]">{selectedSprint?.name || 'Loading sprint…'}</h2>
-            <p className="mt-1 break-all font-mono text-xs text-slate-500 dark:text-[#94A3B8]">{selectedSprintId}</p>
+            <p className="mt-1 break-all font-mono text-xs text-slate-500 dark:text-[#b3b3b3]">{selectedSprintId}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={buttonClass} onClick={loadSprintDetails} disabled={detailLoading || Boolean(busyAction)}><FiRefreshCw className={detailLoading ? 'animate-spin' : ''} size={14} />Refresh</button>
@@ -365,7 +365,7 @@ const SprintsView = () => {
           </div>
         </div>
         {detailError && <div className="mx-5 mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" role="alert">{detailError}</div>}
-        {detailLoading ? <p className="p-5 text-sm text-slate-500 dark:text-[#94A3B8]" role="status">Loading sprint details…</p> : detailError ? <div className="p-5"><button type="button" className={buttonClass} onClick={loadSprintDetails}>Retry</button></div> : selectedSprint && <div className="grid gap-4 p-5 sm:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#1E293B]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Goal</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.goal || 'No goal provided.'}</p></div><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#1E293B]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Schedule</p><p className="mt-2 text-sm text-slate-800 dark:text-[#F1F5F9]">{formatDate(selectedSprint.startDate)} – {formatDate(selectedSprint.endDate)}</p>{selectedSprint.milestoneId && <p className="mt-2 break-all text-xs text-slate-500 dark:text-[#94A3B8]">Milestone: {selectedSprint.milestoneId}</p>}</div>{(selectedSprint.status || selectedSprint.state) && <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#1E293B]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">Status</p><p className="mt-2 text-sm font-medium text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.status || selectedSprint.state}</p></div>}</div>}
+        {detailLoading ? <p className="p-5 text-sm text-slate-500 dark:text-[#b3b3b3]" role="status">Loading sprint details…</p> : detailError ? <div className="p-5"><button type="button" className={buttonClass} onClick={loadSprintDetails}>Retry</button></div> : selectedSprint && <div className="grid gap-4 p-5 sm:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#242424]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Goal</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.goal || 'No goal provided.'}</p></div><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#242424]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Schedule</p><p className="mt-2 text-sm text-slate-800 dark:text-[#F1F5F9]">{formatDate(selectedSprint.startDate)} – {formatDate(selectedSprint.endDate)}</p>{selectedSprint.milestoneId && <p className="mt-2 break-all text-xs text-slate-500 dark:text-[#b3b3b3]">Milestone: {selectedSprint.milestoneId}</p>}</div>{(selectedSprint.status || selectedSprint.state) && <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#242424]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Status</p><p className="mt-2 text-sm font-medium text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.status || selectedSprint.state}</p></div>}</div>}
       </section>}
       </DashboardDialog>
     </div>

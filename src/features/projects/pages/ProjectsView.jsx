@@ -148,7 +148,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
             Projects
           </h1>
-          <p className="text-sm text-slate-500 dark:text-[#94A3B8] mt-1">
+          <p className="text-sm text-slate-500 dark:text-[#b3b3b3] mt-1">
             Manage all your projects in one place. Track progress, schedules, and leadership.
           </p>
         </div>
@@ -160,7 +160,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             onClick={reloadProjects}
             disabled={isLoading}
             title="Refresh projects"
-            className="w-10 h-10 rounded-2xl bg-white dark:bg-[#172033] border border-slate-200/90 dark:border-[#293548] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] flex items-center justify-center shadow-xs transition cursor-pointer disabled:opacity-50"
+            className="w-10 h-10 rounded-2xl bg-white dark:bg-[#1d1d1d] border border-slate-200/90 dark:border-[#303030] hover:bg-slate-50 dark:hover:bg-[#242424] text-slate-600 dark:text-[#e0e0e0] flex items-center justify-center shadow-xs transition cursor-pointer disabled:opacity-50"
           >
             <FiRefreshCw
               size={16}
@@ -213,9 +213,9 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
       )}
 
       {/* Controls Bar: Sub-filter tabs + Search */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/70 dark:bg-[#172033]/90 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 dark:border-[#293548] backdrop-blur-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/70 dark:bg-[#1d1d1d]/90 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 dark:border-[#303030] backdrop-blur-xs">
         {/* Sub-filter tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#1E293B]/80 rounded-xl">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#242424]/80 rounded-xl">
           {filterTabs.map((tab) => (
             <button
               key={tab.id}
@@ -223,16 +223,16 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               onClick={() => onFilterChange && onFilterChange(tab.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition flex items-center gap-1.5 cursor-pointer ${
                 filter === tab.id
-                  ? 'bg-white dark:bg-[#1E3A5F] text-slate-900 dark:text-[#93C5FD] shadow-xs'
-                  : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
+                  ? 'bg-white dark:bg-[#302477] text-slate-900 dark:text-[#d7d0ff] shadow-xs'
+                  : 'text-slate-600 dark:text-[#b3b3b3] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                   filter === tab.id
-                    ? 'bg-sky-100 dark:bg-blue-900/60 text-sky-700 dark:text-[#93C5FD]'
-                    : 'bg-slate-200/80 dark:bg-[#253247] text-slate-600 dark:text-[#CBD5E1]'
+                    ? 'bg-sky-100 dark:bg-blue-900/60 text-sky-700 dark:text-[#d7d0ff]'
+                    : 'bg-slate-200/80 dark:bg-[#303030] text-slate-600 dark:text-[#e0e0e0]'
                 }`}
               >
                 {tab.count}
@@ -243,7 +243,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
         {/* Search Input */}
         <div className="relative min-w-[240px] sm:w-72">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">
             <FiSearch size={15} />
           </span>
           <input
@@ -251,13 +251,13 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             placeholder="Search projects, PM, lead..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-1.5 bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#334155] rounded-xl text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder:text-[#64748B] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition"
+            className="w-full pl-9 pr-3.5 py-1.5 bg-white dark:bg-[#242424] border border-slate-200 dark:border-[#3a3a3a] rounded-xl text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder:text-[#858585] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-[#64748B] hover:text-slate-600 dark:hover:text-[#CBD5E1] text-xs cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-[#858585] hover:text-slate-600 dark:hover:text-[#e0e0e0] text-xs cursor-pointer"
             >
               ×
             </button>
@@ -271,26 +271,26 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="bg-white dark:bg-[#172033] rounded-3xl p-6 border border-slate-200/80 dark:border-[#293548] animate-pulse space-y-4"
+              className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-6 border border-slate-200/80 dark:border-[#303030] animate-pulse space-y-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-[#1E293B]" />
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-[#242424]" />
                   <div className="space-y-1.5">
-                    <div className="h-4 w-28 bg-slate-100 dark:bg-[#1E293B] rounded-md" />
-                    <div className="h-2.5 w-16 bg-slate-100 dark:bg-[#1E293B] rounded-md" />
+                    <div className="h-4 w-28 bg-slate-100 dark:bg-[#242424] rounded-md" />
+                    <div className="h-2.5 w-16 bg-slate-100 dark:bg-[#242424] rounded-md" />
                   </div>
                 </div>
-                <div className="h-6 w-16 bg-slate-100 dark:bg-[#1E293B] rounded-full" />
+                <div className="h-6 w-16 bg-slate-100 dark:bg-[#242424] rounded-full" />
               </div>
               <div className="space-y-2">
-                <div className="h-3 w-full bg-slate-100 dark:bg-[#1E293B] rounded-md" />
-                <div className="h-3 w-4/5 bg-slate-100 dark:bg-[#1E293B] rounded-md" />
+                <div className="h-3 w-full bg-slate-100 dark:bg-[#242424] rounded-md" />
+                <div className="h-3 w-4/5 bg-slate-100 dark:bg-[#242424] rounded-md" />
               </div>
-              <div className="h-14 bg-slate-50 dark:bg-[#1E293B]/60 rounded-2xl" />
-              <div className="pt-2 border-t border-slate-100 dark:border-[#293548] space-y-2">
-                <div className="h-3 w-1/2 bg-slate-100 dark:bg-[#1E293B] rounded-md" />
-                <div className="h-3 w-2/3 bg-slate-100 dark:bg-[#1E293B] rounded-md" />
+              <div className="h-14 bg-slate-50 dark:bg-[#242424]/60 rounded-2xl" />
+              <div className="pt-2 border-t border-slate-100 dark:border-[#303030] space-y-2">
+                <div className="h-3 w-1/2 bg-slate-100 dark:bg-[#242424] rounded-md" />
+                <div className="h-3 w-2/3 bg-slate-100 dark:bg-[#242424] rounded-md" />
               </div>
             </div>
           ))}
@@ -299,14 +299,14 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
       {/* Empty State: No Projects Created Yet */}
       {!isLoading && projects.length === 0 && (
-        <div className="bg-white dark:bg-[#172033] rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-[#293548] shadow-md shadow-slate-200/50 dark:shadow-none text-center max-w-2xl mx-auto my-6">
+        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-[#303030] shadow-md shadow-slate-200/50 dark:shadow-none text-center max-w-2xl mx-auto my-6">
           <div className="w-20 h-20 rounded-3xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] mx-auto flex items-center justify-center mb-5 shadow-xs">
             <FiFolder size={36} />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] mb-2">
             No Projects Yet
           </h2>
-          <p className="text-sm text-slate-500 dark:text-[#94A3B8] max-w-md mx-auto leading-relaxed mb-6">
+          <p className="text-sm text-slate-500 dark:text-[#b3b3b3] max-w-md mx-auto leading-relaxed mb-6">
             Get started by adding your first project to organize issues, sprints,
             deadlines, and collaborate with your team.
           </p>
@@ -323,14 +323,14 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
       {/* Empty State: Search/Filter returned 0 results */}
       {!isLoading && projects.length > 0 && filteredProjects.length === 0 && (
-        <div className="bg-white dark:bg-[#172033] rounded-3xl p-8 border border-slate-200/80 dark:border-[#293548] text-center max-w-lg mx-auto my-6">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#1E293B] text-slate-400 dark:text-[#64748B] mx-auto flex items-center justify-center mb-3">
+        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 border border-slate-200/80 dark:border-[#303030] text-center max-w-lg mx-auto my-6">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#242424] text-slate-400 dark:text-[#858585] mx-auto flex items-center justify-center mb-3">
             <FiSearch size={22} />
           </div>
           <h3 className="text-base font-bold text-slate-800 dark:text-[#F1F5F9] mb-1">
             No matching projects found
           </h3>
-          <p className="text-xs text-slate-500 dark:text-[#94A3B8] mb-4">
+          <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mb-4">
             No projects matched your search query or filter. Try clearing or modifying your filters.
           </p>
           <button
@@ -339,7 +339,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               setSearchQuery('');
               if (onFilterChange) onFilterChange('all');
             }}
-            className="text-xs font-semibold text-sky-600 dark:text-[#60A5FA] hover:text-sky-700 dark:hover:text-[#93C5FD] cursor-pointer"
+            className="text-xs font-semibold text-sky-600 dark:text-[#60A5FA] hover:text-sky-700 dark:hover:text-[#d7d0ff] cursor-pointer"
           >
             Reset Filters
           </button>
@@ -380,7 +380,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                     handleCardClick();
                   }
                 }}
-                className="bg-white dark:bg-[#172033] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#293548] shadow-xs hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-500/50 transition-all duration-200 flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#303030] shadow-xs hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-500/50 transition-all duration-200 flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
               >
                 <div>
                   {/* Card Header: Icon + Name + Status */}
@@ -398,7 +398,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                         </h3>
                         {project.workspaceId && (
                           <span
-                            className="text-[10px] font-mono text-slate-400 dark:text-[#64748B] block truncate"
+                            className="text-[10px] font-mono text-slate-400 dark:text-[#858585] block truncate"
                             title={`Workspace: ${project.workspaceId}`}
                           >
                             ws: {project.workspaceId.slice(0, 10)}...
@@ -417,28 +417,28 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-[#CBD5E1] line-clamp-3 mb-4 leading-relaxed min-h-[3rem]">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-[#e0e0e0] line-clamp-3 mb-4 leading-relaxed min-h-[3rem]">
                     {project.description || 'No description provided.'}
                   </p>
 
                   {/* Dates Banner */}
-                  <div className="p-3 bg-slate-50/90 dark:bg-[#1E293B]/80 rounded-2xl border border-slate-100 dark:border-[#293548] mb-4 space-y-2">
+                  <div className="p-3 bg-slate-50/90 dark:bg-[#242424]/80 rounded-2xl border border-slate-100 dark:border-[#303030] mb-4 space-y-2">
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#64748B] block mb-0.5">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#858585] block mb-0.5">
                           Start Date
                         </span>
                         <div className="flex items-center gap-1.5 text-slate-700 dark:text-[#F1F5F9] font-medium">
-                          <FiCalendar size={13} className="text-slate-400 dark:text-[#64748B] shrink-0" />
+                          <FiCalendar size={13} className="text-slate-400 dark:text-[#858585] shrink-0" />
                           <span className="truncate">{formatDate(project.startDate)}</span>
                         </div>
                       </div>
                       <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#64748B] block mb-0.5">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#858585] block mb-0.5">
                           Deadline
                         </span>
                         <div className="flex items-center gap-1.5 text-slate-700 dark:text-[#F1F5F9] font-medium">
-                          <FiClock size={13} className="text-slate-400 dark:text-[#64748B] shrink-0" />
+                          <FiClock size={13} className="text-slate-400 dark:text-[#858585] shrink-0" />
                           <span className="truncate">{formatDate(project.deadline)}</span>
                         </div>
                       </div>
@@ -446,8 +446,8 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
                     {/* Deadline urgency chip if applicable */}
                     {remainingInfo && (
-                      <div className="pt-1.5 border-t border-slate-200/60 dark:border-[#293548] flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500 dark:text-[#94A3B8]">Timeline:</span>
+                      <div className="pt-1.5 border-t border-slate-200/60 dark:border-[#303030] flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 dark:text-[#b3b3b3]">Timeline:</span>
                         <span
                           className={`font-semibold px-2 py-0.5 rounded-full border text-[10px] ${remainingInfo.className}`}
                         >
@@ -459,17 +459,17 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                 </div>
 
                 {/* Team Leadership: PM & Lead */}
-                <div className="pt-3 border-t border-slate-100 dark:border-[#293548] space-y-1.5">
+                <div className="pt-3 border-t border-slate-100 dark:border-[#303030] space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-400 dark:text-[#64748B] flex items-center gap-1">
-                      <FiUser size={12} className="text-slate-400 dark:text-[#64748B]" /> PM:
+                    <span className="text-[11px] text-slate-400 dark:text-[#858585] flex items-center gap-1">
+                      <FiUser size={12} className="text-slate-400 dark:text-[#858585]" /> PM:
                     </span>
                     <span
-                      className="font-medium text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]"
+                      className="font-medium text-slate-700 dark:text-[#e0e0e0] truncate max-w-[170px]"
                       title={pmEmail || 'Not assigned'}
                     >
                       {pmEmail || (
-                        <span className="text-slate-400 dark:text-[#64748B] italic font-normal">
+                        <span className="text-slate-400 dark:text-[#858585] italic font-normal">
                           Not assigned
                         </span>
                       )}
@@ -477,15 +477,15 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                   </div>
 
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-400 dark:text-[#64748B] flex items-center gap-1">
-                      <FiMail size={12} className="text-slate-400 dark:text-[#64748B]" /> Team Lead:
+                    <span className="text-[11px] text-slate-400 dark:text-[#858585] flex items-center gap-1">
+                      <FiMail size={12} className="text-slate-400 dark:text-[#858585]" /> Team Lead:
                     </span>
                     <span
-                      className="font-medium text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]"
+                      className="font-medium text-slate-700 dark:text-[#e0e0e0] truncate max-w-[170px]"
                       title={leadEmail || 'Not assigned'}
                     >
                       {leadEmail || (
-                        <span className="text-slate-400 dark:text-[#64748B] italic font-normal">
+                        <span className="text-slate-400 dark:text-[#858585] italic font-normal">
                           Not assigned
                         </span>
                       )}

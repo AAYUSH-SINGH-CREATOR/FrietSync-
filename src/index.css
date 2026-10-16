@@ -35,27 +35,27 @@
 }
 
 .dark {
-  --bg-app: #0B1120;
-  --bg-dashboard: #0F172A;
-  --bg-sidebar: #111827;
-  --bg-navbar: #111827;
-  --bg-surface: #172033;
-  --bg-elevated: #1E293B;
-  --bg-hover: #253247;
+  --bg-app: #292929;
+  --bg-dashboard: #292929;
+  --bg-sidebar: #1f1f1f;
+  --bg-navbar: #242424;
+  --bg-surface: #1d1d1d;
+  --bg-elevated: #242424;
+  --bg-hover: #303030;
 
   --text-primary: #F1F5F9;
-  --text-secondary: #CBD5E1;
-  --text-muted: #94A3B8;
-  --text-disabled: #64748B;
+  --text-secondary: #e0e0e0;
+  --text-muted: #b3b3b3;
+  --text-disabled: #858585;
 
-  --border-default: #293548;
-  --border-strong: #3B4B63;
-  --border-input: #334155;
+  --border-default: #303030;
+  --border-strong: #454545;
+  --border-input: #3a3a3a;
 
   --brand-primary: #3B82F6;
   --brand-hover: #60A5FA;
-  --nav-active-bg: #1E3A5F;
-  --nav-active-text: #93C5FD;
+  --nav-active-bg: #302477;
+  --nav-active-text: #d7d0ff;
   --focus-ring: #60A5FA;
 
   --semantic-success: #34D399;
@@ -78,14 +78,14 @@ body {
   height: 8px;
 }
 .dark ::-webkit-scrollbar-track {
-  background: #0F172A;
+  background: #242424;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #253247;
+  background: #454545;
   border-radius: 4px;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #3B4B63;
+  background: #606060;
 }
 
 .auththeme {

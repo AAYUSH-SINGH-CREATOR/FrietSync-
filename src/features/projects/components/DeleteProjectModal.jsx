@@ -51,10 +51,10 @@ const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#293548] p-6 sm:p-8 transition-all text-left"
+        className="relative w-full max-w-lg bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#303030] p-6 sm:p-8 transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#293548] mb-5">
+        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#303030] mb-5">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-[#F87171] flex items-center justify-center shadow-2xs shrink-0">
               <FiAlertTriangle size={24} />
@@ -63,7 +63,7 @@ const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
               <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-[#F1F5F9] tracking-tight">
                 Delete Project
               </h2>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-[#94A3B8] mt-0.5">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-[#b3b3b3] mt-0.5">
                 This action is irreversible.
               </p>
             </div>
@@ -72,7 +72,7 @@ const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#94A3B8] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#1E293B] transition cursor-pointer shrink-0 ml-4"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 dark:text-[#b3b3b3] hover:text-gray-700 dark:hover:text-[#F1F5F9] hover:bg-gray-100 dark:hover:bg-[#242424] transition cursor-pointer shrink-0 ml-4"
           >
             <FiX size={20} />
           </button>
@@ -86,7 +86,7 @@ const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
         )}
 
         <div className="space-y-4">
-          <p className="text-sm text-slate-700 dark:text-[#CBD5E1] leading-relaxed">
+          <p className="text-sm text-slate-700 dark:text-[#e0e0e0] leading-relaxed">
             Are you sure you want to permanently delete{' '}
             <strong className="text-slate-900 dark:text-[#F1F5F9] font-bold">
               &ldquo;{projectName}&rdquo;
@@ -98,12 +98,12 @@ const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-100 dark:border-[#293548]">
+        <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-100 dark:border-[#303030]">
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-[#e0e0e0] hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>

@@ -214,7 +214,7 @@ const IssuesView = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
             Issues
           </h1>
-          <p className="text-sm text-slate-500 dark:text-[#94A3B8] mt-1">
+          <p className="text-sm text-slate-500 dark:text-[#b3b3b3] mt-1">
             Track, prioritize, and resolve issues across your projects.
           </p>
         </div>
@@ -225,7 +225,7 @@ const IssuesView = () => {
             onClick={handleRefreshIssues}
             disabled={isLoadingIssues}
             title="Refresh issues"
-            className="w-10 h-10 rounded-2xl bg-white dark:bg-[#172033] border border-slate-200/90 dark:border-[#293548] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-slate-600 dark:text-[#CBD5E1] flex items-center justify-center shadow-xs transition cursor-pointer disabled:opacity-50"
+            className="w-10 h-10 rounded-2xl bg-white dark:bg-[#1d1d1d] border border-slate-200/90 dark:border-[#303030] hover:bg-slate-50 dark:hover:bg-[#242424] text-slate-600 dark:text-[#e0e0e0] flex items-center justify-center shadow-xs transition cursor-pointer disabled:opacity-50"
           >
             <FiRefreshCw
               size={16}
@@ -287,10 +287,10 @@ const IssuesView = () => {
       )}
 
       <div className="space-y-3">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white/80 dark:bg-[#172033]/90 p-3 rounded-3xl border border-slate-200/80 dark:border-[#293548] shadow-xs backdrop-blur-xs">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white/80 dark:bg-[#1d1d1d]/90 p-3 rounded-3xl border border-slate-200/80 dark:border-[#303030] shadow-xs backdrop-blur-xs">
           {/* Project Selector Dropdown */}
           <div className="flex items-center gap-2 min-w-0 sm:max-w-xs">
-            <span className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider shrink-0 flex items-center gap-1.5 pl-1">
+            <span className="text-xs font-bold text-slate-500 dark:text-[#b3b3b3] uppercase tracking-wider shrink-0 flex items-center gap-1.5 pl-1">
               <FiFolder size={14} className="text-sky-500" />
               <span>Project:</span>
             </span>
@@ -299,13 +299,13 @@ const IssuesView = () => {
                 value={selectedProjectId}
                 disabled={isLoadingProjects}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm font-medium focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer truncate"
+                className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-slate-50/80 dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm font-medium focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer truncate"
               >
                 <option value="all">All Projects ({projects.length})</option>
                 {projects.map((p) => {
                   const pid = p.id || p._id || p.projectId;
                   return (
-                    <option key={pid} value={pid} className="dark:bg-[#1E293B]">
+                    <option key={pid} value={pid} className="dark:bg-[#242424]">
                       {p.name || 'Untitled Project'}
                     </option>
                   );
@@ -324,7 +324,7 @@ const IssuesView = () => {
               placeholder="Search issues by title, description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-[#334155] bg-slate-50/80 dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-slate-50/80 dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
             />
             {searchQuery && (
               <button
@@ -338,7 +338,7 @@ const IssuesView = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#1E293B]/80 rounded-2xl w-fit overflow-x-auto no-scrollbar max-w-full">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#242424]/80 rounded-2xl w-fit overflow-x-auto no-scrollbar max-w-full">
           {priorityTabs.map((tab) => {
             const isSelected = priorityFilter === tab.id;
             return (
@@ -348,8 +348,8 @@ const IssuesView = () => {
                 onClick={() => setPriorityFilter(tab.id)}
                 className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   isSelected
-                    ? 'bg-white dark:bg-[#172033] text-sky-600 dark:text-[#60A5FA] shadow-xs'
-                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
+                    ? 'bg-white dark:bg-[#1d1d1d] text-sky-600 dark:text-[#60A5FA] shadow-xs'
+                    : 'text-slate-600 dark:text-[#b3b3b3] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
                 }`}
               >
                 {tab.dotColor && <span className={`w-1.5 h-1.5 rounded-full ${tab.dotColor}`} />}
@@ -358,7 +358,7 @@ const IssuesView = () => {
                   className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                     isSelected
                       ? 'bg-sky-100 dark:bg-blue-950/60 text-sky-700 dark:text-[#60A5FA]'
-                      : 'bg-slate-200/70 dark:bg-[#293548] text-slate-600 dark:text-[#CBD5E1]'
+                      : 'bg-slate-200/70 dark:bg-[#303030] text-slate-600 dark:text-[#e0e0e0]'
                   }`}
                 >
                   {tab.count}
@@ -374,15 +374,15 @@ const IssuesView = () => {
           {[1, 2, 3, 4, 5, 6].map((idx) => (
             <div
               key={idx}
-              className="bg-white dark:bg-[#172033] rounded-3xl p-6 border border-slate-200/80 dark:border-[#293548] animate-pulse space-y-4"
+              className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-6 border border-slate-200/80 dark:border-[#303030] animate-pulse space-y-4"
             >
               <div className="flex items-center justify-between">
-                <div className="h-5 w-16 bg-slate-100 dark:bg-[#1E293B] rounded-full" />
-                <div className="h-5 w-20 bg-slate-100 dark:bg-[#1E293B] rounded-lg" />
+                <div className="h-5 w-16 bg-slate-100 dark:bg-[#242424] rounded-full" />
+                <div className="h-5 w-20 bg-slate-100 dark:bg-[#242424] rounded-lg" />
               </div>
-              <div className="h-6 w-3/4 bg-slate-100 dark:bg-[#1E293B] rounded-md" />
-              <div className="h-10 bg-slate-50 dark:bg-[#1E293B]/60 rounded-md" />
-              <div className="h-4 w-1/2 bg-slate-100 dark:bg-[#1E293B] rounded" />
+              <div className="h-6 w-3/4 bg-slate-100 dark:bg-[#242424] rounded-md" />
+              <div className="h-10 bg-slate-50 dark:bg-[#242424]/60 rounded-md" />
+              <div className="h-4 w-1/2 bg-slate-100 dark:bg-[#242424] rounded" />
             </div>
           ))}
         </div>
@@ -401,7 +401,7 @@ const IssuesView = () => {
           })}
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#172033] rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-[#293548] shadow-xs text-center max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-[#303030] shadow-xs text-center max-w-2xl mx-auto">
           <div className="w-16 h-16 rounded-3xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] mx-auto flex items-center justify-center mb-4 shadow-2xs">
             <AiOutlineBug size={32} />
           </div>
@@ -416,7 +416,7 @@ const IssuesView = () => {
               : 'No issues in this project yet'}
           </h3>
 
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] max-w-md mx-auto leading-relaxed mb-6">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#b3b3b3] max-w-md mx-auto leading-relaxed mb-6">
             {searchQuery
               ? `No issues matched "${searchQuery}". Try a different search keyword.`
               : priorityFilter !== 'all'

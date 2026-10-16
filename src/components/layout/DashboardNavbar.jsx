@@ -72,7 +72,7 @@ const DashboardNavbar = () => {
 
   return (
     <>
-      <header className="bg-white dark:bg-[#111827] border-b border-gray-200 dark:border-[#293548] px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
+      <header className="bg-white dark:bg-[#1f1f1f] border-b border-gray-200 dark:border-[#303030] px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="flex items-center gap-2 group">
             <img
@@ -95,7 +95,7 @@ const DashboardNavbar = () => {
                 onClick={toggleTheme}
                 title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 aria-label="Toggle theme"
-                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-[#293548] hover:border-sky-300 dark:hover:border-[#3B4B63] hover:bg-sky-50/50 dark:hover:bg-[#1E293B] text-gray-700 dark:text-[#CBD5E1] hover:text-sky-600 dark:hover:text-[#F1F5F9] flex items-center justify-center transition cursor-pointer"
+                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-[#303030] hover:border-sky-300 dark:hover:border-[#454545] hover:bg-sky-50/50 dark:hover:bg-[#242424] text-gray-700 dark:text-[#e0e0e0] hover:text-sky-600 dark:hover:text-[#F1F5F9] flex items-center justify-center transition cursor-pointer"
               >
                 {isDarkMode ? (
                   <FiSun size={17} className="text-amber-400" />
@@ -119,7 +119,7 @@ const DashboardNavbar = () => {
             onClick={() => setIsBellOpen(true)}
             title="Invitations"
             aria-label="View Invitations"
-            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-[#293548] hover:border-sky-300 dark:hover:border-[#3B4B63] hover:bg-sky-50/50 dark:hover:bg-[#1E293B] text-gray-700 dark:text-[#CBD5E1] hover:text-sky-600 dark:hover:text-[#F1F5F9] flex items-center justify-center transition cursor-pointer"
+            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-[#303030] hover:border-sky-300 dark:hover:border-[#454545] hover:bg-sky-50/50 dark:hover:bg-[#242424] text-gray-700 dark:text-[#e0e0e0] hover:text-sky-600 dark:hover:text-[#F1F5F9] flex items-center justify-center transition cursor-pointer"
           >
             <FiBell size={18} />
             {pendingCount > 0 && (
@@ -140,7 +140,7 @@ const DashboardNavbar = () => {
               onClick={handleLogout}
               disabled={isLoggingOut}
               title="Logout"
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-gray-600 dark:text-[#CBD5E1] hover:text-red-600 dark:hover:text-[#F87171] hover:bg-red-50 dark:hover:bg-rose-950/30 border border-gray-200 dark:border-[#293548] hover:border-red-200 dark:hover:border-rose-800/50 transition cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-gray-600 dark:text-[#e0e0e0] hover:text-red-600 dark:hover:text-[#F87171] hover:bg-red-50 dark:hover:bg-rose-950/30 border border-gray-200 dark:border-[#303030] hover:border-red-200 dark:hover:border-rose-800/50 transition cursor-pointer disabled:opacity-50"
             >
               <FiLogOut size={16} />
               <span className="hidden md:inline">

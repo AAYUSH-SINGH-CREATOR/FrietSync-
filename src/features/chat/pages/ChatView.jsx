@@ -339,7 +339,7 @@ const ChatsView = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
             Project Chat
           </h1>
-          <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-0.5">
             Real-time messaging for all members of your projects.
           </p>
         </div>
@@ -348,7 +348,7 @@ const ChatsView = () => {
           type="button"
           onClick={handleRefreshProjects}
           title="Refresh projects"
-          className="p-2 rounded-xl bg-white dark:bg-[#172033] border border-slate-200/80 dark:border-[#293548] text-slate-600 dark:text-[#CBD5E1] hover:text-sky-600 dark:hover:text-[#60A5FA] transition shadow-xs cursor-pointer"
+          className="p-2 rounded-xl bg-white dark:bg-[#1d1d1d] border border-slate-200/80 dark:border-[#303030] text-slate-600 dark:text-[#e0e0e0] hover:text-sky-600 dark:hover:text-[#60A5FA] transition shadow-xs cursor-pointer"
         >
           <FiRefreshCw size={15} />
         </button>

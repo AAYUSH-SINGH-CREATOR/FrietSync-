@@ -189,9 +189,9 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                         className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
                     >
                         <div
-                            className={`flex-1 flex items-center border rounded-xl bg-white dark:bg-[#1E293B] overflow-hidden transition shadow-2xs ${failedEmail && member.email.trim() === failedEmail
+                            className={`flex-1 flex items-center border rounded-xl bg-white dark:bg-[#242424] overflow-hidden transition shadow-2xs ${failedEmail && member.email.trim() === failedEmail
                                     ? 'border-red-400 dark:border-rose-500/80 ring-2 ring-red-100 dark:ring-rose-950/50 bg-red-50/15 dark:bg-rose-950/20'
-                                    : 'border-slate-300 dark:border-[#334155] focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/50'
+                                    : 'border-slate-300 dark:border-[#3a3a3a] focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/50'
                                 }`}
                         >
                             <input
@@ -200,36 +200,36 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                                 value={member.email}
                                 disabled={isSubmitting}
                                 onChange={(e) => handleMemberChange(index, 'email', e.target.value)}
-                                className="flex-1 min-w-0 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] bg-transparent outline-none"
+                                className="flex-1 min-w-0 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] bg-transparent outline-none"
                             />
 
-                            <div className="h-6 w-px bg-slate-200 dark:bg-[#334155] shrink-0" />
+                            <div className="h-6 w-px bg-slate-200 dark:bg-[#3a3a3a] shrink-0" />
 
                             <div className="relative shrink-0">
                                 <select
                                     value={member.role}
                                     disabled={isSubmitting}
                                     onChange={(e) => handleMemberChange(index, 'role', e.target.value)}
-                                    className="px-3 sm:px-3.5 py-2.5 pr-7 text-xs sm:text-sm font-semibold text-slate-700 dark:text-[#CBD5E1] bg-transparent outline-none cursor-pointer appearance-none hover:bg-slate-50 dark:hover:bg-[#253247]/50 transition"
+                                    className="px-3 sm:px-3.5 py-2.5 pr-7 text-xs sm:text-sm font-semibold text-slate-700 dark:text-[#e0e0e0] bg-transparent outline-none cursor-pointer appearance-none hover:bg-slate-50 dark:hover:bg-[#303030]/50 transition"
                                 >
                                     {ROLE_OPTIONS.map((opt) => (
-                                        <option key={opt.value} value={opt.value} className="bg-white dark:bg-[#1E293B] text-slate-800 dark:text-[#F1F5F9]">
+                                        <option key={opt.value} value={opt.value} className="bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9]">
                                             {opt.label}
                                         </option>
                                     ))}
                                 </select>
                                 <FiChevronDown
-                                    className="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B] pointer-events-none text-xs"
+                                    className="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#858585] pointer-events-none text-xs"
                                 />
                             </div>
                         </div>
 
                         <div
                             title="Invitation Expiration Date (Sent in UTC)"
-                            className="flex items-center border border-slate-300 dark:border-[#334155] rounded-xl px-2.5 sm:px-3 py-2 bg-white dark:bg-[#1E293B] focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/50 transition shadow-2xs shrink-0 sm:w-44"
+                            className="flex items-center border border-slate-300 dark:border-[#3a3a3a] rounded-xl px-2.5 sm:px-3 py-2 bg-white dark:bg-[#242424] focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-950/50 transition shadow-2xs shrink-0 sm:w-44"
                         >
-                            <FiCalendar className="text-slate-400 dark:text-[#64748B] mr-2 shrink-0" size={15} />
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-[#94A3B8] uppercase mr-1.5 shrink-0">
+                            <FiCalendar className="text-slate-400 dark:text-[#858585] mr-2 shrink-0" size={15} />
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-[#b3b3b3] uppercase mr-1.5 shrink-0">
                                 Expires:
                             </span>
                             <input
@@ -249,7 +249,7 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                                 disabled={isSubmitting}
                                 title="Remove invitation"
                                 aria-label="Remove invitation"
-                                className="self-center p-2 rounded-xl text-slate-400 dark:text-[#64748B] hover:text-red-500 dark:hover:text-[#F87171] hover:bg-red-50 dark:hover:bg-rose-950/30 transition cursor-pointer shrink-0 disabled:opacity-40"
+                                className="self-center p-2 rounded-xl text-slate-400 dark:text-[#858585] hover:text-red-500 dark:hover:text-[#F87171] hover:bg-red-50 dark:hover:bg-rose-950/30 transition cursor-pointer shrink-0 disabled:opacity-40"
                             >
                                 <FiTrash2 size={16} />
                             </button>
@@ -263,12 +263,12 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                     type="button"
                     onClick={handleAddMember}
                     disabled={members.length >= MAX_MEMBERS || isSubmitting}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-[#1E293B] hover:bg-slate-200 dark:hover:bg-[#253247] active:bg-slate-300 dark:active:bg-[#293548] text-slate-700 dark:text-[#CBD5E1] border border-transparent dark:border-[#334155] text-xs sm:text-sm font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-[#242424] hover:bg-slate-200 dark:hover:bg-[#303030] active:bg-slate-300 dark:active:bg-[#303030] text-slate-700 dark:text-[#e0e0e0] border border-transparent dark:border-[#3a3a3a] text-xs sm:text-sm font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none"
                 >
                     <FiPlus size={14} className="stroke-[2.5]" />
                     <span>Add another</span>
                     {members.length >= MAX_MEMBERS && (
-                        <span className="text-[11px] text-slate-400 dark:text-[#64748B] font-normal ml-0.5">
+                        <span className="text-[11px] text-slate-400 dark:text-[#858585] font-normal ml-0.5">
                             (Max {MAX_MEMBERS})
                         </span>
                     )}
@@ -280,7 +280,7 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
                             type="button"
                             onClick={onCancel}
                             disabled={isSubmitting}
-                            className="px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer disabled:opacity-50"
+                            className="px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 dark:text-[#e0e0e0] hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer disabled:opacity-50"
                         >
                             Cancel
                         </button>
