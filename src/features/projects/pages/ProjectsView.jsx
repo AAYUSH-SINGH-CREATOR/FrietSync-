@@ -4,30 +4,29 @@ import {
   FiFolder,
   FiPlus,
   FiSearch,
+  FiUsers,
+  FiCheckSquare,
   FiCalendar,
-  FiClock,
-  FiUser,
-  FiMail,
   FiRefreshCw,
   FiAlertCircle,
   FiCheckCircle,
+  FiActivity,
 } from 'react-icons/fi';
-import { getMyProjects, getFriendlyErrorMessage } from '../services/projectApi';
+import { getMyProjects, getProjectMembers, getFriendlyErrorMessage } from '../services/projectApi';
+import { getProjectIssues } from '../../issues/services/issueApi';
 import CreateProjectModal from '../components/CreateProjectModal';
-import {
-  formatDate,
-  getStatusBadge,
-  getRemainingDaysInfo,
-} from '../utils/projectUtils';
+import { formatDate } from '../utils/projectUtils';
 const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
   const filter = propFilter || outletContext.projectFilter || 'all';
   const onFilterChange = propOnFilterChange || outletContext.setProjectFilter;
   const [projects, setProjects] = useState([]);
+  const [projectStats, setProjectStats] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('recent');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [successNotice, setSuccessNotice] = useState('');
 
@@ -53,6 +52,29 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         setIsLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all(projects.map(async (project) => {
+      const projectId = project.id || project._id || project.projectId;
+      if (!projectId) return null;
+      const [membersResult, issuesResult] = await Promise.allSettled([
+        getProjectMembers(projectId),
+        getProjectIssues(projectId, { page: 0, size: 1 }),
+      ]);
+      const members = membersResult.status === 'fulfilled' ? membersResult.value : [];
+      const issues = issuesResult.status === 'fulfilled' ? issuesResult.value : null;
+      return {
+        projectId: String(projectId),
+        memberCount: Array.isArray(members) ? members.length : 0,
+        issueCount: issues?.totalElements ?? issues?.total ?? 0,
+      };
+    })).then((stats) => {
+      if (!isMounted) return;
+      setProjectStats(Object.fromEntries(stats.filter(Boolean).map(({ projectId, ...counts }) => [projectId, counts])));
+    });
+    return () => { isMounted = false; };
+  }, [projects]);
 
   useEffect(() => {
     let isMounted = true;
@@ -137,8 +159,12 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         );
       }
       return true;
+    }).sort((a, b) => {
+      if (sortOrder === 'name') return (a.name || '').localeCompare(b.name || '');
+      if (sortOrder === 'deadline') return new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
+      return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
     });
-  }, [projects, filter, searchQuery]);
+  }, [projects, filter, searchQuery, sortOrder]);
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
@@ -176,6 +202,19 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             <span>Create Project</span>
           </button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        {[
+          { label: 'Total projects', value: counts.all, icon: FiFolder, tint: 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300' },
+          { label: 'Active projects', value: counts.active, icon: FiActivity, tint: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300' },
+          { label: 'Completed projects', value: counts.completed, icon: FiCheckCircle, tint: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
+        ].map(({ label, value, icon: Icon, tint }) => (
+          <div key={label} className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 dark:border-[#293548] dark:bg-[#172033]">
+            <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${tint}`}><Icon size={19} /></span>
+            <div><p className="text-xs text-slate-500 dark:text-[#94A3B8]">{label}</p><p className="text-lg font-semibold leading-6 text-slate-900 dark:text-[#F1F5F9]">{value}</p></div>
+          </div>
+        ))}
       </div>
 
       {/* Success Notification */}
@@ -242,7 +281,8 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
 
         {/* Search Input */}
-        <div className="relative min-w-[240px] sm:w-72">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <div className="relative min-w-[220px] sm:w-64">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
             <FiSearch size={15} />
           </span>
@@ -262,6 +302,13 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               ×
             </button>
           )}
+        </div>
+        <label className="relative">
+          <span className="sr-only">Sort projects</span>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="w-full sm:w-auto appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-8 text-xs text-slate-700 outline-none focus:border-sky-500 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1]">
+            <option value="recent">Sort: Recent</option><option value="name">Sort: Name</option><option value="deadline">Sort: Deadline</option>
+          </select><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">⌄</span>
+        </label>
         </div>
       </div>
 
@@ -351,16 +398,12 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {filteredProjects.map((project, idx) => {
             const projectId = project.id || project._id || project.projectId;
-            const statusBadge = getStatusBadge(project.status);
-            const remainingInfo = getRemainingDaysInfo(project.deadline, project.status);
-            const pmEmail =
-              project.projectManagerEmail ||
-              project.projectManager?.email ||
-              '';
-            const leadEmail =
-              project.teamLeadEmail ||
-              project.teamLead?.email ||
-              '';
+            const stats = projectStats[String(projectId)] || {};
+            const memberCount = stats.memberCount ?? project.memberCount ?? project.members?.length ?? project.teamMembers?.length ?? '—';
+            const issueCount = stats.issueCount ?? project.issueCount ?? project.totalIssues ?? project.issues?.length ?? '—';
+            const rawProgress = project.progress ?? 40;
+            const parsedProgress = rawProgress === '' ? Number.NaN : Number(rawProgress);
+            const progress = Number.isFinite(parsedProgress) ? Math.min(100, Math.max(0, parsedProgress)) : 40;
 
             const handleCardClick = () => {
               if (projectId) {
@@ -380,117 +423,33 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                     handleCardClick();
                   }
                 }}
-                className="bg-white dark:bg-[#172033] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#293548] shadow-xs hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-500/50 transition-all duration-200 flex flex-col justify-between group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                className="flex h-[184px] w-full max-w-[341px] flex-col rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all duration-200 group cursor-pointer hover:border-sky-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-[#293548] dark:bg-[#172033] dark:hover:border-sky-500/50"
               >
-                <div>
-                  {/* Card Header: Icon + Name + Status */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
-                        <FiFolder size={20} />
-                      </div>
-                      <div className="min-w-0">
-                        <h3
-                          className="text-base font-bold text-slate-900 dark:text-[#F1F5F9] truncate tracking-tight"
-                          title={project.name}
-                        >
-                          {project.name || 'Untitled Project'}
-                        </h3>
-                        {project.workspaceId && (
-                          <span
-                            className="text-[10px] font-mono text-slate-400 dark:text-[#64748B] block truncate"
-                            title={`Workspace: ${project.workspaceId}`}
-                          >
-                            ws: {project.workspaceId.slice(0, 10)}...
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Status badge */}
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge.bg} shrink-0`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
-                      {statusBadge.label}
-                    </span>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-700 transition-transform group-hover:scale-105 dark:bg-indigo-950/70 dark:text-indigo-200">
+                    <FiFolder size={24} />
                   </div>
-
-                  {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-[#CBD5E1] line-clamp-3 mb-4 leading-relaxed min-h-[3rem]">
-                    {project.description || 'No description provided.'}
-                  </p>
-
-                  {/* Dates Banner */}
-                  <div className="p-3 bg-slate-50/90 dark:bg-[#1E293B]/80 rounded-2xl border border-slate-100 dark:border-[#293548] mb-4 space-y-2">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#64748B] block mb-0.5">
-                          Start Date
-                        </span>
-                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-[#F1F5F9] font-medium">
-                          <FiCalendar size={13} className="text-slate-400 dark:text-[#64748B] shrink-0" />
-                          <span className="truncate">{formatDate(project.startDate)}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-[#64748B] block mb-0.5">
-                          Deadline
-                        </span>
-                        <div className="flex items-center gap-1.5 text-slate-700 dark:text-[#F1F5F9] font-medium">
-                          <FiClock size={13} className="text-slate-400 dark:text-[#64748B] shrink-0" />
-                          <span className="truncate">{formatDate(project.deadline)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Deadline urgency chip if applicable */}
-                    {remainingInfo && (
-                      <div className="pt-1.5 border-t border-slate-200/60 dark:border-[#293548] flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500 dark:text-[#94A3B8]">Timeline:</span>
-                        <span
-                          className={`font-semibold px-2 py-0.5 rounded-full border text-[10px] ${remainingInfo.className}`}
-                        >
-                          {remainingInfo.text}
-                        </span>
-                      </div>
-                    )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate font-sans text-[20px] font-medium leading-normal tracking-tight text-slate-900 dark:text-white" title={project.name}>
+                      {project.name || 'Untitled Project'}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 font-sans text-[12px] font-light leading-normal text-slate-600 dark:text-[#CBD5E1]">
+                      {project.description || 'No description provided.'}
+                    </p>
                   </div>
                 </div>
 
-                {/* Team Leadership: PM & Lead */}
-                <div className="pt-3 border-t border-slate-100 dark:border-[#293548] space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-400 dark:text-[#64748B] flex items-center gap-1">
-                      <FiUser size={12} className="text-slate-400 dark:text-[#64748B]" /> PM:
-                    </span>
-                    <span
-                      className="font-medium text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]"
-                      title={pmEmail || 'Not assigned'}
-                    >
-                      {pmEmail || (
-                        <span className="text-slate-400 dark:text-[#64748B] italic font-normal">
-                          Not assigned
-                        </span>
-                      )}
-                    </span>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="h-3 w-[180px] max-w-[calc(100%-56px)] flex-none overflow-hidden rounded-full bg-slate-200 dark:bg-[#343434]" role="progressbar" aria-label={`${project.name || 'Project'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                    <div className="h-full rounded-full bg-gradient-to-r from-sky-700 to-sky-400 dark:from-sky-700 dark:to-sky-400" style={{ width: `${progress}%` }} />
                   </div>
+                  <span className="shrink-0 text-sm font-normal leading-5 text-sky-600 dark:text-sky-400">{progress}%</span>
+                </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-400 dark:text-[#64748B] flex items-center gap-1">
-                      <FiMail size={12} className="text-slate-400 dark:text-[#64748B]" /> Team Lead:
-                    </span>
-                    <span
-                      className="font-medium text-slate-700 dark:text-[#CBD5E1] truncate max-w-[170px]"
-                      title={leadEmail || 'Not assigned'}
-                    >
-                      {leadEmail || (
-                        <span className="text-slate-400 dark:text-[#64748B] italic font-normal">
-                          Not assigned
-                        </span>
-                      )}
-                    </span>
-                  </div>
+                <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 text-sm font-normal leading-5 text-slate-700 dark:text-[#CBD5E1]">
+                  <span className="inline-flex items-center gap-1.5" title="Project members"><FiUsers size={18} />{memberCount}</span>
+                  <span className="inline-flex items-center gap-1.5" title="Project issues"><FiCheckSquare size={18} />{issueCount}</span>
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Project date"><FiCalendar size={18} />{project.deadline ? formatDate(project.deadline) : '—'}</span>
                 </div>
               </div>
             );

@@ -14,6 +14,8 @@ import {
   FiRefreshCw,
   FiAlertCircle,
   FiCheckCircle,
+  FiPlus,
+  FiChevronRight,
 } from 'react-icons/fi';
 import {
   getProjectById,
@@ -21,6 +23,10 @@ import {
   removeProjectMember,
   getFriendlyErrorMessage,
 } from '../services/projectApi';
+import { getProjectIssues, normalizeIssuePage } from '../../issues/services/issueApi';
+import CreateIssueModal from '../../issues/components/CreateIssueModal';
+import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
+import { getPriorityBadge, getStatusBadge as getIssueStatusBadge } from '../../issues/utils/issueUtils';
 import {
   formatDate,
   getStatusBadge,
@@ -38,6 +44,11 @@ const ProjectDetailsView = () => {
 
   const [project, setProject] = useState(null);
   const [members, setMembers] = useState([]);
+  const [projectIssues, setProjectIssues] = useState([]);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(true);
+  const [issueTotal, setIssueTotal] = useState(0);
+  const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState(null);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [projectError, setProjectError] = useState('');
@@ -95,6 +106,21 @@ const ProjectDetailsView = () => {
       });
   }, [projectId]);
 
+  const reloadProjectIssues = useCallback(async () => {
+    if (!projectId) return;
+    setIsLoadingIssues(true);
+    try {
+      const result = await getProjectIssues(projectId, { page: 0, size: 20 });
+      const page = normalizeIssuePage(result);
+      setProjectIssues(page.items.map((issue) => ({ ...issue, projectId, projectName: project?.name || '' })));
+      setIssueTotal(page.totalElements);
+    } catch (error) {
+      showToast('error', getFriendlyErrorMessage(error, 'issue'));
+      setProjectIssues([]);
+      setIssueTotal(0);
+    } finally { setIsLoadingIssues(false); }
+  }, [projectId, project?.name, showToast]);
+
   useEffect(() => {
     if (!projectId) return;
     let isMounted = true;
@@ -131,6 +157,16 @@ const ProjectDetailsView = () => {
       isMounted = false;
     };
   }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return undefined;
+    let active = true;
+    getProjectIssues(projectId, { page: 0, size: 20 })
+      .then((result) => { if (active) { const page = normalizeIssuePage(result); setProjectIssues(page.items.map((issue) => ({ ...issue, projectId, projectName: project?.name || '' }))); setIssueTotal(page.totalElements); } })
+      .catch((error) => { if (active) { showToast('error', getFriendlyErrorMessage(error, 'issue')); setProjectIssues([]); setIssueTotal(0); } })
+      .finally(() => { if (active) setIsLoadingIssues(false); });
+    return () => { active = false; };
+  }, [projectId, project?.name, showToast]);
 
   const handleProjectUpdated = (updated) => {
     const updatedName = updated?.name || project?.name || 'Project';
@@ -368,7 +404,7 @@ const ProjectDetailsView = () => {
               </h4>
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <span className="text-[11px] text-slate-400 dark:text-[#64748B] block mb-0.5">
+                  <span className="text-xs text-slate-400 dark:text-[#64748B] block mb-0.5">
                     Start Date
                   </span>
                   <div className="flex items-center gap-1.5 text-slate-800 dark:text-[#F1F5F9] font-semibold">
@@ -377,7 +413,7 @@ const ProjectDetailsView = () => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 dark:text-[#64748B] block mb-0.5">
+                  <span className="text-xs text-slate-400 dark:text-[#64748B] block mb-0.5">
                     Deadline
                   </span>
                   <div className="flex items-center gap-1.5 text-slate-800 dark:text-[#F1F5F9] font-semibold">
@@ -433,6 +469,34 @@ const ProjectDetailsView = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Project Issues Section */}
+      {!isLoadingProject && project && (
+        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#293548] dark:bg-[#172033] sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#293548]">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Project issues <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]">{issueTotal}</span></h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Issues created for {project.name || 'this project'}.</p>
+            </div>
+            <button type="button" onClick={() => setIsCreateIssueOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-3.5 text-xs font-semibold text-white transition hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500"><FiPlus size={15} />Create Issue</button>
+          </div>
+          {isLoadingIssues ? <div className="space-y-2">{[0, 1, 2].map((item) => <div key={item} className="h-11 animate-pulse rounded-xl bg-slate-100 dark:bg-[#1E293B]" />)}</div> : projectIssues.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[620px] text-left text-xs">
+                <thead><tr className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#94A3B8]"><th className="px-3 py-2">Issue</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Priority</th><th className="px-3 py-2">Due date</th><th className="px-3 py-2" /></tr></thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-[#293548]">{projectIssues.map((issue, index) => <tr key={issue.id || issue._id || issue.issueId || index} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1E293B]/70" onClick={() => setSelectedIssue(issue)}>
+                  <td className="px-3 py-3"><span className="font-mono text-[10px] text-slate-400">{issue.issueNumber ? `#${issue.issueNumber}` : ''}</span><p className="mt-0.5 font-semibold text-slate-800 dark:text-[#F1F5F9]">{issue.title || 'Untitled issue'}</p></td>
+                  <td className="px-3 py-3"><span className={`rounded-md border px-2 py-1 text-[11px] ${getIssueStatusBadge(issue.status)}`}>{String(issue.status || 'OPEN').replace(/[_-]/g, ' ')}</span></td>
+                  <td className="px-3 py-3"><span className={`rounded-md border px-2 py-1 text-[11px] ${getPriorityBadge(issue.priority)}`}>{String(issue.priority || 'MEDIUM').replace(/[_-]/g, ' ')}</span></td>
+                  <td className="px-3 py-3 text-slate-600 dark:text-[#CBD5E1]">{issue.dueDate ? new Date(issue.dueDate).toLocaleDateString() : '—'}</td>
+                  <td className="px-3 py-3 text-slate-400"><FiChevronRight /></td>
+                </tr>)}</tbody>
+              </table>
+              {issueTotal > projectIssues.length && <p className="px-3 pt-3 text-xs text-slate-500 dark:text-[#94A3B8]">Showing the first {projectIssues.length} of {issueTotal} issues. View the full list from Issues.</p>}
+            </div>
+          ) : <div className="rounded-xl bg-slate-50 px-4 py-8 text-center dark:bg-[#1E293B]/60"><p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">No issues in this project yet</p><p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Create the first issue to track work here.</p><button type="button" onClick={() => setIsCreateIssueOpen(true)} className="mt-3 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-[#60A5FA]">Create Issue</button></div>}
+        </section>
       )}
 
       {/* Project Members Section */}
@@ -619,6 +683,8 @@ const ProjectDetailsView = () => {
           onMemberAdded={handleMemberAdded}
         />
       )}
+      <CreateIssueModal isOpen={isCreateIssueOpen} onClose={() => setIsCreateIssueOpen(false)} projects={project ? [project] : []} defaultProjectId={projectId} onIssueCreated={(created) => { showToast('success', `“${created?.title || 'Issue'}” was created.`); reloadProjectIssues(); }} />
+      <IssueDetailsModal key={`${selectedIssue?.id || selectedIssue?._id || selectedIssue?.issueId || 'none'}-${!!selectedIssue}`} isOpen={!!selectedIssue} onClose={() => setSelectedIssue(null)} issueId={selectedIssue?.id || selectedIssue?._id || selectedIssue?.issueId} initialIssue={selectedIssue} projectName={project?.name || ''} onIssueUpdated={reloadProjectIssues} onIssueDeleted={() => { setSelectedIssue(null); reloadProjectIssues(); }} />
     </div>
   );
 };

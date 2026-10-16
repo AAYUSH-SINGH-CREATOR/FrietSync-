@@ -84,6 +84,8 @@ export const createProject = async (projectData) => {
       projectManagerEmail: projectData.projectManagerEmail?.trim() || '',
       teamLeadEmail: projectData.teamLeadEmail?.trim() || '',
     };
+    const workspaceId = projectData.workspaceId || localStorage.getItem('frietSyncWorkspaceId');
+    if (workspaceId) payload.workspaceId = workspaceId;
 
     const response = await axios.post(
       `${BASE_URL}/projects`,
@@ -204,5 +206,44 @@ export const removeProjectMember = async (projectId, memberUserId) => {
     handleProjectError(error, 'Failed to remove project member.');
   }
 };
+
+// Project extension endpoints use caller-supplied contract payloads. The API
+// guide lists their routes but does not define all DTO fields here.
+const projectResourceRequest = async (method, path, payload, config = {}, defaultMessage = 'Project request failed.') => {
+  try {
+    const response = await axios({ method, url: `${BASE_URL}${path}`, data: payload, ...getAuthHeaders(), ...config });
+    return response.data === undefined ? null : response.data;
+  } catch (error) { handleProjectError(error, defaultMessage); }
+};
+
+export const getProjectMilestones = (projectId) => projectResourceRequest('get', `/projects/${projectId}/milestones`, undefined, {}, 'Failed to load project milestones.');
+export const createProjectMilestone = (projectId, payload) => projectResourceRequest('post', `/projects/${projectId}/milestones`, payload, {}, 'Failed to create milestone.');
+export const updateProjectMilestone = (milestoneId, payload) => projectResourceRequest('patch', `/milestones/${milestoneId}`, payload, {}, 'Failed to update milestone.');
+export const deleteProjectMilestone = (milestoneId) => projectResourceRequest('delete', `/milestones/${milestoneId}`, undefined, {}, 'Failed to delete milestone.');
+
+export const getProjectReleases = (projectId) => projectResourceRequest('get', `/projects/${projectId}/releases`, undefined, {}, 'Failed to load project releases.');
+export const createProjectRelease = (projectId, payload) => projectResourceRequest('post', `/projects/${projectId}/releases`, payload, {}, 'Failed to create release.');
+export const updateProjectRelease = (releaseId, payload) => projectResourceRequest('patch', `/releases/${releaseId}`, payload, {}, 'Failed to update release.');
+export const deleteProjectRelease = (releaseId) => projectResourceRequest('delete', `/releases/${releaseId}`, undefined, {}, 'Failed to delete release.');
+export const addIssueToRelease = (releaseId, payload) => projectResourceRequest('post', `/releases/${releaseId}/issues`, payload, {}, 'Failed to add issue to release.');
+export const uploadReleaseFile = async (releaseId, file) => {
+  const form = new FormData();
+  form.append('file', file);
+  const headers = getAuthHeaders();
+  delete headers.headers['Content-Type'];
+  return projectResourceRequest('post', `/releases/${releaseId}/file`, form, { headers }, 'Failed to upload release file.');
+};
+
+export const getProjectSprints = (projectId) => projectResourceRequest('get', `/projects/${projectId}/sprints`, undefined, {}, 'Failed to load project sprints.');
+export const createProjectSprint = (projectId, payload) => projectResourceRequest('post', `/projects/${projectId}/sprints`, payload, {}, 'Failed to create sprint.');
+export const getSprint = (sprintId) => projectResourceRequest('get', `/sprints/${sprintId}`, undefined, {}, 'Failed to load sprint.');
+export const updateSprint = (sprintId, payload) => projectResourceRequest('patch', `/sprints/${sprintId}`, payload, {}, 'Failed to update sprint.');
+export const startSprint = (sprintId) => projectResourceRequest('post', `/sprints/${sprintId}/start`, undefined, {}, 'Failed to start sprint.');
+export const completeSprint = (sprintId) => projectResourceRequest('post', `/sprints/${sprintId}/complete`, undefined, {}, 'Failed to complete sprint.');
+export const deleteSprint = (sprintId) => projectResourceRequest('delete', `/sprints/${sprintId}`, undefined, {}, 'Failed to delete sprint.');
+export const assignSprint = (sprintId, payload) => projectResourceRequest('post', `/sprints/${sprintId}/assign`, payload, {}, 'Failed to assign sprint work.');
+export const requestSprint = (sprintId, payload) => projectResourceRequest('post', `/sprints/${sprintId}/request`, payload, {}, 'Failed to request sprint work.');
+export const getProjectSprintRequests = (projectId) => projectResourceRequest('get', `/projects/${projectId}/sprints-requests`, undefined, {}, 'Failed to load sprint requests.');
+export const createSprintRequest = (sprintId, payload) => projectResourceRequest('post', `/sprints/${sprintId}/sprints-requests`, payload, {}, 'Failed to create sprint request.');
 
 export { getFriendlyErrorMessage };
