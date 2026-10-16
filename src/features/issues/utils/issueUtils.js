@@ -16,9 +16,9 @@ export const getPriorityBadge = (priority) => {
     case 'MEDIUM':
       return 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-blue-950/40 dark:text-[#60A5FA] dark:border-blue-800/60';
     case 'LOW':
-      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/60 dark:text-[#CBD5E1] dark:border-[#334155]';
+      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/60 dark:text-[#e0e0e0] dark:border-[#3a3a3a]';
     default:
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-[#94A3B8] dark:border-[#334155]';
+      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-[#b3b3b3] dark:border-[#3a3a3a]';
   }
 };
 
@@ -37,9 +37,9 @@ export const getStatusBadge = (status) => {
     case 'OPEN':
     case 'TODO':
     case 'BACKLOG':
-      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:border-[#334155]';
+      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#242424] dark:text-[#e0e0e0] dark:border-[#3a3a3a]';
     default:
-      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1E293B] dark:text-[#94A3B8] dark:border-[#334155]';
+      return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#242424] dark:text-[#b3b3b3] dark:border-[#3a3a3a]';
   }
 };
 

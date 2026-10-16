@@ -91,10 +91,10 @@ const AddProjectMemberModal = ({
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-md bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#293548] p-6 sm:p-7 max-h-[92vh] overflow-y-auto transition-all text-left"
+        className="relative w-full max-w-md bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#303030] p-6 sm:p-7 max-h-[92vh] overflow-y-auto transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#293548] mb-5">
+        <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#303030] mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shadow-2xs shrink-0">
               <FiUserPlus size={20} />
@@ -103,7 +103,7 @@ const AddProjectMemberModal = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
                 Add Project Member
               </h2>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5 truncate max-w-[220px]">
+              <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-0.5 truncate max-w-[220px]">
                 Add collaborator to {projectName}
               </p>
             </div>
@@ -112,7 +112,7 @@ const AddProjectMemberModal = ({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 dark:text-[#94A3B8] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer shrink-0 ml-4"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 dark:text-[#b3b3b3] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer shrink-0 ml-4"
           >
             <FiX size={19} />
           </button>
@@ -129,12 +129,12 @@ const AddProjectMemberModal = ({
           <div>
             <label
               htmlFor="add-member-email"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-2"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-2"
             >
               Member Email <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                 <FiMail size={16} />
               </span>
               <input
@@ -148,7 +148,7 @@ const AddProjectMemberModal = ({
                   setEmail(e.target.value);
                   if (errorMessage) setErrorMessage('');
                 }}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition"
               />
             </div>
           </div>
@@ -156,42 +156,42 @@ const AddProjectMemberModal = ({
           <div>
             <label
               htmlFor="add-member-role"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-2"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-2"
             >
               Project Role <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                 <FiShield size={16} />
               </span>
               <select
                 id="add-member-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition appearance-none cursor-pointer"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition appearance-none cursor-pointer"
               >
                 {PROJECT_MEMBER_ROLES.map((opt) => (
                   <option
                     key={opt.value}
                     value={opt.value}
-                    className="bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9]"
+                    className="bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9]"
                   >
                     {opt.label}
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B] text-xs">
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585] text-xs">
                 ▼
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#293548]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#303030]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-[#3a3a3a] text-slate-600 dark:text-[#e0e0e0] hover:bg-slate-50 dark:hover:bg-[#242424] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

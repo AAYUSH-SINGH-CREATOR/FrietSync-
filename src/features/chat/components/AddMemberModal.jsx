@@ -108,10 +108,10 @@ const AddMemberModal = ({
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-md bg-white dark:bg-[#172033] rounded-3xl shadow-2xl dark:shadow-black/70 border border-slate-100 dark:border-[#293548] p-6 sm:p-7 max-h-[92vh] overflow-y-auto no-scrollbar transition-all text-left"
+        className="relative w-full max-w-md bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-slate-100 dark:border-[#303030] p-6 sm:p-7 max-h-[92vh] overflow-y-auto no-scrollbar transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#293548] mb-5">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#303030] mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] flex items-center justify-center shadow-2xs shrink-0">
               <FiUserPlus size={20} />
@@ -120,8 +120,8 @@ const AddMemberModal = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
                 Add Group Member
               </h2>
-              <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">
-                Add a teammate to <span className="font-semibold text-slate-800 dark:text-[#CBD5E1]">{activeChat.name}</span>
+              <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-0.5">
+                Add a teammate to <span className="font-semibold text-slate-800 dark:text-[#e0e0e0]">{activeChat.name}</span>
               </p>
             </div>
           </div>
@@ -129,7 +129,7 @@ const AddMemberModal = ({
             type="button"
             onClick={handleClose}
             aria-label="Close modal"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 dark:text-[#94A3B8] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition cursor-pointer shrink-0 ml-4"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 dark:text-[#b3b3b3] hover:text-slate-700 dark:hover:text-[#F1F5F9] hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer shrink-0 ml-4"
           >
             <FiX size={19} />
           </button>
@@ -146,12 +146,12 @@ const AddMemberModal = ({
           <div>
             <label
               htmlFor="add-member-email"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-2"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-2"
             >
               Member Email Address <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                 <FiMail size={16} />
               </span>
               <input
@@ -165,7 +165,7 @@ const AddMemberModal = ({
                   setEmail(e.target.value);
                   if (error) setError('');
                 }}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#64748B] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#858585] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
               />
             </div>
           </div>
@@ -173,22 +173,22 @@ const AddMemberModal = ({
           <div>
             <label
               htmlFor="add-member-role"
-              className="block text-xs font-bold text-slate-800 dark:text-[#CBD5E1] uppercase tracking-wider mb-2"
+              className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-2"
             >
               Group Role
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#94A3B8]">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3]">
                 <FiShield size={16} />
               </span>
               <select
                 id="add-member-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#334155] bg-white dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition appearance-none cursor-pointer"
               >
                 {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value} className="dark:bg-[#1E293B] text-slate-900 dark:text-[#F1F5F9]">
+                  <option key={opt.value} value={opt.value} className="dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9]">
                     {opt.label}
                   </option>
                 ))}
@@ -198,16 +198,16 @@ const AddMemberModal = ({
 
           {availableTeammates.length > 0 && (
             <div className="pt-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#64748B] block mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#858585] block mb-2">
                 Or pick from workspace teammates:
               </span>
-              <div className="max-h-32 overflow-y-auto no-scrollbar space-y-1.5 border border-slate-100 dark:border-[#293548] rounded-2xl p-2 bg-slate-50/60 dark:bg-[#1E293B]/40">
+              <div className="max-h-32 overflow-y-auto no-scrollbar space-y-1.5 border border-slate-100 dark:border-[#303030] rounded-2xl p-2 bg-slate-50/60 dark:bg-[#242424]/40">
                 {availableTeammates.map((teammate) => (
                   <button
                     key={teammate.id || teammate.email}
                     type="button"
                     onClick={() => handleSelectTeammate(teammate)}
-                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-[#1E293B] text-left transition text-xs cursor-pointer group"
+                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-[#242424] text-left transition text-xs cursor-pointer group"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 rounded-full bg-sky-500 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
@@ -217,7 +217,7 @@ const AddMemberModal = ({
                         <p className="font-semibold text-slate-800 dark:text-[#F1F5F9] truncate">
                           {teammate.name}
                         </p>
-                        <p className="text-[10px] text-slate-400 dark:text-[#94A3B8] truncate">
+                        <p className="text-[10px] text-slate-400 dark:text-[#b3b3b3] truncate">
                           {teammate.email}
                         </p>
                       </div>
@@ -231,12 +231,12 @@ const AddMemberModal = ({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-[#293548]">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-[#303030]">
             <button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-[#334155] text-slate-600 dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-[#1E293B] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-[#3a3a3a] text-slate-600 dark:text-[#e0e0e0] hover:bg-slate-50 dark:hover:bg-[#242424] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

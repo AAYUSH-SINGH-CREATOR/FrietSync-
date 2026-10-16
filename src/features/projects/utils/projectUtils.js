@@ -38,13 +38,13 @@ export const getStatusBadge = (status) => {
       };
     case 'ON_HOLD':
       return {
-        bg: 'bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]',
+        bg: 'bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] border-slate-200 dark:border-[#3a3a3a]',
         dot: 'bg-slate-500',
         label: 'On Hold',
       };
     default:
       return {
-        bg: 'bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]',
+        bg: 'bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] border-slate-200 dark:border-[#3a3a3a]',
         dot: 'bg-slate-400',
         label: status || 'General',
       };
@@ -96,9 +96,9 @@ export const getRoleBadge = (role) => {
       return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#34D399] border-emerald-200 dark:border-emerald-800/60';
     case 'REPORTER':
     case 'VIEWER':
-      return 'bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]';
+      return 'bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] border-slate-200 dark:border-[#3a3a3a]';
     default:
-      return 'bg-slate-100 dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#334155]';
+      return 'bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] border-slate-200 dark:border-[#3a3a3a]';
   }
 };
 

@@ -55,8 +55,8 @@ const OtpInput = ({ otp, setOtp, error, length = 6 }) => {
             onFocus={(e) => e.target.select()}
             className={`w-11 h-13 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border auththeme${error
                 ? 'border-[#FF1100] dark:border-[#F87171] text-[#FF1100] dark:text-[#F87171]'
-                : 'border-gray-300 dark:border-[#334155] text-gray-900 dark:text-[#F1F5F9] focus:border-sky-400 dark:focus:border-[#60A5FA]'
-              } bg-white dark:bg-[#1E293B] outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-blue-900/30 transition auththeme`}
+                : 'border-gray-300 dark:border-[#3a3a3a] text-gray-900 dark:text-[#F1F5F9] focus:border-sky-400 dark:focus:border-[#60A5FA]'
+              } bg-white dark:bg-[#242424] outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-blue-900/30 transition auththeme`}
           />
         ))}
       </div>
