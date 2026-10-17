@@ -74,9 +74,9 @@ const ProfileView = () => {
     setIsUploadingAvatar(true);
     setFeedbackMsg(null);
     try {
-      await uploadAvatar(file);
+      const uploadedProfile = await uploadAvatar(file);
       const refreshedProfile = await refreshCurrentUserProfile();
-      setDraftProfile((prev) => ({ ...prev, profilePictureUrl: refreshedProfile?.profilePictureUrl || prev.profilePictureUrl }));
+      setDraftProfile((prev) => ({ ...prev, profilePictureUrl: uploadedProfile?.profilePictureUrl || refreshedProfile?.profilePictureUrl || prev.profilePictureUrl }));
       setAvatarPreviewUrl('');
       setFeedbackMsg({ type: 'success', text: 'Avatar updated successfully!' });
       setTimeout(() => setFeedbackMsg(null), 3000);

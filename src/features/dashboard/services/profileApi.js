@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-const PROFILE_PICTURE_FIELD = import.meta.env.VITE_PROFILE_PICTURE_FIELD_NAME;
+// Confirmed by the successful Apidog request: Body -> form-data, key "file".
+const PROFILE_PICTURE_FIELD = 'file';
 
 const getAuthHeaders = (isMultipart = false) => {
   const rawToken =
