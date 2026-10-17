@@ -6,4 +6,4 @@ export { default as ChatsView } from './ChatsView';
 export { default as TeamView } from './TeamView';
 export { default as SettingsView } from './SettingsView';
 export { default as ProfileView } from './ProfileView';
-
+export { default as NoWorkspace } from './NoWorkspace';

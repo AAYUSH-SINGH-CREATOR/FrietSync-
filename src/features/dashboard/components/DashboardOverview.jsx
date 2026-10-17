@@ -10,14 +10,15 @@ import {
   FiSettings,
 } from 'react-icons/fi';
 import { BsChatDots } from 'react-icons/bs';
-import { getUserProfile } from '../../auth/services/authApi';
 import { getMyWorkspace } from '../services/workspaceApi';
+import NoWorkspace from './NoWorkspace';
 
 
 const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
   const pendingInviteCount = propInviteCount ?? outletContext.pendingInviteCount ?? 0;
+  const { currentUserProfile } = outletContext;
 
   const handleNavigate = (target) => {
     if (onNavigate) {
@@ -27,27 +28,42 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
     }
   };
 
-    const [workspace, setWorkspace] = useState(null);
-  const [userProfile] = useState(() => getUserProfile());
-  const userName = userProfile?.name?.trim();
-  const userRole = userProfile?.role?.trim();
+  const [workspace, setWorkspace] = useState(null);
+  const [isLoadingWorkspaceData, setIsLoadingWorkspaceData] = useState(true);
+  const userName = currentUserProfile?.name?.trim() || localStorage.getItem('frietSyncName') || '';
+  const userRole = currentUserProfile?.role?.trim();
 
-    useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
     getMyWorkspace()
       .then((ws) => {
-        if (isMounted && ws && (ws.name || ws.id || ws._id)) {
-          setWorkspace(ws);
-        }
+        if (!isMounted) return;
+        setWorkspace(ws && (ws.name || ws.id || ws._id) ? ws : null);
       })
-      .catch(() => {
-
+      .catch((err) => {
+        console.warn('Workspace load notice:', err);
+        if (isMounted) setWorkspace(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingWorkspaceData(false);
       });
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  if (isLoadingWorkspaceData) {
+    return (
+      <div className="flex items-center justify-center min-h-[320px]">
+        <div className="w-8 h-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!workspace || !(workspace.name || workspace.id || workspace._id)) {
+    return <NoWorkspace userName={userName} />;
+  }
 
   const cards = [
     {

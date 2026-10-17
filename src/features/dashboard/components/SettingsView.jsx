@@ -250,7 +250,7 @@ const SettingsView = () => {
         text: 'You have left the workspace.',
       });
       setTimeout(() => {
-        navigate('/create-workspace');
+        navigate('/dashboard');
       }, 1000);
     } catch (err) {
       setStatusMessage({

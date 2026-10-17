@@ -65,11 +65,23 @@ export const getMyWorkspace = async () => {
     );
     const data = response.data;
     const workspace = data?.workspace || data?.data || data || null;
-    const workspaceId = workspace?.id || workspace?._id || workspace?.workspaceId;
-    if (workspaceId) localStorage.setItem('frietSyncWorkspaceId', workspaceId);
-    return workspace;
+    if (workspace && (workspace.name || workspace.id || workspace._id || workspace.workspaceId)) {
+      const workspaceId = workspace?.id || workspace?._id || workspace?.workspaceId;
+      if (workspaceId) localStorage.setItem('frietSyncWorkspaceId', workspaceId);
+      return workspace;
+    }
+    return null;
   } catch (error) {
-    if (error.response?.status === 404) {
+    const status = error.response?.status;
+    const msg = (error.response?.data?.message || error.response?.data?.error || error.message || '').toLowerCase();
+    if (
+      status === 404 ||
+      status === 400 ||
+      msg.includes('no workspace') ||
+      msg.includes('workspace not found') ||
+      msg.includes('not a member') ||
+      msg.includes('not found')
+    ) {
       return null;
     }
     handleWorkspaceError(error, 'Failed to fetch current workspace.');
