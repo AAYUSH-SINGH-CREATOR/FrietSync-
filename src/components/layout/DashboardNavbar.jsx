@@ -1,24 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FiPlus, FiBell, FiLogOut, FiSearch, FiSun, FiMoon } from 'react-icons/fi';
-import { logoutUser, getUserProfile } from '../../features/auth/services/authApi';
+import { FiPlus, FiBell, FiLogOut, FiSun, FiMoon, FiUser, FiSettings } from 'react-icons/fi';
+import { logoutUser } from '../../features/auth/services/authApi';
 import { getMyInvites } from '../../features/invites/services/inviteApi';
-import { getMyWorkspace } from '../../features/dashboard/services/workspaceApi';
 import { useTheme } from '../../context/ThemeContext';
 import InviteModal from '../../features/invites/components/InviteModal';
 import InvitesBellModal from '../../features/invites/components/InvitesBellModal';
 import logo from '../../assets/logo.svg';
+import defaultAvatar from '../../assets/oggy-img.png';
 
 
-const DashboardNavbar = () => {
+const DashboardNavbar = ({ currentUserProfile }) => {
   const navigate = useNavigate();
   const { isDarkMode, toggleTheme } = useTheme() || {};
-  const [userProfile] = useState(() => getUserProfile());
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isBellOpen, setIsBellOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [workspace, setWorkspace] = useState(null);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const refreshInviteCount = useCallback(() => {
     getMyInvites()
@@ -43,20 +43,33 @@ const DashboardNavbar = () => {
       .catch(() => {
       });
 
-    getMyWorkspace()
-      .then((ws) => {
-        if (isMounted && ws && (ws.name || ws.id || ws._id)) {
-          setWorkspace(ws);
-        }
-      })
-      .catch(() => {
-      });
-
     return () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!profileMenuRef.current?.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setIsProfileMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProfileMenuOpen]);
+
   const handleLogout = async () => {
+    setIsProfileMenuOpen(false);
     setIsLoggingOut(true);
     try {
       await logoutUser();
@@ -129,26 +142,71 @@ const DashboardNavbar = () => {
             )}
           </button>
 
-      
-
-          <div className="flex items-center gap-2 sm:gap-3">
-
-
-
+          <div className="relative" ref={profileMenuRef}>
             <button
               type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              title="Logout"
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-gray-600 dark:text-[#e0e0e0] hover:text-red-600 dark:hover:text-[#F87171] hover:bg-red-50 dark:hover:bg-rose-950/30 border border-gray-200 dark:border-[#303030] hover:border-red-200 dark:hover:border-rose-800/50 transition cursor-pointer disabled:opacity-50"
+              onClick={() => setIsProfileMenuOpen((open) => !open)}
+              aria-label="Open profile menu"
+              aria-haspopup="menu"
+              aria-expanded={isProfileMenuOpen}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#1f1f1f] cursor-pointer"
             >
-              <FiLogOut size={16} />
-              <span className="hidden md:inline">
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
-              </span>
+              <img
+                src={currentUserProfile?.profilePictureUrl || defaultAvatar}
+                alt={currentUserProfile?.name ? `${currentUserProfile.name} profile` : 'Profile'}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = defaultAvatar;
+                }}
+                className="w-full h-full rounded-full object-cover border border-gray-200 dark:border-[#454545]"
+              />
             </button>
+
+            {isProfileMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Profile menu"
+                className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 dark:border-[#383838] bg-white dark:bg-[#252525] shadow-xl z-50"
+              >
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-[#383838]">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    {currentUserProfile?.name || 'Your account'}
+                  </p>
+                  {currentUserProfile?.email && (
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {currentUserProfile.email}
+                    </p>
+                  )}
+                </div>
+                <Link
+                  to="/dashboard/settings/profile"
+                  role="menuitem"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#303030] transition"
+                >
+                  <FiUser size={16} /> Profile
+                </Link>
+                <Link
+                  to="/dashboard/settings"
+                  role="menuitem"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#303030] transition"
+                >
+                  <FiSettings size={16} /> Settings
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/30 transition disabled:opacity-50"
+                >
+                  <FiLogOut size={16} /> {isLoggingOut ? 'Logging out…' : 'Logout'}
+                </button>
+              </div>
+            )}
           </div>
-          </div>
+        </div>
       </header>
 
       <InviteModal

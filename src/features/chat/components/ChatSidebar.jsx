@@ -67,7 +67,7 @@ const ChatSidebar = ({
   }, [channelList, searchQuery, activeFilter]);
 
   return (
-    <div className="flex flex-col w-full h-full min-h-0 bg-[#fcf6f6] dark:bg-[#2a2a2a] rounded-xl border border-slate-200/80 dark:border-transparent p-2 sm:p-2.5 shadow-xs transition-colors w-[350px]">
+    <div className="flex flex-col w-full h-full min-h-0 bg-[#f8f4f4] dark:bg-[#2a2a2a] rounded-xl border border-slate-200/80 dark:border-transparent p-2 sm:p-2.5 shadow-xs transition-colors w-[350px]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Chats

@@ -1,109 +1,91 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import {
   FiArrowLeft,
   FiCamera,
   FiStar,
-  FiChevronDown,
-  FiX,
-  FiCheck,
 } from 'react-icons/fi';
-import { getProfile, updateProfile, uploadAvatar } from '../services/profileApi';
+import { updateProfile, uploadAvatar } from '../services/profileApi';
 import profileBanner from '../../../assets/profile-banner.png';
 import defaultAvatar from '../../../assets/oggy-img.png';
 
-const ROLE_OPTIONS = [
-  'Contributor',
-  'Backend Developer',
-  'Frontend Developer',
-  'Full Stack Engineer',
-  'Project Manager',
-  'Team Lead',
-  'Admin',
-];
+const mapProfile = (data) => ({
+  id: data?.id || '',
+  workspaceId: data?.workspaceId || '',
+  name: data?.name || '',
+  email: data?.email || '',
+  jobTitle: data?.jobTitle || '',
+  role: data?.role || '',
+  bio: data?.bio || '',
+  githubUrl: data?.githubUrl || '',
+  linkedinUrl: data?.linkedinUrl || '',
+  portfolioUrl: data?.portfolioUrl || '',
+  profilePictureUrl: data?.profilePictureUrl || '',
+  skills: Array.isArray(data?.skills) ? data.skills : [],
+});
+
+const safeExternalUrl = (value) => {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+  } catch {
+    return '';
+  }
+};
 
 const ProfileView = () => {
   const fileInputRef = useRef(null);
+  const {
+    currentUserProfile,
+    refreshCurrentUserProfile,
+    isLoadingUserProfile,
+    userProfileError,
+  } = useOutletContext() || {};
 
-  const [profile, setProfile] = useState({
-    fullName: '',
-    email: '',
-    jobTitle: '',
-    role: 'Contributor',
-    skills: [],
-    about: '',
-    avatarUrl: defaultAvatar,
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftProfile, setDraftProfile] = useState(() => mapProfile(currentUserProfile));
+  const profile = isEditing ? draftProfile : mapProfile(currentUserProfile);
   const [feedbackMsg, setFeedbackMsg] = useState(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
 
-  const [isAddingSkill, setIsAddingSkill] = useState(false);
-  const [newSkillText, setNewSkillText] = useState('');
-
-  useEffect(() => {
-    let isMounted = true;
-    getProfile()
-      .then((data) => {
-        if (!isMounted) return;
-        setProfile({
-          fullName: data.fullName || '',
-          email: data.email || '',
-          jobTitle: data.jobTitle || '',
-          role: data.role || 'Contributor',
-          skills: Array.isArray(data.skills) ? data.skills : [],
-          about: data.about || '',
-          avatarUrl: defaultAvatar,
-        });
-      })
-      .catch(() => {
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  useEffect(() => () => {
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+  }, [avatarPreviewUrl]);
 
   const handleChange = (field, value) => {
-    setProfile((prev) => ({ ...prev, [field]: value }));
+    setDraftProfile((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
 
+    if (!file.type.startsWith('image/')) {
+      setFeedbackMsg({ type: 'error', text: 'Choose an image file to upload.' });
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreviewUrl(previewUrl);
+    setIsUploadingAvatar(true);
+    setFeedbackMsg(null);
     try {
-      const updated = await uploadAvatar(file);
-      setProfile((prev) => ({ ...prev, avatarUrl: updated.avatarUrl }));
+      await uploadAvatar(file);
+      const refreshedProfile = await refreshCurrentUserProfile();
+      setDraftProfile((prev) => ({ ...prev, profilePictureUrl: refreshedProfile?.profilePictureUrl || prev.profilePictureUrl }));
+      setAvatarPreviewUrl('');
       setFeedbackMsg({ type: 'success', text: 'Avatar updated successfully!' });
       setTimeout(() => setFeedbackMsg(null), 3000);
-    } catch {
-      setFeedbackMsg({ type: 'error', text: 'Failed to upload avatar.' });
+    } catch (error) {
+      setAvatarPreviewUrl('');
+      setFeedbackMsg({ type: 'error', text: error?.message || 'Failed to upload avatar.' });
+    } finally {
+      setIsUploadingAvatar(false);
     }
-  };
-
-  const handleAddSkill = (e) => {
-    if (e) e.preventDefault();
-    const trimmed = newSkillText.trim();
-    if (trimmed && !profile.skills.includes(trimmed)) {
-      setProfile((prev) => ({
-        ...prev,
-        skills: [...prev.skills, trimmed],
-      }));
-    }
-    setNewSkillText('');
-    setIsAddingSkill(false);
-  };
-
-  const handleRemoveSkill = (skillToRemove) => {
-    setProfile((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((s) => s !== skillToRemove),
-    }));
   };
 
   const handleSubmit = async (e) => {
@@ -111,15 +93,33 @@ const ProfileView = () => {
     setIsSaving(true);
     setFeedbackMsg(null);
 
+    if (!profile.name.trim()) {
+      setFeedbackMsg({ type: 'error', text: 'Name is required.' });
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      await updateProfile(profile);
+      await updateProfile(draftProfile);
+      await refreshCurrentUserProfile();
       setFeedbackMsg({ type: 'success', text: 'Changes saved successfully!' });
+      setIsEditing(false);
       setTimeout(() => setFeedbackMsg(null), 4000);
     } catch (err) {
       setFeedbackMsg({ type: 'error', text: err?.message || 'Failed to save changes.' });
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setFeedbackMsg(null);
+  };
+
+  const handleStartEditing = () => {
+    setDraftProfile(mapProfile(currentUserProfile));
+    setIsEditing(true);
   };
 
   return (
@@ -137,6 +137,20 @@ const ProfileView = () => {
         </Link>
       </div>
 
+      {isLoadingUserProfile && (
+        <p className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-200" role="status">
+          Loading your profile…
+        </p>
+      )}
+      {userProfileError && !currentUserProfile && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200" role="alert">
+          <span>{userProfileError}</span>
+          <button type="button" onClick={() => refreshCurrentUserProfile().catch(() => {})} className="font-semibold underline underline-offset-2">
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-[#171717] rounded-2xl border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden transition-all text-slate-900 dark:text-white">
         <div className="relative h-[185px] w-full overflow-hidden bg-[#0C101B]">
           <img
@@ -152,36 +166,44 @@ const ProfileView = () => {
               <div className="-mt-[88px] relative w-full max-w-[247px] shrink-0 pb-7">
                 <div className="w-full h-[327px] rounded-2xl overflow-hidden relative border border-white/10 shadow-2xl bg-[#1e293b]">
                   <img
-                    src={profile.avatarUrl || defaultAvatar}
-                    alt={profile.fullName || 'User Portrait'}
+                    src={avatarPreviewUrl || profile.profilePictureUrl || defaultAvatar}
+                    alt={profile.name || 'Profile picture'}
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = defaultAvatar;
+                    }}
                     className="w-full h-full object-cover object-top"
                   />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Change profile picture"
-                    className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white text-slate-800 hover:bg-slate-100 shadow-md flex items-center justify-center transition-transform hover:scale-105 cursor-pointer"
-                  >
-                    <FiCamera size={16} />
-                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      title="Change profile picture"
+                      className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white text-slate-800 hover:bg-slate-100 shadow-md flex items-center justify-center transition-transform hover:scale-105 cursor-pointer"
+                    >
+                      {isUploadingAvatar ? '…' : <FiCamera size={16} />}
+                    </button>
+                  )}
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleAvatarChange}
+                    disabled={isUploadingAvatar}
                     className="hidden"
                   />
                 </div>
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-[190px] py-3 px-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center shadow-2xl z-10">
                   <h3 className="text-lg font-semibold text-white tracking-tight truncate">
-                    {profile.fullName || 'Arjun Mehta'}
+                    {profile.name || 'Your name'}
                   </h3>
                   <p className="text-xs text-slate-200 mt-0.5 truncate">
-                    {profile.jobTitle || 'Backend developer'}
+                    {profile.jobTitle || 'Job title not set'}
                   </p>
                   <div className="mt-2 flex justify-center">
                     <span className="inline-block px-5 py-1 rounded-full bg-[#252525] text-white text-[11px] font-medium border border-sky-400/40 shadow-xs">
-                      {profile.role || 'Contributor'}
+                      {profile.role || 'Role not set'}
                     </span>
                   </div>
                 </div>
@@ -194,53 +216,12 @@ const ProfileView = () => {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2.5">
-                  {profile.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="group relative h-7 bg-white text-slate-900 rounded-full text-xs font-bold px-2 flex items-center justify-center shadow-xs transition select-none truncate"
-                    >
-                      <span className="truncate">{skill}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSkill(skill)}
-                        title={`Remove ${skill}`}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-xs cursor-pointer"
-                      >
-                        <FiX size={10} />
-                      </button>
+                  {profile.skills.length > 0 ? profile.skills.map((skill) => (
+                    <span key={skill} className="h-7 bg-white text-slate-900 rounded-full text-xs font-bold px-2 flex items-center justify-center shadow-xs truncate">
+                      {skill}
                     </span>
-                  ))}
-
-                  {isAddingSkill ? (
-                    <div className="col-span-1 h-7 bg-slate-50 dark:bg-[#171717] border border-sky-400 rounded-full px-1.5 flex items-center justify-between">
-                      <input
-                        type="text"
-                        value={newSkillText}
-                        onChange={(e) => setNewSkillText(e.target.value)}
-                        placeholder="Skill"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleAddSkill(e);
-                          if (e.key === 'Escape') setIsAddingSkill(false);
-                        }}
-                        className="w-10 bg-transparent text-slate-900 dark:text-white text-[11px] focus:outline-none px-0.5"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddSkill}
-                        className="text-sky-400 hover:text-sky-300"
-                      >
-                        <FiCheck size={11} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingSkill(true)}
-                      className="h-7 bg-[#6BBBEB] hover:bg-[#52aae0] text-slate-900 rounded-full text-xs font-bold px-2 flex items-center justify-center transition shadow-xs cursor-pointer"
-                    >
-                      <span>Add+</span>
-                    </button>
+                  )) : (
+                    <p className="col-span-3 text-xs text-slate-500 dark:text-slate-400">No skills listed.</p>
                   )}
                 </div>
               </div>
@@ -259,10 +240,10 @@ const ProfileView = () => {
                     </label>
                     <input
                       type="text"
-                      value={profile.fullName}
-                      onChange={(e) => handleChange('fullName', e.target.value)}
+                      value={profile.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
                       placeholder="Enter full name"
-                      disabled={isLoading}
+                      disabled={!isEditing || isLoadingUserProfile}
                       className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
                       required
                     />
@@ -277,7 +258,7 @@ const ProfileView = () => {
                       value={profile.email}
                       onChange={(e) => handleChange('email', e.target.value)}
                       placeholder="Enter email address"
-                      disabled={isLoading}
+                      disabled
                       className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
                       required
                     />
@@ -292,7 +273,7 @@ const ProfileView = () => {
                       value={profile.jobTitle}
                       onChange={(e) => handleChange('jobTitle', e.target.value)}
                       placeholder="e.g. Backend Developer"
-                      disabled={isLoading}
+                      disabled={!isEditing || isLoadingUserProfile}
                       className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
                     />
                   </div>
@@ -302,23 +283,45 @@ const ProfileView = () => {
                       Role
                     </label>
                     <div className="relative flex-1">
-                      <select
+                      <input
+                        type="text"
                         value={profile.role}
-                        onChange={(e) => handleChange('role', e.target.value)}
-                        disabled={isLoading}
-                        className="w-full h-9 appearance-none px-4 pr-10 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 hover:border-slate-400 dark:hover:border-white/30 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner cursor-pointer"
-                      >
-                        {ROLE_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt} className="bg-white dark:bg-[#171717] text-slate-900 dark:text-white">
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                      <FiChevronDown
-                        size={15}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-white pointer-events-none"
+                        disabled
+                        className="w-full h-9 appearance-none px-4 rounded-full bg-slate-100 dark:bg-[#171717] border border-slate-300 dark:border-white/20 text-slate-600 dark:text-white text-xs sm:text-sm shadow-inner"
                       />
                     </div>
+                  </div>
+
+                  {[
+                    ['GitHub URL', 'githubUrl'],
+                    ['LinkedIn URL', 'linkedinUrl'],
+                  ].map(([label, field]) => (
+                    <div key={field} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                      <label className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">{label}</label>
+                      {isEditing ? (
+                        <input
+                          type="url"
+                          value={profile[field]}
+                          onChange={(e) => handleChange(field, e.target.value)}
+                          placeholder="https://"
+                          disabled={isLoadingUserProfile}
+                          className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
+                        />
+                      ) : safeExternalUrl(profile[field]) ? (
+                        <a href={safeExternalUrl(profile[field])} target="_blank" rel="noreferrer" className="flex-1 min-w-0 truncate text-sm text-sky-700 dark:text-sky-300 hover:underline">{profile[field]}</a>
+                      ) : (
+                        <span className="flex-1 text-sm text-slate-400 dark:text-slate-500">Not provided</span>
+                      )}
+                    </div>
+                  ))}
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                    <span className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">Portfolio</span>
+                    {safeExternalUrl(profile.portfolioUrl) ? (
+                      <a href={safeExternalUrl(profile.portfolioUrl)} target="_blank" rel="noreferrer" className="flex-1 min-w-0 truncate text-sm text-sky-700 dark:text-sky-300 hover:underline">{profile.portfolioUrl}</a>
+                    ) : (
+                      <span className="flex-1 text-sm text-slate-400 dark:text-slate-500">Not provided</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -327,10 +330,10 @@ const ProfileView = () => {
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">About</h3>
                 <textarea
                   rows={4}
-                  value={profile.about}
-                  onChange={(e) => handleChange('about', e.target.value)}
+                  value={profile.bio}
+                  onChange={(e) => handleChange('bio', e.target.value)}
                   placeholder="Tell the team about yourself, your expertise, and interests..."
-                  disabled={isLoading}
+                  disabled={!isEditing || isLoadingUserProfile}
                   className="w-full bg-transparent text-xs sm:text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-0 resize-none leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
@@ -341,8 +344,8 @@ const ProfileView = () => {
                     <span
                       className={`text-xs font-semibold px-3 py-1 rounded-xl ${
                         feedbackMsg.type === 'success'
-                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'
-                          : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                          : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
                       }`}
                     >
                       {feedbackMsg.text}
@@ -350,13 +353,34 @@ const ProfileView = () => {
                   )}
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSaving || isLoading}
-                  className="w-[131px] h-[40px] rounded-full bg-[#007DFE] hover:bg-[#006FDF] active:bg-[#005ECE] text-white font-medium text-sm transition shadow-lg shadow-sky-600/30 disabled:opacity-50 cursor-pointer flex items-center justify-center shrink-0 self-end sm:self-auto"
-                >
-                  {isSaving ? 'Saving...' : 'Save changes'}
-                </button>
+                {isEditing ? (
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={isSaving || isUploadingAvatar}
+                      className="h-10 px-4 rounded-full border border-slate-300 dark:border-[#454545] text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-100 dark:hover:bg-[#252525] transition disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSaving || isLoadingUserProfile || isUploadingAvatar}
+                      className="w-[131px] h-[40px] rounded-full bg-[#007DFE] hover:bg-[#006FDF] active:bg-[#005ECE] text-white font-medium text-sm transition shadow-lg shadow-sky-600/30 disabled:opacity-50 cursor-pointer flex items-center justify-center shrink-0"
+                    >
+                      {isSaving ? 'Saving...' : 'Save changes'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isLoadingUserProfile || !currentUserProfile}
+                    onClick={handleStartEditing}
+                    className="w-[131px] h-[40px] rounded-full bg-[#007DFE] hover:bg-[#006FDF] active:bg-[#005ECE] text-white font-medium text-sm transition shadow-lg shadow-sky-600/30 disabled:opacity-50 cursor-pointer flex items-center justify-center shrink-0 self-end sm:self-auto"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import DashboardNavbar from '../../../components/layout/DashboardNavbar';
 import Sidebar from '../../../components/layout/Sidebar';
 import { getUnreadNotificationCount } from '../services/notificationApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
+import { getProfile } from '../services/profileApi';
 
 const readUnreadCount = (value) => {
   const candidates = [value, value?.data, value?.result];
@@ -25,6 +26,24 @@ const Dashboard = () => {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(null);
   const [unreadNotificationLoading, setUnreadNotificationLoading] = useState(true);
   const [notificationCountError, setNotificationCountError] = useState('');
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
+  const [isLoadingUserProfile, setIsLoadingUserProfile] = useState(true);
+  const [userProfileError, setUserProfileError] = useState('');
+
+  const refreshCurrentUserProfile = useCallback(async () => {
+    setIsLoadingUserProfile(true);
+    setUserProfileError('');
+    try {
+      const profile = await getProfile();
+      setCurrentUserProfile(profile);
+      return profile;
+    } catch (error) {
+      setUserProfileError(error?.message || 'Failed to load your profile.');
+      throw error;
+    } finally {
+      setIsLoadingUserProfile(false);
+    }
+  }, []);
 
   const updateUnreadNotificationCount = useCallback((count, error = '') => {
     setUnreadNotificationCount(count);
@@ -72,11 +91,33 @@ const Dashboard = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    getProfile()
+      .then((profile) => {
+        if (!isMounted) return;
+        setCurrentUserProfile(profile);
+        setUserProfileError('');
+      })
+      .catch((error) => {
+        if (isMounted) setUserProfileError(error?.message || 'Failed to load your profile.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingUserProfile(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div
       className="min-h-screen bg-[var(--bg-dashboard)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-200"
     >
-      <DashboardNavbar unreadNotificationCount={unreadNotificationCount} />
+      <DashboardNavbar
+        unreadNotificationCount={unreadNotificationCount}
+        currentUserProfile={currentUserProfile}
+      />
 
       <Sidebar
         projectFilter={projectFilter}
@@ -106,6 +147,10 @@ const Dashboard = () => {
               notificationCountError,
               setUnreadNotificationCount: updateUnreadNotificationCount,
               refreshUnreadNotificationCount,
+              currentUserProfile,
+              refreshCurrentUserProfile,
+              isLoadingUserProfile,
+              userProfileError,
             }}
           />
         </main>
