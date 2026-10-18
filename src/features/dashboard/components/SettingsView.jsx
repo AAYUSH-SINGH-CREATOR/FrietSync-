@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   FiUser,
   FiBell,
@@ -15,7 +15,8 @@ import {
   FiRefreshCw,
 } from 'react-icons/fi';
 import profileBanner from '../../../assets/profile-banner.png';
-import { logoutUser } from '../../auth/services/authApi';
+import { logoutUser, sendForgotPasswordOtp, getFriendlyErrorMessage as getAuthErrorMessage } from '../../auth/services/authApi';
+import { getProfile } from '../services/profileApi';
 import {
   getMyWorkspace,
   updateWorkspace,
@@ -26,6 +27,8 @@ import {
   getNotificationPreferences,
   updateNotificationPreferences,
 } from '../services/notificationApi';
+import { CiLock } from "react-icons/ci";
+
 
 const DEFAULT_PREFERENCES = [
   // {
@@ -67,6 +70,8 @@ const DEFAULT_PREFERENCES = [
 
 const SettingsView = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
 
   // Expanded categories state
   const [expandedSection, setExpandedSection] = useState({
@@ -92,7 +97,27 @@ const SettingsView = () => {
 
   // Account State
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+  const [statusMessage, setStatusMessage] = useState(() => location.state?.passwordResetSuccess
+    ? { type: 'success', text: 'Your password was reset successfully.' }
+    : { type: '', text: '' });
+  const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
+
+  const handleRequestPasswordReset = async () => {
+    if (isRequestingPasswordReset) return;
+    setIsRequestingPasswordReset(true);
+    setStatusMessage({ type: '', text: '' });
+    try {
+      const profile = currentUserProfile || await getProfile();
+      const email = profile?.email?.trim();
+      if (!email) throw new Error('Your account email could not be found. Please try again later.');
+      await sendForgotPasswordOtp(email);
+      navigate('/dashboard/settings/reset-password', { state: { email } });
+    } catch (error) {
+      setStatusMessage({ type: 'error', text: getAuthErrorMessage(error, 'forgot-password') });
+    } finally {
+      setIsRequestingPasswordReset(false);
+    }
+  };
 
   // Load Notification Preferences
   const loadPreferences = useCallback(async () => {
@@ -485,22 +510,33 @@ const SettingsView = () => {
           {expandedSection.security && (
             <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn space-y-3">
               <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Authentication & Password
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
-                  Your credentials and tokens are secured via FrietSync JWT authentication. Password resets and verification are handled through the email OTP service.
-                </p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className='flex gap-3'>
+                   <CiLock size={18} />
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Password</h4>
+                    {/* <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
+                      Reset your password using a verification code sent to your account email.
+                    </p> */}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRequestPasswordReset}
+                    disabled={isRequestingPasswordReset || isLoadingUserProfile}
+                    className="shrink-0 rounded-full bg-sky-400 hover:bg-sky-500 disabled:opacity-60 disabled:cursor-wait px-5 py-2 text-xs font-semibold text-slate-950 transition-colors"
+                  >
+                    {isRequestingPasswordReset ? 'Sending code...' : 'Reset Password'}
+                  </button>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">
+              {/* <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                   Two-Factor Authentication (2FA)
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
                   Multi-Factor Authentication and session revocation features are scheduled for the next workspace security update.
                 </p>
-              </div>
+              </div> */}
             </div>
           )}
         </div>
