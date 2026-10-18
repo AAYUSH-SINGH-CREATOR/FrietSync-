@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 
 import {
@@ -10,7 +10,7 @@ import {
   FiSettings,
 } from 'react-icons/fi';
 import { BsChatDots } from 'react-icons/bs';
-import { getMyWorkspace } from '../services/workspaceApi';
+import { getMyWorkspace, getFriendlyErrorMessage } from '../services/workspaceApi';
 import NoWorkspace from './NoWorkspace';
 
 
@@ -30,33 +30,51 @@ const DashboardOverview = ({ onNavigate, pendingInviteCount: propInviteCount }) 
 
   const [workspace, setWorkspace] = useState(null);
   const [isLoadingWorkspaceData, setIsLoadingWorkspaceData] = useState(true);
+  const [workspaceError, setWorkspaceError] = useState('');
   const userName = currentUserProfile?.name?.trim() || localStorage.getItem('frietSyncName') || '';
   const userRole = currentUserProfile?.role?.trim();
+
+  const loadWorkspace = useCallback(async () => {
+    setIsLoadingWorkspaceData(true);
+    setWorkspaceError('');
+    try {
+      const ws = await getMyWorkspace();
+      setWorkspace(ws && (ws.name || ws.id || ws._id) ? ws : null);
+    } catch (err) {
+      setWorkspaceError(getFriendlyErrorMessage(err, 'workspace'));
+    } finally {
+      setIsLoadingWorkspaceData(false);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
     getMyWorkspace()
       .then((ws) => {
-        if (!isMounted) return;
-        setWorkspace(ws && (ws.name || ws.id || ws._id) ? ws : null);
+        if (isMounted) setWorkspace(ws && (ws.name || ws.id || ws._id) ? ws : null);
       })
       .catch((err) => {
-        console.warn('Workspace load notice:', err);
-        if (isMounted) setWorkspace(null);
+        if (isMounted) setWorkspaceError(getFriendlyErrorMessage(err, 'workspace'));
       })
       .finally(() => {
         if (isMounted) setIsLoadingWorkspaceData(false);
       });
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   if (isLoadingWorkspaceData) {
     return (
       <div className="flex items-center justify-center min-h-[320px]">
         <div className="w-8 h-8 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (workspaceError) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-center">
+        <p className="text-sm text-rose-600 dark:text-rose-400">{workspaceError}</p>
+        <button type="button" onClick={loadWorkspace} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Retry</button>
       </div>
     );
   }

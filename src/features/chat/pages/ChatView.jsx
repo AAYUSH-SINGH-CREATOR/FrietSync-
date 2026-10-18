@@ -45,17 +45,30 @@ const ChatsView = () => {
     if (!msg) return false;
     if (msg.isOutgoing) return true;
     if (msg.sender === 'You') return true;
-    if (currentUser.userId && msg.senderId && String(msg.senderId) === String(currentUser.userId)) {
+    const msgSenderId = msg.senderId || msg.userId;
+    if (currentUser.userId && msgSenderId && String(msgSenderId) === String(currentUser.userId)) {
       return true;
     }
-    if (currentUser.email && msg.senderEmail && msg.senderEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+    const msgSenderEmail = msg.senderEmail || msg.email;
+    if (currentUser.email && msgSenderEmail && msgSenderEmail.toLowerCase() === currentUser.email.toLowerCase()) {
       return true;
     }
-    if (currentUser.name && msg.senderName && msg.senderName.toLowerCase() === currentUser.name.toLowerCase()) {
+    const msgSenderName = msg.senderName || msg.sender;
+    if (currentUser.name && msgSenderName && msgSenderName.toLowerCase() === currentUser.name.toLowerCase()) {
       return true;
     }
     return false;
   }, [currentUser]);
+
+  const isOutgoingMessageRef = useRef(isOutgoingMessage);
+  useEffect(() => {
+    isOutgoingMessageRef.current = isOutgoingMessage;
+  }, [isOutgoingMessage]);
+
+  const showToastRef = useRef(showToast);
+  useEffect(() => {
+    showToastRef.current = showToast;
+  }, [showToast]);
 
   useEffect(() => {
     let isMounted = true;
@@ -213,6 +226,9 @@ const ChatsView = () => {
       },
       onError: (err) => {
         console.warn('STOMP client error:', err);
+        if (isMounted && showToastRef.current) {
+          showToastRef.current('error', err?.message || 'Chat connection failed. Please try again.');
+        }
       },
     });
 
@@ -222,21 +238,22 @@ const ChatsView = () => {
     const unsub = client.subscribe(`/topic/projects/${projectId}/chat`, (receivedMsg) => {
       if (!isMounted || !receivedMsg) return;
 
-      const outgoing = isOutgoingMessage(receivedMsg);
+      const outgoing = isOutgoingMessageRef.current ? isOutgoingMessageRef.current(receivedMsg) : false;
+      const text = receivedMsg.content ?? receivedMsg.message ?? receivedMsg.text ?? '';
       const formatted = {
         id: receivedMsg.id || `${Date.now()}-${Math.random()}`,
-        sender: outgoing ? 'You' : receivedMsg.senderName || receivedMsg.senderEmail || 'Member',
-        senderId: receivedMsg.senderId,
-        senderEmail: receivedMsg.senderEmail,
+        sender: outgoing ? 'You' : receivedMsg.senderName || receivedMsg.sender || receivedMsg.senderEmail || 'Member',
+        senderId: receivedMsg.senderId || receivedMsg.userId,
+        senderEmail: receivedMsg.senderEmail || receivedMsg.email,
         senderAvatar: receivedMsg.senderProfilePictureUrl || receivedMsg.profilePictureUrl || receivedMsg.avatarUrl || '',
-        text: receivedMsg.content || receivedMsg.message || '',
-        timestamp: formatMessageTime(receivedMsg.createdAt || receivedMsg.timestamp),
+        text: text,
+        timestamp: formatMessageTime(receivedMsg.createdAt || receivedMsg.timestamp || receivedMsg.sentAt || receivedMsg.time),
         isOutgoing: outgoing,
       };
 
       setMessagesMap((prev) => {
         const currentList = prev[projectId] || [];
-        if (receivedMsg.id && currentList.some((m) => m.id === receivedMsg.id)) {
+        if (receivedMsg.id && currentList.some((m) => String(m.id) === String(receivedMsg.id))) {
           return prev;
         }
         return {
@@ -267,7 +284,8 @@ const ChatsView = () => {
         stompClientRef.current = null;
       }
     };
-  }, [activeProjectId, isOutgoingMessage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProjectId]);
 
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
@@ -279,7 +297,7 @@ const ChatsView = () => {
   };
 
   const handleSendMessage = (text) => {
-    if (!activeChat || !text || !text.trim()) return;
+    if (!activeChat || !text || !text.trim()) return false;
 
     const trimmedText = text.trim();
 
@@ -288,17 +306,30 @@ const ChatsView = () => {
         stompClientRef.current.publish(`/app/projects/${activeChat.id}/chat`, {
           content: trimmedText,
         });
+        return true;
       } catch (publishErr) {
         console.warn('Failed to publish STOMP message:', publishErr);
         showToast('error', 'Failed to send message. Please check connection.');
+        return false;
       }
     } else {
-      showToast('error', 'Cannot send message: Chat WebSocket is connecting or offline.');
+      const statusNotice = connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
+        ? `Cannot send message: Chat is still connecting (${connectionStatus}). Please wait a moment.`
+        : 'Cannot send message: Chat WebSocket is offline. Reconnecting...';
+      showToast('error', statusNotice);
+      if (stompClientRef.current && !stompClientRef.current.connected) {
+        try {
+          stompClientRef.current.connect();
+        } catch (reconnErr) {
+          console.warn('Reconnect trigger failed:', reconnErr);
+        }
+      }
+      return false;
     }
   };
 
   return (
-    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-y-hidden">
+    <div className="h-full min-h-0 min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-hidden">
       {toastNotice && (
         <div
           className={`mb-3 p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${
@@ -342,7 +373,7 @@ const ChatsView = () => {
         </div>
 
         <div
-          className={`h-full min-h-0 flex-1 min-w-0 flex justify-center ${
+          className={`h-full min-h-0 flex-1 min-w-0 flex ${
             isMobileThreadOpen ? 'flex' : 'hidden md:flex'
           }`}
         >

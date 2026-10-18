@@ -21,7 +21,9 @@ const handleAxiosError = (error, defaultMessage) => {
 
 export const getAccessToken = () => {
   const rawToken =
-    localStorage.getItem('accessToken') || '';
+    localStorage.getItem('frietSyncToken') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('token') || '';
   return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
 };
 export const saveUserData = (data, fallbackData = {}) => {
@@ -193,6 +195,7 @@ export const refreshAccessToken = async () => {
 
     if (newToken) {
       localStorage.setItem('frietSyncToken', newToken);
+      localStorage.setItem('accessToken', newToken);
     }
     if (newRefreshToken) {
       localStorage.setItem('frietSyncRefreshToken', newRefreshToken);
@@ -242,16 +245,20 @@ export const fetchWithAuth = async (url, options = {}) => {
     if (error.response?.status === 401 && localStorage.getItem('frietSyncRefreshToken')) {
       try {
         await refreshAccessToken();
-        token = getAccessToken();
-        const retryHeaders = {
-          ...options.headers,
-          ...(token && { Authorization: `Bearer ${token}` }),
-        };
-        return await axios({ url, ...options, headers: retryHeaders });
       } catch {
         await logoutUser();
         window.location.href = '/login';
         throw error;
+      }
+      token = getAccessToken();
+      const retryHeaders = {
+        ...options.headers,
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+      try {
+        return await axios({ url, ...options, headers: retryHeaders });
+      } catch (retryError) {
+        handleAxiosError(retryError, 'Request failed');
       }
     }
     handleAxiosError(error, 'Request failed');
@@ -265,7 +272,7 @@ export const invitemem = async (fromdata) => {
       purpose: 'WORKSPACE_INVITE',
       ...fromdata,
     };
-    const response = await axios.post(`${BASE_URL}/admin/invites`, fromdata, {
+    const response = await axios.post(`${BASE_URL}/admin/invites`, payload, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -287,6 +294,7 @@ export const getUserProfile = () => {
       return { name, role };
     }
   } catch {
+    // Ignore malformed cached data and fall back to the legacy name and role keys.
   }
   return {
     name: localStorage.getItem('frietSyncName') || '',

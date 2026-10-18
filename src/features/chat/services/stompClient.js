@@ -71,12 +71,22 @@ export class StompChatClient {
     }
 
     this.ws.onopen = () => {
+      let host;
+      try {
+        host = new URL(this.wsUrl).host || '/';
+      } catch {
+        host = '/';
+      }
+
       const connectFrame = [
         'CONNECT',
-        'accept-version:1.2',
-        `Authorization:Bearer ${token}`,
-        `passcode:${token}`,
+        'accept-version:1.0,1.1,1.2',
+        `host:${host}`,
         'heart-beat:0,0',
+        `Authorization:Bearer ${token}`,
+        `authorization:Bearer ${token}`,
+        `passcode:${token}`,
+        `login:${token}`,
         '',
         '',
       ].join('\n') + '\0';
@@ -84,8 +94,18 @@ export class StompChatClient {
       this.ws.send(connectFrame);
     };
 
-    this.ws.onmessage = (event) => {
-      this.handleIncomingData(event.data);
+    this.ws.onmessage = async (event) => {
+      let data = event.data;
+      if (typeof Blob !== 'undefined' && data instanceof Blob) {
+        try {
+          data = await data.text();
+        } catch {
+          return;
+        }
+      } else if (typeof ArrayBuffer !== 'undefined' && data instanceof ArrayBuffer) {
+        data = new TextDecoder().decode(data);
+      }
+      this.handleIncomingData(data);
     };
 
     this.ws.onerror = (err) => {
@@ -142,14 +162,23 @@ export class StompChatClient {
   }
 
   parseFrame(frameStr) {
-    const headerBodySplit = frameStr.indexOf('\n\n');
-    let headerStr = frameStr;
+    const cleaned = frameStr.replace(/^[\r\n]+/, '');
+    let headerBodySplit = cleaned.indexOf('\r\n\r\n');
+    let delimiterLength = 4;
+    if (headerBodySplit === -1) {
+      headerBodySplit = cleaned.indexOf('\n\n');
+      delimiterLength = 2;
+    }
+
+    let headerStr = cleaned;
     let body = '';
 
     if (headerBodySplit !== -1) {
-      headerStr = frameStr.slice(0, headerBodySplit);
-      body = frameStr.slice(headerBodySplit + 2);
+      headerStr = cleaned.slice(0, headerBodySplit);
+      body = cleaned.slice(headerBodySplit + delimiterLength);
     }
+
+    body = body.replace(/\0+$/, '');
 
     const lines = headerStr.split('\n').map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) return;
@@ -262,12 +291,15 @@ export class StompChatClient {
     }
 
     const payload = typeof body === 'object' ? JSON.stringify(body) : String(body);
+    const contentLength = typeof TextEncoder !== 'undefined'
+      ? new TextEncoder().encode(payload).length
+      : (typeof Blob !== 'undefined' ? new Blob([payload]).size : payload.length);
 
     const sendFrame = [
       'SEND',
       `destination:${destination}`,
       'content-type:application/json',
-      `content-length:${new Blob([payload]).size}`,
+      `content-length:${contentLength}`,
       '',
       payload,
     ].join('\n') + '\0';

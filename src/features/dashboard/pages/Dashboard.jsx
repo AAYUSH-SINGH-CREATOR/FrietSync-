@@ -112,7 +112,7 @@ const Dashboard = () => {
 
   return (
     <div
-      className="min-h-screen bg-[var(--bg-dashboard)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-200"
+      className={`${isChat ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-[var(--bg-dashboard)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-200`}
     >
       <DashboardNavbar
         unreadNotificationCount={unreadNotificationCount}
@@ -127,13 +127,13 @@ const Dashboard = () => {
       <div
         className={`flex-1 w-full ${
           isChat
-            ? 'pl-[76px] sm:pl-[88px] pr-2 sm:pr-4 pt-2 pb-2 sm:pb-2.5 flex flex-col min-h-0 overflow-hidden'
+            ? 'pl-[76px] sm:pl-[88px] pr-2 sm:pr-4 pt-2 pb-2 sm:pb-2.5 flex flex-col min-h-0 min-w-0 overflow-hidden'
             : 'pl-[84px] sm:pl-[104px] pr-4 sm:pr-8 py-6'
         }`}
       >
         <main
           className={
-            isChat ? 'w-full h-full flex-1 min-h-0 flex flex-col' : 'max-w-[1500px] w-full mx-auto'
+            isChat ? 'w-full h-full flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden' : 'max-w-[1500px] w-full mx-auto'
           }
         >
           <Outlet

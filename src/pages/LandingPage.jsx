@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiX, FiBarChart2 } from 'react-icons/fi';
+import { FiBarChart2 } from 'react-icons/fi';
 import { BsLightningChargeFill } from 'react-icons/bs';
 import { AiOutlineTeam, AiFillBug } from 'react-icons/ai';
-import faviconLogo from '../assets/favicon.svg';
 import heroTeamImg from '../assets/hero-team.png';
 import wavesSvg from '../assets/waves.svg';
 import { FaCirclePlay } from "react-icons/fa6";
@@ -11,6 +11,7 @@ import logo from "../assets/logo.svg"
 
 
 const LandingPage = () => {
+    const [showDemoModal, setShowDemoModal] = useState(false);
     const isAuthenticated = Boolean(getAccessToken());
 
     const features = [
@@ -166,6 +167,18 @@ const LandingPage = () => {
                     </div>
                 </div>
             </main>
+            {showDemoModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowDemoModal(false); }}>
+                    <section role="dialog" aria-modal="true" aria-labelledby="demo-title" className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+                        <h2 id="demo-title" className="text-xl font-semibold text-slate-900">Product demo</h2>
+                        <p className="mt-2 text-sm text-slate-600">A video demo is not available yet. You can explore FrietSync by creating an account.</p>
+                        <div className="mt-5 flex justify-center gap-3">
+                            <button type="button" onClick={() => setShowDemoModal(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">Close</button>
+                            <Link to="/signup" onClick={() => setShowDemoModal(false)} className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white">Get started</Link>
+                        </div>
+                    </section>
+                </div>
+            )}
         </div>
     );
 };

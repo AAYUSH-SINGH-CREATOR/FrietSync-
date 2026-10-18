@@ -1,50 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   FiSend,
-  FiArrowLeft,
-  FiFolder,
-  FiSearch,
   FiMoreVertical,
-  FiExternalLink,
+  FiArrowLeft,
+  FiPaperclip,
+  FiSmile,
+  FiSearch,
+  FiMessageSquare,
 } from 'react-icons/fi';
-import chatFrame from '../../../assets/chatframe.png';
+import { getInitials, getAvatarColor, getCurrentChatUser } from '../services/chatApi';
 
-const SENDER_AVATAR_COLORS = [
-  'bg-[#6366f1]', // indigo
-  'bg-[#2563eb]', // blue
-  'bg-[#0284c7]', // sky
-  'bg-[#0d9488]', // teal
-  'bg-[#16a34a]', // green
-  'bg-[#ea580c]', // orange
-  'bg-[#db2777]', // pink
-  'bg-[#9333ea]', // purple
-];
-
-const getSenderAvatarColor = (str = '') => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return SENDER_AVATAR_COLORS[Math.abs(hash) % SENDER_AVATAR_COLORS.length];
-};
-
-const getInitials = (name = '') => {
-  if (!name || typeof name !== 'string') return '?';
-  const clean = name.trim();
-  if (!clean) return '?';
-  const parts = clean.split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-};
-
-const formatMessageTimestamp = (timeStr) => {
-  if (!timeStr) return '';
-  if (typeof timeStr !== 'string') return String(timeStr);
-  if (timeStr.includes(',')) {
-    return timeStr.split(',')[1].trim();
-  }
-  return timeStr;
+const ChatAvatar = ({ src, name, className, color }) => {
+  const [failed, setFailed] = useState(false);
+  const initials = getInitials(name);
+  return src && !failed
+    ? <img src={src} alt={name || 'User avatar'} onError={() => setFailed(true)} className={`${className} object-cover rounded-full`} />
+    : <div className={`${className} ${color || getAvatarColor(name)} rounded-full text-white font-semibold flex items-center justify-center shrink-0 select-none`}>{initials}</div>;
 };
 
 const ChatArea = ({
@@ -52,76 +23,78 @@ const ChatArea = ({
   messages = [],
   onSendMessage,
   onBackToList,
+  onOpenGroupDetails,
   connectionStatus = 'disconnected',
   isLoadingMessages = false,
-  currentUser,
+  currentUser: currentUserProp,
 }) => {
-  const navigate = useNavigate();
   const [inputText, setInputText] = useState('');
-  const [showMenu, setShowMenu] = useState(false);
-  const messagesContainerRef = useRef(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchInChat, setSearchInChat] = useState('');
+  const messagesEndRef = useRef(null);
+
+  const currentUser = currentUserProp || getCurrentChatUser();
 
   useEffect(() => {
-    const messageHistory = messagesContainerRef.current;
-    messageHistory?.scrollTo({
-      top: messageHistory.scrollHeight,
-      behavior: 'smooth',
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, activeChat?.id]);
 
   const handleSend = (e) => {
     e?.preventDefault();
     const text = inputText.trim();
     if (!text || text.length > 2000) return;
-    if (connectionStatus !== 'connected') return;
-
-    onSendMessage(text);
+    const sent = onSendMessage(text);
+    if (sent === false) return;
     setInputText('');
+    setSearchInChat('');
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSend(e);
     }
   };
 
+  const displayedMessages = useMemo(() => {
+    if (!searchInChat.trim()) return messages;
+    const q = searchInChat.trim().toLowerCase();
+    return messages.filter((m) =>
+      (m.text || '').toLowerCase().includes(q) ||
+      (m.sender || '').toLowerCase().includes(q)
+    );
+  }, [messages, searchInChat]);
+
   if (!activeChat) {
     return (
-      <div className="relative w-full max-w-[720px] bg-[#e9e9e9] dark:bg-[#030b17] rounded-2xl border border-slate-200 dark:border-[#42617a] shadow-xs h-full flex flex-col items-center justify-center p-8 text-center transition-colors overflow-hidden" style={{ backgroundImage: `url(${chatFrame})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 bg-white/80 dark:bg-[#030b17]/10"
-        />
-        <div className="relative z-10 w-16 h-16 rounded-2xl bg-sky-50 dark:bg-sky-950/40 text-sky-500 dark:text-[#38bdf8] flex items-center justify-center mb-4 shadow-sm">
-          <FiFolder size={28} />
+      <div className="w-full flex-1 min-w-0 bg-gradient-to-br from-[#D9EAFD] via-[#EAF2FF] to-[#D5E7FC] dark:from-[#060D1A] dark:via-[#091527] dark:to-[#040A14] border border-sky-200/50 dark:border-cyan-900/30 rounded-2xl sm:rounded-3xl shadow-sm h-full flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-14 h-14 rounded-full bg-white dark:bg-[#171717] text-sky-500 dark:text-sky-400 flex items-center justify-center mb-3 shadow-xs">
+          <FiMessageSquare size={24} />
         </div>
-        <h3 className="relative z-10 text-lg font-bold text-slate-800 dark:text-white">Select a project channel</h3>
-        <p className="relative z-10 text-xs text-slate-400 dark:text-[#94a3b8] mt-1 max-w-sm">
-          Choose a project from the sidebar to chat live with project members.
+        <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">Select a conversation</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs leading-relaxed">
+          Choose a project chat from the left panel to join the conversation.
         </p>
       </div>
     );
   }
 
-  const projectInitials = getInitials(activeChat.name || 'PR');
-  const userInitials = getInitials(currentUser?.name || 'You');
+  const isProject = !!activeChat.isProject;
+  const memberCount = Array.isArray(activeChat.members) ? activeChat.members.length : 0;
+  const projectInitials = getInitials(activeChat.name);
+  const projectColor = getAvatarColor(activeChat.name);
 
   return (
-    <div className="relative w-full max-w-[720px] bg-[#e9e9e9] dark:bg-[#030b17] rounded-2xl border border-slate-200 dark:border-[#42617a] shadow-xs flex flex-col h-full min-h-0 overflow-hidden transition-colors" style={{ backgroundImage: `url(${chatFrame})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-0 bg-white/100 dark:bg-[#030b17]/10"
-      />
-
-      {/* Header */}
-      <div className="relative z-20 mx-1 mt-1 px-4 sm:px-6 py-3.5 rounded-xl bg-white/90 dark:bg-[#1d1d1d]/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+    <div className="w-full flex-1 min-w-0 bg-gradient-to-br from-[#D9EAFD] via-[#EAF2FF] to-[#D5E7FC] dark:from-[#060D1A] dark:via-[#091527] dark:to-[#040A14] border-2 sm:border-4 border-[#CCE5FE] dark:border-[#1B3654] rounded-3xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden relative transition-colors">
+      {/* 1. Inset Floating Header (Frame 397) */}
+      <div className="bg-white dark:bg-[#171717] rounded-2xl mx-2.5 sm:mx-3 mt-2.5 sm:mt-3 px-3.5 sm:px-5 py-2.5 sm:py-3 shadow-xs border border-sky-100 dark:border-white/5 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-3 min-w-0">
+          {/* Mobile Back to List Button */}
           {onBackToList && (
             <button
               type="button"
               onClick={onBackToList}
-              className="md:hidden p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-[#20232c] cursor-pointer"
+              className="lg:hidden p-1.5 -ml-1 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-xl cursor-pointer"
               title="Back to conversation list"
             >
               <FiArrowLeft size={18} />
@@ -130,212 +103,177 @@ const ChatArea = ({
 
           {/* Project Avatar */}
           <div className="relative shrink-0">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-              {projectInitials}
-            </div>
-          </div>
-
-          {/* Project Details */}
-          <div className="min-w-0 text-left">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate tracking-tight">
-              {activeChat.name}
-            </h2>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5">
-              {activeChat.members?.length > 0 && (
-                <span>{activeChat.members.length} Members</span>
-              )}
-              {activeChat.members?.length > 0 && <span className="opacity-60">•</span>}
-              {connectionStatus === 'connected' ? (
-                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-[#34d399] font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  online
-                </span>
-              ) : connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? (
-                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-[#fbbf24] font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  connecting
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-slate-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                  offline
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Header Right Actions */}
-        <div className="relative flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            title="Search in conversation"
-            aria-label="Search in conversation"
-            className="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 dark:text-[#94a3b8] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#20232c] flex items-center justify-center transition cursor-pointer"
-          >
-            <FiSearch size={18} />
-          </button>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowMenu((prev) => !prev)}
-              title="More options"
-              aria-label="More options"
-              className="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 dark:text-[#94a3b8] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#20232c] flex items-center justify-center transition cursor-pointer"
-            >
-              <FiMoreVertical size={18} />
-            </button>
-
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-[#1f2128] border border-slate-200 dark:border-[#2d303b] shadow-xl py-1.5 z-30 animate-fadeIn">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMenu(false);
-                    navigate(`/dashboard/projects/${activeChat.id}`);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#282b36] transition cursor-pointer"
-                >
-                  <FiExternalLink size={14} className="text-sky-500 dark:text-[#38bdf8]" />
-                  Project Details
-                </button>
+            {activeChat.avatar ? (
+              <img src={activeChat.avatar} alt={activeChat.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+            ) : (
+              <div className={`w-10 h-10 rounded-full ${projectColor} text-white font-bold text-xs flex items-center justify-center shadow-xs select-none`}>
+                {projectInitials}
               </div>
             )}
           </div>
+
+          <div className="min-w-0 text-left">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">{activeChat.name}</h2>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+              <span>{memberCount} {memberCount === 1 ? 'Member' : 'Members'}</span>
+              <span>•</span>
+              {isProject && (
+                connectionStatus === 'connected' ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Live
+                  </span>
+                ) : connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? (
+                  <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                    Connecting...
+                  </span>
+                ) : (
+                  <span className="text-slate-400">Offline</span>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0 text-slate-600 dark:text-slate-300">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen((prev) => !prev)}
+            title="Search in messages"
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+          >
+            <FiSearch size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={onOpenGroupDetails}
+            title="Conversation details"
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+          >
+            <FiMoreVertical size={18} />
+          </button>
         </div>
       </div>
+      {isSearchOpen && (
+        <div className="mx-3 mt-2 px-3 py-1.5 bg-white dark:bg-[#171717] rounded-xl border border-sky-100 dark:border-white/5 shadow-xs flex items-center gap-2 text-xs shrink-0 min-w-0">
+          <FiSearch className="text-slate-400" size={14} />
+          <input
+            type="text"
+            placeholder="Search in this chat..."
+            value={searchInChat}
+            onChange={(e) => setSearchInChat(e.target.value)}
+            className="flex-1 min-w-0 bg-transparent text-slate-900 dark:text-white outline-none"
+            autoFocus
+          />
+          {searchInChat && (
+            <button type="button" onClick={() => setSearchInChat('')} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+              Clear
+            </button>
+          )}
+        </div>
+      )}
 
-      {/* Messages Scroll Area */}
-      <div ref={messagesContainerRef} className="relative z-10 flex-1 min-h-0 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-4 sm:p-6 space-y-5">
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden no-scrollbar p-3.5 sm:p-5 space-y-3.5">
         {isLoadingMessages ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 dark:text-[#94a3b8]">
-            <span className="w-6 h-6 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-2" />
-            <p className="text-xs">Loading messages...</p>
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+            <span className="w-5 h-5 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-2" />
+            <p className="text-xs">Loading message history...</p>
           </div>
-        ) : messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#20232c] text-sky-500 dark:text-[#38bdf8] mx-auto flex items-center justify-center mb-3">
-              <FiFolder size={22} />
-            </div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">
-              No messages yet
+        ) : displayedMessages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              {searchInChat ? 'No messages match search' : 'No messages yet'}
             </p>
-            <p className="text-xs text-slate-400 dark:text-[#94a3b8] mt-1 max-w-xs">
-              Say hello to start the discussion with members of {activeChat.name}!
+            <p className="text-[11px] mt-0.5 max-w-xs">
+              {searchInChat ? 'Try another search term.' : `Say hello to begin collaborating in ${activeChat.name}!`}
             </p>
           </div>
         ) : (
-          messages.map((msg) => {
-            const isOutgoing = !!msg.isOutgoing;
-            const senderInitial = isOutgoing
-              ? userInitials
-              : getInitials(msg.sender || 'Member');
-            const avatarColorClass = isOutgoing
-              ? 'bg-[#c026d3]'
-              : getSenderAvatarColor(msg.sender || 'Member');
-
-            if (isOutgoing) {
-              return (
-                <div key={msg.id} className="flex min-w-0 items-start justify-end gap-2.5 sm:gap-3 ml-auto max-w-[90%] sm:max-w-[75%]">
-                  <div className="flex flex-col items-end min-w-0">
-                    <div className="flex items-center gap-2 mb-1 mr-1">
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        You
-                      </span>
-                      <span className="text-[11px] text-slate-400 dark:text-[#858585]">
-                        {formatMessageTimestamp(msg.timestamp)}
-                      </span>
-                    </div>
-                    <div className="min-w-0 max-w-full bg-sky-100 dark:bg-[#222222] border border-sky-200 dark:border-[#343434] text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tr-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
-                    </div>
-                  </div>
-
-                  {/* Outgoing Avatar */}
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 mt-0.5 shadow-2xs ${avatarColorClass}`}
-                  >
-                    {senderInitial}
-                  </div>
-                </div>
-              );
-            }
+          displayedMessages.map((msg) => {
+            const isOutgoing = msg.isOutgoing;
+            const senderName = isOutgoing ? 'You' : msg.sender || 'Member';
+            const avatarColor = isOutgoing ? 'bg-[#D95295]' : getAvatarColor(senderName);
 
             return (
-              <div key={msg.id} className="flex min-w-0 items-start gap-2.5 sm:gap-3 max-w-[90%] sm:max-w-[75%]">
-                {/* Incoming Avatar */}
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 mt-0.5 shadow-2xs ${avatarColorClass}`}
-                >
-                  {senderInitial}
+              <div key={msg.id} className={`flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
+                {/* Sender Name & Timestamp above bubble */}
+                <div className={`text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 flex items-center gap-1.5 ${isOutgoing ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
+                  <span>{senderName}</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{msg.timestamp}</span>
                 </div>
 
-                <div className="flex min-w-0 max-w-full flex-col items-start">
-                  <div className="flex items-center gap-2 mb-1 ml-1">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {msg.sender}
-                    </span>
-                    <span className="text-[11px] text-slate-400 dark:text-[#858585]">
-                      {formatMessageTimestamp(msg.timestamp)}
-                    </span>
+                {/* Bubble & Avatar row */}
+                <div className="flex items-center gap-2 min-w-0 max-w-full sm:max-w-[85%]">
+                  {!isOutgoing && (
+                    <ChatAvatar src={msg.senderAvatar} name={senderName} color={avatarColor} className="w-7 h-7 text-[10px] shadow-xs" />
+                  )}
+
+                  <div
+                    className={`min-w-0 max-w-full rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere] shadow-xs ${
+                      isOutgoing
+                        ? 'bg-[#8AD4FF] dark:bg-[#1C1C1C] text-slate-900 dark:text-white rounded-tr-xs dark:border dark:border-white/10'
+                        : 'bg-white dark:bg-[#171717] text-slate-900 dark:text-white rounded-tl-xs border border-slate-100 dark:border-white/5'
+                    }`}
+                  >
+                    <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{msg.text}</p>
                   </div>
-                  <div className="min-w-0 max-w-full bg-white dark:bg-[#222222] border border-slate-200 dark:border-[#343434] text-slate-900 dark:text-[#F1F5F9] rounded-2xl rounded-tl-xs px-4 py-2.5 text-sm leading-relaxed shadow-2xs break-words [overflow-wrap:anywhere]">
-                    <p className="whitespace-pre-wrap">{msg.text}</p>
-                  </div>
+
+                  {isOutgoing && (
+                    <ChatAvatar src={currentUser?.profilePictureUrl} name={currentUser?.name || 'You'} color="bg-[#D95295]" className="w-7 h-7 text-[10px] shadow-xs" />
+                  )}
                 </div>
               </div>
             );
           })
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Composer */}
-      <div className="relative z-20 mx-1 mb-1 shrink-0 p-3.5 sm:p-4 pb-[max(0.85rem,env(safe-area-inset-bottom))] rounded-xl bg-white/90 dark:bg-[#1d1d1d]/95 backdrop-blur-md">
-        <form
-          onSubmit={handleSend}
-          className="flex items-center gap-2.5 bg-slate-100 dark:bg-[#292929] border border-slate-200 dark:border-[#3a3a3a] rounded-full px-4 py-2 sm:py-2.5 focus-within:border-sky-500 dark:focus-within:border-[#38bdf8]/60 focus-within:ring-2 focus-within:ring-sky-500/10 dark:focus-within:ring-[#38bdf8]/20 transition-all shadow-inner"
+      {/* 3. Inset Floating Bottom Composer (Frame 398) */}
+      <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10">
+        {/* Paperclip attachment icon */}
+        <button
+          type="button"
+          title="Attach file"
+          className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
         >
-          {/* <button
-            type="button"
-            title="Attach file (not configured)"
-            aria-label="Attach file"
-            className="text-slate-400 dark:text-[#858585] hover:text-slate-600 dark:hover:text-slate-200 transition p-1 cursor-pointer shrink-0"
-          >
-            <FiPaperclip size={18} />
-          </button> */}
+          <FiPaperclip size={18} />
+        </button>
 
+        {/* Input Pill Capsule */}
+        <div className="flex-1 flex items-center bg-[#F1F3F5] dark:bg-[#252525] rounded-full px-3.5 sm:px-4 py-1.5 border border-transparent dark:border-white/5 focus-within:border-sky-400 transition">
           <input
             type="text"
             maxLength={2000}
-            placeholder={
-              connectionStatus !== 'connected'
-                ? `Connecting to project chat (${connectionStatus})...`
-                : 'Type here....'
-            }
+            placeholder={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Type here....'}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent px-1 py-1 text-xs sm:text-sm text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#6b7280] outline-none"
+            className="text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder-slate-500 bg-transparent outline-none w-full"
           />
-
           <button
-            type="submit"
-            disabled={!inputText.trim() || connectionStatus !== 'connected'}
-            title={
-              connectionStatus !== 'connected'
-                ? `Connecting (${connectionStatus})...`
-                : 'Send message'
-            }
-            aria-label="Send message"
-            className="p-1.5 text-sky-500 dark:text-[#38bdf8] hover:text-sky-600 dark:hover:text-[#7dd3fc] active:scale-95 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+            type="button"
+            onClick={() => setInputText((prev) => prev + ' 😊')}
+            title="Add emoji"
+            className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition shrink-0 ml-1.5 cursor-pointer"
           >
-            <FiSend size={20} />
+            <FiSmile size={16} />
           </button>
-        </form>
-      </div>
+        </div>
+
+        {/* Send Action Button */}
+        <button
+          type="submit"
+          disabled={!inputText.trim()}
+          title={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Send message'}
+          className="p-2 rounded-full text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 disabled:opacity-40 transition cursor-pointer shrink-0"
+        >
+          <FiSend size={18} />
+        </button>
+      </form>
     </div>
   );
 };
 
 export default ChatArea;
-

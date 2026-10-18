@@ -31,7 +31,7 @@ const ChatSidebar = ({
   }, [groups, activeFilter, searchQuery]);
 
   return (
-    <div className="bg-[#F3F4F6] dark:bg-[#252525] rounded-2xl p-3 sm:p-4 flex flex-col h-full w-full overflow-hidden border border-slate-200/60 dark:border-white/5">
+    <div className="bg-[#F3F4F6] dark:bg-[#252525] rounded-2xl p-3 sm:p-4 flex flex-col h-full min-h-0 min-w-0 w-full overflow-hidden border border-slate-200/60 dark:border-white/5">
       {/* 1. Header with Title and Plus Button */}
       <div className="flex items-center justify-between shrink-0">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Chats</h2>

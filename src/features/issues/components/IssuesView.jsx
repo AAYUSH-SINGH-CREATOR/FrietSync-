@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FiPlus, FiSearch, FiRefreshCw, FiFolder, FiAlertCircle, FiCheckCircle,
-  FiChevronDown, FiChevronLeft, FiChevronRight, FiCircle, FiActivity,
+  FiChevronDown, FiChevronLeft, FiChevronRight, FiActivity,
   FiCheckSquare, FiLayers, FiX,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
