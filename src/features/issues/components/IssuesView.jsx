@@ -469,7 +469,7 @@ const IssuesView = () => {
                 <thead>
                   <tr className="h-[38px] bg-slate-100 text-xs font-semibold text-slate-800 dark:bg-[#202020] dark:text-[#eee]">
                     <th className="w-10 px-3"><span className="sr-only">Select issues</span><input aria-label="Select issues" type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-sky-500" /></th>
-                    <th className="px-2">Issue</th><th className="px-3">ID</th><th className="px-3">Project</th><th className="px-3">Status</th><th className="px-3">Priority</th><th className="px-3">Assignee</th><th className="px-3">Due date</th>
+                    <th className="p-4">Issue</th><th className="p-5">ID</th><th className="p-5">Project</th><th className="p-5">Status</th><th className="px-3">Priority</th><th className="px-3">Assignee</th><th className="px-3">Due date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[#343434]">
