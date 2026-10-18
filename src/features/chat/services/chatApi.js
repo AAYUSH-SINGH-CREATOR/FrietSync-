@@ -13,6 +13,33 @@ export const getAuthToken = () => {
   return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
 };
 
+export const getInitials = (name = '') => {
+  const trimmed = name?.trim() || '';
+  if (!trimmed) return '?';
+  const parts = trimmed.split(/\s+/);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return trimmed.slice(0, 2).toUpperCase();
+};
+
+export const getAvatarColor = (name = '') => {
+  const colors = [
+    'bg-[#8A56E2]',
+    'bg-[#3B6BDC]',
+    'bg-[#C8523A]',
+    'bg-[#D95295]',
+    'bg-[#0EA5E9]',
+    'bg-[#10B981]',
+    'bg-[#F59E0B]',
+    'bg-[#6366F1]',
+  ];
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i += 1) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+
 const getAuthHeaders = () => {
   const token = getAuthToken();
   return {
@@ -147,4 +174,5 @@ export const getProjectChatMessages = async (projectId, limit = 50) => {
 };
 
 export { getFriendlyErrorMessage };
+
 

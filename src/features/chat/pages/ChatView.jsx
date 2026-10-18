@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import {
   getProjectChatMessages,
   getCurrentChatUser,
@@ -14,6 +14,7 @@ import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
 
 const ChatsView = () => {
+  const { currentUserProfile } = useOutletContext() || {};
   const [searchParams, setSearchParams] = useSearchParams();
   const urlProjectId = searchParams.get('projectId');
 
@@ -31,7 +32,7 @@ const ChatsView = () => {
   const stompClientRef = useRef(null);
   const unsubscribeRef = useRef(null);
 
-  const currentUser = useMemo(() => getCurrentChatUser(), []);
+  const currentUser = useMemo(() => ({ ...getCurrentChatUser(), profilePictureUrl: currentUserProfile?.profilePictureUrl || '' }), [currentUserProfile]);
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -116,44 +117,6 @@ const ChatsView = () => {
     };
   }, [urlProjectId, showToast]);
 
-  const handleRefreshProjects = () => {
-    setIsLoadingChannels(true);
-    getMyProjects()
-      .then((data) => {
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.projects)
-          ? data.projects
-          : Array.isArray(data?.data)
-          ? data.data
-          : [];
-
-        const normalized = list.map((p) => {
-          const id = String(p.id || p.projectId || p._id || '');
-          return {
-            id,
-            name: p.name || 'Untitled Project',
-            description: p.description || '',
-            status: p.status || 'ACTIVE',
-            isProject: true,
-            isGroup: true,
-            members: Array.isArray(p.members) ? p.members : [],
-            lastMessage: '',
-            timestamp: '',
-            raw: p,
-          };
-        });
-
-        setProjects(normalized);
-      })
-      .catch((err) => {
-        showToast('error', getFriendlyErrorMessage(err, 'project'));
-      })
-      .finally(() => {
-        setIsLoadingChannels(false);
-      });
-  };
-
   const activeChat = useMemo(() => {
     if (!activeConversationId) return projects[0] || null;
     return projects.find((p) => p.id === String(activeConversationId)) || projects[0] || null;
@@ -194,6 +157,7 @@ const ChatsView = () => {
               sender: outgoing ? 'You' : msg.senderName || msg.senderEmail || 'Member',
               senderId: msg.senderId,
               senderEmail: msg.senderEmail,
+              senderAvatar: msg.senderProfilePictureUrl || msg.profilePictureUrl || msg.avatarUrl || '',
               text: msg.content || msg.message || '',
               timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
               isOutgoing: outgoing,
@@ -264,6 +228,7 @@ const ChatsView = () => {
         sender: outgoing ? 'You' : receivedMsg.senderName || receivedMsg.senderEmail || 'Member',
         senderId: receivedMsg.senderId,
         senderEmail: receivedMsg.senderEmail,
+        senderAvatar: receivedMsg.senderProfilePictureUrl || receivedMsg.profilePictureUrl || receivedMsg.avatarUrl || '',
         text: receivedMsg.content || receivedMsg.message || '',
         timestamp: formatMessageTime(receivedMsg.createdAt || receivedMsg.timestamp),
         isOutgoing: outgoing,
@@ -333,7 +298,7 @@ const ChatsView = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 overflow-y-hidden">
+    <div className="h-[calc(100vh-6.75rem)] min-h-[500px] min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-y-hidden">
       {toastNotice && (
         <div
           className={`mb-3 p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${
@@ -360,20 +325,19 @@ const ChatsView = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 min-w-0 w-full max-w-[1012px] mx-auto flex flex-col md:flex-row gap-2.5 sm:gap-3">
+      <div className="flex-1 min-h-0 min-w-0 w-full max-w-[1320px] mx-auto flex flex-col md:flex-row gap-2.5 sm:gap-3">
         <div
-          className={`h-full min-h-0 min-w-0 w-full md:w-[330px] max-w-full shrink-0 ${
+          className={`h-full min-h-0 min-w-0 w-full md:w-[31%] md:min-w-[245px] md:max-w-[330px] max-w-full shrink-0 ${
             isMobileThreadOpen ? 'hidden md:flex' : 'flex'
           }`}
         >
           <ChatSidebar
-            projects={projects}
+            groups={projects}
             activeConversationId={activeConversationId}
             onSelectConversation={handleSelectConversation}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            isLoadingChannels={isLoadingChannels}
-            onRefresh={handleRefreshProjects}
+            isLoadingProjects={isLoadingChannels}
           />
         </div>
 
