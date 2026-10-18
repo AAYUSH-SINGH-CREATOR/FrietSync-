@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-const OtpInput = ({ otp, setOtp, error, length = 6 }) => {
+const OtpInput = ({ otp, setOtp, error, length = 6, dashboardTheme = false }) => {
   const inputRefs = useRef([]);
 
   const handleChange = (e, index) => {
@@ -53,7 +53,7 @@ const OtpInput = ({ otp, setOtp, error, length = 6 }) => {
             onChange={(e) => handleChange(e, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onFocus={(e) => e.target.select()}
-            className={`w-11 h-12 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border auththeme ${error
+            className={`w-11 h-12 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border ${dashboardTheme ? 'bg-white text-slate-900 dark:bg-[#171a21] dark:text-white dark:border-[#414856] dark:focus:border-sky-400 dark:focus:ring-sky-900/40' : 'auththeme bg-white text-gray-900'} ${error
                 ? 'border-[#FF1100] text-[#FF1100]'
                 : 'border-gray-300 text-gray-900 focus:border-sky-400'
               } bg-white outline-none focus:ring-2 focus:ring-sky-200 transition`}

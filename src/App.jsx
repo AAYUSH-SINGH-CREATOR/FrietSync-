@@ -4,6 +4,7 @@ import Signup from './features/auth/pages/Signup';
 import Login from './features/auth/pages/Login';
 import OtpVerification from './features/auth/pages/OtpVerification';
 import ForgotPassword from './features/auth/pages/ForgotPassword';
+import SettingsPasswordReset from './features/dashboard/components/SettingsPasswordReset';
 import ProtectedRoute from './features/auth/components/ProtectedRoute';
 import PublicRoute from './features/auth/components/PublicRoute';
 import Dashboard from './features/dashboard/pages/Dashboard';
@@ -46,6 +47,7 @@ function App() {
           <Route path="invites" element={<InvitesView />} />
           <Route path="team" element={<TeamView />} />
           <Route path="settings" element={<SettingsView />} />
+          <Route path="settings/reset-password" element={<SettingsPasswordReset />} />
           <Route path="settings/profile" element={<ProfileView />} />
           <Route path="profile" element={<Navigate to="/dashboard/settings/profile" replace />} />
           <Route path="no-workspace" element={<NoWorkspace />} />
