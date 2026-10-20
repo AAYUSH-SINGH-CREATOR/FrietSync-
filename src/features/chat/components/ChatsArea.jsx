@@ -80,7 +80,9 @@ const ChatArea = ({
   }
 
   const isProject = !!activeChat.isProject;
-  const memberCount = Array.isArray(activeChat.members) ? activeChat.members.length : 0;
+  const memberCount = Array.isArray(activeChat.members) && activeChat.members.length > 0
+    ? activeChat.members.length
+    : (activeChat.memberCount ?? activeChat.raw?.memberCount ?? 0);
   const projectInitials = getInitials(activeChat.name);
   const projectColor = getAvatarColor(activeChat.name);
 

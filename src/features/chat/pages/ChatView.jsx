@@ -6,7 +6,7 @@ import {
   formatMessageTime,
   getFriendlyErrorMessage,
 } from '../services/chatApi';
-import { getMyProjects } from '../../projects/services/projectApi';
+import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { StompChatClient } from '../services/stompClient';
 
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
@@ -74,7 +74,7 @@ const ChatsView = () => {
     let isMounted = true;
 
     getMyProjects()
-      .then((data) => {
+      .then(async (data) => {
         if (!isMounted) return;
         const list = Array.isArray(data)
           ? data
@@ -94,22 +94,36 @@ const ChatsView = () => {
             isProject: true,
             isGroup: true,
             members: Array.isArray(p.members) ? p.members : [],
+            memberCount: p.memberCount ?? p.membersCount ?? p.totalMembers,
             lastMessage: '',
             timestamp: '',
             raw: p,
           };
         });
 
-        setProjects(normalized);
+        // /projects/me may omit the expanded members array. Load it from the
+        // project members endpoint so the chat header can show the real count.
+        const projectsWithMembers = await Promise.all(normalized.map(async (project) => {
+          try {
+            const members = await getProjectMembers(project.id);
+            return { ...project, members: Array.isArray(members) ? members : project.members };
+          } catch (error) {
+            console.warn(`Failed to load members for project ${project.id}:`, error);
+            return project;
+          }
+        }));
+
+        if (!isMounted) return;
+        setProjects(projectsWithMembers);
 
         setActiveConversationId((prev) => {
-          if (urlProjectId && normalized.some((p) => p.id === urlProjectId)) {
+          if (urlProjectId && projectsWithMembers.some((p) => p.id === urlProjectId)) {
             return urlProjectId;
           }
-          if (prev && normalized.some((p) => p.id === prev)) {
+          if (prev && projectsWithMembers.some((p) => p.id === prev)) {
             return prev;
           }
-          return normalized.length > 0 ? normalized[0].id : null;
+          return projectsWithMembers.length > 0 ? projectsWithMembers[0].id : null;
         });
       })
       .catch((err) => {
