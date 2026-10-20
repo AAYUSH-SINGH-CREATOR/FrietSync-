@@ -98,4 +98,37 @@ export const deleteSprint = (sprintId) => {
   );
 };
 
+export const assignSprint = (sprintId, contributorId) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.post(`${BASE_URL}/sprints/${sprintId}/assign`, { contributorId }, getAuthHeaders()),
+    'Failed to assign sprint contributor.'
+  );
+};
+
+export const requestSprintAssignment = (sprintId, message = '') => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  const payload = message?.trim() ? { message: message.trim() } : {};
+  return request(
+    () => axios.post(`${BASE_URL}/sprints/${sprintId}/request`, payload, getAuthHeaders()),
+    'Failed to request sprint assignment.'
+  );
+};
+
+export const getProjectSprintRequests = (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  return request(
+    () => axios.get(`${BASE_URL}/projects/${projectId}/sprints-requests`, getAuthHeaders()),
+    'Failed to load sprint assignment requests.'
+  );
+};
+
+export const approveSprintRequest = (sprintId, requestId) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.post(`${BASE_URL}/sprints/${sprintId}/sprints-requests`, { requestId }, getAuthHeaders()),
+    'Failed to approve sprint assignment request.'
+  );
+};
+
 export { getFriendlyErrorMessage };
