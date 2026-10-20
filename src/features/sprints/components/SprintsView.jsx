@@ -1,28 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
   FiAlertCircle,
-  FiCalendar,
-  FiCheck,
-  FiChevronRight,
-  FiEdit2,
-  FiFlag,
+  FiCheckCircle,
+  FiChevronDown,
   FiPlus,
   FiRefreshCw,
-  FiTrash2,
+  FiSearch,
   FiX,
 } from 'react-icons/fi';
-import { getMyProjects } from '../../projects/services/projectApi';
+import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
+import { getProjectIssues } from '../../issues/services/issueApi';
 import {
-  completeSprint,
-  createSprint,
-  deleteSprint,
   getProjectSprints,
-  getSprintById,
-  startSprint,
-  updateSprint,
+  getFriendlyErrorMessage,
 } from '../services/sprintsApi';
-import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
-import DashboardDialog from '../../dashboard/components/DashboardDialog';
+import SprintsSummaryCards from './SprintsSummaryCards';
+import SprintsTable from './SprintsTable';
+import SprintsBoard from './SprintsBoard';
+import SprintDetailsView from './SprintDetailsView';
+import CreateEditSprintModal from './CreateEditSprintModal';
 
 const getCollection = (value, keys) => {
   const containers = [value, value?.data, value?.result];
@@ -37,53 +34,74 @@ const getCollection = (value, keys) => {
   return [];
 };
 
-const unwrapRecord = (value) => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-  if (value.sprint) return value.sprint;
-  if (value.data && typeof value.data === 'object') return unwrapRecord(value.data);
-  return value;
-};
-
 const getProjectId = (project) => project?.id || project?.projectId || project?._id;
 const getSprintId = (sprint) => sprint?.id || sprint?.sprintId || sprint?._id;
-const formatDate = (value) => {
-  if (!value) return 'Not set';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? String(value)
-    : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
 
-const panelClass = 'rounded-2xl border border-slate-200 bg-white dark:border-[#303030] dark:bg-[#1d1d1d]';
-const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-[#3a3a3a] dark:bg-[#242424] dark:text-[#F1F5F9] dark:placeholder:text-[#858585] dark:focus:border-[#60A5FA] dark:focus:ring-blue-900/30';
-const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#3a3a3a] dark:text-[#e0e0e0] dark:hover:bg-[#242424]';
-const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-lg bg-sky-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-500';
+const FilterSelect = ({ label, value, onChange, options }) => (
+  <label className="relative min-w-[110px] flex-1 sm:flex-none">
+    <span className="sr-only">Filter by {label.toLowerCase()}</span>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-[34px] w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-8 text-xs font-semibold text-slate-800 outline-none transition hover:border-slate-300 focus:border-sky-400 dark:border-[#303035] dark:bg-[#1a1a1d] dark:text-white dark:hover:border-[#555]"
+    >
+      <option value="all">{label}</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+    <FiChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#888]" />
+  </label>
+);
 
 const SprintsView = () => {
+  const { currentUserProfile } = useOutletContext() || {};
+  const globalRole = String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase();
+  const isAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
+
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState('');
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState('');
+
   const [sprints, setSprints] = useState([]);
   const [sprintsLoading, setSprintsLoading] = useState(false);
   const [sprintsError, setSprintsError] = useState('');
+
+  const [projectIssues, setProjectIssues] = useState([]);
+  const [members, setMembers] = useState([]);
+
+  // Selected sprint for details
   const [selectedSprintId, setSelectedSprintId] = useState('');
   const [selectedSprint, setSelectedSprint] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState('');
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingSprintId, setEditingSprintId] = useState('');
-  const [form, setForm] = useState({ name: '', goal: '', startDate: '', endDate: '', milestoneId: '' });
-  const [formError, setFormError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [busyAction, setBusyAction] = useState('');
-  const [notice, setNotice] = useState('');
+
+  // View mode: 'list' or 'board' (matching screenshot, default to list)
+  const [layoutView, setLayoutView] = useState('list');
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('due-asc');
+  const [page, setPage] = useState(0);
+
+  // Create / Edit modal state
+  const [isCreateEditOpen, setIsCreateEditOpen] = useState(false);
+  const [sprintToEdit, setSprintToEdit] = useState(null);
+
+  const [toastNotice, setToastNotice] = useState(null);
   const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(0);
   const [sprintRefreshTrigger, setSprintRefreshTrigger] = useState(0);
-  const [detailRefreshTrigger, setDetailRefreshTrigger] = useState(0);
 
-  const currentProject = projects.find((project) => String(getProjectId(project)) === projectId);
+  const showToast = useCallback((type, message) => {
+    setToastNotice({ type, message });
+    window.setTimeout(() => setToastNotice(null), 4000);
+  }, []);
 
+  const currentProject = projects.find((p) => String(getProjectId(p)) === projectId);
+
+  // Load Projects
   useEffect(() => {
     let isMounted = true;
     getMyProjects()
@@ -109,13 +127,12 @@ const SprintsView = () => {
         if (isMounted) setProjectsLoading(false);
       });
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [projectRefreshTrigger]);
 
+  // Load Sprints for active project
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId) return undefined;
 
     let isMounted = true;
     getProjectSprints(projectId)
@@ -123,252 +140,335 @@ const SprintsView = () => {
         if (!isMounted) return;
         setSprints(getCollection(response, ['sprints', 'items', 'content', 'results']));
         setSprintsError('');
+        setSprintsLoading(false);
       })
       .catch((error) => {
         if (!isMounted) return;
         setSprints([]);
         setSprintsError(getFriendlyErrorMessage(error, 'sprint'));
-      })
-      .finally(() => {
-        if (isMounted) setSprintsLoading(false);
+        setSprintsLoading(false);
       });
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [projectId, sprintRefreshTrigger]);
 
+  // Load Project Issues & Members for accurate metrics & filters
   useEffect(() => {
-    if (!selectedSprintId) return;
-
+    if (!projectId) return undefined;
     let isMounted = true;
-    getSprintById(selectedSprintId)
-      .then((response) => {
+    getProjectIssues(projectId, { page: 0, size: 100 })
+      .then((data) => {
         if (!isMounted) return;
-        setSelectedSprint(unwrapRecord(response));
-        setDetailError('');
+        const items = data?.items || data?.content || (Array.isArray(data) ? data : []);
+        setProjectIssues(items);
       })
-      .catch((error) => {
+      .catch(() => {});
+
+    getProjectMembers(projectId)
+      .then((data) => {
         if (!isMounted) return;
-        setDetailError(getFriendlyErrorMessage(error, 'sprint'));
+        const list = Array.isArray(data) ? data : (data?.members || []);
+        setMembers(list);
       })
-      .finally(() => {
-        if (isMounted) setDetailLoading(false);
-      });
+      .catch(() => {});
 
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedSprintId, detailRefreshTrigger]);
-
-  const loadProjects = useCallback(() => {
-    setProjectsLoading(true);
-    setProjectRefreshTrigger((v) => v + 1);
-  }, []);
+    return () => { isMounted = false; };
+  }, [projectId]);
 
   const loadSprints = useCallback(() => {
     setSprintsLoading(true);
     setSprintRefreshTrigger((v) => v + 1);
   }, []);
 
-  const loadSprintDetails = useCallback(() => {
-    setDetailLoading(true);
-    setDetailRefreshTrigger((v) => v + 1);
+  const loadProjects = useCallback(() => {
+    setProjectsLoading(true);
+    setProjectRefreshTrigger((v) => v + 1);
   }, []);
 
-  const openCreateForm = () => {
-    setEditingSprintId('');
-    setForm({ name: '', goal: '', startDate: '', endDate: '', milestoneId: '' });
-    setFormError('');
-    setFormOpen(true);
+  const canManage = isAdmin || true; // Server is authoritative on actions
+
+  // Derived metrics for summary cards
+  const summaryMetrics = useMemo(() => {
+    const totalSprints = sprints.length;
+    const activeSprints = sprints.filter((s) => {
+      const norm = String(s.status || s.state || '').toUpperCase();
+      return ['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm);
+    }).length;
+    const completedSprints = sprints.filter((s) => {
+      const norm = String(s.status || s.state || '').toUpperCase();
+      return ['COMPLETED', 'CLOSED', 'DONE'].includes(norm);
+    }).length;
+    const openIssues = projectIssues.filter((i) => {
+      const norm = String(i.status || '').toUpperCase();
+      return !['DONE', 'RESOLVED', 'CLOSED', 'COMPLETED'].includes(norm);
+    }).length;
+
+    return { totalSprints, activeSprints, completedSprints, openIssues };
+  }, [sprints, projectIssues]);
+
+  // Filtered sprints
+  const filteredSprints = useMemo(() => {
+    let result = [...sprints];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((s) =>
+        (s.name || '').toLowerCase().includes(q) ||
+        (s.goal || '').toLowerCase().includes(q) ||
+        (s.key || '').toLowerCase().includes(q)
+      );
+    }
+    if (statusFilter !== 'all') {
+      result = result.filter((s) => {
+        const norm = String(s.status || s.state || 'PLANNED').toUpperCase();
+        if (statusFilter === 'PLANNED') return ['PLANNED', 'PLANNING', 'FUTURE'].includes(norm);
+        if (statusFilter === 'ACTIVE') return ['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm);
+        if (statusFilter === 'IN_REVIEW') return ['IN_REVIEW', 'REVIEW', 'TESTING'].includes(norm);
+        if (statusFilter === 'COMPLETED') return ['COMPLETED', 'CLOSED', 'DONE'].includes(norm);
+        return norm === statusFilter;
+      });
+    }
+    if (assigneeFilter !== 'all') {
+      result = result.filter((s) => {
+        const assignee = s.contributorName || s.contributor?.name || '';
+        return assignee.toLowerCase().includes(assigneeFilter.toLowerCase());
+      });
+    }
+    if (sortOrder === 'due-desc') {
+      result.sort((a, b) => new Date(b.endDate || 0) - new Date(a.endDate || 0));
+    } else if (sortOrder === 'name') {
+      result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } else {
+      // due-asc
+      result.sort((a, b) => new Date(a.endDate || '9999-12-31') - new Date(b.endDate || '9999-12-31'));
+    }
+    return result;
+  }, [sprints, searchQuery, statusFilter, assigneeFilter, sortOrder]);
+
+  const handleSprintClick = (sprint) => {
+    const id = getSprintId(sprint);
+    if (!id) return;
+    setSelectedSprint(sprint);
+    setSelectedSprintId(String(id));
   };
 
-  const sprintStatus = String(selectedSprint?.status || selectedSprint?.state || '').trim().toUpperCase();
-  const isCompleted = ['COMPLETED', 'CLOSED', 'DONE'].includes(sprintStatus);
-
-  const openEditForm = () => {
-    if (!selectedSprint || isCompleted) return;
-    setEditingSprintId(selectedSprintId);
-    setForm({
-      name: selectedSprint.name || '',
-      goal: selectedSprint.goal || '',
-      startDate: selectedSprint.startDate ? String(selectedSprint.startDate).slice(0, 10) : '',
-      endDate: selectedSprint.endDate ? String(selectedSprint.endDate).slice(0, 10) : '',
-      milestoneId: selectedSprint.milestoneId || selectedSprint.milestone?.id || '',
-    });
-    setFormError('');
-    setFormOpen(true);
-  };
-
-  const handleSave = async (event) => {
-    event.preventDefault();
-    const name = form.name.trim();
-    if (!name || !form.startDate || !form.endDate) {
-      setFormError('Name, start date, and end date are required.');
-      return;
-    }
-    if (new Date(form.startDate) > new Date(form.endDate)) {
-      setFormError('The end date must be on or after the start date.');
-      return;
-    }
-
-    const payload = {
-      name,
-      goal: form.goal.trim(),
-      startDate: form.startDate,
-      endDate: form.endDate,
-      ...(form.milestoneId.trim() ? { milestoneId: form.milestoneId.trim() } : {}),
-    };
-
-    setIsSaving(true);
-    setFormError('');
-    try {
-      if (editingSprintId) {
-        await updateSprint(editingSprintId, payload);
-        setSelectedSprint((current) => current ? { ...current, ...payload } : current);
-        setNotice('Sprint updated.');
-      } else {
-        const created = await createSprint(projectId, payload);
-        const record = unwrapRecord(created);
-        if (getSprintId(record)) setSelectedSprintId(String(getSprintId(record)));
-        setNotice('Sprint created.');
-      }
-      setFormOpen(false);
-      await loadSprints();
-    } catch (error) {
-      setFormError(getFriendlyErrorMessage(error, 'sprint'));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const runLifecycleAction = async (action, successText, confirmText) => {
-    if (!selectedSprintId) return;
-    if (confirmText && !window.confirm(confirmText)) return;
-    setBusyAction('lifecycle');
-    setDetailError('');
-    try {
-      await action(selectedSprintId);
-      setNotice(successText);
-      await Promise.all([loadSprintDetails(), loadSprints()]);
-    } catch (error) {
-      setDetailError(getFriendlyErrorMessage(error, 'sprint'));
-    } finally {
-      setBusyAction('');
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedSprintId || !window.confirm('Delete this sprint? This action cannot be undone.')) return;
-    setBusyAction('delete');
-    setDetailError('');
-    try {
-      await deleteSprint(selectedSprintId);
-      setSelectedSprintId('');
-      setSelectedSprint(null);
-      setNotice('Sprint deleted.');
-      await loadSprints();
-    } catch (error) {
-      setDetailError(getFriendlyErrorMessage(error, 'sprint'));
-    } finally {
-      setBusyAction('');
-    }
-  };
+  // If a sprint is selected, render full dedicated SprintDetailsView
+  if (selectedSprintId) {
+    return (
+      <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#141416] dark:text-white sm:p-6 lg:p-7">
+        <SprintDetailsView
+          sprintId={selectedSprintId}
+          initialSprint={selectedSprint}
+          projectId={projectId}
+          projectName={currentProject?.name}
+          canManage={canManage}
+          currentUserProfile={currentUserProfile}
+          onBack={() => { setSelectedSprintId(''); setSelectedSprint(null); }}
+          onSprintUpdated={loadSprints}
+          onSprintDeleted={() => { setSelectedSprintId(''); setSelectedSprint(null); loadSprints(); }}
+          onOpenEdit={(s) => { setSprintToEdit(s); setIsCreateEditOpen(true); }}
+        />
+        <CreateEditSprintModal
+          isOpen={isCreateEditOpen}
+          onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
+          projectId={projectId}
+          projectName={currentProject?.name}
+          sprintToEdit={sprintToEdit}
+          onSprintSaved={() => {
+            loadSprints();
+            showToast('success', 'Sprint saved successfully.');
+          }}
+        />
+      </section>
+    );
+  }
 
   return (
-    <div className="space-y-5 pb-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="min-h-[calc(100vh-7.5rem)] space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#121214] dark:text-white sm:p-6 lg:p-7 animate-fadeIn">
+      {/* 1. Header Row matching screenshot */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">Planning</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-[#F1F5F9] sm:text-3xl">Sprints</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">Plan a focused delivery window for a project.</p>
+          <h1 className="text-2xl sm:text-[28px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
+            Sprints
+          </h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#a0a0a5] sm:text-sm">
+            Plan, track and manage your sprints to deliver value faster.
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className={buttonClass} onClick={() => Promise.all([loadProjects(), loadSprints()])} disabled={projectsLoading || sprintsLoading}><FiRefreshCw className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} size={15} />Refresh</button>
-          <button type="button" className={primaryButtonClass} onClick={openCreateForm} disabled={!projectId}><FiPlus size={15} />New sprint</button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => Promise.all([loadProjects(), loadSprints()])}
+            disabled={projectsLoading || sprintsLoading}
+            title="Refresh sprints"
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#2b2b30] dark:bg-[#1a1a1d] dark:text-[#ccc] cursor-pointer"
+          >
+            <FiRefreshCw size={15} className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
+            disabled={!projectId}
+            className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 sm:text-sm cursor-pointer disabled:opacity-50"
+          >
+            <FiPlus size={16} /> New sprint
+          </button>
         </div>
-      </header>
+      </div>
 
-      {notice && <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice('')} aria-label="Dismiss message"><FiX size={16} /></button></div>}
-      {projectsError && <div className={`${panelClass} flex items-center justify-between gap-3 p-4`} role="alert"><p className="flex items-center gap-2 text-sm text-rose-700 dark:text-rose-300"><FiAlertCircle />{projectsError}</p><button type="button" className={buttonClass} onClick={loadProjects}>Retry</button></div>}
+      {/* Notices */}
+      {toastNotice && (
+        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <span className="flex items-center gap-2"><FiCheckCircle />{toastNotice.message}</span>
+          <button type="button" onClick={() => setToastNotice(null)} aria-label="Dismiss"><FiX /></button>
+        </div>
+      )}
+      {projectsError && (
+        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+          <span className="flex items-center gap-2"><FiAlertCircle />{projectsError}</span>
+          <button type="button" onClick={loadProjects} className="font-semibold underline cursor-pointer">Retry</button>
+        </div>
+      )}
+      {sprintsError && (
+        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+          <span className="flex items-center gap-2"><FiAlertCircle />{sprintsError}</span>
+          <button type="button" onClick={loadSprints} className="font-semibold underline cursor-pointer">Retry</button>
+        </div>
+      )}
 
-      <section className={`${panelClass} overflow-hidden`}>
-        <div className="border-b border-slate-200 p-4 dark:border-[#303030]">
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-[#e0e0e0] sm:flex-row sm:items-center">
-            Project
-            <select className={`${inputClass} sm:w-80`} value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedSprintId(''); setSelectedSprint(null); }} disabled={projectsLoading || projects.length === 0} aria-label="Select project">
-              {!projects.length && <option value="">No projects available</option>}
-              {projects.map((project) => <option key={getProjectId(project)} value={String(getProjectId(project))}>{project.name || 'Untitled project'}</option>)}
-            </select>
-          </label>
+      {/* 2. 4 Summary Cards Row matching screenshot */}
+      <SprintsSummaryCards
+        totalSprints={summaryMetrics.totalSprints}
+        activeSprints={summaryMetrics.activeSprints}
+        openIssues={summaryMetrics.openIssues}
+        completedSprints={summaryMetrics.completedSprints}
+      />
+
+      {/* 3. Board / List View Switcher Capsule matching screenshot */}
+      <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#151518]">
+        <button
+          type="button"
+          onClick={() => setLayoutView('board')}
+          className={`rounded-lg px-6 py-2 text-xs font-bold transition cursor-pointer ${
+            layoutView === 'board'
+              ? 'border border-[#20204a] bg-[#141428] text-white shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
+              : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
+          }`}
+        >
+          Board
+        </button>
+        <button
+          type="button"
+          onClick={() => setLayoutView('list')}
+          className={`rounded-lg px-6 py-2 text-xs font-bold transition cursor-pointer ${
+            layoutView === 'list'
+              ? 'border border-[#20204a] bg-[#141428] text-white shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
+              : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
+          }`}
+        >
+          List
+        </button>
+      </div>
+
+      {/* 4. Controls Row: Search & Filters matching screenshot */}
+      <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+        {/* Search input matching screenshot placeholder: Search issue.... */}
+        <div className="relative min-w-[200px] flex-1 sm:w-72">
+          <FiSearch size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#777]" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+            placeholder="Search issue...."
+            className="h-[36px] w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none placeholder:text-slate-400 focus:border-sky-400 dark:border-[#2e2e34] dark:bg-[#1a1a1d] dark:text-white dark:placeholder:text-[#777]"
+          />
         </div>
 
-        {!projectId && !projectsLoading ? <div className="px-6 py-14 text-center"><h2 className="font-semibold text-slate-800 dark:text-[#F1F5F9]">Create a project to plan sprints</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">Sprints are organized inside a project.</p></div>
-          : sprintsLoading ? <p className="px-6 py-14 text-center text-sm text-slate-500 dark:text-[#b3b3b3]" role="status">Loading sprints…</p>
-            : sprintsError ? <div className="flex flex-col items-center gap-3 px-6 py-14 text-center" role="alert"><p className="text-sm text-rose-700 dark:text-rose-300">{sprintsError}</p><button type="button" className={buttonClass} onClick={loadSprints}>Retry</button></div>
-              : sprints.length === 0 ? <div className="px-6 py-14 text-center"><h2 className="font-semibold text-slate-800 dark:text-[#F1F5F9]">No sprints yet</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">Create a sprint to plan a project delivery window.</p><button type="button" className={`${primaryButtonClass} mt-4`} onClick={openCreateForm}><FiPlus size={15} />New sprint</button></div>
-                : <ul className="divide-y divide-slate-100 dark:divide-[#303030]">
-                  {sprints.map((sprint, index) => {
-                    const id = getSprintId(sprint);
-                    const selected = String(id) === selectedSprintId;
-                    return <li key={id || `${index}-${sprint.name || 'sprint'}`}>
-                      <button type="button" className={`flex w-full items-start justify-between gap-4 px-4 py-4 text-left transition sm:px-5 ${selected ? 'bg-sky-50/70 dark:bg-[#302477]/40' : 'hover:bg-slate-50 dark:hover:bg-[#242424]/60'}`} onClick={() => { if (id) { setSelectedSprint(sprint); setSelectedSprintId(String(id)); setDetailLoading(true); } }} disabled={!id}>
-                        <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 dark:text-[#F1F5F9]">{sprint.name || 'Untitled sprint'}</span><span className="mt-1 block text-sm text-slate-500 dark:text-[#b3b3b3]">{sprint.goal || 'No goal provided.'}</span><span className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-[#b3b3b3]"><span className="inline-flex items-center gap-1"><FiCalendar size={13} />{formatDate(sprint.startDate)} – {formatDate(sprint.endDate)}</span>{sprint.milestoneName && <span className="inline-flex items-center gap-1"><FiFlag size={13} />{sprint.milestoneName}</span>}</span></span>
-                        <span className="flex shrink-0 items-center gap-2">{(sprint.status || sprint.state) && <span className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 dark:border-[#3a3a3a] dark:text-[#e0e0e0]">{sprint.status || sprint.state}</span>}<FiChevronRight className="text-slate-400" size={16} /></span>
-                      </button>
-                    </li>;
-                  })}
-                </ul>}
-      </section>
-
-      <DashboardDialog isOpen={formOpen} onClose={() => setFormOpen(false)} ariaLabel={editingSprintId ? 'Edit sprint' : 'Create sprint'} showHeader={false} size="max-w-2xl" closeDisabled={isSaving}>
-      {formOpen && <section className={`${panelClass} p-5 sm:p-6`}>
-        <div className="mb-4 flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900 dark:text-[#F1F5F9]">{editingSprintId ? 'Edit sprint' : 'Create sprint'}</h2><p className="mt-1 text-sm text-slate-500 dark:text-[#b3b3b3]">{currentProject?.name || 'Selected project'}</p></div><button type="button" className={buttonClass} onClick={() => setFormOpen(false)} aria-label="Close sprint form" disabled={isSaving}><FiX size={16} /></button></div>
-        {formError && <p className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" role="alert">{formError}</p>}
-        <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2">
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Sprint name <span className="text-rose-600">*</span></span><input className={inputClass} required maxLength={120} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Goal</span><textarea className={`${inputClass} resize-y`} rows={3} value={form.goal} onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))} /></label>
-          <label><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Start date <span className="text-rose-600">*</span></span><input type="date" className={inputClass} required value={form.startDate} onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))} /></label>
-          <label><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">End date <span className="text-rose-600">*</span></span><input type="date" className={inputClass} required value={form.endDate} onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))} /></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-[#e0e0e0]">Milestone ID <span className="text-slate-400">(optional)</span></span><input className={inputClass} value={form.milestoneId} onChange={(event) => setForm((current) => ({ ...current, milestoneId: event.target.value }))} /></label>
-          <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" className={buttonClass} onClick={() => setFormOpen(false)} disabled={isSaving}>Cancel</button><button type="submit" className={primaryButtonClass} disabled={isSaving}>{isSaving ? 'Saving…' : 'Save sprint'}</button></div>
-        </form>
-      </section>}
-      </DashboardDialog>
-
-      <DashboardDialog isOpen={Boolean(selectedSprintId) && !formOpen} onClose={() => { setSelectedSprintId(''); setSelectedSprint(null); }} ariaLabel={selectedSprint?.name || 'Sprint details'} showHeader={false} size="max-w-3xl" closeDisabled={Boolean(busyAction)}>
-      {selectedSprintId && !formOpen && <section className={`${panelClass} overflow-hidden`}>
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-[#303030] sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Sprint details</p>
-              {isCompleted && (
-                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                  Completed
-                </span>
-              )}
-            </div>
-            <h2 className="mt-1 break-words text-xl font-semibold text-slate-900 dark:text-[#F1F5F9]">{selectedSprint?.name || 'Loading sprint…'}</h2>
-            <p className="mt-1 break-all font-mono text-xs text-slate-500 dark:text-[#b3b3b3]">{selectedSprintId}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={buttonClass} onClick={loadSprintDetails} disabled={detailLoading || Boolean(busyAction)}><FiRefreshCw className={detailLoading ? 'animate-spin' : ''} size={14} />Refresh</button>
-            {!isCompleted && (
-              <>
-                <button type="button" className={buttonClass} onClick={openEditForm} disabled={!selectedSprint || Boolean(busyAction)}><FiEdit2 size={14} />Edit</button>
-                <button type="button" className={buttonClass} onClick={() => runLifecycleAction(startSprint, 'Sprint started.')} disabled={Boolean(busyAction)}><FiCheck size={14} />{busyAction === 'lifecycle' ? 'Working…' : 'Start'}</button>
-                <button type="button" className={buttonClass} onClick={() => runLifecycleAction(completeSprint, 'Sprint completed.', 'Complete this sprint?')} disabled={Boolean(busyAction)}><FiCheck size={14} />Complete</button>
-                <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={handleDelete} disabled={Boolean(busyAction)}><FiTrash2 size={14} />Delete</button>
-              </>
-            )}
-            <button type="button" className={buttonClass} onClick={() => { setSelectedSprintId(''); setSelectedSprint(null); }} aria-label="Close sprint details" disabled={Boolean(busyAction)}><FiX size={15} />Close</button>
-          </div>
+        {/* Filters Row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterSelect
+            label="Status"
+            value={statusFilter}
+            onChange={(v) => { setStatusFilter(v); setPage(0); }}
+            options={[
+              { value: 'PLANNED', label: 'Planned' },
+              { value: 'ACTIVE', label: 'Active' },
+              { value: 'IN_REVIEW', label: 'In review' },
+              { value: 'COMPLETED', label: 'Completed' },
+            ]}
+          />
+          <FilterSelect
+            label="Priority"
+            value={priorityFilter}
+            onChange={(v) => { setPriorityFilter(v); setPage(0); }}
+            options={[
+              { value: 'HIGH', label: 'High' },
+              { value: 'MEDIUM', label: 'Medium' },
+              { value: 'LOW', label: 'Low' },
+            ]}
+          />
+          <FilterSelect
+            label="Project"
+            value={projectId}
+            onChange={(v) => { setProjectId(v); setPage(0); }}
+            options={projects.map((p) => ({
+              value: String(getProjectId(p)),
+              label: p.name || 'Untitled project',
+            }))}
+          />
+          <FilterSelect
+            label="Assignee"
+            value={assigneeFilter}
+            onChange={(v) => { setAssigneeFilter(v); setPage(0); }}
+            options={members.map((m) => {
+              const name = m.name || m.fullName || m.email || 'Member';
+              return { value: name, label: name };
+            })}
+          />
+          <FilterSelect
+            label="Sort by : Due date"
+            value={sortOrder}
+            onChange={setSortOrder}
+            options={[
+              { value: 'due-asc', label: 'Due date: earliest' },
+              { value: 'due-desc', label: 'Due date: latest' },
+              { value: 'name', label: 'Name: A-Z' },
+            ]}
+          />
         </div>
-        {detailError && <div className="mx-5 mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" role="alert">{detailError}</div>}
-        {detailLoading ? <p className="p-5 text-sm text-slate-500 dark:text-[#b3b3b3]" role="status">Loading sprint details…</p> : detailError ? <div className="p-5"><button type="button" className={buttonClass} onClick={loadSprintDetails}>Retry</button></div> : selectedSprint && <div className="grid gap-4 p-5 sm:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#242424]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Goal</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.goal || 'No goal provided.'}</p></div><div className="rounded-xl bg-slate-50 p-4 dark:bg-[#242424]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Schedule</p><p className="mt-2 text-sm text-slate-800 dark:text-[#F1F5F9]">{formatDate(selectedSprint.startDate)} – {formatDate(selectedSprint.endDate)}</p>{selectedSprint.milestoneId && <p className="mt-2 break-all text-xs text-slate-500 dark:text-[#b3b3b3]">Milestone: {selectedSprint.milestoneId}</p>}</div>{(selectedSprint.status || selectedSprint.state) && <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#242424]"><p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-[#b3b3b3]">Status</p><p className="mt-2 text-sm font-medium text-slate-800 dark:text-[#F1F5F9]">{selectedSprint.status || selectedSprint.state}</p></div>}</div>}
-      </section>}
-      </DashboardDialog>
-    </div>
+      </div>
+
+      {/* 5. Main Content: Table or Board */}
+      {layoutView === 'list' ? (
+        <SprintsTable
+          sprints={filteredSprints}
+          isLoading={sprintsLoading}
+          onSprintClick={handleSprintClick}
+          page={page}
+          pageSize={9}
+          onPageChange={setPage}
+        />
+      ) : (
+        <SprintsBoard
+          sprints={filteredSprints}
+          isLoading={sprintsLoading}
+          onSprintClick={handleSprintClick}
+          onCreateSprint={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
+        />
+      )}
+
+      {/* Create / Edit Sprint Modal */}
+      <CreateEditSprintModal
+        isOpen={isCreateEditOpen}
+        onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
+        projectId={projectId}
+        projectName={currentProject?.name}
+        sprintToEdit={sprintToEdit}
+        onSprintSaved={() => {
+          loadSprints();
+          showToast('success', sprintToEdit ? 'Sprint updated.' : 'Sprint created.');
+        }}
+      />
+    </section>
   );
 };
 
