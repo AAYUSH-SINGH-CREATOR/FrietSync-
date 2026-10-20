@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FiSearch, FiX, FiPlus, FiMessageSquare } from 'react-icons/fi';
-import { getInitials, getAvatarColor } from '../services/chatApi';
+import { getInitials, getAvatarColor, formatMessagePreview } from '../services/chatApi';
 
 const ChatSidebar = ({
   groups = [],
@@ -139,7 +139,7 @@ const ChatSidebar = ({
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">{item.timestamp || ''}</span>
                   </div>
                   <div className="flex items-center justify-between gap-1 mt-0.5">
-                    <p className="text-[11px] text-slate-400 dark:text-slate-400 truncate">{item.lastMessage || 'No messages yet'}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-400 truncate">{formatMessagePreview(item.lastMessage) || 'No messages yet'}</p>
                     {unread > 0 && (
                       <span className="w-4 h-4 rounded-full bg-[#007DFE] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                         {unread > 9 ? '9+' : unread}

@@ -8,10 +8,22 @@ import {
   FiSearch,
   FiMessageSquare,
   FiBarChart2,
+  FiX,
+  FiFileText,
+  FiDownload,
 } from 'react-icons/fi';
-import { getInitials, getAvatarColor, getCurrentChatUser } from '../services/chatApi';
+import {
+  getInitials,
+  getAvatarColor,
+  getCurrentChatUser,
+  formatFileSize,
+  getFileExtension,
+  parseAttachmentFromText,
+  compressImage,
+} from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
 
+const FAMOUS_EMOJIS = ['👍', '❤️', '😂', '🔥', '😮', '😢', '😡', '🎉'];
 const ChatAvatar = ({ src, name, className, color }) => {
   const [failed, setFailed] = useState(false);
   const initials = getInitials(name);
@@ -31,9 +43,15 @@ const ChatArea = ({
   currentUser: currentUserProp,
 }) => {
   const [inputText, setInputText] = useState('');
+  const [selectedAttachment, setSelectedAttachment] = useState(null);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInChat, setSearchInChat] = useState('');
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
+  const emojiPickerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   const currentUser = currentUserProp || getCurrentChatUser();
@@ -42,14 +60,114 @@ const ChatArea = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, activeChat?.id]);
 
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+        setIsEmojiPickerOpen(false);
+      }
+    };
+    if (isEmojiPickerOpen) {
+      document.addEventListener('mousedown', handleOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [isEmojiPickerOpen]);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setIsEmojiPickerOpen(false);
+        setPreviewImage(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
+  const handleSelectEmoji = (emoji) => {
+    setInputText((prev) => (prev ? `${prev} ${emoji}` : emoji));
+    setIsEmojiPickerOpen(false);
+    inputRef.current?.focus();
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type?.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
+    if (isImage) {
+      try {
+        const compressed = await compressImage(file);
+        setSelectedAttachment({
+          name: file.name,
+          size: file.size,
+          type: file.type || 'image/jpeg',
+          url: compressed || '',
+          isImage: true,
+        });
+      } catch (err) {
+        console.warn('Failed to compress image:', err);
+        const reader = new FileReader();
+        reader.onload = (loadEvt) => {
+          setSelectedAttachment({
+            name: file.name,
+            size: file.size,
+            type: file.type || 'image/jpeg',
+            url: loadEvt.target.result,
+            isImage: true,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    } else {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File size exceeds the 2 MB limit for documents. Please choose a smaller file.');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => {
+        setSelectedAttachment({
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+          url: loadEvt.target.result,
+          isImage: false,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setSelectedAttachment(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSend = (e) => {
     e?.preventDefault();
     const text = inputText.trim();
-    if (!text || text.length > 2000) return;
-    const sent = onSendMessage(text);
+    if (!text && !selectedAttachment) return;
+    if (text.length > 2000) return;
+
+    let payloadText = text;
+    if (selectedAttachment) {
+      const attData = {
+        name: selectedAttachment.name,
+        type: selectedAttachment.type,
+        size: selectedAttachment.size,
+        url: selectedAttachment.url,
+        isImage: selectedAttachment.isImage,
+      };
+      const attTag = `[ATTACHMENT:${JSON.stringify(attData)}]`;
+      payloadText = text ? `${text}\n${attTag}` : attTag;
+    }
+
+    const sent = onSendMessage(payloadText);
     if (sent === false) return;
     setInputText('');
+    handleRemoveAttachment();
     setSearchInChat('');
+    setIsEmojiPickerOpen(false);
   };
 
   const handleKeyDown = (e) => {
@@ -62,10 +180,14 @@ const ChatArea = ({
   const displayedMessages = useMemo(() => {
     if (!searchInChat.trim()) return messages;
     const q = searchInChat.trim().toLowerCase();
-    return messages.filter((m) =>
-      (m.text || '').toLowerCase().includes(q) ||
-      (m.sender || '').toLowerCase().includes(q)
-    );
+    return messages.filter((m) => {
+      const { cleanText, attachment } = parseAttachmentFromText(m.text || '');
+      return (
+        cleanText.toLowerCase().includes(q) ||
+        (attachment?.name || '').toLowerCase().includes(q) ||
+        (m.sender || '').toLowerCase().includes(q)
+      );
+    });
   }, [messages, searchInChat]);
 
   if (!activeChat) {
@@ -207,6 +329,9 @@ const ChatArea = ({
             const isOutgoing = msg.isOutgoing;
             const senderName = isOutgoing ? 'You' : msg.sender || 'Member';
             const avatarColor = isOutgoing ? 'bg-[#D95295]' : getAvatarColor(senderName);
+            const { cleanText, attachment: parsedAtt } = parseAttachmentFromText(msg.text || '');
+            const attachment = msg.attachment || (Array.isArray(msg.attachments) ? msg.attachments[0] : null) || parsedAtt;
+            const isImageAtt = attachment && (attachment.isImage || attachment.type?.startsWith('image/'));
 
             return (
               <div key={msg.id} className={`flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
@@ -229,7 +354,62 @@ const ChatArea = ({
                         : 'bg-white dark:bg-[#171717] text-slate-900 dark:text-white rounded-tl-xs border border-slate-100 dark:border-white/5'
                     }`}
                   >
-                    <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{msg.text}</p>
+                    {cleanText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{cleanText}</p>}
+
+                    {/* Image Attachment */}
+                    {isImageAtt && attachment.url && (
+                      <div className={`mt-2 rounded-xl overflow-hidden border ${isOutgoing ? 'border-sky-300 dark:border-white/10' : 'border-slate-200 dark:border-white/10'} bg-black/5 dark:bg-white/5`}>
+                        <img
+                          src={attachment.url}
+                          alt={attachment.name || 'Shared image'}
+                          onClick={() => setPreviewImage(attachment)}
+                          className="max-h-60 sm:max-h-72 w-full object-contain cursor-pointer hover:opacity-95 transition"
+                        />
+                        <div className="flex items-center justify-between gap-2 p-1.5 px-2.5 bg-black/50 text-white text-[11px]">
+                          <span className="truncate max-w-[180px]">{attachment.name}</span>
+                          <a
+                            href={attachment.url}
+                            download={attachment.name || 'image.jpg'}
+                            className="hover:text-sky-300 transition shrink-0 p-0.5 cursor-pointer"
+                            title="Download image"
+                          >
+                            <FiDownload size={14} />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Document Attachment */}
+                    {attachment && !isImageAtt && (
+                      <div className={`mt-2 flex items-center gap-2.5 p-2.5 rounded-xl border ${
+                        isOutgoing
+                          ? 'bg-white/60 dark:bg-white/5 border-sky-300 dark:border-white/10 text-slate-900 dark:text-white'
+                          : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
+                      }`}>
+                        <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                          <FiFileText size={18} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs sm:text-sm font-semibold truncate">{attachment.name}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                            {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
+                          </p>
+                        </div>
+                        {attachment.url && (
+                          <a
+                            href={attachment.url}
+                            download={attachment.name || 'document'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-white/80 dark:hover:bg-white/10 transition shrink-0 cursor-pointer"
+                            title="Download file"
+                          >
+                            <FiDownload size={16} />
+                          </a>
+                        )}
+                      </div>
+                    )}
+
                     {msg.text?.includes('📊') && (
                       <button
                         type="button"
@@ -252,12 +432,55 @@ const ChatArea = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 3. Inset Floating Bottom Composer (Frame 398) */}
-      <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10">
+      {/* Selected Attachment Preview Bar */}
+      {selectedAttachment && (
+        <div className="mx-2.5 sm:mx-3 mb-2 p-2 px-3 bg-white dark:bg-[#171717] rounded-2xl border border-sky-200 dark:border-white/10 shadow-sm flex items-center justify-between gap-3 shrink-0 animate-fadeIn z-10">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {selectedAttachment.isImage && selectedAttachment.url ? (
+              <img
+                src={selectedAttachment.url}
+                alt={selectedAttachment.name}
+                className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                <FiFileText size={20} />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
+                {selectedAttachment.name}
+              </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                {formatFileSize(selectedAttachment.size)} • {selectedAttachment.isImage ? 'Image' : getFileExtension(selectedAttachment.name)}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleRemoveAttachment}
+            title="Remove attachment"
+            className="p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer shrink-0"
+          >
+            <FiX size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* 3. Inset Floating Bottom Composer */}
+      <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10 relative">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
         {/* Paperclip attachment icon */}
         <button
           type="button"
-          title="Attach file"
+          onClick={() => fileInputRef.current?.click()}
+          title="Attach document or image"
           className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
         >
           <FiPaperclip size={18} />
@@ -274,8 +497,9 @@ const ChatArea = ({
         </button>
 
         {/* Input Pill Capsule */}
-        <div className="flex-1 flex items-center bg-[#F1F3F5] dark:bg-[#252525] rounded-full px-3.5 sm:px-4 py-1.5 border border-transparent dark:border-white/5 focus-within:border-sky-400 transition">
+        <div className="flex-1 flex items-center bg-[#F1F3F5] dark:bg-[#252525] rounded-full px-3.5 sm:px-4 py-1.5 border border-transparent dark:border-white/5 focus-within:border-sky-400 transition relative">
           <input
+            ref={inputRef}
             type="text"
             maxLength={2000}
             placeholder={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Type here....'}
@@ -286,7 +510,7 @@ const ChatArea = ({
           />
           <button
             type="button"
-            onClick={() => setInputText((prev) => prev + ' 😊')}
+            onClick={() => setIsEmojiPickerOpen((prev) => !prev)}
             title="Add emoji"
             className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition shrink-0 ml-1.5 cursor-pointer"
           >
@@ -294,10 +518,30 @@ const ChatArea = ({
           </button>
         </div>
 
+        {/* Emoji Picker Popup with exactly 8 famous emojis */}
+        {isEmojiPickerOpen && (
+          <div
+            ref={emojiPickerRef}
+            className="absolute bottom-full right-4 sm:right-16 mb-2 bg-white dark:bg-[#1e1e1e] border border-sky-200 dark:border-white/10 rounded-2xl shadow-xl p-1.5 sm:p-2 flex items-center gap-1 z-30 animate-fadeIn"
+          >
+            {FAMOUS_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => handleSelectEmoji(emoji)}
+                className="w-8 h-8 flex items-center justify-center text-lg sm:text-xl rounded-xl hover:bg-sky-50 dark:hover:bg-white/10 active:scale-95 hover:scale-125 transition-transform cursor-pointer"
+                title={`Insert ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Send Action Button */}
         <button
           type="submit"
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() && !selectedAttachment}
           title={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Send message'}
           className="p-2 rounded-full text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 disabled:opacity-40 transition cursor-pointer shrink-0"
         >
@@ -305,13 +549,55 @@ const ChatArea = ({
         </button>
       </form>
 
+      {/* Image Lightbox Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] flex flex-col items-center bg-[#171717] rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between p-3 px-4 bg-white/5 border-b border-white/10 text-white text-xs sm:text-sm">
+              <span className="truncate max-w-xs sm:max-w-md font-medium">{previewImage.name}</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewImage.url}
+                  download={previewImage.name || 'image.jpg'}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white transition cursor-pointer"
+                  title="Download image"
+                >
+                  <FiDownload size={16} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImage(null)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white transition cursor-pointer"
+                  title="Close preview"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="p-2 sm:p-4 flex items-center justify-center overflow-auto max-h-[calc(90vh-60px)]">
+              <img
+                src={previewImage.url}
+                alt={previewImage.name}
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <ChatPollModal
         isOpen={isPollModalOpen}
         onClose={() => setIsPollModalOpen(false)}
         activeChat={activeChat}
         currentUserId={currentUser?.userId || currentUser?.id}
         onShareToChat={(poll) => {
-          const shareText = `📊 Poll: "${poll.question}" — Vote in Project Polls!`;
+          const shareText = `Poll: "${poll.question}" — Vote in Project Polls!`;
           onSendMessage(shareText);
         }}
       />

@@ -173,6 +173,87 @@ export const getProjectChatMessages = async (projectId, limit = 50) => {
   }
 };
 
+export const formatFileSize = (bytes) => {
+  if (!bytes || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i] || 'B'}`;
+};
+
+export const getFileExtension = (filename = '') => {
+  const parts = String(filename).split('.');
+  return parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
+};
+
+export const parseAttachmentFromText = (text = '') => {
+  if (!text) return { cleanText: '', attachment: null };
+  const match = String(text).match(/\[ATTACHMENT:(\{.*?\})\]/s);
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      const cleanText = String(text).replace(match[0], '').trim();
+      return { cleanText, attachment: parsed };
+    } catch {
+      // ignore
+    }
+  }
+  return { cleanText: text, attachment: null };
+};
+
+export const formatMessagePreview = (text) => {
+  if (!text) return '';
+  const { cleanText, attachment } = parseAttachmentFromText(text);
+  if (attachment) {
+    const isImg = attachment.isImage || (attachment.type && attachment.type.startsWith('image/'));
+    const prefix = isImg ? '📷 ' : '📎 ';
+    const label = attachment.name || (isImg ? 'Photo' : 'Document');
+    return cleanText ? `${cleanText} ${prefix}${label}` : `${prefix}${label}`;
+  }
+  return text;
+};
+
+export const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      resolve(null);
+      return;
+    }
+    if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export { getFriendlyErrorMessage };
 
 
