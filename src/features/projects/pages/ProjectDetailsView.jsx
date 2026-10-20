@@ -37,6 +37,7 @@ import {
 import EditProjectModal from '../components/EditProjectModal';
 import DeleteProjectModal from '../components/DeleteProjectModal';
 import AddProjectMemberModal from '../components/AddProjectMemberModal';
+import { ProjectPollsSection } from '../../polls/components';
 
 const ProjectDetailsView = () => {
   const { projectId } = useParams();
@@ -404,7 +405,7 @@ const ProjectDetailsView = () => {
               </h4>
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <span className="text-xs text-slate-400 dark:text-[#858585] block mb-0.5">
+                  <span className="text-xs text-slate-400 dark:text-[#64748B] block mb-0.5">
                     Start Date
                   </span>
                   <div className="flex items-center gap-1.5 text-slate-800 dark:text-[#F1F5F9] font-semibold">
@@ -413,7 +414,7 @@ const ProjectDetailsView = () => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-400 dark:text-[#858585] block mb-0.5">
+                  <span className="text-xs text-slate-400 dark:text-[#64748B] block mb-0.5">
                     Deadline
                   </span>
                   <div className="flex items-center gap-1.5 text-slate-800 dark:text-[#F1F5F9] font-semibold">
@@ -473,8 +474,8 @@ const ProjectDetailsView = () => {
 
       {/* Project Issues Section */}
       {!isLoadingProject && project && (
-        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#303030]">
+        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#293548] dark:bg-[#172033] sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#293548]">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Project issues <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]">{issueTotal}</span></h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Issues created for {project.name || 'this project'}.</p>
@@ -497,6 +498,16 @@ const ProjectDetailsView = () => {
             </div>
           ) : <div className="rounded-xl bg-slate-50 px-4 py-8 text-center dark:bg-[#1E293B]/60"><p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">No issues in this project yet</p><p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Create the first issue to track work here.</p><button type="button" onClick={() => setIsCreateIssueOpen(true)} className="mt-3 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-[#60A5FA]">Create Issue</button></div>}
         </section>
+      )}
+
+      {/* Project Polls Section */}
+      {!isLoadingProject && project && (
+        <ProjectPollsSection
+          projectId={projectId}
+          projectName={project.name}
+          canManage={isAdmin}
+          onShareToChat={() => navigate(`/dashboard/chats?projectId=${projectId}`)}
+        />
       )}
 
       {/* Project Members Section */}

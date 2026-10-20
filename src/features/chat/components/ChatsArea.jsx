@@ -7,8 +7,10 @@ import {
   FiSmile,
   FiSearch,
   FiMessageSquare,
+  FiBarChart2,
 } from 'react-icons/fi';
 import { getInitials, getAvatarColor, getCurrentChatUser } from '../services/chatApi';
+import { ChatPollModal } from '../../polls/components';
 
 const ChatAvatar = ({ src, name, className, color }) => {
   const [failed, setFailed] = useState(false);
@@ -31,6 +33,7 @@ const ChatArea = ({
   const [inputText, setInputText] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInChat, setSearchInChat] = useState('');
+  const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   const currentUser = currentUserProp || getCurrentChatUser();
@@ -141,6 +144,14 @@ const ChatArea = ({
         <div className="flex items-center gap-1 shrink-0 text-slate-600 dark:text-slate-300">
           <button
             type="button"
+            onClick={() => setIsPollModalOpen(true)}
+            title="Project Polls & Decisions"
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+          >
+            <FiBarChart2 size={18} />
+          </button>
+          <button
+            type="button"
             onClick={() => setIsSearchOpen((prev) => !prev)}
             title="Search in messages"
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
@@ -219,6 +230,15 @@ const ChatArea = ({
                     }`}
                   >
                     <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{msg.text}</p>
+                    {msg.text?.includes('📊') && (
+                      <button
+                        type="button"
+                        onClick={() => setIsPollModalOpen(true)}
+                        className="mt-2 inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-sky-700 transition cursor-pointer"
+                      >
+                        <FiBarChart2 size={12} /> View Poll
+                      </button>
+                    )}
                   </div>
 
                   {isOutgoing && (
@@ -241,6 +261,16 @@ const ChatArea = ({
           className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
         >
           <FiPaperclip size={18} />
+        </button>
+
+        {/* Poll button */}
+        <button
+          type="button"
+          onClick={() => setIsPollModalOpen(true)}
+          title="Project Polls & Decisions"
+          className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
+        >
+          <FiBarChart2 size={18} />
         </button>
 
         {/* Input Pill Capsule */}
@@ -274,6 +304,17 @@ const ChatArea = ({
           <FiSend size={18} />
         </button>
       </form>
+
+      <ChatPollModal
+        isOpen={isPollModalOpen}
+        onClose={() => setIsPollModalOpen(false)}
+        activeChat={activeChat}
+        currentUserId={currentUser?.userId || currentUser?.id}
+        onShareToChat={(poll) => {
+          const shareText = `📊 Poll: "${poll.question}" — Vote in Project Polls!`;
+          onSendMessage(shareText);
+        }}
+      />
     </div>
   );
 };
