@@ -20,6 +20,7 @@ const readUnreadCount = (value) => {
 const Dashboard = () => {
   const location = useLocation();
   const isChat = location.pathname.startsWith('/dashboard/chats');
+  const isFullWidthFeature = isChat || location.pathname.startsWith('/dashboard/issues') || location.pathname.startsWith('/dashboard/sprints');
 
   const [projectFilter, setProjectFilter] = useState('all');
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
@@ -125,15 +126,21 @@ const Dashboard = () => {
         pendingInviteCount={pendingInviteCount}
       />
       <div
-        className={`flex-1 w-full ${
+        className={`flex-1 w-full min-w-0 ${
           isChat
             ? 'pl-[76px] sm:pl-[88px] pr-2 sm:pr-4 pt-2 pb-2 sm:pb-2.5 flex flex-col min-h-0 min-w-0 overflow-hidden'
+            : isFullWidthFeature
+            ? 'pl-[76px] sm:pl-[88px] pr-2 sm:pr-4 py-4 sm:py-5 lg:py-6'
             : 'pl-[84px] sm:pl-[104px] pr-4 sm:pr-8 py-6'
         }`}
       >
         <main
           className={
-            isChat ? 'w-full h-full flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden' : 'max-w-[1500px] w-full mx-auto'
+            isChat
+              ? 'w-full h-full flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden'
+              : isFullWidthFeature
+              ? 'w-full min-w-0 mx-auto'
+              : 'max-w-[1500px] w-full mx-auto'
           }
         >
           <Outlet
