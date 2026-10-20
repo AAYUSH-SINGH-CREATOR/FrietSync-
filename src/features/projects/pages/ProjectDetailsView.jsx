@@ -474,29 +474,29 @@ const ProjectDetailsView = () => {
 
       {/* Project Issues Section */}
       {!isLoadingProject && project && (
-        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#293548] dark:bg-[#172033] sm:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#293548]">
+        <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#303030]">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Project issues <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]">{issueTotal}</span></h3>
-              <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Issues created for {project.name || 'this project'}.</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Project issues <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-[#242424] dark:text-[#b3b3b3]">{issueTotal}</span></h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-[#b3b3b3]">Issues created for {project.name || 'this project'}.</p>
             </div>
             <button type="button" onClick={() => setIsCreateIssueOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-3.5 text-xs font-semibold text-white transition hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500"><FiPlus size={15} />Create Issue</button>
           </div>
-          {isLoadingIssues ? <div className="space-y-2">{[0, 1, 2].map((item) => <div key={item} className="h-11 animate-pulse rounded-xl bg-slate-100 dark:bg-[#1E293B]" />)}</div> : projectIssues.length ? (
+          {isLoadingIssues ? <div className="space-y-2">{[0, 1, 2].map((item) => <div key={item} className="h-11 animate-pulse rounded-xl bg-slate-100 dark:bg-[#242424]" />)}</div> : projectIssues.length ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[620px] text-left text-xs">
-                <thead><tr className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#94A3B8]"><th className="px-3 py-2">Issue</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Priority</th><th className="px-3 py-2">Due date</th><th className="px-3 py-2" /></tr></thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#293548]">{projectIssues.map((issue, index) => <tr key={issue.id || issue._id || issue.issueId || index} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1E293B]/70" onClick={() => setSelectedIssue(issue)}>
+                <thead><tr className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-[#858585]"><th className="px-3 py-2">Issue</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Priority</th><th className="px-3 py-2">Due date</th><th className="px-3 py-2" /></tr></thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-[#303030]">{projectIssues.map((issue, index) => <tr key={issue.id || issue._id || issue.issueId || index} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#242424]" onClick={() => setSelectedIssue(issue)}>
                   <td className="px-3 py-3"><span className="font-mono text-[10px] text-slate-400">{issue.issueNumber ? `#${issue.issueNumber}` : ''}</span><p className="mt-0.5 font-semibold text-slate-800 dark:text-[#F1F5F9]">{issue.title || 'Untitled issue'}</p></td>
                   <td className="px-3 py-3"><span className={`rounded-md border px-2 py-1 text-[11px] ${getIssueStatusBadge(issue.status)}`}>{String(issue.status || 'OPEN').replace(/[_-]/g, ' ')}</span></td>
                   <td className="px-3 py-3"><span className={`rounded-md border px-2 py-1 text-[11px] ${getPriorityBadge(issue.priority)}`}>{String(issue.priority || 'MEDIUM').replace(/[_-]/g, ' ')}</span></td>
-                  <td className="px-3 py-3 text-slate-600 dark:text-[#CBD5E1]">{issue.dueDate ? new Date(issue.dueDate).toLocaleDateString() : '—'}</td>
+                  <td className="px-3 py-3 text-slate-600 dark:text-[#b3b3b3]">{issue.dueDate ? new Date(issue.dueDate).toLocaleDateString() : '—'}</td>
                   <td className="px-3 py-3 text-slate-400"><FiChevronRight /></td>
                 </tr>)}</tbody>
               </table>
-              {issueTotal > projectIssues.length && <p className="px-3 pt-3 text-xs text-slate-500 dark:text-[#94A3B8]">Showing the first {projectIssues.length} of {issueTotal} issues. View the full list from Issues.</p>}
+              {issueTotal > projectIssues.length && <p className="px-3 pt-3 text-xs text-slate-500 dark:text-[#999]">Showing the first {projectIssues.length} of {issueTotal} issues. View the full list from Issues.</p>}
             </div>
-          ) : <div className="rounded-xl bg-slate-50 px-4 py-8 text-center dark:bg-[#1E293B]/60"><p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">No issues in this project yet</p><p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">Create the first issue to track work here.</p><button type="button" onClick={() => setIsCreateIssueOpen(true)} className="mt-3 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-[#60A5FA]">Create Issue</button></div>}
+          ) : <div className="rounded-xl bg-slate-50 px-4 py-8 text-center dark:bg-[#242424]/60"><p className="text-sm font-semibold text-slate-800 dark:text-[#F1F5F9]">No issues in this project yet</p><p className="mt-1 text-xs text-slate-500 dark:text-[#999]">Create the first issue to track work here.</p><button type="button" onClick={() => setIsCreateIssueOpen(true)} className="mt-3 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-[#60A5FA]">Create Issue</button></div>}
         </section>
       )}
 

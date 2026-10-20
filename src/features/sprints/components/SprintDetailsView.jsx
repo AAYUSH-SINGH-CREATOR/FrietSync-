@@ -144,7 +144,7 @@ const SprintDetailsView = ({
     getProjectSprintRequests(pid)
       .then((data) => {
         if (!isMounted) return;
-        const list = Array.isArray(data) ? data : (data?.requests || data?.items || []);
+        const list = Array.isArray(data) ? data : (data?.requests || data?.items || data?.data?.requests || data?.data?.items || []);
         setRequests(list);
       })
       .catch((err) => console.warn('Failed loading sprint requests:', err));
@@ -237,9 +237,20 @@ const SprintDetailsView = ({
     }
   };
 
-  const handleApproveRequest = async (requestId) => {
+  const sprintRequests = requests.filter((request) => {
+    const requestSprintId = request.sprintId || request.sprint?.id || request.sprint?.sprintId || request.sprint?._id;
+    return String(requestSprintId || '') === String(sprintId);
+  });
+
+  const handleApproveRequest = async (request) => {
+    const requestId = request.id || request.requestId || request.assignmentRequestId;
+    const requestSprintId = request.sprintId || request.sprint?.id || request.sprint?.sprintId || request.sprint?._id;
+    if (!requestId || !requestSprintId) {
+      showToast('error', 'Unable to approve this request: sprint or request ID is missing.');
+      return;
+    }
     try {
-      await approveSprintRequest(sprintId, requestId);
+      await approveSprintRequest(requestSprintId, requestId);
       showToast('success', 'Sprint assignment request approved.');
       loadRequests();
       loadDetails();
@@ -472,18 +483,18 @@ const SprintDetailsView = ({
       </div>
 
       {/* Assignment Requests Section (for sprint managers) */}
-      {canManage && requests.length > 0 && (
+      {canManage && sprintRequests.length > 0 && (
         <section className="rounded-3xl border border-slate-200/80 bg-white p-5 dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
             <div className="flex items-center gap-2">
               <FiInbox size={18} className="text-sky-600" />
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Sprint Assignment Requests</h3>
-              <span className="rounded-full bg-sky-100 px-2 py-0.2 text-xs font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">{requests.length}</span>
+              <span className="rounded-full bg-sky-100 px-2 py-0.2 text-xs font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">{sprintRequests.length}</span>
             </div>
             <button type="button" onClick={loadRequests} className="text-xs font-semibold text-sky-600 hover:underline cursor-pointer">Refresh</button>
           </div>
           <div className="space-y-2">
-            {requests.map((req) => (
+            {sprintRequests.map((req) => (
               <div key={req.id || req.requestId} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5 dark:border-[#2d2d32] dark:bg-[#222226] text-xs">
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white">{req.user?.name || req.requesterName || req.email || 'Project Contributor'}</p>
@@ -491,7 +502,7 @@ const SprintDetailsView = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleApproveRequest(req.id || req.requestId)}
+                  onClick={() => handleApproveRequest(req)}
                   className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3.5 py-1.5 font-semibold text-white hover:bg-emerald-700 transition cursor-pointer"
                 >
                   <FiCheck size={13} /> Approve
