@@ -4,16 +4,18 @@ import {
   FiPlus, FiSearch, FiRefreshCw, FiFolder, FiAlertCircle, FiCheckCircle,
   FiChevronDown, FiChevronLeft, FiChevronRight, FiActivity,
   FiCheckSquare, FiLayers, FiX, FiInbox, FiUser, FiCheck,
+  FiColumns, FiList,
 } from 'react-icons/fi';
 import { AiOutlineBug, AiOutlineExclamationCircle } from 'react-icons/ai';
 import {
   getProjectIssues, getProjectIssueRequests, manageProjectIssueRequest,
-  deleteProjectIssueRequest, getFriendlyErrorMessage,
+  deleteProjectIssueRequest, updateIssue, getFriendlyErrorMessage,
 } from '../services/issueApi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { getPriorityBadge, getStatusBadge } from '../utils/issueUtils';
 import CreateIssueModal from './CreateIssueModal';
 import IssueDetailsView from './IssueDetailsView';
+import KanbanBoardView from './KanbanBoardView';
 
 const PAGE_SIZE = 20;
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
@@ -70,6 +72,7 @@ const IssuesView = () => {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('due-asc');
+  const [layoutView, setLayoutView] = useState('board');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalIssueCount, setTotalIssueCount] = useState(0);
@@ -283,6 +286,18 @@ const IssuesView = () => {
   const changeProjectFilter = (v) => { setIsLoadingIssues(true); setPage(0); setProjectFilter(v); };
   const handleIssueCreated = (created) => { showToast('success', `“${created?.title || 'New issue'}” created.`); refresh(); };
 
+  const handleUpdateIssueStatus = useCallback(async (id, newStatus) => {
+    const prevIssues = issues;
+    setIssues((current) => current.map((i) => (String(issueId(i)) === String(id) ? { ...i, status: newStatus } : i)));
+    try {
+      await updateIssue(id, { status: newStatus });
+      showToast('success', `Issue moved to ${newStatus.replace(/[_-]/g, ' ')}.`);
+    } catch (err) {
+      setIssues(prevIssues);
+      showToast('error', getFriendlyErrorMessage(err, 'issue'));
+    }
+  }, [issues, showToast]);
+
   // Handle assignment request decisions in tab
   const handleApproveRequest = async (req) => {
     try {
@@ -301,9 +316,6 @@ const IssuesView = () => {
     } catch (err) { showToast('error', getFriendlyErrorMessage(err, 'issue')); }
   };
 
-  // -------------------------------------------------------------
-  // If an issue is selected, render the dedicated IssueDetailsView
-  // -------------------------------------------------------------
   if (selectedIssueForDetails) {
     return (
       <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#141416] dark:text-white sm:p-6 lg:p-7">
@@ -445,15 +457,49 @@ const IssuesView = () => {
           )}
         </div>
       ) : (
-        /* ================= ISSUES TABLE VIEW ================= */
+        /* ================= ISSUES BOARD / TABLE VIEW ================= */
         <>
-          {/* Search & Filters */}
-          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center">
-            <div className="relative min-w-[190px] flex-1 xl:max-w-[250px]">
-              <FiSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-[#aaa]" />
-              <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search issues..." className="h-[34px] w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none placeholder:text-slate-400 focus:border-sky-400 dark:border-[#343434] dark:bg-[#202020] dark:text-white dark:placeholder:text-[#999]" />
+          {/* Controls: View Switcher (Board/List), Search & Filters */}
+          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 dark:border-[#343434] dark:bg-[#1e1e1e]">
+                <button
+                  type="button"
+                  onClick={() => setLayoutView('board')}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                    layoutView === 'board'
+                      ? 'bg-white text-slate-900 shadow-xs dark:bg-[#2b2b2b] dark:text-white'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-[#888] dark:hover:text-white'
+                  }`}
+                >
+                  <FiColumns size={13} /> Board
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLayoutView('list')}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                    layoutView === 'list'
+                      ? 'bg-white text-slate-900 shadow-xs dark:bg-[#2b2b2b] dark:text-white'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-[#888] dark:hover:text-white'
+                  }`}
+                >
+                  <FiList size={13} /> List
+                </button>
+              </div>
+
+              <div className="relative min-w-[190px] flex-1 sm:w-64">
+                <FiSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-[#aaa]" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search issue...."
+                  className="h-[34px] w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none placeholder:text-slate-400 focus:border-sky-400 dark:border-[#343434] dark:bg-[#202020] dark:text-white dark:placeholder:text-[#999]"
+                />
+              </div>
             </div>
-            <div className="w-full flex flex-wrap justify-between pr-4 sm:pr-20">
+
+            <div className="flex flex-wrap items-center gap-2">
               <FilterSelect label="Status" value={statusFilter} onChange={setStatusFilter} options={statusOptions} />
               <FilterSelect label="Priority" value={priorityFilter} onChange={setPriorityFilter} options={priorityOptions} />
               <FilterSelect label="Project" value={projectFilter} onChange={changeProjectFilter} options={projects.map((p) => ({ value: String(p.id || p._id || p.projectId), label: p.name || 'Project' }))} />
@@ -462,85 +508,110 @@ const IssuesView = () => {
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#242424]">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px] border-collapse text-left">
-                <thead>
-                  <tr className="h-[38px] bg-slate-100 text-xs font-semibold text-slate-800 dark:bg-[#202020] dark:text-[#eee]">
-                    <th className="w-10 px-3"><span className="sr-only">Select issues</span><input aria-label="Select issues" type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-sky-500" /></th>
-                    <th className="p-4">Issue</th><th className="p-5">ID</th><th className="p-5">Project</th><th className="p-5">Status</th><th className="px-3">Priority</th><th className="px-3">Assignee</th><th className="px-3">Due date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#343434]">
-                  {isLoadingIssues ? Array.from({ length: 5 }, (_, idx) => (
-                    <tr key={idx} className="h-[43px] animate-pulse"><td colSpan="8" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#333]" /></td></tr>
-                  )) : filteredIssues.map((issueItem, idx) => {
-                    const id = issueId(issueItem);
-                    const number = issueItem.issueNumber || (id ? String(id).slice(-6) : `#${idx + 1}`);
-                    const assignee = displayAssignee(issueItem);
-                    const avatarColor = avatarColors[(assignee.charCodeAt(0) || idx) % avatarColors.length];
-                    return (
-                      <tr
-                        key={id || `${issueItem.title}-${idx}`}
-                        onClick={() => setSelectedIssueForDetails(issueItem)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') setSelectedIssueForDetails(issueItem); }}
-                        tabIndex={0}
-                        className="h-[43px] cursor-pointer text-xs transition hover:bg-slate-50 dark:hover:bg-[#2e2e2e]"
-                      >
-                        <td className="px-3"><input aria-label={`Select ${issueItem.title || 'issue'}`} type="checkbox" onClick={(e) => e.stopPropagation()} className="h-3.5 w-3.5 rounded border-slate-300 accent-sky-500 dark:border-[#555]" /></td>
-                        <td className="max-w-[250px] px-2"><span className="inline-block max-w-full truncate rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-900 dark:bg-[#303030] dark:text-white" title={issueItem.title}>{issueItem.title || 'Untitled issue'}</span></td>
-                        <td className="px-3"><span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-700 dark:bg-[#303030] dark:text-[#ddd]">{String(number).startsWith('#') ? number : `#${number}`}</span></td>
-                        <td className="px-3"><span className="inline-flex max-w-[150px] items-center gap-1 truncate rounded-md bg-slate-100 px-2 py-1 text-slate-700 dark:bg-[#303030] dark:text-[#ddd]"><FiLayers size={11} className="shrink-0" />{issueItem.projectName || projectMap.get(String(issueItem.projectId)) || issueItem.project?.name || '—'}</span></td>
-                        <td className="px-3"><span className={`whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium ${getStatusBadge(issueItem.status)}`}>{String(issueItem.status || 'OPEN').replace(/[_-]/g, ' ')}</span></td>
-                        <td className="px-3"><span className={`whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium ${getPriorityBadge(issueItem.priority)}`}>{String(issueItem.priority || 'MEDIUM').replace(/[_-]/g, ' ')}</span></td>
-                        <td className="px-3">{assignee ? <span title={assignee} className={`flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold text-white ${avatarColor}`}>{assignee.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase()}</span> : <span className="text-slate-400 dark:text-[#888]">—</span>}</td>
-                        <td className="whitespace-nowrap px-3 text-slate-700 dark:text-[#ddd]">{compactDate(issueItem.dueDate)}</td>
-                      </tr>
-                    );
-                  })}
-                  {!isLoadingIssues && filteredIssues.length === 0 && (
-                    <tr>
-                      <td colSpan="8" className="px-4 py-12 text-center">
-                        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-300">
-                          <AiOutlineBug size={24} />
-                        </div>
-                        <p className="text-sm font-semibold">
-                          {activeTab === 'assigned' ? 'No issues assigned to you yet' : issues.length ? 'No matching issues' : 'No issues yet'}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">
-                          {activeTab === 'assigned'
-                            ? 'When a project manager assigns an issue to you, or your assignment request is approved, it will appear here.'
-                            : issues.length ? 'Try changing your search or filters.' : 'Create an issue to start tracking work across your projects.'}
-                        </p>
-                        {activeTab === 'assigned' ? (
-                          <button type="button" onClick={() => setActiveTab('all')} className="mt-4 inline-flex h-[34px] items-center gap-1.5 rounded-md bg-sky-600 px-3.5 text-xs font-semibold text-white hover:bg-sky-700 cursor-pointer">
-                            Browse Project Issues
-                          </button>
-                        ) : !issues.length ? (
-                          <button type="button" onClick={() => setIsCreateModalOpen(true)} className="mt-4 inline-flex h-[34px] items-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-semibold text-white hover:bg-sky-700 cursor-pointer">
-                            <FiPlus />Create Issue
-                          </button>
-                        ) : null}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          {layoutView === 'board' ? (
+            <div className="space-y-4">
+              <KanbanBoardView
+                issues={filteredIssues}
+                isLoading={isLoadingIssues}
+                onIssueClick={(issue) => setSelectedIssueForDetails(issue)}
+                onStatusChange={handleUpdateIssueStatus}
+                onCreateInColumn={() => setIsCreateModalOpen(true)}
+                displayAssignee={displayAssignee}
+              />
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:bg-[#242424] dark:text-[#bbb] sm:px-4">
+                  <span>{projectFilter === 'all' ? `Showing ${filteredIssues.length} issues on page ${page + 1}` : `Showing ${start}–${end} of ${totalIssueCount} issues`}</span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" aria-label="Previous page" disabled={page <= 0} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.max(0, c - 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronLeft size={14} /></button>
+                    {Array.from({ length: totalPages }, (_, idx) => idx).slice(Math.max(0, Math.min(page - 2, totalPages - 4)), Math.max(4, Math.min(page - 2, totalPages - 4)) + 4).map((val) => (
+                      <button type="button" key={val} onClick={() => { setIsLoadingIssues(true); setPage(val); }} className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-xs cursor-pointer ${page === val ? 'bg-sky-500 font-semibold text-white' : 'hover:bg-slate-100 dark:hover:bg-[#383838]'}`}>{val + 1}</button>
+                    ))}
+                    <button type="button" aria-label="Next page" disabled={page >= totalPages - 1} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.min(totalPages - 1, c + 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronRight size={14} /></button>
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            /* Table Container */
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#242424]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[780px] border-collapse text-left">
+                  <thead>
+                    <tr className="h-[38px] bg-slate-100 text-xs font-semibold text-slate-800 dark:bg-[#202020] dark:text-[#eee]">
+                      <th className="w-10 px-3"><span className="sr-only">Select issues</span><input aria-label="Select issues" type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-sky-500" /></th>
+                      <th className="p-4">Issue</th><th className="p-5">ID</th><th className="p-5">Project</th><th className="p-5">Status</th><th className="px-3">Priority</th><th className="px-3">Assignee</th><th className="px-3">Due date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#343434]">
+                    {isLoadingIssues ? Array.from({ length: 5 }, (_, idx) => (
+                      <tr key={idx} className="h-[43px] animate-pulse"><td colSpan="8" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#333]" /></td></tr>
+                    )) : filteredIssues.map((issueItem, idx) => {
+                      const id = issueId(issueItem);
+                      const number = issueItem.issueNumber || (id ? String(id).slice(-6) : `#${idx + 1}`);
+                      const assignee = displayAssignee(issueItem);
+                      const avatarColor = avatarColors[(assignee.charCodeAt(0) || idx) % avatarColors.length];
+                      return (
+                        <tr
+                          key={id || `${issueItem.title}-${idx}`}
+                          onClick={() => setSelectedIssueForDetails(issueItem)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') setSelectedIssueForDetails(issueItem); }}
+                          tabIndex={0}
+                          className="h-[43px] cursor-pointer text-xs transition hover:bg-slate-50 dark:hover:bg-[#2e2e2e]"
+                        >
+                          <td className="px-3"><input aria-label={`Select ${issueItem.title || 'issue'}`} type="checkbox" onClick={(e) => e.stopPropagation()} className="h-3.5 w-3.5 rounded border-slate-300 accent-sky-500 dark:border-[#555]" /></td>
+                          <td className="max-w-[250px] px-2"><span className="inline-block max-w-full truncate rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-900 dark:bg-[#303030] dark:text-white" title={issueItem.title}>{issueItem.title || 'Untitled issue'}</span></td>
+                          <td className="px-3"><span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-700 dark:bg-[#303030] dark:text-[#ddd]">{String(number).startsWith('#') ? number : `#${number}`}</span></td>
+                          <td className="px-3"><span className="inline-flex max-w-[150px] items-center gap-1 truncate rounded-md bg-slate-100 px-2 py-1 text-slate-700 dark:bg-[#303030] dark:text-[#ddd]"><FiLayers size={11} className="shrink-0" />{issueItem.projectName || projectMap.get(String(issueItem.projectId)) || issueItem.project?.name || '—'}</span></td>
+                          <td className="px-3"><span className={`whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium ${getStatusBadge(issueItem.status)}`}>{String(issueItem.status || 'OPEN').replace(/[_-]/g, ' ')}</span></td>
+                          <td className="px-3"><span className={`whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium ${getPriorityBadge(issueItem.priority)}`}>{String(issueItem.priority || 'MEDIUM').replace(/[_-]/g, ' ')}</span></td>
+                          <td className="px-3">{assignee ? <span title={assignee} className={`flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold text-white ${avatarColor}`}>{assignee.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase()}</span> : <span className="text-slate-400 dark:text-[#888]">—</span>}</td>
+                          <td className="whitespace-nowrap px-3 text-slate-700 dark:text-[#ddd]">{compactDate(issueItem.dueDate)}</td>
+                        </tr>
+                      );
+                    })}
+                    {!isLoadingIssues && filteredIssues.length === 0 && (
+                      <tr>
+                        <td colSpan="8" className="px-4 py-12 text-center">
+                          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-300">
+                            <AiOutlineBug size={24} />
+                          </div>
+                          <p className="text-sm font-semibold">
+                            {activeTab === 'assigned' ? 'No issues assigned to you yet' : issues.length ? 'No matching issues' : 'No issues yet'}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">
+                            {activeTab === 'assigned'
+                              ? 'When a project manager assigns an issue to you, or your assignment request is approved, it will appear here.'
+                              : issues.length ? 'Try changing your search or filters.' : 'Create an issue to start tracking work across your projects.'}
+                          </p>
+                          {activeTab === 'assigned' ? (
+                            <button type="button" onClick={() => setActiveTab('all')} className="mt-4 inline-flex h-[34px] items-center gap-1.5 rounded-md bg-sky-600 px-3.5 text-xs font-semibold text-white hover:bg-sky-700 cursor-pointer">
+                              Browse Project Issues
+                            </button>
+                          ) : !issues.length ? (
+                            <button type="button" onClick={() => setIsCreateModalOpen(true)} className="mt-4 inline-flex h-[34px] items-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-semibold text-white hover:bg-sky-700 cursor-pointer">
+                              <FiPlus />Create Issue
+                            </button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-            {/* Pagination Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:text-[#bbb] sm:px-4">
-              <span className="text-xs">{projectFilter === 'all' ? `Showing ${filteredIssues.length} issues on page ${page + 1}` : `Showing ${start}–${end} of ${totalIssueCount} issues`}</span>
-              <div className="flex items-center gap-1">
-                <button type="button" aria-label="Previous page" disabled={page <= 0} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.max(0, c - 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronLeft size={14} /></button>
-                {Array.from({ length: totalPages }, (_, idx) => idx).slice(Math.max(0, Math.min(page - 2, totalPages - 4)), Math.max(4, Math.min(page - 2, totalPages - 4)) + 4).map((val) => (
-                  <button type="button" key={val} onClick={() => { setIsLoadingIssues(true); setPage(val); }} className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-xs cursor-pointer ${page === val ? 'bg-sky-500 font-semibold text-white' : 'hover:bg-slate-100 dark:hover:bg-[#383838]'}`}>{val + 1}</button>
-                ))}
-                <button type="button" aria-label="Next page" disabled={page >= totalPages - 1} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.min(totalPages - 1, c + 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronRight size={14} /></button>
+              {/* Pagination Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:text-[#bbb] sm:px-4">
+                <span className="text-xs">{projectFilter === 'all' ? `Showing ${filteredIssues.length} issues on page ${page + 1}` : `Showing ${start}–${end} of ${totalIssueCount} issues`}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" aria-label="Previous page" disabled={page <= 0} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.max(0, c - 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronLeft size={14} /></button>
+                  {Array.from({ length: totalPages }, (_, idx) => idx).slice(Math.max(0, Math.min(page - 2, totalPages - 4)), Math.max(4, Math.min(page - 2, totalPages - 4)) + 4).map((val) => (
+                    <button type="button" key={val} onClick={() => { setIsLoadingIssues(true); setPage(val); }} className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-xs cursor-pointer ${page === val ? 'bg-sky-500 font-semibold text-white' : 'hover:bg-slate-100 dark:hover:bg-[#383838]'}`}>{val + 1}</button>
+                  ))}
+                  <button type="button" aria-label="Next page" disabled={page >= totalPages - 1} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.min(totalPages - 1, c + 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronRight size={14} /></button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
 
