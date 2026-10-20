@@ -370,9 +370,9 @@ const ChatsView = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 min-w-0 w-full max-w-[1320px] mx-auto flex flex-col md:flex-row gap-2.5 sm:gap-3">
+      <div className="flex-1 min-h-0 min-w-0 w-full grid grid-cols-1 md:grid-cols-[minmax(230px,0.3fr)_minmax(0,1fr)] xl:grid-cols-[minmax(260px,0.3fr)_minmax(0,1fr)] gap-2.5 sm:gap-3">
         <div
-          className={`h-full min-h-0 min-w-0 w-full md:w-[31%] md:min-w-[245px] md:max-w-[330px] max-w-full shrink-0 ${
+          className={`h-full min-h-0 min-w-0 w-full max-w-full ${
             isMobileThreadOpen ? 'hidden md:flex' : 'flex'
           }`}
         >
