@@ -74,14 +74,14 @@ const KanbanBoardView = ({
   };
 
   return (
-    <div className="flex w-full gap-3.5 overflow-x-auto pb-4 select-none" onClick={() => setOpenMenuIssueId(null)}>
+    <div className="grid w-full min-w-0 grid-flow-col auto-cols-[minmax(260px,1fr)] gap-3.5 overflow-x-auto pb-4 select-none" onClick={() => setOpenMenuIssueId(null)}>
       {columnIssues.map((col) => (
         <div
           key={col.id}
           onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverColumn(col.id); }}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverColumn(null); }}
           onDrop={(e) => handleDrop(e, col)}
-          className={`flex min-w-[245px] sm:min-w-[260px] max-w-[280px] flex-1 flex-col rounded-2xl transition-all ${
+          className={`flex min-w-0 flex-col rounded-2xl transition-all ${
             dragOverColumn === col.id ? 'ring-2 ring-sky-400/70 bg-sky-50/20 dark:bg-sky-950/20' : ''
           }`}
         >
@@ -133,7 +133,7 @@ const KanbanBoardView = ({
                       draggable={!pendingStatusIssueIds.has(String(id))}
                       onDragStart={(e) => handleDragStart(e, issue)}
                       onClick={() => onIssueClick?.(issue)}
-                      className={`group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#303030] dark:bg-[#1e1e22] ${pendingStatusIssueIds.has(String(id)) ? 'cursor-wait opacity-70' : 'cursor-grab active:cursor-grabbing'}`}
+                      className={`group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#1a1a1d] ${pendingStatusIssueIds.has(String(id)) ? 'cursor-wait opacity-70' : 'cursor-grab active:cursor-grabbing'}`}
                     >
                   {/* Top row: Issue Key + Assignee Avatar */}
                   <div className="flex items-center justify-between gap-2">

@@ -365,7 +365,7 @@ const SprintsView = () => {
   // If a sprint is selected, render full dedicated SprintDetailsView
   if (selectedSprintId) {
     return (
-      <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#141416] dark:text-white sm:p-6 lg:p-7">
+      <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7">
         <SprintDetailsView
           sprintId={selectedSprintId}
           initialSprint={selectedSprint}
@@ -394,7 +394,7 @@ const SprintsView = () => {
   }
 
   return (
-    <section className="min-h-[calc(100vh-7.5rem)] space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#121214] dark:text-white sm:p-6 lg:p-7 animate-fadeIn">
+    <section className="min-h-[calc(100vh-7.5rem)] min-w-0 space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7 animate-fadeIn">
       {/* 1. Header Row matching screenshot */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
