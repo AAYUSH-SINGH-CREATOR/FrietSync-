@@ -97,7 +97,7 @@ const SprintModalForm = ({
               placeholder="e.g., Sprint 1: Project Setup"
               maxLength={120}
               required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] placeholder:text-slate-400 dark:placeholder:text-[#888]"
             />
           </div>
 
@@ -111,7 +111,7 @@ const SprintModalForm = ({
               placeholder="What are the key goals and delivery outcomes for this sprint?"
               rows={2}
               maxLength={500}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 resize-none"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] placeholder:text-slate-400 dark:placeholder:text-[#888] resize-none"
             />
           </div>
 
@@ -125,7 +125,7 @@ const SprintModalForm = ({
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226]"
               />
             </div>
             <div>
@@ -137,7 +137,7 @@ const SprintModalForm = ({
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226]"
               />
             </div>
           </div>
@@ -152,7 +152,7 @@ const SprintModalForm = ({
               onChange={(e) => setMilestoneId(e.target.value)}
               placeholder="e.g., milestone-v1"
               maxLength={80}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] placeholder:text-slate-400 dark:placeholder:text-[#888]"
             />
           </div>
 
