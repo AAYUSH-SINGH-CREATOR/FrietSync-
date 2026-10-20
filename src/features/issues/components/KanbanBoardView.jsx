@@ -48,6 +48,7 @@ const KanbanBoardView = ({
   onStatusChange,
   onCreateInColumn,
   displayAssignee,
+  pendingStatusIssueIds = new Set(),
 }) => {
   const [dragOverColumn, setDragOverColumn] = useState(null);
   const [openMenuIssueId, setOpenMenuIssueId] = useState(null);
@@ -129,10 +130,10 @@ const KanbanBoardView = ({
                   return (
                     <div
                       key={id || idx}
-                      draggable
+                      draggable={!pendingStatusIssueIds.has(String(id))}
                       onDragStart={(e) => handleDragStart(e, issue)}
                       onClick={() => onIssueClick?.(issue)}
-                      className="group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#303030] dark:bg-[#1e1e22] cursor-grab active:cursor-grabbing"
+                      className={`group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#303030] dark:bg-[#1e1e22] ${pendingStatusIssueIds.has(String(id)) ? 'cursor-wait opacity-70' : 'cursor-grab active:cursor-grabbing'}`}
                     >
                   {/* Top row: Issue Key + Assignee Avatar */}
                   <div className="flex items-center justify-between gap-2">
@@ -195,6 +196,7 @@ const KanbanBoardView = ({
                             <button
                               key={dest.id}
                               type="button"
+                              disabled={pendingStatusIssueIds.has(String(id))}
                               onClick={() => {
                                 onStatusChange?.(id, dest.apiStatus);
                                 setOpenMenuIssueId(null);

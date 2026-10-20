@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import {
   FiAlertCircle,
@@ -13,6 +13,8 @@ import { getMyProjects, getProjectMembers } from '../../projects/services/projec
 import { getProjectIssues } from '../../issues/services/issueApi';
 import {
   getProjectSprints,
+  startSprint,
+  completeSprint,
   getFriendlyErrorMessage,
 } from '../services/sprintsApi';
 import SprintsSummaryCards from './SprintsSummaryCards';
@@ -65,6 +67,8 @@ const SprintsView = () => {
   const [projectsError, setProjectsError] = useState('');
 
   const [sprints, setSprints] = useState([]);
+  const [pendingSprintIds, setPendingSprintIds] = useState(() => new Set());
+  const pendingSprintIdsRef = useRef(new Set());
   const [sprintsLoading, setSprintsLoading] = useState(false);
   const [sprintsError, setSprintsError] = useState('');
 
@@ -179,6 +183,39 @@ const SprintsView = () => {
     setSprintsLoading(true);
     setSprintRefreshTrigger((v) => v + 1);
   }, []);
+
+  const handleSprintStatusChange = useCallback(async (sprint, sourceColumnId, destinationColumnId) => {
+    const sprintId = getSprintId(sprint);
+    if (!sprintId || sourceColumnId === destinationColumnId) return;
+    const key = String(sprintId);
+    if (pendingSprintIdsRef.current.has(key)) return;
+
+    const currentStatus = String(sprint.status || sprint.state || 'PLANNED').toUpperCase().replace(/[\s-]+/g, '_');
+    const plannedStatuses = ['PLANNED', 'PLANNING', 'FUTURE'];
+    const activeStatuses = ['ACTIVE', 'IN_PROGRESS', 'STARTED'];
+    const isStartTransition = plannedStatuses.includes(currentStatus) && destinationColumnId === 'ACTIVE';
+    const isCompleteTransition = activeStatuses.includes(currentStatus) && destinationColumnId === 'COMPLETED';
+
+    if (!isStartTransition && !isCompleteTransition) {
+      showToast('error', 'That sprint status transition is not supported by the available sprint actions.');
+      return;
+    }
+    if (isCompleteTransition && !window.confirm('Complete this sprint? This marks current delivery goals as finished.')) return;
+
+    pendingSprintIdsRef.current.add(key);
+    setPendingSprintIds(new Set(pendingSprintIdsRef.current));
+    try {
+      if (isStartTransition) await startSprint(sprintId);
+      else await completeSprint(sprintId);
+      showToast('success', isStartTransition ? 'Sprint started successfully.' : 'Sprint completed successfully.');
+      loadSprints();
+    } catch (error) {
+      showToast('error', getFriendlyErrorMessage(error, 'sprint'));
+    } finally {
+      pendingSprintIdsRef.current.delete(key);
+      setPendingSprintIds(new Set(pendingSprintIdsRef.current));
+    }
+  }, [loadSprints, showToast]);
 
   const loadProjects = useCallback(() => {
     setProjectsLoading(true);
@@ -452,6 +489,8 @@ const SprintsView = () => {
           sprints={filteredSprints}
           isLoading={sprintsLoading}
           onSprintClick={handleSprintClick}
+          onStatusChange={handleSprintStatusChange}
+          pendingSprintIds={pendingSprintIds}
           onCreateSprint={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
         />
       )}

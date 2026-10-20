@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import {
   FiPlus, FiSearch, FiRefreshCw, FiFolder, FiAlertCircle, FiCheckCircle,
@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fi';
 import { AiOutlineBug, AiOutlineExclamationCircle } from 'react-icons/ai';
 import {
-  getProjectIssues, getProjectIssueRequests, manageProjectIssueRequest,
+  getProjectIssues, getIssueDetails, getProjectIssueRequests, manageProjectIssueRequest,
   deleteProjectIssueRequest, updateIssue, getFriendlyErrorMessage,
 } from '../services/issueApi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
@@ -80,6 +80,8 @@ const IssuesView = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedIssueForDetails, setSelectedIssueForDetails] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [pendingStatusIssueIds, setPendingStatusIssueIds] = useState(() => new Set());
+  const pendingStatusIssueIdsRef = useRef(new Set());
 
   // Tab mode: 'all' (project issues), 'assigned' (assigned to me), 'requests' (assignment requests)
   const [userSelectedTab, setUserSelectedTab] = useState(null);
@@ -287,14 +289,30 @@ const IssuesView = () => {
   const handleIssueCreated = (created) => { showToast('success', `“${created?.title || 'New issue'}” created.`); refresh(); };
 
   const handleUpdateIssueStatus = useCallback(async (id, newStatus) => {
-    const prevIssues = issues;
-    setIssues((current) => current.map((i) => (String(issueId(i)) === String(id) ? { ...i, status: newStatus } : i)));
+    const issue = issues.find((item) => String(issueId(item)) === String(id));
+    if (!issue || normalize(issue.status || 'OPEN') === normalize(newStatus)) return;
+    if (pendingStatusIssueIdsRef.current.has(String(id))) return;
+    pendingStatusIssueIdsRef.current.add(String(id));
+    setPendingStatusIssueIds(new Set(pendingStatusIssueIdsRef.current));
     try {
+      // Keep the existing PATCH contract, then verify the server's persisted
+      // state before moving the card locally or reporting success.
       await updateIssue(id, { status: newStatus });
+      const persistedIssue = await getIssueDetails(id);
+      if (!persistedIssue?.status || normalize(persistedIssue.status) !== normalize(newStatus)) {
+        throw new Error(`The server did not confirm the status change to ${newStatus.replace(/[_-]/g, ' ')}.`);
+      }
+      setIssues((current) => current.map((item) => (
+        String(issueId(item)) === String(id)
+          ? { ...item, ...persistedIssue, projectId: item.projectId, projectName: item.projectName }
+          : item
+      )));
       showToast('success', `Issue moved to ${newStatus.replace(/[_-]/g, ' ')}.`);
     } catch (err) {
-      setIssues(prevIssues);
       showToast('error', getFriendlyErrorMessage(err, 'issue'));
+    } finally {
+      pendingStatusIssueIdsRef.current.delete(String(id));
+      setPendingStatusIssueIds(new Set(pendingStatusIssueIdsRef.current));
     }
   }, [issues, showToast]);
 
@@ -515,6 +533,7 @@ const IssuesView = () => {
                 isLoading={isLoadingIssues}
                 onIssueClick={(issue) => setSelectedIssueForDetails(issue)}
                 onStatusChange={handleUpdateIssueStatus}
+                pendingStatusIssueIds={pendingStatusIssueIds}
                 onCreateInColumn={() => setIsCreateModalOpen(true)}
                 displayAssignee={displayAssignee}
               />

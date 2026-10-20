@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { FiCalendar, FiClock, FiPlus } from 'react-icons/fi';
 
 const COLUMNS = [
@@ -25,7 +26,12 @@ const SprintsBoard = ({
   isLoading = false,
   onSprintClick,
   onCreateSprint,
+  onStatusChange,
+  pendingSprintIds = new Set(),
 }) => {
+  const [dragOverColumn, setDragOverColumn] = useState(null);
+  const draggedSprintRef = useRef(null);
+  const suppressClickRef = useRef(false);
   const columnSprints = COLUMNS.map((col) => ({
     ...col,
     items: sprints.filter((s) => {
@@ -35,9 +41,29 @@ const SprintsBoard = ({
   }));
 
   return (
-    <div className="flex w-full gap-3.5 overflow-x-auto pb-4 select-none">
+    <div className="grid w-full grid-flow-col auto-cols-[minmax(260px,1fr)] gap-3.5 overflow-x-auto pb-4 select-none">
       {columnSprints.map((col) => (
-        <div key={col.id} className="flex min-w-[260px] max-w-[290px] flex-1 flex-col rounded-2xl">
+        <div
+          key={col.id}
+          id={`sprint-column-${col.id}`}
+          onDragOver={(event) => {
+            if (!draggedSprintRef.current) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            setDragOverColumn(col.id);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setDragOverColumn(null);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragOverColumn(null);
+            const dragged = draggedSprintRef.current;
+            if (dragged && onStatusChange) onStatusChange(dragged.sprint, dragged.columnId, col.id);
+            draggedSprintRef.current = null;
+          }}
+          className={`flex min-w-0 flex-col rounded-2xl transition ${dragOverColumn === col.id ? 'ring-2 ring-sky-400/70 bg-sky-50/30 dark:bg-sky-950/20' : ''}`}
+        >
           {/* Column Header */}
           <div className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 ${col.bg} ${col.text} ${col.darkBg} ${col.darkText} shadow-2xs`}>
             <div className="flex items-center gap-2">
@@ -66,7 +92,11 @@ const SprintsBoard = ({
                 <div className="h-32 rounded-xl bg-slate-100 dark:bg-[#252528] animate-pulse" />
               </>
             ) : col.items.map((sprint, idx) => {
-              const id = sprint.id || sprint._id || idx;
+              const id = sprint.id || sprint.sprintId || sprint._id;
+              const stableId = id ? String(id) : sprint.key ? String(sprint.key) : `sprint-${sprint.sprintNumber || sprint.number || idx}`;
+              const normalizedStatus = String(sprint.status || sprint.state || 'PLANNED').toUpperCase().replace(/[\s-]+/g, '_');
+              const sourceColumn = COLUMNS.find((column) => column.match.includes(normalizedStatus));
+              const isPending = id && pendingSprintIds.has(String(id));
               const num = sprint.sprintNumber || sprint.number || (sprint.id ? String(sprint.id).slice(-2) : idx + 1);
               const sprintKey = sprint.key || `SPR-${num}`;
               const assigneeName = sprint.contributorName || sprint.contributor?.name || 'HV';
@@ -81,9 +111,26 @@ const SprintsBoard = ({
 
               return (
                 <div
-                  key={id}
-                  onClick={() => onSprintClick?.(sprint)}
-                  className="group rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-400 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#1a1a1d] cursor-pointer"
+                  key={stableId}
+                  draggable={Boolean(id) && !isPending}
+                  onDragStart={(event) => {
+                    if (!id) return;
+                    draggedSprintRef.current = { sprint, columnId: sourceColumn?.id || col.id };
+                    suppressClickRef.current = true;
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', String(id));
+                    event.dataTransfer.setData('application/x-frietsync-sprint-id', String(id));
+                  }}
+                  onDragEnd={() => {
+                    draggedSprintRef.current = null;
+                    setDragOverColumn(null);
+                    window.setTimeout(() => { suppressClickRef.current = false; }, 250);
+                  }}
+                  onClick={() => {
+                    if (suppressClickRef.current) return;
+                    onSprintClick?.(sprint);
+                  }}
+                  className={`group rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-400 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#1a1a1d] ${id && !isPending ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isPending ? 'opacity-60' : ''}`}
                 >
                   {/* Top: Key & Assignee */}
                   <div className="flex items-center justify-between gap-2">
