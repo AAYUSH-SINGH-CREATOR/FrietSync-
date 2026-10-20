@@ -106,11 +106,10 @@ export const assignSprint = (sprintId, contributorId) => {
   );
 };
 
-export const requestSprintAssignment = (sprintId, message = '') => {
+export const requestSprintAssignment = (sprintId) => {
   if (!sprintId) throw new Error('Sprint ID is required.');
-  const payload = message?.trim() ? { message: message.trim() } : {};
   return request(
-    () => axios.post(`${BASE_URL}/sprints/${sprintId}/request`, payload, getAuthHeaders()),
+    () => axios.post(`${BASE_URL}/sprints/${sprintId}/request`, null, getAuthHeaders()),
     'Failed to request sprint assignment.'
   );
 };

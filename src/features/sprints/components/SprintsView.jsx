@@ -8,11 +8,15 @@ import {
   FiRefreshCw,
   FiSearch,
   FiX,
+  FiInbox,
+  FiCheck,
 } from 'react-icons/fi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import {
   getProjectSprints,
+  getProjectSprintRequests,
+  approveSprintRequest,
   startSprint,
   completeSprint,
   getFriendlyErrorMessage,
@@ -67,6 +71,9 @@ const SprintsView = () => {
   const [projectsError, setProjectsError] = useState('');
 
   const [sprints, setSprints] = useState([]);
+  const [sprintRequests, setSprintRequests] = useState([]);
+  const [sprintRequestsLoading, setSprintRequestsLoading] = useState(false);
+  const [sprintRequestsProjectId, setSprintRequestsProjectId] = useState('');
   const [pendingSprintIds, setPendingSprintIds] = useState(() => new Set());
   const pendingSprintIdsRef = useRef(new Set());
   const [sprintsLoading, setSprintsLoading] = useState(false);
@@ -74,6 +81,7 @@ const SprintsView = () => {
 
   const [projectIssues, setProjectIssues] = useState([]);
   const [members, setMembers] = useState([]);
+  const [membersProjectId, setMembersProjectId] = useState('');
 
   // Selected sprint for details
   const [selectedSprintId, setSelectedSprintId] = useState('');
@@ -173,6 +181,7 @@ const SprintsView = () => {
         if (!isMounted) return;
         const list = Array.isArray(data) ? data : (data?.members || []);
         setMembers(list);
+        setMembersProjectId(String(projectId));
       })
       .catch(() => {});
 
@@ -222,7 +231,72 @@ const SprintsView = () => {
     setProjectRefreshTrigger((v) => v + 1);
   }, []);
 
-  const canManage = isAdmin || true; // Server is authoritative on actions
+  const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
+  const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
+  const currentProjectRole = members.find((member) => {
+    if (String(membersProjectId) !== String(projectId)) return false;
+    const memberUserId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
+    const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
+    return (currentUserId && String(memberUserId) === String(currentUserId)) || (currentUserEmail && memberEmail === currentUserEmail);
+  });
+  const currentProjectRoleName = String(currentProjectRole?.role || currentProjectRole?.projectRole || currentProjectRole?.user?.role || '').toUpperCase();
+  const canManage = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(currentProjectRoleName);
+
+  const loadSprintRequests = useCallback(async () => {
+    if (!projectId || !canManage) {
+      setSprintRequests([]);
+      return;
+    }
+    setSprintRequestsLoading(true);
+    try {
+      const response = await getProjectSprintRequests(projectId);
+      setSprintRequests(getCollection(response, ['requests', 'items', 'content', 'results']));
+      setSprintRequestsProjectId(String(projectId));
+    } catch (error) {
+      showToast('error', getFriendlyErrorMessage(error, 'sprint'));
+      setSprintRequests([]);
+      setSprintRequestsProjectId(String(projectId));
+    } finally {
+      setSprintRequestsLoading(false);
+    }
+  }, [projectId, canManage, showToast]);
+
+  useEffect(() => {
+    if (!projectId || !canManage) return undefined;
+    let isMounted = true;
+    getProjectSprintRequests(projectId)
+      .then((response) => {
+        if (!isMounted) return;
+        setSprintRequests(getCollection(response, ['requests', 'items', 'content', 'results']));
+        setSprintRequestsProjectId(String(projectId));
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        showToast('error', getFriendlyErrorMessage(error, 'sprint'));
+        setSprintRequests([]);
+        setSprintRequestsProjectId(String(projectId));
+      });
+    return () => { isMounted = false; };
+  }, [projectId, canManage, showToast]);
+
+  const isLoadingSprintRequests = sprintRequestsLoading || (canManage && projectId && sprintRequestsProjectId !== String(projectId));
+
+  const handleApproveSprintRequest = async (request) => {
+    const requestId = request.id || request.requestId || request.assignmentRequestId;
+    const requestSprintId = request.sprintId || request.sprint?.id || request.sprint?.sprintId || request.sprint?._id;
+    if (!requestId || !requestSprintId) {
+      showToast('error', 'Unable to approve this request: sprint or request ID is missing.');
+      return;
+    }
+    try {
+      await approveSprintRequest(requestSprintId, requestId);
+      showToast('success', 'Sprint assignment request approved.');
+      await loadSprintRequests();
+      loadSprints();
+    } catch (error) {
+      showToast('error', getFriendlyErrorMessage(error, 'sprint'));
+    }
+  };
 
   // Derived metrics for summary cards
   const summaryMetrics = useMemo(() => {
@@ -379,6 +453,44 @@ const SprintsView = () => {
         openIssues={summaryMetrics.openIssues}
         completedSprints={summaryMetrics.completedSprints}
       />
+
+      {canManage && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-[#303030]">
+            <div className="flex items-center gap-2">
+              <FiInbox size={17} className="text-sky-600 dark:text-sky-400" />
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Sprint Assignment Requests</h2>
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">{sprintRequests.length}</span>
+            </div>
+            <button type="button" onClick={loadSprintRequests} disabled={isLoadingSprintRequests} className="text-xs font-semibold text-sky-600 hover:underline disabled:opacity-50 dark:text-sky-400">Refresh</button>
+          </div>
+          {isLoadingSprintRequests ? (
+            <p className="py-5 text-center text-xs text-slate-500 dark:text-[#999]">Loading assignment requests...</p>
+          ) : sprintRequests.length ? (
+            <div className="space-y-2">
+              {sprintRequests.map((request, index) => {
+                const requestId = request.id || request.requestId || request.assignmentRequestId || index;
+                const requestSprintId = request.sprintId || request.sprint?.id || request.sprint?.sprintId || request.sprint?._id;
+                const sprintName = request.sprintName || request.sprint?.name || sprints.find((sprint) => String(getSprintId(sprint)) === String(requestSprintId))?.name || 'Sprint';
+                const requesterName = request.requester?.name || request.user?.name || request.requesterName || request.name || request.email || 'Project member';
+                return (
+                  <div key={requestId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-[#303030] dark:bg-[#222226]">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">{requesterName}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-[#999]">Requested assignment to {sprintName}</p>
+                    </div>
+                    <button type="button" onClick={() => handleApproveSprintRequest(request)} disabled={!requestSprintId} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                      <FiCheck size={13} /> Approve
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="py-5 text-center text-xs text-slate-500 dark:text-[#999]">No sprint assignment requests for this project.</p>
+          )}
+        </section>
+      )}
 
       {/* 3. Board / List View Switcher Capsule matching screenshot */}
       <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#151518]">
