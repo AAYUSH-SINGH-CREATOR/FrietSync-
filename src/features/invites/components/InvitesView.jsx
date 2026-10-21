@@ -17,6 +17,7 @@ import {
   getFriendlyErrorMessage,
 } from '../services/inviteApi';
 import MultiInviteForm from './MultiInviteForm';
+import { canSendInvites } from '../utils/invitePermissions';
 
 const AVATAR_COLORS = ['#4277d3', '#d95195', '#9569d3', '#c46653'];
 
@@ -34,6 +35,7 @@ const formatDate = (value) => {
 const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
   const outletContext = useOutletContext() || {};
   const onInvitesUpdated = propOnInvitesUpdated || outletContext.setPendingInviteCount;
+  const canSendInvitesSection = !outletContext.isLoadingUserProfile && canSendInvites(outletContext.currentUserProfile);
   const [invites, setInvites] = useState([]);
   const [isLoadingInvites, setIsLoadingInvites] = useState(true);
   const [inviteError, setInviteError] = useState('');
@@ -138,11 +140,13 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
         ))}
       </div>
 
-      <section className="rounded-2xl border border-slate-200/80 dark:border-[#3a3a3a] bg-white dark:bg-[#1d1d1d] p-5 sm:p-7">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Invite to Frietsync</h2>
-        <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-1 mb-5">Invite upto 6 people with email</p>
-        <MultiInviteForm onSuccess={fetchInvites} />
-      </section>
+      {canSendInvitesSection && (
+        <section className="rounded-2xl border border-slate-200/80 dark:border-[#3a3a3a] bg-white dark:bg-[#1d1d1d] p-5 sm:p-7">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">Invite to Frietsync</h2>
+          <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mt-1 mb-5">Invite upto 6 people with email</p>
+          <MultiInviteForm onSuccess={fetchInvites} />
+        </section>
+      )}
 
       <section className="rounded-2xl border border-slate-200/80 dark:border-[#3a3a3a] bg-white dark:bg-[#1d1d1d] p-5 sm:p-7">
         <h2 className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9] mb-4">My invites</h2>

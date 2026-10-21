@@ -6,11 +6,12 @@ import { getMyInvites } from '../../features/invites/services/inviteApi';
 import { useTheme } from '../../context/ThemeContext';
 import InviteModal from '../../features/invites/components/InviteModal';
 import InvitesBellModal from '../../features/invites/components/InvitesBellModal';
+import { canSendInvites } from '../../features/invites/utils/invitePermissions';
 import logo from '../../assets/logo.svg';
 import defaultAvatar from '../../assets/oggy-img.png';
 
 
-const DashboardNavbar = ({ currentUserProfile }) => {
+const DashboardNavbar = ({ currentUserProfile, isLoadingUserProfile }) => {
   const navigate = useNavigate();
   const { isDarkMode, toggleTheme } = useTheme() || {};
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -19,6 +20,7 @@ const DashboardNavbar = ({ currentUserProfile }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const canSendInvite = !isLoadingUserProfile && canSendInvites(currentUserProfile);
 
   const refreshInviteCount = useCallback(() => {
     getMyInvites()
@@ -93,7 +95,10 @@ const DashboardNavbar = ({ currentUserProfile }) => {
               alt="FrietSync Logo"
               className="w-7 h-7 sm:w-8 sm:h-8 object-contain transition-transform duration-200 group-hover:scale-105"
             />
-            <span className="text-2xl font-black text-sky-600 dark:text-sky-400 tracking-tight group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
+            {/* <span className="text-2xl font-black fon text-black dark:text-white tracking-tight group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
+              FrietSync
+            </span> */}
+            <span className="text-[32px] leading-none font-semibold tracking-normal text-black dark:text-black group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
               FrietSync
             </span>
           </Link>
@@ -102,30 +107,32 @@ const DashboardNavbar = ({ currentUserProfile }) => {
 
         <div className="flex items-center gap-2 sm:gap-3">
 
-             {toggleTheme && (
-              <button
-                type="button"
-                onClick={toggleTheme}
-                title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                aria-label="Toggle theme"
-                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-[#303030] hover:border-sky-300 dark:hover:border-[#454545] hover:bg-sky-50/50 dark:hover:bg-[#242424] text-gray-700 dark:text-[#e0e0e0] hover:text-sky-600 dark:hover:text-[#F1F5F9] flex items-center justify-center transition cursor-pointer"
-              >
-                {isDarkMode ? (
-                  <FiSun size={17} className="text-amber-400" />
-                ) : (
-                  <FiMoon size={17} className="text-slate-600" />
-                )}
-              </button>
-            )}
+          {toggleTheme && (
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label="Toggle theme"
+              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-[#303030] hover:border-sky-300 dark:hover:border-[#454545] hover:bg-sky-50/50 dark:hover:bg-[#242424] text-gray-700 dark:text-[#e0e0e0] hover:text-sky-600 dark:hover:text-[#F1F5F9] flex items-center justify-center transition cursor-pointer"
+            >
+              {isDarkMode ? (
+                <FiSun size={17} className="text-amber-400" />
+              ) : (
+                <FiMoon size={17} className="text-slate-600" />
+              )}
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setIsInviteOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 shadow-sm shadow-sky-600/20 transition cursor-pointer"
-          >
-            <FiPlus size={16} />
-            <span>Invite</span>
-          </button>
+          {canSendInvite && (
+            <button
+              type="button"
+              onClick={() => setIsInviteOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 shadow-sm shadow-sky-600/20 transition cursor-pointer"
+            >
+              <FiPlus size={16} />
+              <span>Invite</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -209,11 +216,13 @@ const DashboardNavbar = ({ currentUserProfile }) => {
         </div>
       </header>
 
-      <InviteModal
-        isOpen={isInviteOpen}
-        onClose={() => setIsInviteOpen(false)}
-        onInviteSent={refreshInviteCount}
-      />
+      {canSendInvite && (
+        <InviteModal
+          isOpen={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          onInviteSent={refreshInviteCount}
+        />
+      )}
 
       <InvitesBellModal
         isOpen={isBellOpen}

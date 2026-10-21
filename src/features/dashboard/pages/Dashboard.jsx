@@ -118,6 +118,7 @@ const Dashboard = () => {
       <DashboardNavbar
         unreadNotificationCount={unreadNotificationCount}
         currentUserProfile={currentUserProfile}
+        isLoadingUserProfile={isLoadingUserProfile}
       />
 
       <Sidebar
