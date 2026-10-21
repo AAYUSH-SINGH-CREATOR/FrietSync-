@@ -32,6 +32,7 @@ export class StompChatClient {
     this.connected = false;
     this.subIdCounter = 0;
     this.subscriptions = new Map(); 
+    this.connectListeners = new Set();
     this.onConnected = options.onConnected || null;
     this.onDisconnected = options.onDisconnected || null;
     this.onError = options.onError || null;
@@ -209,6 +210,13 @@ export class StompChatClient {
         }
 
         if (this.onConnected) this.onConnected(headers);
+        this.connectListeners.forEach((cb) => {
+          try {
+            cb(headers);
+          } catch (e) {
+            console.error('Error in connect listener:', e);
+          }
+        });
         break;
 
       case 'MESSAGE': {
@@ -272,6 +280,14 @@ export class StompChatClient {
 
     return () => {
       this.unsubscribe(subId);
+    };
+  }
+
+  addConnectListener(callback) {
+    if (typeof callback !== 'function') return () => {};
+    this.connectListeners.add(callback);
+    return () => {
+      this.connectListeners.delete(callback);
     };
   }
 
