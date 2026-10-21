@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { FiArrowLeft } from 'react-icons/fi';
 import logo from '../assets/logo.svg';
 
 const documents = {
@@ -133,6 +134,7 @@ const renderLinks = (text) => text.split(/(https:\/\/frietsync\.me\/|frietsync@g
 
 export default function LegalPage({ type }) {
   const document = documents[type];
+  const navigate = useNavigate();
 
   useEffect(() => {
     const previousTitle = window.document.title;
@@ -160,6 +162,14 @@ export default function LegalPage({ type }) {
 
       <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10 dark:border-white/10 dark:bg-[#1d1d1d]">
+          <button
+            type="button"
+            onClick={() => navigate(window.history.length > 1 ? -1 : '/')}
+            className="mb-6 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+          >
+            <FiArrowLeft size={16} />
+            Back
+          </button>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{document.title}</h1>
           <p className="mt-3 text-sm text-slate-500 dark:text-slate-400"><strong>Last Updated: October 21, 2026</strong></p>
 
