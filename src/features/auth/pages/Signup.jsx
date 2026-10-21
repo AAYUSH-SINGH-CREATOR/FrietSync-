@@ -70,6 +70,7 @@ const Signup = () => {
 
     const errors = {};
     if (!formData.name.trim()) errors.name = 'Name is required';
+    else if (!/^[\p{L}\s]+$/u.test(formData.name.trim())) errors.name = 'Name can contain only letters and spaces.';
     if (!formData.email.trim()) errors.email = 'Email is required';
 
     if (!formData.password) {

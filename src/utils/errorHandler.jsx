@@ -63,6 +63,13 @@ export const getFriendlyErrorMessage = (error, context = '') => {
       if (backendMsg.toLowerCase().includes('yourself')) {
         return "You can't invite yourself.";
       }
+      if (context === 'signup') {
+        const cleanMessage = backendMsg.replace(/^(?:name|email|password|confirmPassword)\s*:\s*/i, '');
+        if (/^Name can contain only letters and spaces\.?$/i.test(cleanMessage)) {
+          return 'Name can contain only letters and spaces.';
+        }
+        return cleanMessage;
+      }
       return backendMsg;
     }
     return 'Invalid request. Please check your information and try again.';
