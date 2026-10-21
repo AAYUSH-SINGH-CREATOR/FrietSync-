@@ -15,10 +15,11 @@ import {
 import { getMyProjects, getProjectMembers, getFriendlyErrorMessage } from '../services/projectApi';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import CreateProjectModal from '../components/CreateProjectModal';
-import { formatDate } from '../utils/projectUtils';
+import { canCreateProject, formatDate } from '../utils/projectUtils';
 const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
+  const canCreateProjectButton = outletContext.isLoadingUserProfile === false && canCreateProject(outletContext.currentUserProfile);
   const filter = propFilter || outletContext.projectFilter || 'all';
   const onFilterChange = propOnFilterChange || outletContext.setProjectFilter;
   const [projects, setProjects] = useState([]);
@@ -193,14 +194,16 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               className={isLoading ? 'animate-spin text-sky-600 dark:text-[#60A5FA]' : ''}
             />
           </button>
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
-          >
-            <FiPlus size={18} />
-            <span>Create Project</span>
-          </button>
+          {canCreateProjectButton && (
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
+            >
+              <FiPlus size={18} />
+              <span>Create Project</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -357,14 +360,16 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             Get started by adding your first project to organize issues, sprints,
             deadlines, and collaborate with your team.
           </p>
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
-          >
-            <FiPlus size={18} />
-            <span>Create Your First Project</span>
-          </button>
+          {canCreateProjectButton && (
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
+            >
+              <FiPlus size={18} />
+              <span>Create Your First Project</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -461,7 +466,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
       {/* Create Project Modal */}
       <CreateProjectModal
-        isOpen={isCreateModalOpen}
+        isOpen={canCreateProjectButton && isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onProjectCreated={handleProjectCreated}
       />

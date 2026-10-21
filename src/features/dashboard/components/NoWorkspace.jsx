@@ -4,6 +4,7 @@ import workspaceHero from '../../../assets/workspace-hero.png';
 import workspaceFolderIcon from '../../../assets/workspace-icon-folder.png';
 import workspaceCollaborateIcon from '../../../assets/workspace-icon-collaborate.png';
 import workspaceIssuesIcon from '../../../assets/workspace-icon-issues.png';
+import { canCreateProject } from '../../projects/utils/projectUtils';
 
 const NoWorkspace = ({
   userName: propUserName,
@@ -13,6 +14,7 @@ const NoWorkspace = ({
 }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
+  const canCreateProjectCard = outletContext.isLoadingUserProfile === false && canCreateProject(outletContext.currentUserProfile);
   const userName =
     propUserName ||
     outletContext?.currentUserProfile?.name ||
@@ -82,7 +84,7 @@ const NoWorkspace = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[940px] mx-auto mt-8 sm:mt-12 w-full px-2">
-        <div
+        {canCreateProjectCard && <div
           onClick={handleCreateProjectClick}
           role="button"
           tabIndex={0}
@@ -104,7 +106,7 @@ const NoWorkspace = ({
               organise work tasks and sprints in one place
             </p>
           </div>
-        </div>
+        </div>}
 
         <div
           onClick={handleCollaborateClick}

@@ -1,5 +1,13 @@
 import { getUserProfile } from '../../auth/services/authApi';
 
+export const canCreateProject = (profile) => {
+  const role = String(profile?.role || profile?.user?.role || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+  return ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(role);
+};
+
 export const formatDate = (dateStr) => {
   if (!dateStr) return 'Not set';
   try {

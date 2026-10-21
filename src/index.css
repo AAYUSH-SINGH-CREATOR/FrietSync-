@@ -91,19 +91,15 @@ body {
   height: 0;
 }
 
-.dark ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.dark ::-webkit-scrollbar-track {
-  background: #242424;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: #454545;
-  border-radius: 4px;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #606060;
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .auththeme {

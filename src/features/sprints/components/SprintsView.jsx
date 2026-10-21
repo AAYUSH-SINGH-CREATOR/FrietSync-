@@ -61,7 +61,7 @@ const FilterSelect = ({ label, value, onChange, options }) => (
 );
 
 const SprintsView = () => {
-  const { currentUserProfile } = useOutletContext() || {};
+  const { currentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
   const globalRole = String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase();
   const isAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
 
@@ -241,6 +241,7 @@ const SprintsView = () => {
   });
   const currentProjectRoleName = String(currentProjectRole?.role || currentProjectRole?.projectRole || currentProjectRole?.user?.role || '').toUpperCase();
   const canManage = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(currentProjectRoleName);
+  const canCreateSprint = isLoadingUserProfile === false && canManage;
 
   const loadSprintRequests = useCallback(async () => {
     if (!projectId || !canManage) {
@@ -379,7 +380,7 @@ const SprintsView = () => {
           onOpenEdit={(s) => { setSprintToEdit(s); setIsCreateEditOpen(true); }}
         />
         <CreateEditSprintModal
-          isOpen={isCreateEditOpen}
+          isOpen={isCreateEditOpen && (sprintToEdit ? canManage : canCreateSprint)}
           onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
           projectId={projectId}
           projectName={currentProject?.name}
@@ -415,14 +416,16 @@ const SprintsView = () => {
           >
             <FiRefreshCw size={15} className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} />
           </button>
-          <button
-            type="button"
-            onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
-            disabled={!projectId}
-            className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 sm:text-sm cursor-pointer disabled:opacity-50"
-          >
-            <FiPlus size={16} /> New sprint
-          </button>
+          {canCreateSprint && (
+            <button
+              type="button"
+              onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
+              disabled={!projectId}
+              className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 sm:text-sm cursor-pointer disabled:opacity-50"
+            >
+              <FiPlus size={16} /> New sprint
+            </button>
+          )}
         </div>
       </div>
 
@@ -499,7 +502,7 @@ const SprintsView = () => {
           onClick={() => setLayoutView('board')}
           className={`rounded-lg px-6 py-2 text-xs font-bold transition cursor-pointer ${
             layoutView === 'board'
-              ? 'border border-[#20204a] bg-[#141428] text-white shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
+              ? 'border border-[#20204a] text-black shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
               : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
           }`}
         >
@@ -510,7 +513,7 @@ const SprintsView = () => {
           onClick={() => setLayoutView('list')}
           className={`rounded-lg px-6 py-2 text-xs font-bold transition cursor-pointer ${
             layoutView === 'list'
-              ? 'border border-[#20204a] bg-[#141428] text-white shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
+              ? 'border border-[#20204a]  text-black shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
               : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
           }`}
         >
@@ -603,13 +606,13 @@ const SprintsView = () => {
           onSprintClick={handleSprintClick}
           onStatusChange={handleSprintStatusChange}
           pendingSprintIds={pendingSprintIds}
-          onCreateSprint={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
+          onCreateSprint={canCreateSprint ? () => { setSprintToEdit(null); setIsCreateEditOpen(true); } : undefined}
         />
       )}
 
       {/* Create / Edit Sprint Modal */}
       <CreateEditSprintModal
-        isOpen={isCreateEditOpen}
+        isOpen={isCreateEditOpen && (sprintToEdit ? canManage : canCreateSprint)}
         onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
         projectId={projectId}
         projectName={currentProject?.name}

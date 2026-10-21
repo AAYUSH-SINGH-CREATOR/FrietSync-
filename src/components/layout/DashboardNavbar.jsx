@@ -98,7 +98,7 @@ const DashboardNavbar = ({ currentUserProfile, isLoadingUserProfile }) => {
             {/* <span className="text-2xl font-black fon text-black dark:text-white tracking-tight group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
               FrietSync
             </span> */}
-            <span className="text-[32px] leading-none font-semibold tracking-normal text-black dark:text-black group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
+            <span className="text-[32px] leading-none font-semibold tracking-normal text-black dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
               FrietSync
             </span>
           </Link>
