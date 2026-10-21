@@ -53,6 +53,10 @@ export class StompChatClient {
     this.intentionalClose = false;
     this.clearReconnectTimer();
 
+    if (this.connected || (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN))) {
+      return;
+    }
+
     const token = getToken();
     if (!token) {
       this.updateStatus('unauthorized');
@@ -329,4 +333,14 @@ export class StompChatClient {
     this.updateStatus('disconnected');
   }
 }
+
+let sharedStompClientInstance = null;
+
+export const getSharedStompClient = () => {
+  if (!sharedStompClientInstance) {
+    sharedStompClientInstance = new StompChatClient();
+  }
+  return sharedStompClientInstance;
+};
+
 
