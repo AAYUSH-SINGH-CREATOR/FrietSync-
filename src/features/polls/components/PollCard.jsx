@@ -1,6 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { FiLock, FiClock, FiCheck, FiShare2, FiBarChart2 } from 'react-icons/fi';
-import { voteInPoll, closePoll, getFriendlyErrorMessage } from '../services/pollApi';
+import {
+  voteInPoll,
+  closePoll,
+  getPollDetails,
+  subscribeToPollResults,
+  mergePollUpdateEvent,
+  getFriendlyErrorMessage,
+} from '../services/pollApi';
 
 const PollCard = ({
   poll,
@@ -9,38 +16,93 @@ const PollCard = ({
   onPollUpdated,
   onShareToChat,
 }) => {
+  const [livePoll, setLivePoll] = useState(null);
   const [isVoting, setIsVoting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const voteInProgressRef = useRef(false);
 
-  const pollId = poll?.id || poll?._id || poll?.pollId;
-  const isClosed = poll?.status === 'CLOSED' || poll?.closed === true || (poll?.closesAt && new Date(poll.closesAt) < new Date());
+  const onPollUpdatedRef = useRef(onPollUpdated);
+  useEffect(() => {
+    onPollUpdatedRef.current = onPollUpdated;
+  }, [onPollUpdated]);
 
-  // Check if current user voted
+  const pollData = useMemo(() => {
+    return livePoll ? mergePollUpdateEvent(poll, livePoll) : poll;
+  }, [poll, livePoll]);
+
+  const pollId = pollData?.id || pollData?._id || pollData?.pollId || poll?.id || poll?._id || poll?.pollId;
+
+  useEffect(() => {
+    if (!pollId) return undefined;
+    let isMounted = true;
+    getPollDetails(pollId)
+      .then((fresh) => {
+        if (isMounted && fresh) {
+          setLivePoll((prev) => {
+            const merged = mergePollUpdateEvent(prev || poll, fresh);
+            onPollUpdatedRef.current?.(merged);
+            return merged;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn(`[PollCard] Initial details fetch skipped for ${pollId}:`, err?.message || err);
+      });
+    return () => { isMounted = false; };
+  }, [pollId, poll]);
+
+  useEffect(() => {
+    if (!pollId) return undefined;
+    const unsubscribe = subscribeToPollResults(pollId, (event) => {
+      if (!event) return;
+      setLivePoll((prev) => {
+        const merged = mergePollUpdateEvent(prev || poll, event);
+        onPollUpdatedRef.current?.(merged);
+        return merged;
+      });
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [pollId, poll]);
+
+  const isClosed = pollData?.status === 'CLOSED' || pollData?.closed === true || (pollData?.closesAt && new Date(pollData.closesAt) < new Date());
+
   const localVotedKey = `frietSync_poll_${pollId}_voted`;
   const savedVotedOptionId = typeof window !== 'undefined' ? localStorage.getItem(localVotedKey) : null;
-  const userVotedOptionId = poll?.userVotedOptionId || poll?.votedOptionId || savedVotedOptionId || (
-    poll?.options?.find((o) => o.hasVoted || (Array.isArray(o.voterIds) && currentUserId && o.voterIds.includes(currentUserId)))?.id
+  const userVotedOptionId = pollData?.userVotedOptionId || pollData?.votedOptionId || savedVotedOptionId || (
+    pollData?.options?.find((o) => o.hasVoted || (Array.isArray(o.voterIds) && currentUserId && o.voterIds.includes(currentUserId)))?.id
   );
 
   const totalVotes = useMemo(() => {
-    if (typeof poll?.totalVotes === 'number') return poll.totalVotes;
-    return (poll?.options || []).reduce((acc, o) => acc + (o.voteCount || o.votes || 0), 0);
-  }, [poll]);
+    if (typeof pollData?.totalVotes === 'number') return pollData.totalVotes;
+    return (pollData?.options || []).reduce((acc, o) => acc + (o.voteCount || o.votes || 0), 0);
+  }, [pollData]);
 
   const handleVote = async (optionId) => {
-    if (!pollId || isClosed || isVoting) return;
+    if (!pollId || isClosed || voteInProgressRef.current || String(userVotedOptionId) === String(optionId)) return;
+    voteInProgressRef.current = true;
     setErrorMsg('');
     setIsVoting(true);
-    setSelectedOptionId(optionId);
     try {
-      localStorage.setItem(localVotedKey, optionId);
       const updated = await voteInPoll(pollId, optionId);
-      onPollUpdated?.(updated || { ...poll, userVotedOptionId: optionId });
+      localStorage.setItem(localVotedKey, optionId);
+      setSelectedOptionId(optionId);
+      setLivePoll((prev) => {
+        const merged = mergePollUpdateEvent(prev || poll, updated || { userVotedOptionId: optionId });
+        const result = {
+          ...merged,
+          userVotedOptionId: updated?.userVotedOptionId || updated?.votedOptionId || optionId,
+        };
+        onPollUpdatedRef.current?.(result);
+        return result;
+      });
     } catch (err) {
       setErrorMsg(getFriendlyErrorMessage(err, 'poll'));
     } finally {
+      voteInProgressRef.current = false;
       setIsVoting(false);
     }
   };
@@ -52,7 +114,11 @@ const PollCard = ({
     setErrorMsg('');
     try {
       const updated = await closePoll(pollId);
-      onPollUpdated?.(updated || { ...poll, status: 'CLOSED', closed: true });
+      setLivePoll((prev) => {
+        const merged = mergePollUpdateEvent(prev || poll, updated || { status: 'CLOSED', closed: true });
+        onPollUpdatedRef.current?.(merged);
+        return merged;
+      });
     } catch (err) {
       setErrorMsg(getFriendlyErrorMessage(err, 'poll'));
     } finally {
@@ -89,7 +155,7 @@ const PollCard = ({
             {isClosed ? 'Closed' : 'Active Poll'}
           </span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-[#2b2b2e] dark:text-[#999]">
-            {poll?.mode === 'MULTI' ? 'Multi Choice' : 'Single Choice'}
+            {pollData?.mode === 'MULTI' ? 'Multi Choice' : 'Single Choice'}
           </span>
         </div>
 
@@ -97,7 +163,7 @@ const PollCard = ({
           {onShareToChat && (
             <button
               type="button"
-              onClick={() => onShareToChat(poll)}
+              onClick={() => onShareToChat(pollData)}
               title="Share poll in chat"
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-sky-600 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950/40 cursor-pointer"
             >
@@ -120,11 +186,11 @@ const PollCard = ({
       {/* Question & Description */}
       <div className="mt-2.5">
         <h4 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base leading-snug">
-          {poll?.question || 'Untitled Poll'}
+          {pollData?.question || 'Untitled Poll'}
         </h4>
-        {poll?.description && (
+        {pollData?.description && (
           <p className="mt-1 text-xs text-slate-500 dark:text-[#999] leading-relaxed">
-            {poll.description}
+            {pollData.description}
           </p>
         )}
       </div>
@@ -137,7 +203,7 @@ const PollCard = ({
 
       {/* Options List with Progress Bars */}
       <div className="mt-3.5 space-y-2">
-        {(poll?.options || []).map((opt, idx) => {
+        {(pollData?.options || []).map((opt, idx) => {
           const optId = opt.id || opt._id || opt.optionId || String(idx);
           const optText = opt.text || opt.label || opt.title || opt.optionText || (typeof opt === 'string' ? opt : `Option ${idx + 1}`);
           const count = opt.voteCount ?? opt.votes ?? opt.count ?? 0;
@@ -202,9 +268,9 @@ const PollCard = ({
           <span>{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'} total</span>
           {userVotedOptionId && <span className="text-sky-600 dark:text-sky-400 font-semibold">• You voted</span>}
         </div>
-        {poll?.closesAt && (
-          <span title={poll.closesAt}>
-            {isClosed ? 'Closed' : 'Closes'}: {formatDeadline(poll.closesAt)}
+        {pollData?.closesAt && (
+          <span title={pollData.closesAt}>
+            {isClosed ? 'Closed' : 'Closes'}: {formatDeadline(pollData.closesAt)}
           </span>
         )}
       </div>
