@@ -201,7 +201,7 @@ export const mergePollUpdateEvent = (currentPoll, event) => {
     closed: isClosed,
     totalVotes,
     options: updatedOptions,
-    userVotedOptionId: currentPoll.userVotedOptionId || raw.userVotedOptionId,
+    userVotedOptionId: raw.userVotedOptionId || raw.votedOptionId || currentPoll.userVotedOptionId || currentPoll.votedOptionId,
   };
 };
 

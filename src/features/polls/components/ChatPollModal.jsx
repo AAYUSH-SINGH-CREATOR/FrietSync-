@@ -46,8 +46,9 @@ const ChatPollModal = ({
   };
 
   const handlePollUpdated = (updated) => {
-    if (!updated?.id) return;
-    setPolls((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    const targetId = updated?.id || updated?._id || updated?.pollId;
+    if (!targetId) return;
+    setPolls((prev) => prev.map((p) => ((p.id || p._id || p.pollId) === targetId ? { ...p, ...updated } : p)));
   };
 
   const handlePollCreated = (created) => {
