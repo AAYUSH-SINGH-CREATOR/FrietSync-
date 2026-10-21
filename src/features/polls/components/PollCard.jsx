@@ -9,6 +9,16 @@ import {
   getFriendlyErrorMessage,
 } from '../services/pollApi';
 
+const getCurrentTime = () => Date.now();
+const isDateExpired = (dateStr) => {
+  if (!dateStr) return false;
+  try {
+    return new Date(dateStr).getTime() < Date.now();
+  } catch {
+    return false;
+  }
+};
+
 const PollCard = ({
   poll,
   currentUserId,
@@ -22,6 +32,13 @@ const PollCard = ({
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const voteInProgressRef = useRef(false);
+  const rateLimitedUntilRef = useRef(0);
+  const hasFetchedRef = useRef(null);
+
+  const pollRef = useRef(poll);
+  useEffect(() => {
+    pollRef.current = poll;
+  }, [poll]);
 
   const onPollUpdatedRef = useRef(onPollUpdated);
   useEffect(() => {
@@ -32,16 +49,23 @@ const PollCard = ({
     return livePoll ? mergePollUpdateEvent(poll, livePoll) : poll;
   }, [poll, livePoll]);
 
-  const pollId = pollData?.id || pollData?._id || pollData?.pollId || poll?.id || poll?._id || poll?.pollId;
+  const pollId = poll?.id || poll?._id || poll?.pollId || pollData?.id || pollData?._id || pollData?.pollId;
 
   useEffect(() => {
     if (!pollId) return undefined;
+    if (hasFetchedRef.current === pollId) return undefined;
+    hasFetchedRef.current = pollId;
+
+    if (pollRef.current?.options?.length > 0) {
+      return undefined;
+    }
+
     let isMounted = true;
     getPollDetails(pollId)
       .then((fresh) => {
         if (isMounted && fresh) {
           setLivePoll((prev) => {
-            const merged = mergePollUpdateEvent(prev || poll, fresh);
+            const merged = mergePollUpdateEvent(prev || pollRef.current, fresh);
             onPollUpdatedRef.current?.(merged);
             return merged;
           });
@@ -51,14 +75,14 @@ const PollCard = ({
         console.warn(`[PollCard] Initial details fetch skipped for ${pollId}:`, err?.message || err);
       });
     return () => { isMounted = false; };
-  }, [pollId, poll]);
+  }, [pollId]);
 
   useEffect(() => {
     if (!pollId) return undefined;
     const unsubscribe = subscribeToPollResults(pollId, (event) => {
       if (!event) return;
       setLivePoll((prev) => {
-        const merged = mergePollUpdateEvent(prev || poll, event);
+        const merged = mergePollUpdateEvent(prev || pollRef.current, event);
         onPollUpdatedRef.current?.(merged);
         return merged;
       });
@@ -66,9 +90,9 @@ const PollCard = ({
     return () => {
       unsubscribe();
     };
-  }, [pollId, poll]);
+  }, [pollId]);
 
-  const isClosed = pollData?.status === 'CLOSED' || pollData?.closed === true || (pollData?.closesAt && new Date(pollData.closesAt) < new Date());
+  const isClosed = pollData?.status === 'CLOSED' || pollData?.closed === true || isDateExpired(pollData?.closesAt);
 
   const localVotedKey = `frietSync_poll_${pollId}_voted`;
   const savedVotedOptionId = typeof window !== 'undefined' ? localStorage.getItem(localVotedKey) : null;
@@ -82,16 +106,28 @@ const PollCard = ({
   }, [pollData]);
 
   const handleVote = async (optionId) => {
-    if (!pollId || isClosed || voteInProgressRef.current || String(userVotedOptionId) === String(optionId)) return;
+    if (!pollId || isClosed || voteInProgressRef.current || isVoting) return;
+
+    if (pollData?.mode !== 'MULTI' && String(userVotedOptionId) === String(optionId)) {
+      return;
+    }
+
+    const now = getCurrentTime();
+    if (rateLimitedUntilRef.current && now < rateLimitedUntilRef.current) {
+      const waitSecs = Math.max(1, Math.ceil((rateLimitedUntilRef.current - now) / 1000));
+      setErrorMsg(`Too many requests. Please wait ${waitSecs}s before voting.`);
+      return;
+    }
+
     voteInProgressRef.current = true;
     setErrorMsg('');
     setIsVoting(true);
+    setSelectedOptionId(optionId);
     try {
       const updated = await voteInPoll(pollId, optionId);
       localStorage.setItem(localVotedKey, optionId);
-      setSelectedOptionId(optionId);
       setLivePoll((prev) => {
-        const merged = mergePollUpdateEvent(prev || poll, updated || { userVotedOptionId: optionId });
+        const merged = mergePollUpdateEvent(prev || pollRef.current, updated || { userVotedOptionId: optionId });
         const result = {
           ...merged,
           userVotedOptionId: updated?.userVotedOptionId || updated?.votedOptionId || optionId,
@@ -100,7 +136,13 @@ const PollCard = ({
         return result;
       });
     } catch (err) {
+      if (err?.status === 429 || err?.response?.status === 429) {
+        const retryHeader = err?.retryAfter || err?.response?.headers?.['retry-after'];
+        const retrySecs = Number(retryHeader) || 60;
+        rateLimitedUntilRef.current = getCurrentTime() + (retrySecs * 1000);
+      }
       setErrorMsg(getFriendlyErrorMessage(err, 'poll'));
+      setSelectedOptionId(null);
     } finally {
       voteInProgressRef.current = false;
       setIsVoting(false);
@@ -115,7 +157,7 @@ const PollCard = ({
     try {
       const updated = await closePoll(pollId);
       setLivePoll((prev) => {
-        const merged = mergePollUpdateEvent(prev || poll, updated || { status: 'CLOSED', closed: true });
+        const merged = mergePollUpdateEvent(prev || pollRef.current, updated || { status: 'CLOSED', closed: true });
         onPollUpdatedRef.current?.(merged);
         return merged;
       });

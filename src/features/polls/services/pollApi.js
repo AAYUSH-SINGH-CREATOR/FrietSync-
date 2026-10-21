@@ -19,12 +19,16 @@ const handlePollError = (error, defaultMessage) => {
   if (error.response) {
     error.status = error.response.status;
     error.data = error.response.data;
+    const retryAfter = error.response.headers?.['retry-after'];
+    if (retryAfter) {
+      error.retryAfter = retryAfter;
+    }
     const serverMsg =
       error.response.data?.message ||
       error.response.data?.error ||
       error.response.data?.msg ||
       (typeof error.response.data === 'string' ? error.response.data : null);
-    error.message = serverMsg || defaultMessage;
+    error.message = serverMsg || (error.status === 429 && retryAfter ? `Too many requests, try again in ${retryAfter} seconds` : defaultMessage);
   } else {
     error.status = 0;
     error.response = { status: 0, data: null };
@@ -62,7 +66,7 @@ export const createProjectPoll = async (projectId, pollData) => {
       description: pollData.description?.trim() || '',
       options: (pollData.options || []).map((o) => (typeof o === 'string' ? o.trim() : o.text || o.label || '')).filter(Boolean),
       closesAt: pollData.closesAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      mode: pollData.mode || 'SINGLE',
+      mode: 'SINGLE',
     };
     const response = await axios.post(`${BASE_URL}/projects/${projectId}/polls`, payload, getAuthHeaders());
     return normalizePoll(response.data) || response.data;
@@ -113,12 +117,15 @@ export const closePoll = async (pollId) => {
     const response = await axios.post(`${BASE_URL}/polls/${pollId}/close`, {}, getAuthHeaders());
     return normalizePoll(response.data) || response.data;
   } catch (error) {
-    try {
-      const patchRes = await axios.patch(`${BASE_URL}/polls/${pollId}/close`, {}, getAuthHeaders());
-      return normalizePoll(patchRes.data) || patchRes.data;
-    } catch {
-      handlePollError(error, 'Failed to close poll.');
+    if (error.response?.status === 405) {
+      try {
+        const patchRes = await axios.patch(`${BASE_URL}/polls/${pollId}/close`, {}, getAuthHeaders());
+        return normalizePoll(patchRes.data) || patchRes.data;
+      } catch {
+        handlePollError(error, 'Failed to close poll.');
+      }
     }
+    handlePollError(error, 'Failed to close poll.');
   }
 };
 

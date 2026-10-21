@@ -14,7 +14,6 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
   const [description, setDescription] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [durationDays, setDurationDays] = useState(7);
-  const [mode, setMode] = useState('SINGLE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -62,14 +61,12 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
         description: description.trim(),
         options: cleanOptions,
         closesAt: closesAtDate.toISOString(),
-        mode,
       });
 
       setQuestion('');
       setDescription('');
       setOptions(['', '']);
       setDurationDays(7);
-      setMode('SINGLE');
       onPollCreated?.(newPoll);
       onClose();
     } catch (err) {
@@ -171,8 +168,8 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
             )}
           </div>
 
-          {/* Duration & Mode Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Duration */}
+          <div className="pt-1">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Duration</label>
               <div className="grid grid-cols-2 gap-1.5">
@@ -190,34 +187,6 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
                     {preset.label}
                   </button>
                 ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Voting Mode</label>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setMode('SINGLE')}
-                  className={`rounded-xl border py-1.5 text-center font-medium transition cursor-pointer ${
-                    mode === 'SINGLE'
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 dark:border-sky-400 dark:bg-sky-950/40 dark:text-sky-300'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#35353a] dark:text-[#aaa] dark:hover:bg-[#242428]'
-                  }`}
-                >
-                  Single choice
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('MULTI')}
-                  className={`rounded-xl border py-1.5 text-center font-medium transition cursor-pointer ${
-                    mode === 'MULTI'
-                      ? 'border-sky-500 bg-sky-50 text-sky-700 dark:border-sky-400 dark:bg-sky-950/40 dark:text-sky-300'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-[#35353a] dark:text-[#aaa] dark:hover:bg-[#242428]'
-                  }`}
-                >
-                  Multi choice
-                </button>
               </div>
             </div>
           </div>
