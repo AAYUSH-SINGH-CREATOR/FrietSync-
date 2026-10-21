@@ -31,41 +31,30 @@ import { CiLock } from "react-icons/ci";
 
 
 const DEFAULT_PREFERENCES = [
-  // {
-  //   type: 'PROJECT_UPDATES',
-  //   title: 'Project updates',
-  //   description: 'Notifications when milestones, sprints, or project statuses change.',
-  //   inApp: true,
-  //   email: false,
-  // },
-  // {
-  //   type: 'TASK_ASSIGNMENT',
-  //   title: 'Task assignment',
-  //   description: 'Alerts when issues or tasks are assigned to you or updated.',
-  //   inApp: true,
-  //   email: true,
-  // },
-  // {
-  //   type: 'MENTIONS',
-  //   title: 'Mentions',
-  //   description: 'When teammates mention you in project comments or chats.',
-  //   inApp: true,
-  //   email: false,
-  // },
-  // {
-  //   type: 'COMMENTS',
-  //   title: 'Comments',
-  //   description: 'Activity and replies on issues and sprints you are following.',
-  //   inApp: true,
-  //   email: false,
-  // },
-  // {
-  //   type: 'EMAIL_NOTIFICATIONS',
-  //   title: 'Email Notification',
-  //   description: 'Weekly digest summaries and important workspace updates.',
-  //   inApp: false,
-  //   email: true,
-  // },
+  {
+    type: 'INVITE_RECEIVED',
+    title: 'Workspace Invitations',
+    description: 'When you are invited to join a workspace or project.',
+    inApp: true,
+    email: true,
+    emailSupported: true,
+  },
+  {
+    type: 'INVITE_ACCEPTED',
+    title: 'Invitation Responses',
+    description: 'When an invite you sent is accepted by a teammate.',
+    inApp: true,
+    email: true,
+    emailSupported: true,
+  },
+  {
+    type: 'CHAT_MESSAGE',
+    title: 'Direct and Channel Messages',
+    description: 'Real-time chat alerts from team discussions.',
+    inApp: true,
+    email: false,
+    emailSupported: false,
+  },
 ];
 
 const SettingsView = () => {
@@ -132,7 +121,7 @@ const SettingsView = () => {
               ? {
                   ...item,
                   inApp: found.inApp ?? item.inApp,
-                  email: found.email ?? item.email,
+                  email: item.emailSupported === false ? false : (found.email ?? item.email),
                 }
               : item;
           })
@@ -160,6 +149,9 @@ const SettingsView = () => {
 
   // Handle Toggle Notification Preference
   const handleTogglePreference = async (type, channel) => {
+    const item = preferences.find((p) => p.type === type);
+    if (channel === 'email' && item?.emailSupported === false) return;
+
     const prevPreferences = [...preferences];
     const key = `${type}-${channel}`;
     setUpdatingPrefKey(key);
@@ -181,7 +173,7 @@ const SettingsView = () => {
       const payload = updated.map((p) => ({
         type: p.type,
         inApp: p.inApp,
-        email: p.email,
+        email: p.emailSupported === false ? false : p.email,
       }));
       await updateNotificationPreferences(payload);
     } catch (err) {
@@ -398,10 +390,6 @@ const SettingsView = () => {
                     Preferences
                   </h3>
                 </div>
-                <div className="flex items-center gap-6 text-[11px] font-semibold text-slate-400 uppercase pr-2">
-                  <span>In-App</span>
-                  <span>Email</span>
-                </div>
               </div>
 
               {isLoadingPreferences ? (
@@ -411,16 +399,12 @@ const SettingsView = () => {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {preferences.map((item) => {
-                    const isUpdatingInApp = updatingPrefKey === `${item.type}-inApp`;
-                    const isUpdatingEmail = updatingPrefKey === `${item.type}-email`;
-
-                    return (
+                  {preferences.map((item) => (
                       <div
                         key={item.type}
-                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4"
+                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]"
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">
                             {item.title}
                           </p>
@@ -428,54 +412,8 @@ const SettingsView = () => {
                             {item.description}
                           </p>
                         </div>
-
-                        {/* Toggle Switches */}
-                        <div className="flex items-center gap-6 shrink-0">
-                          {/* In-App Toggle */}
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={item.inApp}
-                            title={`${item.title} in-app alerts`}
-                            disabled={isUpdatingInApp}
-                            onClick={() => handleTogglePreference(item.type, 'inApp')}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                              item.inApp
-                                ? 'bg-sky-600 dark:bg-blue-600'
-                                : 'bg-slate-200 dark:bg-[#2b2e38]'
-                            } ${isUpdatingInApp ? 'opacity-50 cursor-wait' : ''}`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                                item.inApp ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
-
-                          {/* Email Toggle */}
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={item.email}
-                            title={`${item.title} email notifications`}
-                            disabled={isUpdatingEmail}
-                            onClick={() => handleTogglePreference(item.type, 'email')}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                              item.email
-                                ? 'bg-sky-600 dark:bg-blue-600'
-                                : 'bg-slate-200 dark:bg-[#2b2e38]'
-                            } ${isUpdatingEmail ? 'opacity-50 cursor-wait' : ''}`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                                item.email ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
-                        </div>
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               )}
             </div>
