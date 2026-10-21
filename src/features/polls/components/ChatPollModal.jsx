@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiBarChart2, FiPlus, FiRefreshCw } from 'react-icons/fi';
-import { getProjectPolls } from '../services/pollApi';
+import { getProjectPolls, getPollDetails } from '../services/pollApi';
 import PollCard from './PollCard';
 import CreatePollModal from './CreatePollModal';
 
@@ -9,6 +9,7 @@ const ChatPollModal = ({
   onClose,
   activeChat,
   currentUserId,
+  pollId,
   onShareToChat,
 }) => {
   const [polls, setPolls] = useState([]);
@@ -22,7 +23,7 @@ const ChatPollModal = ({
   useEffect(() => {
     if (!isOpen || !projectId) return undefined;
     let isMounted = true;
-    getProjectPolls(projectId)
+    (pollId ? getPollDetails(pollId).then((poll) => poll ? [poll] : []) : getProjectPolls(projectId))
       .then((data) => {
         if (isMounted) {
           setPolls(Array.isArray(data) ? data : []);
@@ -36,7 +37,7 @@ const ChatPollModal = ({
         }
       });
     return () => { isMounted = false; };
-  }, [isOpen, projectId, refreshTrigger]);
+  }, [isOpen, projectId, pollId, refreshTrigger]);
 
   if (!isOpen) return null;
 

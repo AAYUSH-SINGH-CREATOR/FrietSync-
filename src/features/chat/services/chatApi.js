@@ -200,9 +200,23 @@ export const parseAttachmentFromText = (text = '') => {
   return { cleanText: text, attachment: null };
 };
 
+const POLL_METADATA_PATTERN = /\s*\[FRIETSYNC_POLL:([^\]]+)\]/i;
+
+export const getMessagePollId = (message) => {
+  const metadata = message?.metadata || message?.data;
+  const pollId = message?.pollId || message?.poll?.id || message?.poll?._id || message?.poll?.pollId ||
+    metadata?.pollId || metadata?.poll?.id || metadata?.poll?._id || metadata?.poll?.pollId;
+  if (pollId !== undefined && pollId !== null && String(pollId).trim()) return String(pollId).trim();
+  const text = message?.text || message?.content || message?.message || '';
+  return String(text).match(POLL_METADATA_PATTERN)?.[1]?.trim() || null;
+};
+
+export const stripPollMetadata = (text = '') => String(text).replace(POLL_METADATA_PATTERN, '').trim();
+
 export const formatMessagePreview = (text) => {
   if (!text) return '';
-  const { cleanText, attachment } = parseAttachmentFromText(text);
+  const { cleanText: parsedText, attachment } = parseAttachmentFromText(text);
+  const cleanText = stripPollMetadata(parsedText);
   if (attachment) {
     const isImg = attachment.isImage || (attachment.type && attachment.type.startsWith('image/'));
     const prefix = isImg ? '📷 ' : '📎 ';

@@ -19,6 +19,8 @@ import {
   formatFileSize,
   getFileExtension,
   parseAttachmentFromText,
+  getMessagePollId,
+  stripPollMetadata,
   compressImage,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
@@ -49,6 +51,7 @@ const ChatArea = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInChat, setSearchInChat] = useState('');
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [pollToOpenId, setPollToOpenId] = useState(null);
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -266,7 +269,7 @@ const ChatArea = ({
         <div className="flex items-center gap-1 shrink-0 text-slate-600 dark:text-slate-300">
           <button
             type="button"
-            onClick={() => setIsPollModalOpen(true)}
+            onClick={() => { setPollToOpenId(null); setIsPollModalOpen(true); }}
             title="Project Polls & Decisions"
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
@@ -332,6 +335,9 @@ const ChatArea = ({
             const { cleanText, attachment: parsedAtt } = parseAttachmentFromText(msg.text || '');
             const attachment = msg.attachment || (Array.isArray(msg.attachments) ? msg.attachments[0] : null) || parsedAtt;
             const isImageAtt = attachment && (attachment.isImage || attachment.type?.startsWith('image/'));
+            const displayText = stripPollMetadata(cleanText).replace('📊 Poll:', '🗳️ Poll:');
+            const pollId = getMessagePollId(msg);
+            const isLegacyPollMessage = msg.text?.includes('📊') && /\bpoll\b/i.test(msg.text);
 
             return (
               <div key={msg.id} className={`flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
@@ -354,7 +360,7 @@ const ChatArea = ({
                         : 'bg-white dark:bg-[#171717] text-slate-900 dark:text-white rounded-tl-xs border border-slate-100 dark:border-white/5'
                     }`}
                   >
-                    {cleanText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{cleanText}</p>}
+                    {displayText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{displayText}</p>}
 
                     {/* Image Attachment */}
                     {isImageAtt && attachment.url && (
@@ -410,13 +416,13 @@ const ChatArea = ({
                       </div>
                     )}
 
-                    {msg.text?.includes('📊') && (
+                    {(pollId || isLegacyPollMessage) && (
                       <button
                         type="button"
-                        onClick={() => setIsPollModalOpen(true)}
+                        onClick={() => { setPollToOpenId(pollId); setIsPollModalOpen(true); }}
                         className="mt-2 inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-sky-700 transition cursor-pointer"
                       >
-                        <FiBarChart2 size={12} /> View Poll
+                       View Poll
                       </button>
                     )}
                   </div>
@@ -489,7 +495,7 @@ const ChatArea = ({
         {/* Poll button */}
         <button
           type="button"
-          onClick={() => setIsPollModalOpen(true)}
+          onClick={() => { setPollToOpenId(null); setIsPollModalOpen(true); }}
           title="Project Polls & Decisions"
           className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
         >
@@ -593,11 +599,13 @@ const ChatArea = ({
 
       <ChatPollModal
         isOpen={isPollModalOpen}
-        onClose={() => setIsPollModalOpen(false)}
+        pollId={pollToOpenId}
+        onClose={() => { setIsPollModalOpen(false); setPollToOpenId(null); }}
         activeChat={activeChat}
         currentUserId={currentUser?.userId || currentUser?.id}
         onShareToChat={(poll) => {
-          const shareText = `Poll: "${poll.question}" — Vote in Project Polls!`;
+          const pollId = poll.id || poll._id || poll.pollId;
+          const shareText = `🗳️ Poll: "${poll.question}" — Vote in Project Polls!${pollId ? ` [FRIETSYNC_POLL:${pollId}]` : ''}`;
           onSendMessage(shareText);
         }}
       />
