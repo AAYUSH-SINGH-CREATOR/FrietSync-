@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   FiUser,
   FiBell,
@@ -465,6 +465,20 @@ const SettingsView = () => {
                     {isRequestingPasswordReset ? 'Sending code...' : 'Reset Password'}
                   </button>
                 </div>
+              </div>
+              <div className="flex flex-wrap gap-2 px-1">
+                <Link
+                  to="/privacy"
+                  className="rounded-lg border border-slate-200 dark:border-[#30333d] px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#20232c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                >
+                  Privacy Policy
+                </Link>
+                <Link
+                  to="/terms"
+                  className="rounded-lg border border-slate-200 dark:border-[#30333d] px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#20232c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                >
+                  Terms of Service
+                </Link>
               </div>
 
               {/* <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
+import LegalPage from './pages/LegalPage';
 import Signup from './features/auth/pages/Signup';
 import Login from './features/auth/pages/Login';
 import OtpVerification from './features/auth/pages/OtpVerification';
@@ -27,6 +28,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/privacy" element={<LegalPage type="privacy" />} />
+      <Route path="/terms" element={<LegalPage type="terms" />} />
       <Route path="/verify-otp" element={<OtpVerification />} />
 
       <Route element={<PublicRoute />}>

@@ -179,6 +179,15 @@ const LandingPage = () => {
                     </section>
                 </div>
             )}
+            <footer className="relative z-10 w-full border-t border-blue-200/80 bg-white/80">
+                <div className="mx-auto flex w-full max-w-[1440px] flex-col items-center justify-between gap-3 px-6 py-5 text-sm text-gray-600 sm:flex-row sm:px-10 lg:px-16">
+                    <span>© Frietsync</span>
+                    <nav aria-label="Legal" className="flex items-center gap-5">
+                        <Link to="/privacy" className="hover:text-sky-700">Privacy Policy</Link>
+                        <Link to="/terms" className="hover:text-sky-700">Terms of Service</Link>
+                    </nav>
+                </div>
+            </footer>
         </div>
     );
 };
