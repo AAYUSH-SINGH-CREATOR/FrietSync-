@@ -495,31 +495,36 @@ const SprintsView = () => {
         </section>
       )}
 
-      {/* 3. Board / List View Switcher Capsule matching screenshot */}
-      <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#151518]">
-        <button
-          type="button"
-          onClick={() => setLayoutView('board')}
-          className={`rounded-lg px-6 py-2 text-xs font-bold transition cursor-pointer ${
-            layoutView === 'board'
-              ? 'border border-[#20204a] text-black shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
-              : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
-          }`}
-        >
-          Board
-        </button>
-        <button
-          type="button"
-          onClick={() => setLayoutView('list')}
-          className={`rounded-lg px-6 py-2 text-xs font-bold transition cursor-pointer ${
-            layoutView === 'list'
-              ? 'border border-[#20204a]  text-black shadow-xs dark:border-[#383860] dark:bg-[#1a1a36]'
-              : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
-          }`}
-        >
-          List
-        </button>
-      </div>
+     
+{/* Board / List View Switcher */}
+<div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#151518]">
+  <button
+    type="button"
+    onClick={() => setLayoutView('board')}
+    aria-pressed={layoutView === 'board'}
+    className={`cursor-pointer rounded-lg border px-6 py-2 text-xs font-bold transition-colors duration-200 ${
+      layoutView === 'board'
+        ? 'border-slate-300 bg-white text-slate-900 shadow-sm dark:border-[#383860] dark:bg-[#1a1a36] dark:text-white'
+        : 'border-transparent bg-transparent text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:text-[#888] dark:hover:bg-[#222228] dark:hover:text-white'
+    }`}
+  >
+    Board
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setLayoutView('list')}
+    aria-pressed={layoutView === 'list'}
+    className={`cursor-pointer rounded-lg border px-6 py-2 text-xs font-bold transition-colors duration-200 ${
+      layoutView === 'list'
+        ? 'border-slate-300 bg-white text-slate-900 shadow-sm dark:border-[#383860] dark:bg-[#1a1a36] dark:text-white'
+        : 'border-transparent bg-transparent text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:text-[#888] dark:hover:bg-[#222228] dark:hover:text-white'
+    }`}
+  >
+    List
+  </button>
+</div>
+
 
       {/* 4. Controls Row: Search & Filters matching screenshot */}
       <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
