@@ -109,7 +109,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
               placeholder="e.g., Which authentication architecture should we prioritize?"
               maxLength={250}
               required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] dark:focus:ring-sky-400/30"
             />
           </div>
 
@@ -124,7 +124,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
               placeholder="Provide background context or guidelines for this decision..."
               rows={2}
               maxLength={500}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 resize-none"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] dark:focus:ring-sky-400/30 resize-none"
             />
           </div>
 
@@ -145,7 +145,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                     placeholder={`Option ${idx + 1}`}
                     maxLength={100}
-                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400"
+                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] dark:focus:ring-sky-400/30"
                   />
                   {options.length > 2 && (
                     <button
