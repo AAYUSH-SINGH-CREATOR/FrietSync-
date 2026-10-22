@@ -7,10 +7,12 @@ import {
   FiAlertCircle,
   FiLock,
   FiHome,
+  FiRotateCcw,
 } from 'react-icons/fi';
 import {
   createWorkspace,
   getMyWorkspace,
+  restoreWorkspace,
   getFriendlyErrorMessage,
 } from '../services/workspaceApi';
 import logo from '../../../assets/logo.svg';
@@ -66,6 +68,18 @@ const CreateWorkspace = () => {
     }
   };
 
+  const handleRestore = async () => {
+    setIsSubmitting(true);
+    setErrorMessage('');
+    try {
+      await restoreWorkspace(existingWorkspace?.id || existingWorkspace?._id);
+      navigate('/dashboard');
+    } catch (err) {
+      setErrorMessage(getFriendlyErrorMessage(err, 'workspace'));
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#eaedf1] dark:bg-[#292929] flex flex-col justify-center items-center px-4 py-8 font-sans transition-colors duration-200">
       <div className="flex items-center gap-2.5 mb-8">
@@ -113,7 +127,27 @@ const CreateWorkspace = () => {
               </p>
             </div>
 
+            {Boolean(existingWorkspace?.deletionRequestedAt || existingWorkspace?.permanentlyDeleteAt) && (
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-left text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                <p className="font-semibold">Workspace Scheduled for Deletion</p>
+                <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                  Your workspace is currently in a 30-day grace period. You can restore it to continue working with your team.
+                </p>
+              </div>
+            )}
+
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-3 justify-center">
+              {Boolean(existingWorkspace?.deletionRequestedAt || existingWorkspace?.permanentlyDeleteAt) && (
+                <button
+                  type="button"
+                  onClick={handleRestore}
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-md transition cursor-pointer disabled:opacity-50"
+                >
+                  <FiRotateCcw size={16} />
+                  <span>{isSubmitting ? 'Restoring...' : 'Restore Workspace'}</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
