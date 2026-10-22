@@ -7,8 +7,10 @@ import {
 import {
   getSprintById, startSprint, completeSprint, deleteSprint,
   assignSprint, requestSprintAssignment, getProjectSprintRequests, approveSprintRequest,
+  getSprintComments, createSprintComment, updateSprintComment, deleteSprintComment,
   getFriendlyErrorMessage,
 } from '../services/sprintsApi';
+import CommentsThread from '../../../components/ui/CommentsThread';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import { getProjectMembers } from '../../projects/services/projectApi';
 
@@ -48,6 +50,7 @@ const SprintDetailsView = ({
   onOpenEdit,
   canManage = false,
   onIssueClick,
+  currentUserProfile = null,
 }) => {
   const [sprint, setSprint] = useState(initialSprint || null);
   const [isLoading, setIsLoading] = useState(!initialSprint);
@@ -56,6 +59,7 @@ const SprintDetailsView = ({
   const [busyAction, setBusyAction] = useState('');
   const [detailsTrigger, setDetailsTrigger] = useState(0);
   const [requestsTrigger, setRequestsTrigger] = useState(0);
+  const [sprintCommentsCount, setSprintCommentsCount] = useState(0);
 
   // Associated Project issues
   const [projectIssues, setProjectIssues] = useState([]);
@@ -407,9 +411,6 @@ const SprintDetailsView = ({
                   {statusBadge.label}
                 </span>
               </div>
-              <p className="mt-0.5 font-mono text-xs text-slate-400 dark:text-[#888]">
-                Sprint ID: {sprintId}
-              </p>
             </div>
           </div>
         </div>
@@ -575,6 +576,30 @@ const SprintDetailsView = ({
             No issues currently assigned to this sprint. Issues can be assigned to sprints from the Issues module.
           </div>
         )}
+      </section>
+
+      {/* Sprint Discussion & Comments Section */}
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              Sprint Discussion & Comments {sprintCommentsCount > 0 && <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-[#252528] dark:text-[#bbb]">{sprintCommentsCount}</span>}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-[#999]">Collaborate, share sprint updates, and post blockers.</p>
+          </div>
+        </div>
+
+        <CommentsThread
+          key={`sprint-comments-${sprintId}`}
+          entityId={sprintId}
+          entityType="sprint"
+          currentUserProfile={currentUserProfile}
+          fetchComments={getSprintComments}
+          createComment={createSprintComment}
+          updateComment={updateSprintComment}
+          deleteComment={deleteSprintComment}
+          onCountChange={setSprintCommentsCount}
+        />
       </section>
 
       {/* Assign Contributor Modal */}

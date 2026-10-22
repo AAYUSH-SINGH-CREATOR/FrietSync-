@@ -14,6 +14,7 @@ import {
   FiUserPlus,
   FiRefreshCw,
 } from 'react-icons/fi';
+import { IoPersonCircle } from 'react-icons/io5';
 import { logoutUser } from '../../features/auth/services/authApi';
 import { getMyInvites } from '../../features/invites/services/inviteApi';
 import {
@@ -33,7 +34,6 @@ import InviteModal from '../../features/invites/components/InviteModal';
 import InvitesBellModal from '../../features/invites/components/InvitesBellModal';
 import { canSendInvites } from '../../features/invites/utils/invitePermissions';
 import logo from '../../assets/logo.svg';
-import defaultAvatar from '../../assets/oggy-img.png';
 
 const getNotificationIcon = (type) => {
   switch (type) {
@@ -547,17 +547,17 @@ const DashboardNavbar = ({
               aria-label="Open profile menu"
               aria-haspopup="menu"
               aria-expanded={isProfileMenuOpen}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#1f1f1f] cursor-pointer"
+              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#1f1f1f] cursor-pointer"
             >
-              <img
-                src={currentUserProfile?.profilePictureUrl || defaultAvatar}
-                alt={currentUserProfile?.name ? `${currentUserProfile.name} profile` : 'Profile'}
-                onError={(event) => {
-                  event.currentTarget.onerror = null;
-                  event.currentTarget.src = defaultAvatar;
-                }}
-                className="w-full h-full rounded-full object-cover border border-gray-200 dark:border-[#454545]"
-              />
+              <IoPersonCircle className="w-full h-full text-slate-400 dark:text-slate-500" aria-hidden="true" />
+              {currentUserProfile?.profilePictureUrl && (
+                <img
+                  src={currentUserProfile.profilePictureUrl}
+                  alt={currentUserProfile?.name ? `${currentUserProfile.name} profile` : 'Profile'}
+                  onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                  className="absolute inset-0 w-full h-full rounded-full object-cover border border-gray-200 dark:border-[#454545]"
+                />
+              )}
             </button>
 
             {isProfileMenuOpen && (

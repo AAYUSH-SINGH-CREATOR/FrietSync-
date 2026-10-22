@@ -25,7 +25,6 @@ import {
 } from '../services/workspaceApi';
 import {
   getNotificationPreferences,
-  updateNotificationPreferences,
 } from '../services/notificationApi';
 import {
   getGoogleConnectUrl,
@@ -78,7 +77,6 @@ const SettingsView = () => {
   // Notification Preferences State
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
-  const [updatingPrefKey, setUpdatingPrefKey] = useState(null);
 
   // Workspace Management State
   const [workspace, setWorkspace] = useState(null);
@@ -188,47 +186,7 @@ const SettingsView = () => {
     });
   };
 
-  // Handle Toggle Notification Preference
-  const handleTogglePreference = async (type, channel) => {
-    const item = preferences.find((p) => p.type === type);
-    if (channel === 'email' && item?.emailSupported === false) return;
 
-    const prevPreferences = [...preferences];
-    const key = `${type}-${channel}`;
-    setUpdatingPrefKey(key);
-
-    // Optimistic update
-    const updated = preferences.map((p) => {
-      if (p.type === type) {
-        return {
-          ...p,
-          [channel]: !p[channel],
-        };
-      }
-      return p;
-    });
-    setPreferences(updated);
-
-    try {
-      // Call PUT /notifications/preferences
-      const payload = updated.map((p) => ({
-        type: p.type,
-        inApp: p.inApp,
-        email: p.emailSupported === false ? false : p.email,
-      }));
-      await updateNotificationPreferences(payload);
-    } catch (err) {
-      console.error('Failed to update preference:', err);
-      // Rollback on failure
-      setPreferences(prevPreferences);
-      setStatusMessage({
-        type: 'error',
-        text: 'Failed to update notification preference. Please try again.',
-      });
-    } finally {
-      setUpdatingPrefKey(null);
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -431,10 +389,6 @@ const SettingsView = () => {
                     Preferences
                   </h3>
                 </div>
-                <div className="flex items-center gap-6 text-[11px] font-semibold text-slate-400 uppercase pr-2">
-                  <span>In-App</span>
-                  <span>Email</span>
-                </div>
               </div>
 
               {isLoadingPreferences ? (
@@ -444,16 +398,12 @@ const SettingsView = () => {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {preferences.map((item) => {
-                    const isUpdatingInApp = updatingPrefKey === `${item.type}-inApp`;
-                    const isUpdatingEmail = updatingPrefKey === `${item.type}-email`;
-
-                    return (
+                  {preferences.map((item) => (
                       <div
                         key={item.type}
-                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4"
+                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]"
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">
                             {item.title}
                           </p>
@@ -462,62 +412,8 @@ const SettingsView = () => {
                           </p>
                         </div>
 
-                        {/* Toggle Switches */}
-                        <div className="flex items-center gap-6 shrink-0">
-                          {/* In-App Toggle */}
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={item.inApp}
-                            title={`${item.title} in-app alerts`}
-                            disabled={isUpdatingInApp}
-                            onClick={() => handleTogglePreference(item.type, 'inApp')}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                              item.inApp
-                                ? 'bg-sky-600 dark:bg-blue-600'
-                                : 'bg-slate-200 dark:bg-[#2b2e38]'
-                            } ${isUpdatingInApp ? 'opacity-50 cursor-wait' : ''}`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                                item.inApp ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
-
-                          {/* Email Toggle */}
-                          {item.emailSupported !== false ? (
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={item.email}
-                              title={`${item.title} email notifications`}
-                              disabled={isUpdatingEmail}
-                              onClick={() => handleTogglePreference(item.type, 'email')}
-                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                                item.email
-                                  ? 'bg-sky-600 dark:bg-blue-600'
-                                  : 'bg-slate-200 dark:bg-[#2b2e38]'
-                              } ${isUpdatingEmail ? 'opacity-50 cursor-wait' : ''}`}
-                            >
-                              <span
-                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                                  item.email ? 'translate-x-5' : 'translate-x-0'
-                                }`}
-                              />
-                            </button>
-                          ) : (
-                            <div
-                              className="h-6 w-11 shrink-0 flex items-center justify-center text-xs text-slate-400 dark:text-slate-600 select-none"
-                              title="Email notifications not supported for chat messages"
-                            >
-                              —
-                            </div>
-                          )}
-                        </div>
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               )}
             </div>

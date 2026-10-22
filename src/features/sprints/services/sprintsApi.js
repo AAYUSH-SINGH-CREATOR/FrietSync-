@@ -130,4 +130,38 @@ export const approveSprintRequest = (sprintId, requestId) => {
   );
 };
 
+export const getSprintComments = (sprintId) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.get(`${BASE_URL}/sprints/${sprintId}/comments`, getAuthHeaders()),
+    'Failed to load sprint comments.'
+  );
+};
+
+export const createSprintComment = (sprintId, content) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.post(`${BASE_URL}/sprints/${sprintId}/comments`, { content }, getAuthHeaders()),
+    'Failed to create sprint comment.'
+  );
+};
+
+export const updateSprintComment = (sprintId, commentId, content) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  if (!commentId) throw new Error('Comment ID is required.');
+  return request(
+    () => axios.patch(`${BASE_URL}/sprints/${sprintId}/comments/${commentId}`, { content }, getAuthHeaders()),
+    'Failed to update sprint comment.'
+  );
+};
+
+export const deleteSprintComment = (sprintId, commentId) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  if (!commentId) throw new Error('Comment ID is required.');
+  return request(
+    () => axios.delete(`${BASE_URL}/sprints/${sprintId}/comments/${commentId}`, getAuthHeaders()),
+    'Failed to delete sprint comment.'
+  );
+};
+
 export { getFriendlyErrorMessage };
