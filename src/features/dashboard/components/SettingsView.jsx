@@ -13,14 +13,19 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiRefreshCw,
+  FiRotateCcw,
+  FiUsers,
 } from 'react-icons/fi';
 import profileBanner from '../../../assets/profile-banner.png';
-import { logoutUser, sendForgotPasswordOtp, getFriendlyErrorMessage as getAuthErrorMessage } from '../../auth/services/authApi';
-import { getProfile } from '../services/profileApi';
+import { clearAuthStorage, logoutUser, sendForgotPasswordOtp, getFriendlyErrorMessage as getAuthErrorMessage } from '../../auth/services/authApi';
+import { deleteMyAccount, getProfile } from '../services/profileApi';
 import {
   getMyWorkspace,
   updateWorkspace,
   leaveWorkspace,
+  deleteWorkspace,
+  restoreWorkspace,
+  getWorkspaceMembers,
   getFriendlyErrorMessage,
 } from '../services/workspaceApi';
 import {
@@ -85,9 +90,15 @@ const SettingsView = () => {
   const [isUpdatingWorkspace, setIsUpdatingWorkspace] = useState(false);
   const [isLeavingWorkspace, setIsLeavingWorkspace] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isRestoringWorkspace, setIsRestoringWorkspace] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
+  const [workspaceMembersCount, setWorkspaceMembersCount] = useState(0);
 
   // Account State
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
   const [statusMessage, setStatusMessage] = useState(() => location.state?.passwordResetSuccess
     ? { type: 'success', text: 'Your password was reset successfully.' }
     : { type: '', text: '' });
@@ -196,6 +207,10 @@ const SettingsView = () => {
         if (ws && (ws.name || ws.id || ws._id)) {
           setWorkspace(ws);
           setRenameInput(ws.name || '');
+          const wid = ws.id || ws._id || ws.workspaceId;
+          getWorkspaceMembers(wid).then((m) => {
+            if (isMounted && Array.isArray(m)) setWorkspaceMembersCount(m.length);
+          }).catch(() => {});
         } else {
           setWorkspace(null);
           setRenameInput('');
@@ -278,6 +293,62 @@ const SettingsView = () => {
     }
   };
 
+  // Restore Workspace
+  const handleRestoreWorkspace = async () => {
+    setIsRestoringWorkspace(true);
+    setStatusMessage({ type: '', text: '' });
+    try {
+      const restored = await restoreWorkspace(workspace?.id || workspace?._id);
+      setWorkspace((prev) => ({
+        ...prev,
+        ...restored,
+        deletionRequestedAt: null,
+        permanentlyDeleteAt: null,
+      }));
+      setStatusMessage({
+        type: 'success',
+        text: 'Workspace restored successfully! The 30-day deletion schedule has been cancelled.',
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: getFriendlyErrorMessage(err, 'workspace'),
+      });
+    } finally {
+      setIsRestoringWorkspace(false);
+    }
+  };
+
+  // Soft Delete Workspace
+  const handleDeleteWorkspace = async () => {
+    setIsDeletingWorkspace(true);
+    setStatusMessage({ type: '', text: '' });
+    try {
+      const res = await deleteWorkspace(workspace?.id || workspace?._id);
+      setShowDeleteConfirm(false);
+      const permDate = res?.permanentlyDeleteAt
+        ? new Date(res.permanentlyDeleteAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'in 30 days';
+      setWorkspace((prev) => ({
+        ...prev,
+        ...res,
+        deletionRequestedAt: res?.deletionRequestedAt || new Date().toISOString(),
+        permanentlyDeleteAt: res?.permanentlyDeleteAt || null,
+      }));
+      setStatusMessage({
+        type: 'success',
+        text: `Workspace scheduled for permanent deletion (${permDate}). You have a 30-day grace period to restore it.`,
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: getFriendlyErrorMessage(err, 'workspace'),
+      });
+    } finally {
+      setIsDeletingWorkspace(false);
+    }
+  };
+
   // Handle Logout
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -288,6 +359,25 @@ const SettingsView = () => {
     } finally {
       setIsLoggingOut(false);
       navigate('/login');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (isDeletingAccount) return;
+    setIsDeletingAccount(true);
+    setStatusMessage({ type: '', text: '' });
+    try {
+      await deleteMyAccount();
+      clearAuthStorage();
+      navigate('/');
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to delete your account. Please try again.',
+      });
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteAccountConfirm(false);
     }
   };
 
@@ -609,15 +699,53 @@ const SettingsView = () => {
                   type="button"
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-rose-600/20 transition cursor-pointer disabled:opacity-50 shrink-0"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-[#454545] bg-slate-100 dark:bg-[#242424] hover:bg-slate-200 dark:hover:bg-[#303030] text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm transition cursor-pointer disabled:opacity-50 shrink-0"
                 >
                   <FiLogOut size={16} />
                   <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
                 </button>
               </div>
 
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-white dark:bg-[#181a20] border border-rose-200/60 dark:border-rose-900/40">
+                <div>
+                  <h4 className="text-sm font-bold text-rose-800 dark:text-rose-400">Delete Account</h4>
+                  <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5">
+                    Your account will be deleted or deactivated according to the account service policy.
+                  </p>
+                </div>
+                {!showDeleteAccountConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteAccountConfirm(true)}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-rose-600/20 transition cursor-pointer shrink-0"
+                  >
+                    Delete Account
+                  </button>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteAccountConfirm(false)}
+                      disabled={isDeletingAccount}
+                      className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#28282c] transition cursor-pointer disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={isDeletingAccount}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isDeletingAccount && <FiRefreshCw className="animate-spin" size={13} />}
+                      {isDeletingAccount ? 'Deleting...' : 'Confirm Delete'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="p-3 text-[11px] text-rose-600/80 dark:text-rose-400/80 bg-rose-100/50 dark:bg-rose-950/30 rounded-xl leading-normal">
-                Note: Permanent account deactivation and deletion must be authorized by your workspace administrator.
+                Note: Account deletion follows the account service policy.
               </div>
             </div>
           )}
@@ -661,6 +789,61 @@ const SettingsView = () => {
                 </div>
               ) : (
                 <>
+                  {/* Pending Soft Deletion Warning Banner */}
+                  {Boolean(workspace?.deletionRequestedAt || workspace?.permanentlyDeleteAt) && (
+                    <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 space-y-2.5 animate-fadeIn">
+                      <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-sm">
+                        <FiAlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Workspace Scheduled for Deletion (30-Day Grace Period)</span>
+                      </div>
+                      <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
+                        This workspace is soft-deleted and hidden from members. It is scheduled for permanent deletion on{' '}
+                        <strong className="font-semibold text-amber-950 dark:text-amber-100">
+                          {workspace.permanentlyDeleteAt
+                            ? new Date(workspace.permanentlyDeleteAt).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : 'in 30 days'}
+                        </strong>
+                        . Workspace administrators can restore it at any time during this grace period.
+                      </p>
+                      {['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase()) && (
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={handleRestoreWorkspace}
+                            disabled={isRestoringWorkspace}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+                          >
+                            {isRestoringWorkspace ? <FiRefreshCw className="animate-spin" size={13} /> : <FiRotateCcw size={13} />}
+                            <span>{isRestoringWorkspace ? 'Restoring Workspace...' : 'Restore Workspace'}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Workspace Info & Team Preview */}
+                  <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-slate-900 dark:text-white text-sm">{workspace.name}</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-[#888] mt-1">
+                        {workspaceMembersCount > 0 ? `${workspaceMembersCount} active workspace members` : 'Manage workspace team members'}
+                      </p>
+                    </div>
+                    <Link
+                      to="/dashboard/team"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#333] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#222] transition shrink-0 self-start sm:self-auto cursor-pointer"
+                    >
+                      <FiUsers size={13} />
+                      <span>View Team ({workspaceMembersCount})</span>
+                    </Link>
+                  </div>
+
                   {/* Rename Workspace Form */}
                   <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] space-y-3">
                     <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-sm">
@@ -686,45 +869,119 @@ const SettingsView = () => {
                     </form>
                   </div>
 
-                  {/* Leave Workspace */}
-                  <div className="p-4 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-rose-800 dark:text-[#F87171]">
-                        Leave Workspace
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 max-w-md">
-                        Leaving removes your membership and access to all its projects, tasks, and boards.
-                      </p>
+                  {/* Workspace Actions / Danger Zone */}
+                  <div className="space-y-3 pt-1">
+                    {/* Leave Workspace */}
+                    <div className="p-4 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-rose-800 dark:text-[#F87171]">
+                          Leave Workspace
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 max-w-md">
+                          Leaving removes your membership and access to all its projects, tasks, and boards.
+                        </p>
+                      </div>
+
+                      {!showLeaveConfirm ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowLeaveConfirm(true)}
+                          className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition cursor-pointer shrink-0"
+                        >
+                          Leave
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setShowLeaveConfirm(false)}
+                            className="px-3 py-1.5 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#20232c] cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleLeaveWorkspace}
+                            disabled={isLeavingWorkspace}
+                            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+                          >
+                            {isLeavingWorkspace ? 'Leaving...' : 'Confirm'}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {!showLeaveConfirm ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowLeaveConfirm(true)}
-                        className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition cursor-pointer shrink-0"
-                      >
-                        Leave
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setShowLeaveConfirm(false)}
-                          className="px-3 py-1.5 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#20232c] cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleLeaveWorkspace}
-                          disabled={isLeavingWorkspace}
-                          className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
-                        >
-                          {isLeavingWorkspace ? 'Leaving...' : 'Confirm'}
-                        </button>
-                      </div>
-                    )}
+                    {/* Soft Delete Workspace (Admins Only) */}
+                    {['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase()) &&
+                      !(workspace?.deletionRequestedAt || workspace?.permanentlyDeleteAt) && (
+                        <div className="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-300/70 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-rose-900 dark:text-[#F87171]">
+                              Delete Workspace
+                            </h4>
+                            <p className="text-xs text-slate-600 dark:text-[#94a3b8] mt-0.5 max-w-md">
+                              Soft-delete this workspace. Scheduled for permanent deletion after 30 days. Deletion will be rejected if unfinished projects remain.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition cursor-pointer shrink-0"
+                          >
+                            Delete Workspace
+                          </button>
+                        </div>
+                      )}
                   </div>
+
+                  {/* Soft Delete Confirmation Modal */}
+                  {showDeleteConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+                      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1a1a1d] p-6 shadow-2xl border border-slate-200 dark:border-[#303030] space-y-4 text-left">
+                        <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                          <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-950/50">
+                            <FiAlertTriangle size={24} />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-base text-slate-900 dark:text-white">Delete Workspace</h3>
+                            <p className="text-xs text-slate-500">Soft deletion with 30-day recovery window</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl bg-slate-50 dark:bg-[#232326] p-3 text-xs text-slate-600 dark:text-[#ccc] space-y-2 leading-relaxed">
+                          <p>
+                            Deleting <strong className="text-slate-900 dark:text-white">{workspace?.name}</strong> will:
+                          </p>
+                          <ul className="list-disc pl-4 space-y-1 text-slate-500 dark:text-[#aaa]">
+                            <li>Immediately hide this workspace from all non-admin members.</li>
+                            <li>Schedule permanent purge after <strong>30 days</strong>.</li>
+                            <li>Be rejected by the server if active or unfinished projects remain.</li>
+                            <li>Allow workspace admins to restore it anytime during the 30-day grace period.</li>
+                          </ul>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            disabled={isDeletingWorkspace}
+                            className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-[#bbb] hover:bg-slate-100 dark:hover:bg-[#28282c] rounded-xl transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDeleteWorkspace}
+                            disabled={isDeletingWorkspace}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+                          >
+                            {isDeletingWorkspace ? <FiRefreshCw className="animate-spin" size={12} /> : null}
+                            <span>{isDeletingWorkspace ? 'Deleting...' : 'Confirm Soft Deletion'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
