@@ -5,6 +5,7 @@ import {
   FiFolder,
   FiRefreshCw,
   FiBriefcase,
+  FiCalendar,
   FiUsers,
   FiSettings,
   FiChevronsLeft,
@@ -79,6 +80,7 @@ const Sidebar = ({
     { id: 'issues', to: '/dashboard/issues', label: 'Issues', icon: AiOutlineBug },
     { id: 'sprints', to: '/dashboard/sprints', label: 'Sprints', icon: FiRefreshCw },
     { id: 'my-work', to: '/dashboard/my-work', label: 'My Work', icon: FiBriefcase },
+    { id: 'calendar', to: '/dashboard/calendar', label: 'Calendar', icon: FiCalendar },
     { id: 'chats', to: '/dashboard/chats', label: 'Chats', icon: IoChatboxEllipsesOutline },
     { id: 'invites', to: '/dashboard/invites', label: 'My Invites', icon: IoMailOutline, badge: pendingInviteCount },
   ];

@@ -20,7 +20,11 @@ const readUnreadCount = (value) => {
 const Dashboard = () => {
   const location = useLocation();
   const isChat = location.pathname.startsWith('/dashboard/chats');
-  const isFullWidthFeature = isChat || location.pathname.startsWith('/dashboard/issues') || location.pathname.startsWith('/dashboard/sprints');
+  const isFullWidthFeature =
+    isChat ||
+    location.pathname.startsWith('/dashboard/issues') ||
+    location.pathname.startsWith('/dashboard/sprints') ||
+    location.pathname.startsWith('/dashboard/calendar');
 
   const [projectFilter, setProjectFilter] = useState('all');
   const [pendingInviteCount, setPendingInviteCount] = useState(0);

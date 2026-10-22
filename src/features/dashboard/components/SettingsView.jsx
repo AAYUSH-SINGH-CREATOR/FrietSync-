@@ -27,6 +27,10 @@ import {
   getNotificationPreferences,
   updateNotificationPreferences,
 } from '../services/notificationApi';
+import {
+  getGoogleConnectUrl,
+  disconnectGoogleCalendar,
+} from '../../calendar/services/calendarApi';
 import { CiLock } from "react-icons/ci";
 
 
@@ -90,6 +94,43 @@ const SettingsView = () => {
     ? { type: 'success', text: 'Your password was reset successfully.' }
     : { type: '', text: '' });
   const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(() => {
+    return localStorage.getItem('frietSyncGoogleConnected') === 'true';
+  });
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+
+  const handleConnectGoogle = async () => {
+    setIsConnectingGoogle(true);
+    try {
+      const url = await getGoogleConnectUrl();
+      if (url && typeof url === 'string') {
+        window.location.href = url;
+      }
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to initiate Google Calendar connection.',
+      });
+      setIsConnectingGoogle(false);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    try {
+      await disconnectGoogleCalendar();
+      setIsGoogleConnected(false);
+      localStorage.removeItem('frietSyncGoogleConnected');
+      setStatusMessage({
+        type: 'success',
+        text: 'Google Calendar disconnected successfully.',
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to disconnect Google Calendar.',
+      });
+    }
+  };
 
   const handleRequestPasswordReset = async () => {
     if (isRequestingPasswordReset) return;
@@ -390,6 +431,10 @@ const SettingsView = () => {
                     Preferences
                   </h3>
                 </div>
+                <div className="flex items-center gap-6 text-[11px] font-semibold text-slate-400 uppercase pr-2">
+                  <span>In-App</span>
+                  <span>Email</span>
+                </div>
               </div>
 
               {isLoadingPreferences ? (
@@ -399,12 +444,16 @@ const SettingsView = () => {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {preferences.map((item) => (
+                  {preferences.map((item) => {
+                    const isUpdatingInApp = updatingPrefKey === `${item.type}-inApp`;
+                    const isUpdatingEmail = updatingPrefKey === `${item.type}-email`;
+
+                    return (
                       <div
                         key={item.type}
-                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]"
+                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">
                             {item.title}
                           </p>
@@ -412,8 +461,63 @@ const SettingsView = () => {
                             {item.description}
                           </p>
                         </div>
+
+                        {/* Toggle Switches */}
+                        <div className="flex items-center gap-6 shrink-0">
+                          {/* In-App Toggle */}
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={item.inApp}
+                            title={`${item.title} in-app alerts`}
+                            disabled={isUpdatingInApp}
+                            onClick={() => handleTogglePreference(item.type, 'inApp')}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                              item.inApp
+                                ? 'bg-sky-600 dark:bg-blue-600'
+                                : 'bg-slate-200 dark:bg-[#2b2e38]'
+                            } ${isUpdatingInApp ? 'opacity-50 cursor-wait' : ''}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                item.inApp ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+
+                          {/* Email Toggle */}
+                          {item.emailSupported !== false ? (
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={item.email}
+                              title={`${item.title} email notifications`}
+                              disabled={isUpdatingEmail}
+                              onClick={() => handleTogglePreference(item.type, 'email')}
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                                item.email
+                                  ? 'bg-sky-600 dark:bg-blue-600'
+                                  : 'bg-slate-200 dark:bg-[#2b2e38]'
+                              } ${isUpdatingEmail ? 'opacity-50 cursor-wait' : ''}`}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                  item.email ? 'translate-x-5' : 'translate-x-0'
+                                }`}
+                              />
+                            </button>
+                          ) : (
+                            <div
+                              className="h-6 w-11 shrink-0 flex items-center justify-center text-xs text-slate-400 dark:text-slate-600 select-none"
+                              title="Email notifications not supported for chat messages"
+                            >
+                              —
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -519,15 +623,51 @@ const SettingsView = () => {
           </button>
 
           {expandedSection.connected && (
-            <div className="p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn text-center">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#20232c] text-slate-400 dark:text-[#94a3b8] mx-auto flex items-center justify-center mb-3">
-                <FiLink size={20} />
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-[#262833] bg-slate-50/50 dark:bg-[#15171d] animate-fadeIn space-y-3">
+              <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0">
+                    G
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      Google Calendar
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-[#94a3b8] truncate">
+                      Sync meetings and project schedules with your Google account.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {isGoogleConnected ? (
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                        Connected
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleDisconnectGoogle}
+                        className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:underline cursor-pointer"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectGoogle}
+                      disabled={isConnectingGoogle}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isConnectingGoogle ? 'Connecting…' : 'Connect'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                No Accounts Connected
-              </p>
-              <p className="text-xs text-slate-400 dark:text-[#858585] mt-1 max-w-sm mx-auto leading-relaxed">
-                You do not currently have any third-party accounts linked. Third-party integrations with GitHub, GitLab, and Slack are in development.
+
+              <p className="text-[11px] text-slate-400 dark:text-[#777] text-center pt-2">
+                Additional third-party integrations with GitHub, GitLab, and Slack are in development.
               </p>
             </div>
           )}
