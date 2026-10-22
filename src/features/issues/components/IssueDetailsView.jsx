@@ -12,8 +12,10 @@ import {
   getIssueAttachments, uploadIssueAttachment, downloadIssueAttachment, deleteIssueAttachment,
   requestIssueAssignment, getMyIssueAssignmentRequest, cancelIssueAssignmentRequest,
   getProjectIssueRequests, manageProjectIssueRequest, deleteProjectIssueRequest,
+  getIssueComments, createIssueComment, updateIssueComment, deleteIssueComment,
   getFriendlyErrorMessage,
 } from '../services/issueApi';
+import CommentsThread from '../../../components/ui/CommentsThread';
 import { getProjectMembers } from '../../projects/services/projectApi';
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import { getPriorityBadge, getStatusBadge, formatIssueDate, formatEstimatedHours, PRIORITY_OPTIONS } from '../utils/issueUtils';
@@ -79,6 +81,7 @@ const IssueDetailsView = ({
   const [historyPage, setHistoryPage] = useState(0);
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [activityTab, setActivityTab] = useState('all');
+  const [commentsCount, setCommentsCount] = useState(0);
   const [myRequest, setMyRequest] = useState(null);
   const [projectRequests, setProjectRequests] = useState([]);
 
@@ -638,67 +641,99 @@ const IssueDetailsView = ({
                         : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
                     }`}
                   >
-                    {tab}
+                    {tab}{tab === 'comments' && commentsCount > 0 ? ` (${commentsCount})` : ''}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Comment composer hint / timeline */}
+            {/* Comment composer / thread / timeline */}
             <div className="mt-3 space-y-3">
-              {activityTab === 'comments' || activityTab === 'work log' ? (
+              {activityTab === 'work log' && (
                 <div className="rounded-xl bg-slate-50 dark:bg-[#252529] p-3 text-xs text-slate-500 dark:text-[#999] leading-relaxed">
-                  Comments and work logs for this issue are recorded via the project activity stream and issue history timeline.
+                  Work logs for this issue are recorded via the project activity stream and issue history timeline.
                 </div>
-              ) : null}
+              )}
+
+              {/* Comments Thread */}
+              {(activityTab === 'comments' || activityTab === 'all') && (
+                <div className="space-y-2">
+                  {activityTab === 'all' && (
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-[#aaa] border-b border-slate-100 dark:border-[#2d2d32] pb-1">
+                      <span>Comments {commentsCount > 0 ? `(${commentsCount})` : ''}</span>
+                    </div>
+                  )}
+                  <CommentsThread
+                    key={`issue-comments-${issueId}`}
+                    entityId={issueId}
+                    entityType="issue"
+                    currentUserProfile={currentUserProfile}
+                    fetchComments={getIssueComments}
+                    createComment={createIssueComment}
+                    updateComment={updateIssueComment}
+                    deleteComment={deleteIssueComment}
+                    compact
+                    onCountChange={setCommentsCount}
+                  />
+                </div>
+              )}
 
               {/* History Timeline */}
-              {history.length > 0 ? (
-                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                  {history.map((entry, idx) => {
-                    const actorName = entry.actor?.name || entry.user?.name || entry.actorName || 'Member';
-                    const actionText = entry.description || entry.action || entry.message || entry.event || 'updated the issue';
-                    const time = formatDateTime(entry.createdAt || entry.timestamp);
-                    return (
-                      <div key={getId(entry) || idx} className="flex items-start gap-2.5 text-xs">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-[#34343a] font-bold text-[10px] text-slate-700 dark:text-slate-300">
-                          {actorName.slice(0, 2).toUpperCase()}
-                        </div>
+              {(activityTab === 'history' || activityTab === 'all') && (
+                <div className={activityTab === 'all' ? 'space-y-2 pt-3 border-t border-slate-100 dark:border-[#2d2d32]' : 'space-y-3'}>
+                  {activityTab === 'all' && (
+                    <div className="text-xs font-semibold text-slate-600 dark:text-[#aaa] border-b border-slate-100 dark:border-[#2d2d32] pb-1">
+                      <span>History & Updates</span>
+                    </div>
+                  )}
+                  {history.length > 0 ? (
+                    <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                      {history.map((entry, idx) => {
+                        const actorName = entry.actor?.name || entry.user?.name || entry.actorName || 'Member';
+                        const actionText = entry.description || entry.action || entry.message || entry.event || 'updated the issue';
+                        const time = formatDateTime(entry.createdAt || entry.timestamp);
+                        return (
+                          <div key={getId(entry) || idx} className="flex items-start gap-2.5 text-xs">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-[#34343a] font-bold text-[10px] text-slate-700 dark:text-slate-300">
+                              {actorName.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-slate-800 dark:text-slate-200">
+                                <strong className="font-semibold text-slate-900 dark:text-white">{actorName}</strong> {actionText}
+                              </p>
+                              {time && <span className="text-[10px] text-slate-400 dark:text-[#777]">{time}</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {historyHasMore && (
+                        <button
+                          type="button"
+                          onClick={handleLoadMoreHistory}
+                          className="w-full text-center py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                        >
+                          Load more
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2.5 text-xs">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">HM</div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-slate-800 dark:text-slate-200">
-                            <strong className="font-semibold text-slate-900 dark:text-white">{actorName}</strong> {actionText}
-                          </p>
-                          {time && <span className="text-[10px] text-slate-400 dark:text-[#777]">{time}</span>}
+                          <p className="text-slate-800 dark:text-slate-200"><strong className="font-semibold text-slate-900 dark:text-white">Harsh Mehta</strong> changed the status from Open to In progress</p>
+                          <span className="text-[10px] text-slate-400 dark:text-[#777]">16/10/2026, 1:12 PM</span>
                         </div>
                       </div>
-                    );
-                  })}
-                  {historyHasMore && (
-                    <button
-                      type="button"
-                      onClick={handleLoadMoreHistory}
-                      className="w-full text-center py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
-                    >
-                      Load more
-                    </button>
+                      <div className="flex items-start gap-2.5 text-xs">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">AS</div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-slate-800 dark:text-slate-200"><strong className="font-semibold text-slate-900 dark:text-white">Aarav Singh</strong> added the label Authentication</p>
+                          <span className="text-[10px] text-slate-400 dark:text-[#777]">15/10/2026, 10:45 AM</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2.5 text-xs">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">HM</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-slate-800 dark:text-slate-200"><strong className="font-semibold text-slate-900 dark:text-white">Harsh Mehta</strong> changed the status from Open to In progress</p>
-                      <span className="text-[10px] text-slate-400 dark:text-[#777]">16/10/2026, 1:12 PM</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">AS</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-slate-800 dark:text-slate-200"><strong className="font-semibold text-slate-900 dark:text-white">Aarav Singh</strong> added the label Authentication</p>
-                      <span className="text-[10px] text-slate-400 dark:text-[#777]">15/10/2026, 10:45 AM</span>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

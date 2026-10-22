@@ -181,5 +181,24 @@ export const createProjectIssueRequest = (id, payload) => issueRequest('post', `
 export const manageProjectIssueRequest = (issueId, requestId, approve) => issueRequest('post', `/issues/${issueId}/issue-requests`, { requestId, approve }, {}, 'Failed to update assignment request.');
 export const deleteProjectIssueRequest = (projectId, requestId) => issueRequest('delete', `/projects/${projectId}/issue-requests`, undefined, { params: { requestId } }, 'Failed to remove assignment request.');
 
+export const getIssueComments = (issueId) => {
+  if (!issueId) throw new Error('Issue ID is required.');
+  return issueRequest('get', `/issues/${issueId}/comments`, undefined, {}, 'Failed to load issue comments.');
+};
+export const createIssueComment = (issueId, content) => {
+  if (!issueId) throw new Error('Issue ID is required.');
+  return issueRequest('post', `/issues/${issueId}/comments`, { content }, {}, 'Failed to add comment.');
+};
+export const updateIssueComment = (issueId, commentId, content) => {
+  if (!issueId) throw new Error('Issue ID is required.');
+  if (!commentId) throw new Error('Comment ID is required.');
+  return issueRequest('patch', `/issues/${issueId}/comments/${commentId}`, { content }, {}, 'Failed to update comment.');
+};
+export const deleteIssueComment = (issueId, commentId) => {
+  if (!issueId) throw new Error('Issue ID is required.');
+  if (!commentId) throw new Error('Comment ID is required.');
+  return issueRequest('delete', `/issues/${issueId}/comments/${commentId}`, undefined, {}, 'Failed to delete comment.');
+};
+
 export { getFriendlyErrorMessage };
 
