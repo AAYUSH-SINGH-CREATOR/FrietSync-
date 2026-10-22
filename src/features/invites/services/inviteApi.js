@@ -134,5 +134,19 @@ export const rejectInvite = async (inviteId) => {
   }
 };
 
+export const revokeInvite = async (inviteId) => {
+  if (!inviteId) throw new Error('Invite ID is required.');
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/admin/invites/revoke`,
+      { inviteId, id: inviteId },
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    handleInviteError(error, 'Failed to revoke invitation.');
+  }
+};
+
 export { getFriendlyErrorMessage };
 
