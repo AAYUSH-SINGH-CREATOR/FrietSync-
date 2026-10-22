@@ -246,5 +246,6 @@ export const requestSprint = (sprintId, payload) => projectResourceRequest('post
 export const getProjectSprintRequests = (projectId) => projectResourceRequest('get', `/projects/${projectId}/sprints-requests`, undefined, {}, 'Failed to load sprint requests.');
 export const createSprintRequest = (sprintId, payload) => projectResourceRequest('post', `/sprints/${sprintId}/sprints-requests`, payload, {}, 'Failed to create sprint request.');
 export const getProjectSummary = (projectId) => projectResourceRequest('get', `/projects/${projectId}/summary`, undefined, {}, 'Failed to load project summary.');
+export const getProjectTimeline = (projectId) => projectResourceRequest('get', `/projects/${projectId}/timeline`, undefined, {}, 'Failed to load project timeline.');
 
 export { getFriendlyErrorMessage };
