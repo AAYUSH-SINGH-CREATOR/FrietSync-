@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-// Confirmed by the successful Apidog request: Body -> form-data, key "file".
 const PROFILE_PICTURE_FIELD = 'file';
 
 const getAuthHeaders = (isMultipart = false) => {
@@ -67,6 +66,14 @@ export const updateProfile = async (profileData) => {
   }
 };
 
+export const deleteMyAccount = async () => {
+  try {
+    await axios.delete(`${BASE_URL}/users/me`, getAuthHeaders());
+  } catch (error) {
+    handleProfileError(error, 'Failed to delete your account. Please try again.');
+  }
+};
+
 export const uploadAvatar = async (file) => {
   if (!file) throw new Error('Select an image to upload.');
   if (!PROFILE_PICTURE_FIELD) {
@@ -89,4 +96,4 @@ export const uploadAvatar = async (file) => {
   }
 };
 
-export default { getProfile, updateProfile, uploadAvatar };
+export default { getProfile, updateProfile, uploadAvatar, deleteMyAccount };
