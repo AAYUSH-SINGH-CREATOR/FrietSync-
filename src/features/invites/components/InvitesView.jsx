@@ -9,11 +9,13 @@ import {
   FiFolder,
   FiClock,
   FiCheckCircle,
+  FiSlash,
 } from 'react-icons/fi';
 import {
   getMyInvites,
   acceptInvite,
   rejectInvite,
+  revokeInvite,
   getFriendlyErrorMessage,
 } from '../services/inviteApi';
 import MultiInviteForm from './MultiInviteForm';
@@ -41,6 +43,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
   const [inviteError, setInviteError] = useState('');
   const [processingId, setProcessingId] = useState(null);
   const [actionSuccess, setActionSuccess] = useState('');
+  const [confirmRevokeId, setConfirmRevokeId] = useState(null);
 
   const fetchInvites = useCallback(() => {
     setIsLoadingInvites(true);
@@ -77,7 +80,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
     total: invites.length,
     pending: invites.filter((invite) => (invite.status || 'PENDING').toUpperCase() === 'PENDING').length,
     accepted: invites.filter((invite) => (invite.status || '').toUpperCase() === 'ACCEPTED').length,
-    rejected: invites.filter((invite) => (invite.status || '').toUpperCase() === 'REJECTED').length,
+    rejected: invites.filter((invite) => ['REJECTED', 'DECLINED', 'REVOKED'].includes((invite.status || '').toUpperCase())).length,
   }), [invites]);
 
   const updateInviteStatus = (inviteId, status) => {
@@ -104,6 +107,23 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
       updateInviteStatus(inviteId, action);
     } catch (err) {
       setInviteError(getFriendlyErrorMessage(err, action === 'ACCEPTED' ? 'accept-invite' : 'reject-invite'));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRevokeInvite = async (invite) => {
+    const inviteId = invite._id || invite.id || invite.inviteId;
+    setProcessingId(inviteId);
+    setInviteError('');
+    setActionSuccess('');
+    try {
+      await revokeInvite(inviteId);
+      setActionSuccess(`Invitation for ${invite.assigneeEmail || invite.email || 'user'} has been revoked.`);
+      updateInviteStatus(inviteId, 'REVOKED');
+      setConfirmRevokeId(null);
+    } catch (err) {
+      setInviteError(getFriendlyErrorMessage(err, 'revoke-invite'));
     } finally {
       setProcessingId(null);
     }
@@ -175,14 +195,55 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
                 ? 'bg-[#71ff94] text-[#12351d]'
                 : status === 'REJECTED' || status === 'DECLINED'
                   ? 'bg-[#ff8181] text-[#471d1d]'
-                  : 'bg-[#ffff64] text-[#3c3c1e]';
+                  : status === 'REVOKED'
+                    ? 'bg-slate-200 text-slate-700 dark:bg-[#343438] dark:text-[#ccc]'
+                    : 'bg-[#ffff64] text-[#3c3c1e]';
               return (
-                <div key={inviteId} className="grid grid-cols-1 md:grid-cols-[minmax(180px,1.3fr)_minmax(130px,0.8fr)_minmax(180px,1.3fr)_minmax(120px,0.8fr)_minmax(130px,1fr)] gap-3 md:gap-4 md:items-center rounded-xl px-3 sm:px-4 py-4 hover:bg-slate-50 dark:hover:bg-[#242424] transition">
-                  <div className="flex items-center gap-2.5 min-w-0"><span className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0" style={{ backgroundColor: getAvatarColor(assignee) }}>{getInitials(assignee)}</span><span className="truncate text-sm text-slate-800 dark:text-[#e5e5e5]">{assignee}</span></div>
-                  <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Role</span><span className="text-xs text-slate-700 dark:text-[#ddd]">{(invite.role || 'CONTRIBUTOR').replaceAll('_', ' ')}</span></div>
-                  <div className="flex items-center gap-2 md:block min-w-0"><span className="md:hidden text-[11px] text-slate-500">Project</span><span className="truncate block text-xs text-slate-700 dark:text-[#ddd]">{project}</span></div>
-                  <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Status</span><span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${statusStyle}`}>{status.replaceAll('_', ' ')}</span></div>
-                  <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Expires</span><span className="text-xs text-slate-700 dark:text-[#ddd]">{expiry}</span></div>{status === 'PENDING' && <div className="flex items-center gap-1.5 shrink-0"><button type="button" onClick={() => handleInviteAction(invite, 'ACCEPTED')} disabled={isProcessing} title="Accept invitation" aria-label="Accept invitation" className="p-1.5 rounded-full text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 disabled:opacity-50"><FiCheck size={16} /></button><button type="button" onClick={() => handleInviteAction(invite, 'REJECTED')} disabled={isProcessing} title="Decline invitation" aria-label="Decline invitation" className="p-1.5 rounded-full text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/60 disabled:opacity-50">{isProcessing ? <span className="block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : <FiX size={16} />}</button></div>}</div>
+                <div key={inviteId} className="rounded-xl px-3 sm:px-4 py-4 hover:bg-slate-50 dark:hover:bg-[#242424] transition">
+                  <div className="grid grid-cols-1 md:grid-cols-[minmax(180px,1.3fr)_minmax(130px,0.8fr)_minmax(180px,1.3fr)_minmax(120px,0.8fr)_minmax(130px,1fr)] gap-3 md:gap-4 md:items-center">
+                    <div className="flex items-center gap-2.5 min-w-0"><span className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0" style={{ backgroundColor: getAvatarColor(assignee) }}>{getInitials(assignee)}</span><span className="truncate text-sm text-slate-800 dark:text-[#e5e5e5]">{assignee}</span></div>
+                    <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Role</span><span className="text-xs text-slate-700 dark:text-[#ddd]">{(invite.role || 'CONTRIBUTOR').replaceAll('_', ' ')}</span></div>
+                    <div className="flex items-center gap-2 md:block min-w-0"><span className="md:hidden text-[11px] text-slate-500">Project</span><span className="truncate block text-xs text-slate-700 dark:text-[#ddd]">{project}</span></div>
+                    <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Status</span><span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${statusStyle}`}>{status.replaceAll('_', ' ')}</span></div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Expires</span><span className="text-xs text-slate-700 dark:text-[#ddd]">{expiry}</span></div>
+                      {status === 'PENDING' && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button type="button" onClick={() => handleInviteAction(invite, 'ACCEPTED')} disabled={isProcessing} title="Accept invitation" aria-label="Accept invitation" className="p-1.5 rounded-full text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 disabled:opacity-50 cursor-pointer"><FiCheck size={16} /></button>
+                          <button type="button" onClick={() => handleInviteAction(invite, 'REJECTED')} disabled={isProcessing} title="Decline invitation" aria-label="Decline invitation" className="p-1.5 rounded-full text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/60 disabled:opacity-50 cursor-pointer">{isProcessing ? <span className="block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : <FiX size={16} />}</button>
+                          {canSendInvitesSection && (
+                            <button type="button" onClick={() => setConfirmRevokeId(inviteId)} disabled={isProcessing} title="Revoke invitation" aria-label="Revoke invitation" className="p-1.5 rounded-full text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/60 disabled:opacity-50 cursor-pointer"><FiSlash size={15} /></button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {confirmRevokeId === inviteId && (
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs dark:border-amber-900/50 dark:bg-amber-950/50 animate-fadeIn">
+                      <div className="text-amber-900 dark:text-amber-200">
+                        Are you sure you want to revoke this invitation for <strong className="font-semibold">{assignee}</strong>?
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmRevokeId(null)}
+                          disabled={isProcessing}
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white dark:text-[#bbb] dark:hover:bg-[#222] rounded-lg transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeInvite(invite)}
+                          disabled={isProcessing}
+                          className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-lg transition cursor-pointer disabled:opacity-50"
+                        >
+                          {isProcessing ? 'Revoking...' : 'Confirm Revoke'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

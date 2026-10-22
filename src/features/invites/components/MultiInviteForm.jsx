@@ -16,7 +16,7 @@ const ROLE_OPTIONS = [
     { value: 'CONTRIBUTOR', label: 'Contributor' },
     { value: 'PROJECT_MANAGER', label: 'Project Manager' },
     { value: 'TEAM_LEAD', label: 'Team Lead' },
-    { value: 'REPORTER', label: 'src/features/sprints/services/sprintsApi.jsReporter' },
+    { value: 'REPORTER', label: 'Reporter' },
 ];
 
 const MAX_MEMBERS = 6;
