@@ -6,8 +6,8 @@ export default function Invite() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full min-h-screen bg-slate-50/60 dark:bg-[#292929] flex items-center justify-center p-4 sm:p-6 transition-colors">
-      <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-xl dark:shadow-black/70 border border-gray-100 dark:border-[#303030] max-w-2xl w-full p-7 sm:p-9 md:p-10 transition-colors">
+    <div className="w-full min-h-screen bg-slate-50/60 dark:bg-[#292929] px-3 py-4 sm:px-6 sm:py-6 lg:px-8 transition-colors">
+      <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-xl dark:shadow-black/70 border border-gray-100 dark:border-[#303030] w-full p-5 sm:p-7 transition-colors">
         <div className="flex items-start justify-between pb-5 border-b border-gray-100 dark:border-[#303030] mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F1F5F9] tracking-tight">Invite Team Members</h2>

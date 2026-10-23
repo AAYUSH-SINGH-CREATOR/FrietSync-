@@ -458,7 +458,7 @@ const SprintsView = () => {
       />
 
       {canManage && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-5">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#303030] dark:bg-[#1f1f1f] sm:p-5">
           <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-[#303030]">
             <div className="flex items-center gap-2">
               <FiInbox size={17} className="text-sky-600 dark:text-sky-400" />
@@ -497,7 +497,7 @@ const SprintsView = () => {
 
      
 {/* Board / List View Switcher */}
-<div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#151518]">
+<div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
   <button
     type="button"
     onClick={() => setLayoutView('board')}
@@ -528,15 +528,15 @@ const SprintsView = () => {
 
       {/* 4. Controls Row: Search & Filters matching screenshot */}
       <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
-        {/* Search input matching screenshot placeholder: Search issue.... */}
+        {/* Search sprints */}
         <div className="relative min-w-[200px] flex-1 sm:w-72">
           <FiSearch size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#777]" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-            placeholder="Search issue...."
-            className="h-[36px] w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none placeholder:text-slate-400 focus:border-sky-400 dark:border-[#2e2e34] dark:bg-[#1a1a1d] dark:text-white dark:placeholder:text-[#777]"
+            placeholder="Search sprints..."
+            className="h-[36px] w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none placeholder:text-slate-400 focus:border-sky-400 dark:border-[#2e2e34] dark:bg-[#1f1f1f] dark:text-white dark:placeholder:text-[#999]"
           />
         </div>
 

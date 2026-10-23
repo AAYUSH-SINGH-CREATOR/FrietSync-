@@ -1,7 +1,7 @@
 import { FiFolder, FiActivity, FiAlertCircle, FiCheckSquare } from 'react-icons/fi';
 
 const SummaryCard = ({ icon: Icon, label, value, hint, iconBg, iconColor }) => (
-  <div className="flex flex-1 min-w-[200px] items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-[#2b2b30] dark:bg-[#1a1a1d]">
+  <div className="flex flex-1 min-w-[200px] items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBg} ${iconColor} shadow-2xs`}>
       <Icon size={20} />
     </div>

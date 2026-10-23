@@ -64,11 +64,11 @@ const SprintsTable = ({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-[#2b2b30] dark:bg-[#1a1a1d]">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[850px] border-collapse text-left text-xs">
           <thead>
-            <tr className="h-10 border-b border-slate-200 bg-slate-100/70 text-[11px] font-semibold text-slate-700 dark:border-[#2b2b30] dark:bg-[#151518] dark:text-[#aaa]">
+            <tr className="h-10 border-b border-slate-200 bg-slate-100/70 text-[11px] font-semibold text-slate-700 dark:border-[#2b2b30] dark:bg-[#1b1b1b] dark:text-[#aaa]">
               <th className="w-10 px-4">
                 <input
                   type="checkbox"
@@ -130,7 +130,7 @@ const SprintsTable = ({
                   <tr
                     key={id}
                     onClick={() => onSprintClick?.(sprint)}
-                    className="group h-13 cursor-pointer transition hover:bg-slate-50/80 dark:hover:bg-[#202024]"
+                    className="group h-13 cursor-pointer transition hover:bg-slate-50/80 dark:hover:bg-[#292929]"
                   >
                     <td className="px-4" onClick={(e) => e.stopPropagation()}>
                       <input

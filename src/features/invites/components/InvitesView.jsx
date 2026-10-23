@@ -137,7 +137,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
   ];
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn px-3 sm:px-6 lg:px-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">Invites</h1>

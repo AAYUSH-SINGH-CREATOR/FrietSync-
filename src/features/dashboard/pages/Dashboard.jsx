@@ -23,6 +23,8 @@ const Dashboard = () => {
   const isFullWidthFeature =
     isChat ||
     location.pathname.startsWith('/dashboard/issues') ||
+    location.pathname.startsWith('/dashboard/team') ||
+    location.pathname.startsWith('/dashboard/invites') ||
     location.pathname.startsWith('/dashboard/sprints') ||
     location.pathname.startsWith('/dashboard/calendar') ||
     location.pathname.startsWith('/dashboard/projects');

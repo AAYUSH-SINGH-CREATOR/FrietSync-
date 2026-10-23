@@ -512,7 +512,7 @@ const TeamView = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 max-w-7xl mx-auto">
+    <div className="space-y-6 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
       {/* Toast Notice */}
       {toastNotice && (
         <div
