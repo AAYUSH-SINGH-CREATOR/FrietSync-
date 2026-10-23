@@ -93,6 +93,7 @@ const CommentsThread = ({
   updateComment,
   deleteComment,
   compact = false,
+  issueSurface = false,
   onCountChange,
 }) => {
   const [comments, setComments] = useState([]);
@@ -259,7 +260,7 @@ const CommentsThread = ({
       )}
 
       {/* Comment Input Composer */}
-      <form onSubmit={handleAddComment} className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3 dark:border-[#2d2d32] dark:bg-[#1a1a1d] transition">
+      <form onSubmit={handleAddComment} className={`rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3 dark:border-[#2d2d32] ${issueSurface ? 'dark:bg-[#171717]' : 'dark:bg-[#1a1a1d]'} transition`}>
         <textarea
           rows={compact ? 2 : 3}
           value={newContent}
@@ -282,7 +283,7 @@ const CommentsThread = ({
           <button
             type="submit"
             disabled={!newContent.trim() || newContent.length > MAX_CHARS || isSubmitting}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-sky-700 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -303,7 +304,7 @@ const CommentsThread = ({
       {isLoading ? (
         <div className="space-y-2.5 py-2">
           {[0, 1].map((n) => (
-            <div key={n} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white p-3 dark:border-[#2d2d32] dark:bg-[#202024] animate-pulse">
+            <div key={n} className={`flex items-start gap-3 rounded-xl border border-slate-100 bg-white p-3 dark:border-[#2d2d32] ${issueSurface ? 'dark:bg-[#171717]' : 'dark:bg-[#202024]'} animate-pulse`}>
               <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-[#34343a]" />
               <div className="flex-1 space-y-1.5">
                 <div className="h-3 w-28 rounded-sm bg-slate-200 dark:bg-[#34343a]" />
@@ -345,7 +346,7 @@ const CommentsThread = ({
             return (
               <div
                 key={commentId}
-                className="group relative rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs dark:border-[#2d2d32] dark:bg-[#1f1f23] transition hover:border-slate-300 dark:hover:border-[#38383e]"
+                className={`group relative rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-2xs dark:border-[#2d2d32] ${issueSurface ? 'dark:bg-[#171717]' : 'dark:bg-[#1f1f23]'} transition hover:border-slate-300 dark:hover:border-[#38383e]`}
               >
                 {/* Author row */}
                 <div className="flex items-start justify-between gap-2">

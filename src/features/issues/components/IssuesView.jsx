@@ -35,7 +35,7 @@ const compactDate = (d) => {
 const avatarColors = ['bg-pink-500', 'bg-blue-500', 'bg-orange-500', 'bg-violet-500', 'bg-emerald-500', 'bg-sky-500'];
 
 const SummaryCard = ({ icon: Icon, label, value, hint, tone }) => (
-  <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 dark:border-[#343434] dark:bg-[#202020] sm:px-4 shadow-xs">
+  <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 dark:border-[#343434] dark:bg-[#171717] sm:px-4 shadow-xs">
     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}><Icon size={19} /></div>
     <div className="min-w-0">
       <p className="truncate text-xs text-slate-500 dark:text-[#b6b6b6]">{label}</p>
@@ -363,7 +363,7 @@ const IssuesView = () => {
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={refresh} disabled={isLoadingIssues} title="Refresh issues" className="flex h-[38px] w-[38px] items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-[#3a3a3a] dark:bg-[#202020] dark:text-[#ddd] dark:hover:bg-[#333] cursor-pointer"><FiRefreshCw size={15} className={isLoadingIssues ? 'animate-spin' : ''} /></button>
-          {canCreateIssue && <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex h-[38px] items-center gap-2 rounded-md bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 sm:text-sm cursor-pointer"><FiPlus size={16} />Create Issue</button>}
+          {canCreateIssue && <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex h-[38px] items-center gap-2 rounded-md bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:text-sm cursor-pointer"><FiPlus size={16} />Create Issue</button>}
         </div>
       </div>
 
@@ -427,7 +427,7 @@ const IssuesView = () => {
       {/* 2. Main View Content based on Active Tab */}
       {activeTab === 'requests' ? (
         /* ================= ASSIGNMENT REQUESTS VIEW ================= */
-        <div className="rounded-xl border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#242424] p-4 sm:p-5">
+        <div className="rounded-xl border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#171717] p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-900 dark:text-white">Project Assignment Requests</h2>
             <button type="button" onClick={loadProjectRequests} className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">Refresh requests</button>
@@ -538,7 +538,7 @@ const IssuesView = () => {
                 displayAssignee={displayAssignee}
               />
               {totalPages > 1 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:bg-[#242424] dark:text-[#bbb] sm:px-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:bg-[#171717] dark:text-[#bbb] sm:px-4">
                   <span>{projectFilter === 'all' ? `Showing ${filteredIssues.length} issues on page ${page + 1}` : `Showing ${start}–${end} of ${totalIssueCount} issues`}</span>
                   <div className="flex items-center gap-1">
                     <button type="button" aria-label="Previous page" disabled={page <= 0} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.max(0, c - 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronLeft size={14} /></button>
@@ -552,7 +552,7 @@ const IssuesView = () => {
             </div>
           ) : (
             /* Table Container */
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#242424]">
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#171717]">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px] border-collapse text-left">
                   <thead>
