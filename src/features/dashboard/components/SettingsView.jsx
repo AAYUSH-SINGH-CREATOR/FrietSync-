@@ -382,7 +382,7 @@ const SettingsView = () => {
   };
 
   return (
-    <div className="w-full min-w-0 space-y-0 animate-fadeIn pb-12">
+    <div className="w-full min-w-0 space-y-0 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
       {/* Branded Header Banner */}
       <div
         className="min-h-[126px] sm:min-h-[128px] rounded-t-xl sm:rounded-t-2xl px-4 sm:px-5 py-5 sm:py-6 flex items-center relative overflow-hidden bg-cover bg-center"

@@ -72,7 +72,7 @@ const IssuesView = () => {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('due-asc');
-  const [layoutView, setLayoutView] = useState('board');
+  const [layoutView, setLayoutView] = useState('list');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalIssueCount, setTotalIssueCount] = useState(0);
