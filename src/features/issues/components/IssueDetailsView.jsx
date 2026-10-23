@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
 import {
-  getIssueDetails, updateIssue, deleteIssue, assignIssue, resolveIssue, reviewIssue,
+  getIssueDetails, getProjectIssues, updateIssue, deleteIssue, assignIssue, resolveIssue, reviewIssue,
   getIssueHistory, getIssueLabels, attachIssueLabel, removeIssueLabel,
   getIssueLinks, createIssueLink, deleteIssueLink, getIssueDependencies, getIssueImpact,
   getIssueAttachments, uploadIssueAttachment, downloadIssueAttachment, deleteIssueAttachment,
@@ -43,7 +43,7 @@ const formatDateTime = (dateStr) => {
 };
 
 const Card = ({ children, className = '' }) => (
-  <div className={`rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-[#2d2d32] dark:bg-[#1e1e22] sm:p-5 ${className}`}>
+  <div className={`rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-[#2d2d32] dark:bg-[#171717] sm:p-5 ${className}`}>
     {children}
   </div>
 );
@@ -71,6 +71,7 @@ const IssueDetailsView = ({
 
   // Auxiliary data
   const [members, setMembers] = useState([]);
+  const [projectIssues, setProjectIssues] = useState([]);
   const [sprints, setSprints] = useState([]);
   const [labels, setLabels] = useState([]);
   const [links, setLinks] = useState([]);
@@ -143,6 +144,10 @@ const IssueDetailsView = ({
     let active = true;
     getProjectMembers(pid).then((res) => { if (active) setMembers(Array.isArray(res) ? res : []); }).catch(() => {});
     getProjectSprints(pid).then((res) => { if (active) setSprints(asList(res)); }).catch(() => {});
+    getProjectIssues(pid, { page: 0, size: 100 }).then(async (firstPage) => {
+      const pages = await Promise.all(Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, index) => getProjectIssues(pid, { page: index + 1, size: 100 })));
+      if (active) setProjectIssues([...(firstPage.items || []), ...pages.flatMap((page) => page.items || [])]);
+    }).catch(() => { if (active) setProjectIssues([]); });
     return () => { active = false; };
   }, [pid]);
 
@@ -264,7 +269,8 @@ const IssueDetailsView = ({
   const issueNumber = issue?.issueNumber || (issueId ? String(issueId).slice(-6) : '001');
   const issueKey = issue?.key || (issueNumber ? `WBR-${issueNumber}` : `#${issueNumber}`);
   const displayProjectName = projectName || issue?.projectName || issue?.project?.name || 'Project';
-  const affectedDeps = asList(dependencies);
+  const dependencyItems = asList(dependencies);
+  const linkableIssues = projectIssues.filter((item) => getId(item) && String(getId(item)) !== String(issueId));
 
   return (
     <div className="flex flex-col space-y-4 text-slate-900 dark:text-white animate-fadeIn pb-12">
@@ -381,7 +387,7 @@ const IssueDetailsView = ({
             else if (!isAssignee && !myRequest) runAction('req', () => requestIssueAssignment(issueId, 'Interested in taking this task.'), 'Assignment requested!');
             else setIsEditOpen(true);
           }}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
         >
           {isManager ? <><FiUserPlus size={15} /> Assign Member</> : !isAssignee ? <><FiSend size={15} /> Request Task</> : <><FiPlus size={15} /> Add Log</>}
         </button>
@@ -444,7 +450,7 @@ const IssueDetailsView = ({
             <div className="space-y-2">
               {sprints.length > 0 ? (
                 sprints.slice(0, 3).map((sprint, idx) => (
-                  <div key={getId(sprint) || idx} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
+                  <div key={getId(sprint) || idx} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
                       <FiActivity size={15} />
                     </div>
@@ -457,7 +463,7 @@ const IssueDetailsView = ({
                   </div>
                 ))
               ) : (
-                <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
+                <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
                     <FiActivity size={15} />
                   </div>
@@ -490,7 +496,7 @@ const IssueDetailsView = ({
                   const linkId = getId(link);
                   const typeLabel = link.type || link.linkType || 'Relates to';
                   return (
-                    <div key={linkId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
+                    <div key={linkId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="rounded bg-indigo-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
                           {target.issueNumber ? `AUTH-${target.issueNumber}` : target.key || 'LINK'}
@@ -542,33 +548,27 @@ const IssueDetailsView = ({
           {/* E. Project Issue Dependency Graph Card */}
           <Card>
             <CardHeader title="Project Issue Dependency Graph" />
-            <div className="my-2 rounded-xl bg-slate-50 dark:bg-[#18181b] p-4 border border-slate-100 dark:border-white/5 flex items-center justify-center min-h-[120px] overflow-x-auto">
-              {/* Responsive Visual SVG Node Diagram */}
-              <svg viewBox="0 0 440 90" className="w-full max-w-[420px] h-auto select-none">
-                <defs>
-                  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#818cf8" />
-                  </marker>
-                </defs>
-                {/* Node 1: Left Top */}
-                <rect x="15" y="12" width="68" height="28" rx="6" fill="#2d2d34" stroke="#4b5563" strokeWidth="1" />
-                <text x="49" y="30" fill="#f87171" fontSize="11" fontWeight="bold" textAnchor="middle">UI-214</text>
-                {/* Node 2: Left Bottom */}
-                <rect x="15" y="50" width="68" height="28" rx="6" fill="#2d2d34" stroke="#4b5563" strokeWidth="1" />
-                <text x="49" y="68" fill="#818cf8" fontSize="11" fontWeight="bold" textAnchor="middle">API-309</text>
-                {/* Arrow Lines from Left to Center */}
-                <path d="M 83 26 C 115 26, 120 40, 142 43" fill="none" stroke="#6366f1" strokeWidth="1.5" markerEnd="url(#arrow)" />
-                <path d="M 83 64 C 115 64, 120 50, 142 47" fill="none" stroke="#6366f1" strokeWidth="1.5" markerEnd="url(#arrow)" />
-                {/* Center Node (Current Issue) */}
-                <rect x="150" y="27" width="94" height="36" rx="8" fill="#1e1e24" stroke="#60a5fa" strokeWidth="2" />
-                <text x="197" y="49" fill="#93c5fd" fontSize="12" fontWeight="bold" textAnchor="middle">{issueKey}</text>
-                {/* Arrow Line from Center to Right */}
-                <path d="M 244 45 L 302 45" fill="none" stroke="#6366f1" strokeWidth="1.5" markerEnd="url(#arrow)" />
-                {/* Node 3: Right Downstream */}
-                <rect x="310" y="31" width="84" height="28" rx="6" fill="#2d2d34" stroke="#4b5563" strokeWidth="1" />
-                <text x="352" y="49" fill="#c084fc" fontSize="11" fontWeight="bold" textAnchor="middle">AUTH-102</text>
-              </svg>
-            </div>
+            {dependencyItems.length > 0 ? (
+              <div className="my-2 overflow-x-auto rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-[#171717]">
+                <svg viewBox={`0 0 480 ${Math.max(100, dependencyItems.length * 48 + 24)}`} className="mx-auto h-auto w-full min-w-[360px] max-w-[460px] select-none">
+                  {dependencyItems.map((dependency, index) => {
+                    const y = 12 + index * 48;
+                    const title = dependency.title || dependency.issue?.title || dependency.description || dependency.name || 'Untitled issue';
+                    const number = dependency.issueNumber || dependency.issue?.issueNumber || String(getId(dependency) || '').slice(-6);
+                    return (
+                      <g key={getId(dependency) || index}>
+                        <path d={`M 176 ${y + 16} L 200 ${y + 16}`} stroke="#818cf8" strokeWidth="1.5" />
+                        <rect x="8" y={y} width="168" height="32" rx="6" fill="#2d2d34" stroke="#4b5563" />
+                        <text x="18" y={y + 13} fill="#a5b4fc" fontSize="9" fontWeight="bold">{number ? `#${number}` : 'ISSUE'}</text>
+                        <text x="18" y={y + 25} fill="#e5e7eb" fontSize="9">{title.slice(0, 26)}</text>
+                        <rect x="200" y={y} width="128" height="32" rx="7" fill="#1e1e24" stroke="#60a5fa" strokeWidth="2" />
+                        <text x="264" y={y + 20} fill="#93c5fd" fontSize="11" fontWeight="bold" textAnchor="middle">{issueKey}</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            ) : <p className="py-4 text-center text-xs text-slate-400 dark:text-[#888]">No issue dependencies to display.</p>}
           </Card>
 
           {/* F. Labels Card */}
@@ -673,6 +673,7 @@ const IssueDetailsView = ({
                     updateComment={updateIssueComment}
                     deleteComment={deleteIssueComment}
                     compact
+                    issueSurface
                     onCountChange={setCommentsCount}
                   />
                 </div>
@@ -744,7 +745,7 @@ const IssueDetailsView = ({
             <CardHeader
               title="Attachments"
               action={
-                <label className="inline-flex items-center gap-1 rounded-md bg-sky-500 hover:bg-sky-600 px-2.5 py-1 text-[11px] font-semibold text-white transition cursor-pointer">
+                <label className="inline-flex items-center gap-1 rounded-md bg-sky-600 hover:bg-sky-700 active:bg-sky-800 px-2.5 py-1 text-[11px] font-semibold text-white transition cursor-pointer">
                   <FiPaperclip size={12} /> + Add attachment
                   <input type="file" onChange={handleUploadFile} className="sr-only" />
                 </label>
@@ -758,7 +759,7 @@ const IssueDetailsView = ({
                   const size = formatBytes(att.fileSize || att.size);
                   const time = formatDateTime(att.createdAt || att.timestamp);
                   return (
-                    <div key={attId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
+                    <div key={attId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
                           <FiPaperclip size={15} />
@@ -793,68 +794,8 @@ const IssueDetailsView = ({
                 })}
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
-                    <FiPaperclip size={15} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200">error-log-2026-10-16.txt</p>
-                    <p className="text-[10px] text-slate-400 dark:text-[#777]">12 KB · 16/10/2026, 2:34 PM</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
-                    <FiPaperclip size={15} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200">token-flow-diagram.png</p>
-                    <p className="text-[10px] text-slate-400 dark:text-[#777]">245 KB · 15/10/2026, 11:20 AM</p>
-                  </div>
-                </div>
-              </div>
+              <p className="py-4 text-center text-xs text-slate-400 dark:text-[#888]">No attachments yet.</p>
             )}
-          </Card>
-
-          {/* C. Affected Issues Card */}
-          <Card>
-            <CardHeader title="Affected Issues" />
-            <div className="space-y-2">
-              {affectedDeps.length > 0 ? (
-                affectedDeps.map((dep, idx) => {
-                  const did = getId(dep) || idx;
-                  const dnum = dep.issueNumber || (did ? String(did).slice(-6) : idx + 1);
-                  return (
-                    <div key={did} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="rounded bg-rose-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                          {`DEP-${dnum}`}
-                        </span>
-                        <span className="text-xs text-slate-800 dark:text-slate-200 truncate">{dep.title || dep.description || 'Dependent task'}</span>
-                      </div>
-                      <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400 shrink-0">Related</span>
-                    </div>
-                  );
-                })
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="rounded bg-rose-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-rose-600 dark:text-rose-400">UI-214</span>
-                      <span className="text-xs text-slate-800 dark:text-slate-200 truncate">Session timeout shows generic error</span>
-                    </div>
-                    <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400 shrink-0">Related</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="rounded bg-indigo-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">API-309</span>
-                      <span className="text-xs text-slate-800 dark:text-slate-200 truncate">Mobile app fails to refresh token</span>
-                    </div>
-                    <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400 shrink-0">Related</span>
-                  </div>
-                </>
-              )}
-            </div>
           </Card>
 
           {/* D. Assignee & Watchers Card */}
@@ -906,7 +847,7 @@ const IssueDetailsView = ({
             <div className="space-y-3">
               {/* Contributor's Own Request */}
               {myRequest ? (
-                <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#252529] flex items-center justify-between gap-2 text-xs">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717] flex items-center justify-between gap-2 text-xs">
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-white">Your Request Status</p>
                     <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium capitalize">{myRequest.status || 'Pending'}</span>
@@ -951,7 +892,7 @@ const IssueDetailsView = ({
                       const reqId = getId(req);
                       const reqName = req.user?.name || req.requesterName || req.email || 'Member';
                       return (
-                        <div key={reqId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529] text-xs">
+                        <div key={reqId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717] text-xs">
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900 dark:text-white truncate">{reqName}</p>
                             <p className="text-[11px] text-slate-500 dark:text-[#888] truncate">{req.message || 'Requested assignment'}</p>
@@ -990,7 +931,7 @@ const IssueDetailsView = ({
       {/* Edit Issue Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsEditOpen(false)}>
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#1e1e22]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Edit Issue</h3>
               <button type="button" onClick={() => setIsEditOpen(false)}><FiX size={16} /></button>
@@ -1032,7 +973,7 @@ const IssueDetailsView = ({
               </div>
               <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
                 <button type="button" onClick={() => setIsEditOpen(false)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#29292d]">Cancel</button>
-                <button type="submit" disabled={!!busyAction} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-sky-700">Save</button>
+                <button type="submit" disabled={!!busyAction} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50">Save</button>
               </div>
             </form>
           </div>
@@ -1042,7 +983,7 @@ const IssueDetailsView = ({
       {/* Assign Members Modal */}
       {isAssignOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsAssignOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#1e1e22]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Assign Project Members</h3>
               <button type="button" onClick={() => setIsAssignOpen(false)}><FiX size={16} /></button>
@@ -1065,7 +1006,7 @@ const IssueDetailsView = ({
               <button type="button" disabled={!!busyAction} onClick={async () => {
                 await runAction('assign', () => assignIssue(issueId, selectedUserIds), 'Assignees updated.');
                 setIsAssignOpen(false);
-              }} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-sky-700">Save Assignment</button>
+              }} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50">Save Assignment</button>
             </div>
           </div>
         </div>
@@ -1074,20 +1015,26 @@ const IssueDetailsView = ({
       {/* Link Issue Modal */}
       {isLinkOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLinkOpen(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#1e1e22]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Create Issue Link</h3>
               <button type="button" onClick={() => setIsLinkOpen(false)}><FiX size={16} /></button>
             </div>
             <form onSubmit={async (e) => {
               e.preventDefault();
-              if (!linkValues.targetIssueId.trim()) return;
-              await runAction('link', () => createIssueLink(issueId, linkValues.targetIssueId.trim(), linkValues.type), 'Link created.');
+              if (!linkValues.targetIssueId) return;
+              await runAction('link', () => createIssueLink(issueId, linkValues.targetIssueId, linkValues.type), 'Link created.');
               setIsLinkOpen(false);
             }} className="mt-3 space-y-3 text-xs">
               <label className="block space-y-1">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Target Issue UUID</span>
-                <input required value={linkValues.targetIssueId} onChange={(e) => setLinkValues((v) => ({ ...v, targetIssueId: e.target.value }))} placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-[#38383e] dark:bg-[#252529] dark:text-white" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Target Issue</span>
+                <select required value={linkValues.targetIssueId} onChange={(e) => setLinkValues((v) => ({ ...v, targetIssueId: e.target.value }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-sky-500 dark:border-[#38383e] dark:bg-[#252529] dark:text-white">
+                  <option value="">{linkableIssues.length ? 'Select an issue' : 'No other issues found'}</option>
+                  {linkableIssues.map((item) => {
+                    const id = getId(item);
+                    return <option key={id} value={id}>{item.issueNumber ? `#${item.issueNumber} · ` : ''}{item.title || 'Untitled issue'}</option>;
+                  })}
+                </select>
               </label>
               <label className="block space-y-1">
                 <span className="font-semibold text-slate-700 dark:text-slate-300">Relationship Type</span>
@@ -1100,7 +1047,7 @@ const IssueDetailsView = ({
               </label>
               <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
                 <button type="button" onClick={() => setIsLinkOpen(false)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#29292d]">Cancel</button>
-                <button type="submit" disabled={!!busyAction} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-sky-700">Add Link</button>
+                <button type="submit" disabled={!!busyAction || !linkValues.targetIssueId} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50">Add Link</button>
               </div>
             </form>
           </div>
@@ -1110,7 +1057,7 @@ const IssueDetailsView = ({
       {/* Add Label Modal */}
       {isLabelOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLabelOpen(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#1e1e22]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Attach Label</h3>
               <button type="button" onClick={() => setIsLabelOpen(false)}><FiX size={16} /></button>
@@ -1128,7 +1075,7 @@ const IssueDetailsView = ({
               </label>
               <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
                 <button type="button" onClick={() => setIsLabelOpen(false)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#29292d]">Cancel</button>
-                <button type="submit" disabled={!!busyAction} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-sky-700">Attach</button>
+                <button type="submit" disabled={!!busyAction} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50">Attach</button>
               </div>
             </form>
           </div>
@@ -1138,7 +1085,7 @@ const IssueDetailsView = ({
       {/* Review Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsReviewOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#1e1e22]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Review Decision</h3>
               <button type="button" onClick={() => setIsReviewOpen(false)}><FiX size={16} /></button>
@@ -1166,7 +1113,7 @@ const IssueDetailsView = ({
       {/* Delete Confirmation Modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setConfirmDelete(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl dark:border-rose-900 dark:bg-[#1e1e22]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl dark:border-rose-900 dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-bold text-rose-700 dark:text-rose-400">Delete this issue?</h3>
             <p className="mt-2 text-xs text-slate-600 dark:text-[#a0a0a0]">This action permanently removes the issue from the project and cannot be undone.</p>
             <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
