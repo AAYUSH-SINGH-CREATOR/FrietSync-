@@ -17,6 +17,11 @@ import {
   FiUsers,
   FiUserPlus,
   FiChevronRight,
+  FiDownload,
+  FiPackage,
+  FiTag,
+  FiUploadCloud,
+  FiExternalLink,
 } from 'react-icons/fi';
 import {
   getProjectById,
@@ -24,6 +29,9 @@ import {
   removeProjectMember,
   getProjectMilestones,
   getProjectSummary,
+  getProjectSummaryPdf,
+  getProjectReleases,
+  uploadReleaseFile,
   getProjectTimeline,
   getFriendlyErrorMessage,
 } from '../services/projectApi';
@@ -35,6 +43,11 @@ import { getPriorityBadge, getStatusBadge as getIssueStatusBadge } from '../../i
 import EditProjectModal from '../components/EditProjectModal';
 import DeleteProjectModal from '../components/DeleteProjectModal';
 import AddProjectMemberModal from '../components/AddProjectMemberModal';
+import MilestoneModal from '../components/MilestoneModal';
+import DeleteMilestoneModal from '../components/DeleteMilestoneModal';
+import ReleaseModal from '../components/ReleaseModal';
+import DeleteReleaseModal from '../components/DeleteReleaseModal';
+import AttachReleaseIssuesModal from '../components/AttachReleaseIssuesModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
@@ -124,13 +137,17 @@ const ProjectDetailsView = () => {
   const [issues, setIssues] = useState([]);
   const [sprints, setSprints] = useState([]);
   const [milestones, setMilestones] = useState([]);
+  const [releases, setReleases] = useState([]);
   const [polls, setPolls] = useState([]);
   const [activities, setActivities] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [viewingAllPolls, setViewingAllPolls] = useState(false);
+  const [showAllMilestones, setShowAllMilestones] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [uploadingReleaseId, setUploadingReleaseId] = useState(null);
 
   // Modals
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
@@ -141,7 +158,48 @@ const ProjectDetailsView = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [toastNotice, setToastNotice] = useState(null);
 
+  // Milestone Modals
+  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState(null);
+  const [isDeleteMilestoneOpen, setIsDeleteMilestoneOpen] = useState(false);
+  const [deletingMilestone, setDeletingMilestone] = useState(null);
+
+  // Release Modals
+  const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
+  const [editingRelease, setEditingRelease] = useState(null);
+  const [isDeleteReleaseOpen, setIsDeleteReleaseOpen] = useState(false);
+  const [deletingRelease, setDeletingRelease] = useState(null);
+  const [isAttachIssuesOpen, setIsAttachIssuesOpen] = useState(false);
+  const [attachingRelease, setAttachingRelease] = useState(null);
+
   const isAdmin = isUserAdmin();
+
+  const currentProjectRole = useMemo(() => {
+    return members.find((member) => {
+      const memberUserId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
+      const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
+      return (
+        (currentUserId && String(memberUserId) === String(currentUserId)) ||
+        (currentUserEmail && memberEmail === currentUserEmail)
+      );
+    });
+  }, [members, currentUserId, currentUserEmail]);
+
+  const currentRoleName = String(
+    currentProjectRole?.role ||
+    currentProjectRole?.projectRole ||
+    currentUserProfile?.role ||
+    ''
+  ).toUpperCase();
+
+  const isProjectManager =
+    isAdmin ||
+    ['PROJECT_MANAGER', 'ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(currentRoleName) ||
+    (project?.projectManagerId && String(project.projectManagerId) === String(currentUserId));
+
+  const canManageMilestones = isProjectManager;
+  const canManageReleases = isProjectManager;
+  const canAttachIssues = isProjectManager || ['TEAM_LEAD', 'LEAD'].includes(currentRoleName);
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -152,8 +210,8 @@ const ProjectDetailsView = () => {
     if (!pId) return null;
     const now = Date.now();
 
-    // 1. Fetch project core & summary in parallel
-    const [projectRes, summaryRes, membersRes, sprintsRes, issuesRes, pollsRes] =
+    // 1. Fetch project core, summary, members, sprints, issues, polls, releases in parallel
+    const [projectRes, summaryRes, membersRes, sprintsRes, issuesRes, pollsRes, releasesRes] =
       await Promise.allSettled([
         getProjectById(pId),
         getProjectSummary(pId).catch(() => null),
@@ -161,6 +219,7 @@ const ProjectDetailsView = () => {
         getProjectSprints(pId).catch(() => []),
         getProjectIssues(pId, { page: 0, size: 50 }).catch(() => ({ items: [] })),
         getProjectPolls(pId).catch(() => []),
+        getProjectReleases(pId).catch(() => []),
       ]);
 
     const projectData = projectRes.status === 'fulfilled' ? projectRes.value : null;
@@ -179,6 +238,12 @@ const ProjectDetailsView = () => {
         : [];
     const pollsData =
       pollsRes.status === 'fulfilled' && Array.isArray(pollsRes.value) ? pollsRes.value : [];
+    const releasesData =
+      releasesRes.status === 'fulfilled'
+        ? Array.isArray(releasesRes.value)
+          ? releasesRes.value
+          : releasesRes.value?.releases || releasesRes.value?.items || releasesRes.value?.data || []
+        : [];
 
     // 2. Fetch milestones from project milestones API with timeline fallback
     let milestoneList = [];
@@ -306,6 +371,7 @@ const ProjectDetailsView = () => {
       sprints: sprintsData,
       issues: issuesData,
       milestones: milestoneList,
+      releases: releasesData,
       polls: pollsData,
       activities: formattedActivities,
     };
@@ -324,6 +390,7 @@ const ProjectDetailsView = () => {
         setSprints(data.sprints);
         setIssues(data.issues);
         setMilestones(data.milestones);
+        setReleases(data.releases);
         setPolls(data.polls);
         setActivities(data.activities);
       }
@@ -347,6 +414,7 @@ const ProjectDetailsView = () => {
         setSprints(data.sprints);
         setIssues(data.issues);
         setMilestones(data.milestones);
+        setReleases(data.releases);
         setPolls(data.polls);
         setActivities(data.activities);
         setIsLoading(false);
@@ -361,6 +429,101 @@ const ProjectDetailsView = () => {
       isMounted = false;
     };
   }, [projectId, loadAllProjectDataCore]);
+
+  const handleDownloadSummaryPdf = async () => {
+    if (!projectId || isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
+    try {
+      const data = await getProjectSummaryPdf(projectId);
+      if (!data) throw new Error('No PDF content returned');
+      const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeName = (project?.name || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      a.download = `${safeName}-summary.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      showToast('success', 'Project summary PDF downloaded.');
+    } catch (err) {
+      showToast('error', getFriendlyErrorMessage(err, 'project') || 'Failed to download PDF summary.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleUploadReleaseArtifact = async (releaseId, file) => {
+    if (!releaseId || !file) return;
+    const MAX_BYTES = 100 * 1024 * 1024; // 100 MB max
+    if (file.size > MAX_BYTES) {
+      showToast('error', 'File size exceeds maximum 100 MB limit.');
+      return;
+    }
+    setUploadingReleaseId(releaseId);
+    try {
+      const updated = await uploadReleaseFile(releaseId, file);
+      showToast('success', `Artifact "${file.name}" uploaded successfully.`);
+      setReleases((prev) =>
+        prev.map((r) => {
+          const rId = r.id || r._id || r.releaseId;
+          if (String(rId) === String(releaseId)) {
+            return updated && typeof updated === 'object'
+              ? { ...r, ...updated }
+              : { ...r, fileName: file.name, fileUrl: updated || r.fileUrl };
+          }
+          return r;
+        })
+      );
+    } catch (err) {
+      showToast('error', getFriendlyErrorMessage(err, 'project') || 'Failed to upload artifact.');
+    } finally {
+      setUploadingReleaseId(null);
+    }
+  };
+
+  const handleMilestoneSaved = (saved) => {
+    const sId = saved?.id || saved?._id || saved?.milestoneId;
+    setMilestones((prev) => {
+      const exists = prev.some((m) => String(m.id || m._id || m.milestoneId) === String(sId));
+      if (exists) {
+        return prev.map((m) => (String(m.id || m._id || m.milestoneId) === String(sId) ? { ...m, ...saved } : m));
+      }
+      return [saved, ...prev];
+    });
+    showToast('success', `Milestone "${saved?.name || 'Milestone'}" saved.`);
+  };
+
+  const handleMilestoneDeleted = (deletedId) => {
+    setMilestones((prev) => prev.filter((m) => String(m.id || m._id || m.milestoneId) !== String(deletedId)));
+    showToast('success', 'Milestone was deleted.');
+  };
+
+  const handleReleaseSaved = (saved) => {
+    const sId = saved?.id || saved?._id || saved?.releaseId;
+    setReleases((prev) => {
+      const exists = prev.some((r) => String(r.id || r._id || r.releaseId) === String(sId));
+      if (exists) {
+        return prev.map((r) => (String(r.id || r._id || r.releaseId) === String(sId) ? { ...r, ...saved } : r));
+      }
+      return [saved, ...prev];
+    });
+    showToast('success', `Release "${saved?.name || 'Release'}" saved.`);
+  };
+
+  const handleReleaseDeleted = (deletedId) => {
+    setReleases((prev) => prev.filter((r) => String(r.id || r._id || r.releaseId) !== String(deletedId)));
+    showToast('success', 'Release was deleted.');
+  };
+
+  const handleIssuesAttached = (updatedRelease) => {
+    const rId = updatedRelease?.id || updatedRelease?._id || updatedRelease?.releaseId || attachingRelease?.id;
+    setReleases((prev) =>
+      prev.map((r) => (String(r.id || r._id || r.releaseId) === String(rId) ? { ...r, ...updatedRelease } : r))
+    );
+    showToast('success', 'Issues attached to release.');
+  };
 
   // Calculations for Hero Summary
   const overallProgress = useMemo(() => {
@@ -626,9 +789,9 @@ const ProjectDetailsView = () => {
           </div>
         </div>
 
-        {/* Hero Bottom Row: Schedule a meeting + Project Manager + 4 Metric Cards */}
+        {/* Hero Bottom Row: Schedule a meeting + Summary PDF + Project Manager + 4 Metric Cards */}
         <div className="pt-4 border-t border-[#2d2d34] flex flex-col xl:flex-row xl:items-center justify-between gap-5 flex-wrap">
-          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => setIsMeetingModalOpen(true)}
@@ -637,8 +800,23 @@ const ProjectDetailsView = () => {
               Schedule a meeting
             </button>
 
+            <button
+              type="button"
+              onClick={handleDownloadSummaryPdf}
+              disabled={isDownloadingPdf}
+              title="Download project summary PDF report"
+              className="inline-flex items-center gap-2 rounded-full border border-[#383842] bg-[#222228] hover:bg-[#2b2b32] text-slate-200 hover:text-white font-semibold text-xs sm:text-sm px-4 py-2.5 shadow-sm transition shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              {isDownloadingPdf ? (
+                <span className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin inline-block" />
+              ) : (
+                <FiDownload size={14} className="text-sky-400" />
+              )}
+              <span>{isDownloadingPdf ? 'Exporting PDF...' : 'Summary PDF'}</span>
+            </button>
+
             {/* Project Manager Avatar and Name */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ml-1 sm:ml-2">
               <img
                 src={project?.projectManagerAvatar || project?.projectManager?.avatarUrl || defaultAvatar}
                 alt={projectManagerName}
@@ -799,6 +977,18 @@ const ProjectDetailsView = () => {
                       {projectTags}
                     </span>
                   </div>
+                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-[#27272e]">
+                    <span className="text-slate-400 font-medium">Schedule report</span>
+                    <button
+                      type="button"
+                      onClick={handleDownloadSummaryPdf}
+                      disabled={isDownloadingPdf}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer disabled:opacity-50"
+                    >
+                      <FiDownload size={13} />
+                      <span>{isDownloadingPdf ? 'Downloading...' : 'Download PDF Summary'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -806,9 +996,30 @@ const ProjectDetailsView = () => {
             {/* Upcoming Milestones Card */}
             <div className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm flex flex-col justify-between">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white mb-5">
-                  Upcoming Milestones
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-bold text-white">
+                      Upcoming Milestones
+                    </h2>
+                    <span className="rounded-full bg-[#27272e] px-2 py-0.5 text-xs font-semibold text-slate-300">
+                      {milestones.length}
+                    </span>
+                  </div>
+                  {canManageMilestones && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMilestone(null);
+                        setIsMilestoneModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-semibold transition cursor-pointer"
+                      title="Add Milestone"
+                    >
+                      <FiPlus size={13} />
+                      <span>Add</span>
+                    </button>
+                  )}
+                </div>
 
                 {isLoading ? (
                   <div className="space-y-4 py-2">
@@ -817,42 +1028,99 @@ const ProjectDetailsView = () => {
                     ))}
                   </div>
                 ) : milestones.length === 0 ? (
-                  <div className="py-10 text-center text-slate-400">
+                  <div className="py-8 text-center text-slate-400">
                     <p className="text-xs sm:text-sm font-medium text-slate-300">
                       No upcoming milestones
                     </p>
                     <p className="text-xs mt-1">
                       Milestones added to this project will appear here.
                     </p>
+                    {canManageMilestones && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingMilestone(null);
+                          setIsMilestoneModalOpen(true);
+                        }}
+                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-semibold transition cursor-pointer"
+                      >
+                        <FiPlus size={13} /> Add First Milestone
+                      </button>
+                    )}
                   </div>
                 ) : (
-                  <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700/60">
-                    {milestones.slice(0, 4).map((m, idx) => {
-                      const statusInfo = getMilestoneStatusInfo(m.status);
-                      return (
-                        <div
-                          key={m.id || idx}
-                          className="relative flex items-center justify-between gap-3 text-xs"
-                        >
-                          <span
-                            className={`absolute -left-6 top-1.5 h-2.5 w-2.5 rounded-full ${statusInfo.dotClass}`}
-                          />
-                          <div className="min-w-0 pr-2">
-                            <p className="text-xs sm:text-sm font-semibold text-white truncate">
-                              {m.name || m.title || `Milestone ${idx + 1}`}
-                            </p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
-                              {formatMilestoneDate(m.targetDate || m.dueDate || m.deadline)}
-                            </p>
-                          </div>
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border shrink-0 ${statusInfo.badgeClass}`}
+                  <div>
+                    <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700/60 max-h-[260px] overflow-y-auto pr-1">
+                      {milestones.slice(0, showAllMilestones ? undefined : 4).map((m, idx) => {
+                        const mId = m.id || m._id || m.milestoneId || idx;
+                        const statusInfo = getMilestoneStatusInfo(m.status);
+                        return (
+                          <div
+                            key={mId}
+                            className="relative flex items-center justify-between gap-3 text-xs group py-0.5"
                           >
-                            {statusInfo.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+                            <span
+                              className={`absolute -left-6 top-2 h-2.5 w-2.5 rounded-full ${statusInfo.dotClass}`}
+                            />
+                            <div className="min-w-0 pr-2">
+                              <p className="text-xs sm:text-sm font-semibold text-white truncate">
+                                {m.name || m.title || `Milestone ${idx + 1}`}
+                              </p>
+                              {m.description && (
+                                <p className="text-[11px] text-slate-400 truncate mt-0.5 max-w-xs">
+                                  {m.description}
+                                </p>
+                              )}
+                              <p className="text-[11px] text-slate-500 mt-0.5">
+                                Due: {formatMilestoneDate(m.dueDate || m.targetDate || m.deadline)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border shrink-0 ${statusInfo.badgeClass}`}
+                              >
+                                {statusInfo.label}
+                              </span>
+                              {canManageMilestones && (
+                                <div className="flex items-center opacity-70 group-hover:opacity-100 transition">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingMilestone(m);
+                                      setIsMilestoneModalOpen(true);
+                                    }}
+                                    title="Edit Milestone"
+                                    className="p-1 rounded text-slate-400 hover:text-sky-400 hover:bg-[#25252c] transition cursor-pointer"
+                                  >
+                                    <FiEdit2 size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDeletingMilestone(m);
+                                      setIsDeleteMilestoneOpen(true);
+                                    }}
+                                    title="Delete Milestone"
+                                    className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition cursor-pointer"
+                                  >
+                                    <FiTrash2 size={12} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {milestones.length > 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllMilestones((prev) => !prev)}
+                        className="mt-3 text-xs font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer"
+                      >
+                        {showAllMilestones ? 'Show fewer' : `View all (${milestones.length})`}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1270,6 +1538,228 @@ const ProjectDetailsView = () => {
             )}
           </section>
 
+          {/* Under Dashboard: Project Releases */}
+          <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d34] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-950/40 text-cyan-400 flex items-center justify-center shrink-0">
+                  <FiPackage size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-white">Project Releases</h3>
+                    <span className="rounded-full bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-300">
+                      {releases.length}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Published version tags, attached deliverables, and artifact distribution.
+                  </p>
+                </div>
+              </div>
+
+              {canManageReleases && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingRelease(null);
+                    setIsReleaseModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-xs sm:text-sm font-semibold text-slate-950 shadow-md shadow-cyan-600/20 transition cursor-pointer"
+                >
+                  <FiPlus size={15} />
+                  <span>Create Release</span>
+                </button>
+              )}
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-3 py-2">
+                {[1, 2].map((n) => (
+                  <div key={n} className="h-20 rounded-2xl bg-[#27272e] animate-pulse" />
+                ))}
+              </div>
+            ) : releases.length === 0 ? (
+              <div className="py-8 text-center text-slate-400">
+                <p className="text-xs sm:text-sm font-semibold text-slate-300">
+                  No releases published yet
+                </p>
+                <p className="text-xs mt-1">
+                  Create releases to group completed issues, publish release notes, and distribute signed build artifacts.
+                </p>
+                {canManageReleases && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingRelease(null);
+                      setIsReleaseModalOpen(true);
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-semibold transition cursor-pointer"
+                  >
+                    <FiPlus size={14} /> Create First Release
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {releases.map((release, idx) => {
+                  const rId = release.id || release._id || release.releaseId || idx;
+                  const releaseName = release.name || release.version || `Release ${idx + 1}`;
+                  const rDate = release.releaseDate || release.date;
+                  const attachedIssues = release.issues || release.issueIds || release.releaseIssues || [];
+                  const issueCount = Array.isArray(attachedIssues) ? attachedIssues.length : 0;
+                  const fileUrl = release.fileUrl || release.artifactUrl || release.downloadUrl;
+                  const fileName = release.fileName || release.filename || (fileUrl ? 'artifact-file' : null);
+                  const isUploadingThis = String(uploadingReleaseId) === String(rId);
+
+                  return (
+                    <div
+                      key={rId}
+                      className="p-4 sm:p-5 rounded-2xl bg-[#1b1b1f] border border-[#2d2d34] hover:border-[#3b3b44] transition space-y-3"
+                    >
+                      {/* Release Header */}
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-950/50 border border-cyan-800/60 text-cyan-300 text-xs font-bold tracking-wide">
+                            <FiTag size={12} />
+                            <span>{releaseName}</span>
+                          </span>
+                          {rDate && (
+                            <span className="text-xs text-slate-400 font-medium">
+                              Released {formatDate(rDate)}
+                            </span>
+                          )}
+                          {release.releaseUrl && (
+                            <a
+                              href={release.releaseUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-sky-400 hover:underline"
+                            >
+                              <span>External Link</span>
+                              <FiExternalLink size={12} />
+                            </a>
+                          )}
+                        </div>
+
+                        {canManageReleases && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingRelease(release);
+                                setIsReleaseModalOpen(true);
+                              }}
+                              title="Edit Release"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-[#27272e] transition cursor-pointer"
+                            >
+                              <FiEdit2 size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeletingRelease(release);
+                                setIsDeleteReleaseOpen(true);
+                              }}
+                              title="Delete Release"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition cursor-pointer"
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Release Description */}
+                      {release.description && (
+                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                          {release.description}
+                        </p>
+                      )}
+
+                      {/* Interactive Meta Bars: Issues & File Artifact */}
+                      <div className="pt-2 border-t border-[#2d2d34] flex flex-wrap items-center justify-between gap-3 text-xs">
+                        {/* Attached Issues info */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-slate-400 font-medium">Attached Issues:</span>
+                          <span className="font-semibold text-white px-2 py-0.5 rounded-md bg-[#25252c] border border-[#32323a]">
+                            {issueCount} {issueCount === 1 ? 'issue' : 'issues'}
+                          </span>
+                          {canAttachIssues && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAttachingRelease(release);
+                                setIsAttachIssuesOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-sky-400 hover:text-sky-300 hover:underline cursor-pointer ml-1"
+                            >
+                              <FiPlus size={12} /> Attach / Manage Issues
+                            </button>
+                          )}
+                        </div>
+
+                        {/* File Artifact info & upload */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {fileUrl ? (
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={fileUrl}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 hover:bg-emerald-950/60 font-semibold text-xs transition"
+                              >
+                                <FiDownload size={13} />
+                                <span className="truncate max-w-[150px]">{fileName || 'Download Artifact'}</span>
+                              </a>
+                              {canManageReleases && (
+                                <label className="text-[11px] text-slate-400 hover:text-slate-200 cursor-pointer underline ml-1">
+                                  <span>{isUploadingThis ? 'Uploading...' : 'Replace file'}</span>
+                                  <input
+                                    type="file"
+                                    className="hidden"
+                                    disabled={isUploadingThis}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleUploadReleaseArtifact(rId, f);
+                                      e.target.value = '';
+                                    }}
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          ) : (
+                            canManageReleases && (
+                              <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-[#3a3a44] bg-[#24242b] hover:bg-[#2e2e36] text-slate-300 hover:text-white font-semibold text-xs transition cursor-pointer">
+                                {isUploadingThis ? (
+                                  <span className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin inline-block" />
+                                ) : (
+                                  <FiUploadCloud size={14} className="text-cyan-400" />
+                                )}
+                                <span>{isUploadingThis ? 'Uploading (max 100MB)...' : 'Upload Artifact (S3)'}</span>
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  disabled={isUploadingThis}
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleUploadReleaseArtifact(rId, f);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
           {/* Under Dashboard: Project Members (with Add Member) */}
           <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d34] pb-4">
@@ -1459,6 +1949,66 @@ const ProjectDetailsView = () => {
           setSelectedIssue(null);
           reloadData();
         }}
+      />
+
+      {/* Milestone Modals */}
+      <MilestoneModal
+        key={`milestone-${editingMilestone?.id || editingMilestone?._id || 'new'}-${isMilestoneModalOpen}`}
+        isOpen={isMilestoneModalOpen}
+        onClose={() => {
+          setIsMilestoneModalOpen(false);
+          setEditingMilestone(null);
+        }}
+        projectId={projectId}
+        milestone={editingMilestone}
+        onMilestoneSaved={handleMilestoneSaved}
+      />
+
+      <DeleteMilestoneModal
+        key={`delete-milestone-${deletingMilestone?.id || deletingMilestone?._id || 'none'}-${isDeleteMilestoneOpen}`}
+        isOpen={isDeleteMilestoneOpen}
+        onClose={() => {
+          setIsDeleteMilestoneOpen(false);
+          setDeletingMilestone(null);
+        }}
+        milestone={deletingMilestone}
+        onMilestoneDeleted={handleMilestoneDeleted}
+      />
+
+      {/* Release Modals */}
+      <ReleaseModal
+        key={`release-${editingRelease?.id || editingRelease?._id || 'new'}-${isReleaseModalOpen}`}
+        isOpen={isReleaseModalOpen}
+        onClose={() => {
+          setIsReleaseModalOpen(false);
+          setEditingRelease(null);
+        }}
+        projectId={projectId}
+        release={editingRelease}
+        onReleaseSaved={handleReleaseSaved}
+      />
+
+      <DeleteReleaseModal
+        key={`delete-release-${deletingRelease?.id || deletingRelease?._id || 'none'}-${isDeleteReleaseOpen}`}
+        isOpen={isDeleteReleaseOpen}
+        onClose={() => {
+          setIsDeleteReleaseOpen(false);
+          setDeletingRelease(null);
+        }}
+        release={deletingRelease}
+        onReleaseDeleted={handleReleaseDeleted}
+      />
+
+      <AttachReleaseIssuesModal
+        key={`attach-${attachingRelease?.id || attachingRelease?._id || 'none'}-${isAttachIssuesOpen}`}
+        isOpen={isAttachIssuesOpen}
+        onClose={() => {
+          setIsAttachIssuesOpen(false);
+          setAttachingRelease(null);
+        }}
+        release={attachingRelease}
+        projectIssues={issues}
+        onIssuesAttached={handleIssuesAttached}
       />
     </div>
   );

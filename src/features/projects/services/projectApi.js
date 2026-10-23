@@ -229,9 +229,20 @@ export const addIssueToRelease = (releaseId, payload) => projectResourceRequest(
 export const uploadReleaseFile = async (releaseId, file) => {
   const form = new FormData();
   form.append('file', file);
-  const headers = getAuthHeaders();
-  delete headers.headers['Content-Type'];
-  return projectResourceRequest('post', `/releases/${releaseId}/file`, form, { headers }, 'Failed to upload release file.');
+  try {
+    const rawToken =
+      localStorage.getItem('frietSyncToken') ||
+      localStorage.getItem('accessToken') ||
+      localStorage.getItem('token') ||
+      '';
+    const token = rawToken.startsWith('Bearer ') ? rawToken : (rawToken ? `Bearer ${rawToken}` : '');
+    const response = await axios.post(`${BASE_URL}/releases/${releaseId}/file`, form, {
+      headers: token ? { Authorization: token } : {},
+    });
+    return response.data === undefined ? null : response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to upload release file.');
+  }
 };
 
 export const getProjectSprints = (projectId) => projectResourceRequest('get', `/projects/${projectId}/sprints`, undefined, {}, 'Failed to load project sprints.');
@@ -246,6 +257,18 @@ export const requestSprint = (sprintId, payload) => projectResourceRequest('post
 export const getProjectSprintRequests = (projectId) => projectResourceRequest('get', `/projects/${projectId}/sprints-requests`, undefined, {}, 'Failed to load sprint requests.');
 export const createSprintRequest = (sprintId, payload) => projectResourceRequest('post', `/sprints/${sprintId}/sprints-requests`, payload, {}, 'Failed to create sprint request.');
 export const getProjectSummary = (projectId) => projectResourceRequest('get', `/projects/${projectId}/summary`, undefined, {}, 'Failed to load project summary.');
+export const getProjectSummaryPdf = async (projectId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/projects/${projectId}/summary/pdf`, {
+      ...getAuthHeaders(),
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to download project summary PDF.');
+  }
+};
+export const downloadProjectSummaryPdf = getProjectSummaryPdf;
 export const getProjectTimeline = (projectId) => projectResourceRequest('get', `/projects/${projectId}/timeline`, undefined, {}, 'Failed to load project timeline.');
 
 export { getFriendlyErrorMessage };
