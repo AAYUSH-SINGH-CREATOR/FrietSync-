@@ -271,4 +271,59 @@ export const getProjectSummaryPdf = async (projectId) => {
 export const downloadProjectSummaryPdf = getProjectSummaryPdf;
 export const getProjectTimeline = (projectId) => projectResourceRequest('get', `/projects/${projectId}/timeline`, undefined, {}, 'Failed to load project timeline.');
 
+// GitHub Integration Endpoints
+export const getGithubConnectUrl = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/integrations/github/connect`, getAuthHeaders());
+    const data = response.data;
+    const url = data?.authorizationUrl || data?.authUrl || data?.url || data?.redirectUrl || (typeof data === 'string' ? data : null);
+    return url;
+  } catch (error) {
+    handleProjectError(error, 'Failed to initiate GitHub connection.');
+  }
+};
+
+export const disconnectGithub = async () => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/integrations/github/disconnect`, getAuthHeaders());
+    return response.data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to disconnect GitHub account.');
+  }
+};
+
+export const linkProjectRepository = async (projectId, { owner, repository }) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  if (!owner?.trim() || !repository?.trim()) throw new Error('Both owner and repository are required.');
+  return projectResourceRequest(
+    'put',
+    `/integrations/github/projects/${projectId}/repository`,
+    { owner: owner.trim(), repository: repository.trim() },
+    {},
+    'Failed to link GitHub repository.'
+  );
+};
+
+export const unlinkProjectRepository = async (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  return projectResourceRequest(
+    'delete',
+    `/integrations/github/projects/${projectId}/repository`,
+    undefined,
+    {},
+    'Failed to unlink GitHub repository.'
+  );
+};
+
+export const getProjectContributions = async (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  return projectResourceRequest(
+    'get',
+    `/integrations/github/projects/${projectId}/contributions`,
+    undefined,
+    {},
+    'Failed to load GitHub contributions.'
+  );
+};
+
 export { getFriendlyErrorMessage };
