@@ -354,7 +354,7 @@ const IssuesView = () => {
   const end = Math.min((page + 1) * PAGE_SIZE, totalIssueCount);
 
   return (
-    <section className="min-h-[calc(100vh-7.5rem)] space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7 animate-fadeIn px-3 sm:px-6 lg:px-8">
+    <section className="min-h-[calc(100vh-7.5rem)] space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7 animate-fadeIn">
       {/* 1. Header with Tabs */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
