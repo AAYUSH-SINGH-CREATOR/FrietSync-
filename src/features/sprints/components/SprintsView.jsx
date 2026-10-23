@@ -241,6 +241,7 @@ const SprintsView = () => {
   });
   const currentProjectRoleName = String(currentProjectRole?.role || currentProjectRole?.projectRole || currentProjectRole?.user?.role || '').toUpperCase();
   const canManage = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(currentProjectRoleName);
+  const canApproveSprintRequests = currentProjectRoleName === 'PROJECT_MANAGER';
   const canCreateSprint = isLoadingUserProfile === false && canManage;
 
   const loadSprintRequests = useCallback(async () => {
@@ -281,6 +282,10 @@ const SprintsView = () => {
   }, [projectId, canManage, showToast]);
 
   const isLoadingSprintRequests = sprintRequestsLoading || (canManage && projectId && sprintRequestsProjectId !== String(projectId));
+  const pendingSprintRequests = useMemo(
+    () => sprintRequests.filter((request) => String(request.status || '').toUpperCase() === 'PENDING'),
+    [sprintRequests]
+  );
 
   const handleApproveSprintRequest = async (request) => {
     const requestId = request.id || request.requestId || request.assignmentRequestId;
@@ -463,15 +468,15 @@ const SprintsView = () => {
             <div className="flex items-center gap-2">
               <FiInbox size={17} className="text-sky-600 dark:text-sky-400" />
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Sprint Assignment Requests</h2>
-              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">{sprintRequests.length}</span>
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">{pendingSprintRequests.length}</span>
             </div>
             <button type="button" onClick={loadSprintRequests} disabled={isLoadingSprintRequests} className="text-xs font-semibold text-sky-600 hover:underline disabled:opacity-50 dark:text-sky-400">Refresh</button>
           </div>
           {isLoadingSprintRequests ? (
             <p className="py-5 text-center text-xs text-slate-500 dark:text-[#999]">Loading assignment requests...</p>
-          ) : sprintRequests.length ? (
+          ) : pendingSprintRequests.length ? (
             <div className="space-y-2">
-              {sprintRequests.map((request, index) => {
+              {pendingSprintRequests.map((request, index) => {
                 const requestId = request.id || request.requestId || request.assignmentRequestId || index;
                 const requestSprintId = request.sprintId || request.sprint?.id || request.sprint?.sprintId || request.sprint?._id;
                 const sprintName = request.sprintName || request.sprint?.name || sprints.find((sprint) => String(getSprintId(sprint)) === String(requestSprintId))?.name || 'Sprint';
@@ -482,9 +487,11 @@ const SprintsView = () => {
                       <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">{requesterName}</p>
                       <p className="mt-0.5 text-[11px] text-slate-500 dark:text-[#999]">Requested assignment to {sprintName}</p>
                     </div>
-                    <button type="button" onClick={() => handleApproveSprintRequest(request)} disabled={!requestSprintId} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
-                      <FiCheck size={13} /> Approve
-                    </button>
+                    {canApproveSprintRequests && (
+                      <button type="button" onClick={() => handleApproveSprintRequest(request)} disabled={!requestSprintId} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <FiCheck size={13} /> Approve
+                      </button>
+                    )}
                   </div>
                 );
               })}

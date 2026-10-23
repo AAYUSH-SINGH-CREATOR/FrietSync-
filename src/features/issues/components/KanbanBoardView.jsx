@@ -74,7 +74,7 @@ const KanbanBoardView = ({
   };
 
   return (
-    <div className="grid w-full min-w-0 grid-flow-col auto-cols-[minmax(260px,1fr)] gap-3.5 overflow-x-auto pb-4 select-none" onClick={() => setOpenMenuIssueId(null)}>
+    <div className="grid w-full min-w-0 grid-flow-col auto-cols-[minmax(210px,1fr)] gap-3.5 overflow-x-auto pb-4 select-none" onClick={() => setOpenMenuIssueId(null)}>
       {columnIssues.map((col) => (
         <div
           key={col.id}

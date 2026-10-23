@@ -291,10 +291,10 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
           </span>
           <input
             type="text"
-            placeholder="Search projects, PM, lead..."
+            placeholder="Search projects "
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-1.5 bg-white dark:bg-[#242424] border border-slate-200 dark:border-[#3a3a3a] rounded-xl text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder:text-[#858585] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition"
+            className="h-9 w-full pl-9 pr-3.5 bg-white dark:bg-[#242424] border border-slate-200 dark:border-[#3a3a3a] rounded-xl text-xs sm:text-sm text-slate-800 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder:text-[#858585] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-2 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition"
           />
           {searchQuery && (
             <button
@@ -306,11 +306,11 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             </button>
           )}
         </div>
-        <label className="relative">
+        <label className="relative inline-flex h-9 -translate-y-0.5 items-center">
           <span className="sr-only">Sort projects</span>
-          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="w-full sm:w-auto appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-8 text-xs text-slate-700 outline-none focus:border-sky-500 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1]">
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="h-full w-full sm:w-auto appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-8 text-xs text-slate-700 outline-none transition hover:border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-[#3a3a3a] dark:bg-[#242424] dark:text-[#F1F5F9] dark:hover:border-[#555] dark:focus:border-[#60A5FA] dark:focus:ring-blue-900/30 cursor-pointer">
             <option value="recent">Sort: Recent</option><option value="name">Sort: Name</option><option value="deadline">Sort: Deadline</option>
-          </select><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">⌄</span>
+          </select><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-[14px] text-slate-400 dark:text-[#858585]">⌄</span>
         </label>
         </div>
       </div>
