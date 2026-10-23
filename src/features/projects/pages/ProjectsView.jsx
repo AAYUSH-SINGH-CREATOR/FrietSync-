@@ -168,7 +168,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
   }, [projects, filter, searchQuery, sortOrder]);
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12">
+    <div className="space-y-6 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

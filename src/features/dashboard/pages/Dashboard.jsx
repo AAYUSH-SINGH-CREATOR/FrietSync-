@@ -24,7 +24,8 @@ const Dashboard = () => {
     isChat ||
     location.pathname.startsWith('/dashboard/issues') ||
     location.pathname.startsWith('/dashboard/sprints') ||
-    location.pathname.startsWith('/dashboard/calendar');
+    location.pathname.startsWith('/dashboard/calendar') ||
+    location.pathname.startsWith('/dashboard/projects');
 
   const [projectFilter, setProjectFilter] = useState('all');
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
