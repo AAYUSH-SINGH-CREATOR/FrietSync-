@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import {
   FiUser,
   FiBell,
@@ -15,6 +15,7 @@ import {
   FiRefreshCw,
   FiRotateCcw,
   FiUsers,
+  FiGithub,
 } from 'react-icons/fi';
 import profileBanner from '../../../assets/profile-banner.png';
 import { clearAuthStorage, logoutUser, sendForgotPasswordOtp, getFriendlyErrorMessage as getAuthErrorMessage } from '../../auth/services/authApi';
@@ -35,6 +36,10 @@ import {
   getGoogleConnectUrl,
   disconnectGoogleCalendar,
 } from '../../calendar/services/calendarApi';
+import {
+  getGithubConnectUrl,
+  disconnectGithub,
+} from '../../projects/services/projectApi';
 import { CiLock } from "react-icons/ci";
 
 
@@ -68,15 +73,21 @@ const DEFAULT_PREFERENCES = [
 const SettingsView = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
 
   // Expanded categories state
-  const [expandedSection, setExpandedSection] = useState({
-    notifications: false,
-    security: false,
-    connected: false,
-    danger: false,
-    workspace: false,
+  const [expandedSection, setExpandedSection] = useState(() => {
+    const hasConnectParam =
+      new URLSearchParams(window.location.search).has('github') ||
+      new URLSearchParams(window.location.search).has('google');
+    return {
+      notifications: false,
+      security: false,
+      connected: hasConnectParam,
+      danger: false,
+      workspace: false,
+    };
   });
 
   // Notification Preferences State
@@ -103,10 +114,79 @@ const SettingsView = () => {
     ? { type: 'success', text: 'Your password was reset successfully.' }
     : { type: '', text: '' });
   const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
+
+  // Google Calendar Integration State
   const [isGoogleConnected, setIsGoogleConnected] = useState(() => {
-    return localStorage.getItem('frietSyncGoogleConnected') === 'true';
+    return (
+      localStorage.getItem('frietSyncGoogleConnected') === 'true' ||
+      new URLSearchParams(window.location.search).get('google') === 'connected'
+    );
   });
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+
+  // GitHub Integration State
+  const [isGithubConnected, setIsGithubConnected] = useState(() => {
+    return (
+      localStorage.getItem('frietSyncGithubConnected') === 'true' ||
+      new URLSearchParams(window.location.search).get('github') === 'connected'
+    );
+  });
+  const [isConnectingGithub, setIsConnectingGithub] = useState(false);
+  const [isDisconnectingGithub, setIsDisconnectingGithub] = useState(false);
+
+  // Handle URL query parameters for GitHub and Google OAuth callbacks
+  useEffect(() => {
+    const githubParam = searchParams.get('github');
+    const googleParam = searchParams.get('google');
+
+    if (githubParam) {
+      if (githubParam === 'connected') {
+        localStorage.setItem('frietSyncGithubConnected', 'true');
+        Promise.resolve().then(() => {
+          setIsGithubConnected(true);
+          setStatusMessage({ type: 'success', text: 'GitHub account connected successfully.' });
+          setExpandedSection((prev) => ({ ...prev, connected: true }));
+        });
+      } else if (githubParam === 'denied') {
+        Promise.resolve().then(() => {
+          setStatusMessage({ type: 'error', text: 'GitHub connection was denied.' });
+          setExpandedSection((prev) => ({ ...prev, connected: true }));
+        });
+      } else if (githubParam === 'failed') {
+        Promise.resolve().then(() => {
+          setStatusMessage({ type: 'error', text: 'GitHub connection failed. Please try again.' });
+          setExpandedSection((prev) => ({ ...prev, connected: true }));
+        });
+      }
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('github');
+      setSearchParams(newParams, { replace: true });
+    }
+
+    if (googleParam) {
+      if (googleParam === 'connected') {
+        localStorage.setItem('frietSyncGoogleConnected', 'true');
+        Promise.resolve().then(() => {
+          setIsGoogleConnected(true);
+          setStatusMessage({ type: 'success', text: 'Google Calendar successfully connected.' });
+          setExpandedSection((prev) => ({ ...prev, connected: true }));
+        });
+      } else if (googleParam === 'denied') {
+        Promise.resolve().then(() => {
+          setStatusMessage({ type: 'error', text: 'Google Calendar connection was denied.' });
+          setExpandedSection((prev) => ({ ...prev, connected: true }));
+        });
+      } else if (googleParam === 'failed') {
+        Promise.resolve().then(() => {
+          setStatusMessage({ type: 'error', text: 'Google Calendar connection failed. Please try again.' });
+          setExpandedSection((prev) => ({ ...prev, connected: true }));
+        });
+      }
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('google');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleConnectGoogle = async () => {
     setIsConnectingGoogle(true);
@@ -138,6 +218,44 @@ const SettingsView = () => {
         type: 'error',
         text: err?.message || 'Failed to disconnect Google Calendar.',
       });
+    }
+  };
+
+  const handleConnectGithub = async () => {
+    setIsConnectingGithub(true);
+    try {
+      const url = await getGithubConnectUrl();
+      if (url && typeof url === 'string') {
+        window.location.href = url;
+      } else {
+        throw new Error('GitHub authorization URL was not returned by server.');
+      }
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to initiate GitHub connection.',
+      });
+      setIsConnectingGithub(false);
+    }
+  };
+
+  const handleDisconnectGithub = async () => {
+    setIsDisconnectingGithub(true);
+    try {
+      await disconnectGithub();
+      setIsGithubConnected(false);
+      localStorage.removeItem('frietSyncGithubConnected');
+      setStatusMessage({
+        type: 'success',
+        text: 'GitHub account disconnected successfully.',
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to disconnect GitHub account.',
+      });
+    } finally {
+      setIsDisconnectingGithub(false);
     }
   };
 
@@ -652,8 +770,52 @@ const SettingsView = () => {
                 </div>
               </div>
 
+              {/* GitHub */}
+              <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shrink-0">
+                    <FiGithub size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      GitHub
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-[#94a3b8] truncate">
+                      Link your GitHub account to connect repositories and view project contributions.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {isGithubConnected ? (
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                        Connected
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleDisconnectGithub}
+                        disabled={isDisconnectingGithub}
+                        className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
+                      >
+                        {isDisconnectingGithub ? 'Disconnecting…' : 'Disconnect'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectGithub}
+                      disabled={isConnectingGithub}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isConnectingGithub ? 'Connecting…' : 'Connect'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <p className="text-[11px] text-slate-400 dark:text-[#777] text-center pt-2">
-                Additional third-party integrations with GitHub, GitLab, and Slack are in development.
+                Additional third-party integrations with GitLab and Slack are in development.
               </p>
             </div>
           )}

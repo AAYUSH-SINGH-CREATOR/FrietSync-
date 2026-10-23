@@ -22,6 +22,7 @@ import {
   FiTag,
   FiUploadCloud,
   FiExternalLink,
+  FiGithub,
 } from 'react-icons/fi';
 import {
   getProjectById,
@@ -33,6 +34,7 @@ import {
   getProjectReleases,
   uploadReleaseFile,
   getProjectTimeline,
+  unlinkProjectRepository,
   getFriendlyErrorMessage,
 } from '../services/projectApi';
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
@@ -48,6 +50,7 @@ import DeleteMilestoneModal from '../components/DeleteMilestoneModal';
 import ReleaseModal from '../components/ReleaseModal';
 import DeleteReleaseModal from '../components/DeleteReleaseModal';
 import AttachReleaseIssuesModal from '../components/AttachReleaseIssuesModal';
+import LinkRepositoryModal from '../components/LinkRepositoryModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
@@ -171,6 +174,21 @@ const ProjectDetailsView = () => {
   const [deletingRelease, setDeletingRelease] = useState(null);
   const [isAttachIssuesOpen, setIsAttachIssuesOpen] = useState(false);
   const [attachingRelease, setAttachingRelease] = useState(null);
+
+  // GitHub Repository Linking
+  const [isLinkRepoModalOpen, setIsLinkRepoModalOpen] = useState(false);
+  const [isUnlinkingRepo, setIsUnlinkingRepo] = useState(false);
+  const [linkedRepo, setLinkedRepo] = useState(() => {
+    const saved = localStorage.getItem(`frietSyncGithubRepo_${projectId}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const isAdmin = isUserAdmin();
 
@@ -417,6 +435,20 @@ const ProjectDetailsView = () => {
         setReleases(data.releases);
         setPolls(data.polls);
         setActivities(data.activities);
+        const projectRepo = data.project?.githubRepository || data.project?.repository || data.project?.githubRepo;
+        if (projectRepo) {
+          if (typeof projectRepo === 'string') {
+            const parts = projectRepo.split('/');
+            if (parts.length === 2) {
+              const rObj = { owner: parts[0], repository: parts[1] };
+              setLinkedRepo(rObj);
+              localStorage.setItem(`frietSyncGithubRepo_${projectId}`, JSON.stringify(rObj));
+            }
+          } else if (projectRepo.owner && projectRepo.repository) {
+            setLinkedRepo(projectRepo);
+            localStorage.setItem(`frietSyncGithubRepo_${projectId}`, JSON.stringify(projectRepo));
+          }
+        }
         setIsLoading(false);
       })
       .catch((err) => {
@@ -451,6 +483,21 @@ const ProjectDetailsView = () => {
       showToast('error', getFriendlyErrorMessage(err, 'project') || 'Failed to download PDF summary.');
     } finally {
       setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleUnlinkRepository = async () => {
+    if (!projectId || isUnlinkingRepo) return;
+    setIsUnlinkingRepo(true);
+    try {
+      await unlinkProjectRepository(projectId);
+      setLinkedRepo(null);
+      localStorage.removeItem(`frietSyncGithubRepo_${projectId}`);
+      showToast('success', 'GitHub repository unlinked successfully.');
+    } catch (err) {
+      showToast('error', getFriendlyErrorMessage(err, 'project') || 'Failed to unlink repository.');
+    } finally {
+      setIsUnlinkingRepo(false);
     }
   };
 
@@ -988,6 +1035,40 @@ const ProjectDetailsView = () => {
                       <FiDownload size={13} />
                       <span>{isDownloadingPdf ? 'Downloading...' : 'Download PDF Summary'}</span>
                     </button>
+                  </div>
+                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-[#27272e]">
+                    <span className="text-slate-400 font-medium flex items-center gap-1.5">
+                      <FiGithub size={14} className="text-slate-300" />
+                      <span>GitHub Repository</span>
+                    </span>
+                    {linkedRepo ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-semibold text-xs font-mono bg-[#25252c] px-2 py-0.5 rounded-md border border-[#32323a] truncate max-w-[150px]">
+                          {linkedRepo.owner}/{linkedRepo.repository}
+                        </span>
+                        {canManageMilestones && (
+                          <button
+                            type="button"
+                            onClick={handleUnlinkRepository}
+                            disabled={isUnlinkingRepo}
+                            className="text-xs text-rose-400 hover:text-rose-300 hover:underline cursor-pointer font-medium disabled:opacity-50"
+                          >
+                            {isUnlinkingRepo ? 'Unlinking…' : 'Unlink'}
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      canManageMilestones && (
+                        <button
+                          type="button"
+                          onClick={() => setIsLinkRepoModalOpen(true)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer"
+                        >
+                          <FiPlus size={13} />
+                          <span>Link Repository</span>
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
@@ -2010,6 +2091,20 @@ const ProjectDetailsView = () => {
         projectIssues={issues}
         onIssuesAttached={handleIssuesAttached}
       />
+
+      {projectId && isLinkRepoModalOpen && (
+        <LinkRepositoryModal
+          isOpen={isLinkRepoModalOpen}
+          onClose={() => setIsLinkRepoModalOpen(false)}
+          projectId={projectId}
+          onRepositoryLinked={({ owner, repository }) => {
+            const rObj = { owner, repository };
+            setLinkedRepo(rObj);
+            localStorage.setItem(`frietSyncGithubRepo_${projectId}`, JSON.stringify(rObj));
+            showToast('success', `Repository "${owner}/${repository}" linked successfully.`);
+          }}
+        />
+      )}
     </div>
   );
 };
