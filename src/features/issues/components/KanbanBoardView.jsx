@@ -120,7 +120,7 @@ const KanbanBoardView = ({
                   const avatarColor = avatarColors[(assignee.charCodeAt(0) || idx) % avatarColors.length];
                   const num = issue.issueNumber || (id ? String(id).slice(-4) : idx + 1);
                   const keyBadge = issue.key || (String(num).startsWith('#') ? `WBR-${num.slice(1)}` : `WBR-${num}`);
-                  const tagLabel = issue.label || issue.tag || issue.type || issue.category || (Array.isArray(issue.labels) && issue.labels[0]?.name) || (idx % 3 === 0 ? 'Analytics' : idx % 3 === 1 ? 'UX' : 'Design');
+                  const tagLabel = issue.label || issue.tag || issue.type || issue.category || (Array.isArray(issue.labels) && issue.labels[0]?.name);
                   const tagColor = idx % 3 === 0
                     ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300'
                     : idx % 3 === 1
@@ -133,7 +133,7 @@ const KanbanBoardView = ({
                       draggable={!pendingStatusIssueIds.has(String(id))}
                       onDragStart={(e) => handleDragStart(e, issue)}
                       onClick={() => onIssueClick?.(issue)}
-                      className={`group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#1a1a1d] ${pendingStatusIssueIds.has(String(id)) ? 'cursor-wait opacity-70' : 'cursor-grab active:cursor-grabbing'}`}
+                      className={`group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#171717] ${pendingStatusIssueIds.has(String(id)) ? 'cursor-wait opacity-70' : 'cursor-grab active:cursor-grabbing'}`}
                     >
                   {/* Top row: Issue Key + Assignee Avatar */}
                   <div className="flex items-center justify-between gap-2">
@@ -159,9 +159,7 @@ const KanbanBoardView = ({
 
                   {/* Badges row: Tag/Label + Priority Badge */}
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tagColor}`}>
-                      {tagLabel}
-                    </span>
+                    {tagLabel && <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tagColor}`}>{tagLabel}</span>}
                     <PriorityBadge priority={issue.priority} />
                   </div>
 
