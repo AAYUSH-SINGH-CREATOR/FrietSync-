@@ -111,8 +111,8 @@ const IssueDetailsView = ({
   const createdBy = issue?.createdBy?.id || issue?.createdBy?._id || issue?.createdBy || issue?.creator?.id;
   const isCreator = currentUserId && String(createdBy) === String(currentUserId);
   const canEdit = isManager || (currentRole === 'REPORTER' && isCreator);
-  const canResolve = currentRole === 'CONTRIBUTOR' && isAssignee;
-  const canReview = ['PROJECT_MANAGER', 'TEAM_LEAD', 'REPORTER', 'ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(currentRole);
+  const canResolve = currentRole === 'CONTRIBUTOR' && isAssignee && normalize(issue?.status) === 'IN_PROGRESS';
+  const canReview = ['PROJECT_MANAGER', 'TEAM_LEAD', 'REPORTER'].includes(currentRole) && normalize(issue?.status) === 'RESOLVED';
 
   const showToast = useCallback((msg, isErr = false) => {
     if (isErr) setError(msg);
@@ -284,7 +284,7 @@ const IssueDetailsView = ({
           <FiArrowLeft size={16} /> Back to issues
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          {canResolve && !['RESOLVED', 'CLOSED', 'DONE'].includes(normalize(issue?.status)) && (
+          {canResolve && (
             <button
               type="button"
               disabled={!!busyAction}

@@ -25,18 +25,14 @@ export const getPriorityBadge = (priority) => {
 export const getStatusBadge = (status) => {
   const norm = (status || 'OPEN').toUpperCase().replace(/[\s_-]+/g, '_');
   switch (norm) {
-    case 'DONE':
     case 'RESOLVED':
     case 'CLOSED':
-    case 'COMPLETED':
       return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-[#34D399] dark:border-emerald-800/60';
     case 'IN_PROGRESS':
-    case 'IN_REVIEW':
-    case 'ACTIVE':
       return 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-blue-950/40 dark:text-[#60A5FA] dark:border-blue-800/60';
+    case 'REOPENED':
+      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60';
     case 'OPEN':
-    case 'TODO':
-    case 'BACKLOG':
       return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#242424] dark:text-[#e0e0e0] dark:border-[#3a3a3a]';
     default:
       return 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#242424] dark:text-[#b3b3b3] dark:border-[#3a3a3a]';

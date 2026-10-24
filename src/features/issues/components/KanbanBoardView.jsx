@@ -5,11 +5,11 @@ import {
 } from 'react-icons/fi';
 
 const COLUMNS = [
-  { id: 'TODO', label: 'To do', bg: 'bg-[#CBB0FF]', text: 'text-[#2e1065]', darkBg: 'dark:bg-[#4c3875]', darkText: 'dark:text-[#E9D8FD]', match: ['TODO', 'OPEN', 'BACKLOG'], apiStatus: 'TODO' },
-  { id: 'IN_PROGRESS', label: 'In progress', bg: 'bg-[#9BD4FD]', text: 'text-[#0c4a6e]', darkBg: 'dark:bg-[#1E3A5F]', darkText: 'dark:text-[#BAE6FD]', match: ['IN_PROGRESS', 'ACTIVE'], apiStatus: 'IN_PROGRESS' },
-  { id: 'IN_REVIEW', label: 'In review', bg: 'bg-[#F8A0CB]', text: 'text-[#831843]', darkBg: 'dark:bg-[#5E1E3C]', darkText: 'dark:text-[#FBCFE8]', match: ['IN_REVIEW'], apiStatus: 'IN_REVIEW' },
-  { id: 'TESTING', label: 'Testing', bg: 'bg-[#FEF08A]', text: 'text-[#713f12]', darkBg: 'dark:bg-[#5C4D14]', darkText: 'dark:text-[#FEF08A]', match: ['TESTING', 'QA'], apiStatus: 'TESTING' },
-  { id: 'DONE', label: 'Done', bg: 'bg-[#86EFAC]', text: 'text-[#14532d]', darkBg: 'dark:bg-[#1C4D2E]', darkText: 'dark:text-[#BBF7D0]', match: ['DONE', 'RESOLVED', 'CLOSED', 'COMPLETED'], apiStatus: 'DONE' },
+  { id: 'OPEN', label: 'Open', bg: 'bg-[#CBB0FF]', text: 'text-[#2e1065]', darkBg: 'dark:bg-[#4c3875]', darkText: 'dark:text-[#E9D8FD]', match: ['OPEN'], apiStatus: 'OPEN' },
+  { id: 'IN_PROGRESS', label: 'In progress', bg: 'bg-[#9BD4FD]', text: 'text-[#0c4a6e]', darkBg: 'dark:bg-[#1E3A5F]', darkText: 'dark:text-[#BAE6FD]', match: ['IN_PROGRESS'], apiStatus: 'IN_PROGRESS' },
+  { id: 'RESOLVED', label: 'Resolved', bg: 'bg-[#FEF08A]', text: 'text-[#713f12]', darkBg: 'dark:bg-[#5C4D14]', darkText: 'dark:text-[#FEF08A]', match: ['RESOLVED'], apiStatus: 'RESOLVED' },
+  { id: 'REOPENED', label: 'Reopened', bg: 'bg-[#F8A0CB]', text: 'text-[#831843]', darkBg: 'dark:bg-[#5E1E3C]', darkText: 'dark:text-[#FBCFE8]', match: ['REOPENED'], apiStatus: 'REOPENED' },
+  { id: 'CLOSED', label: 'Closed', bg: 'bg-[#86EFAC]', text: 'text-[#14532d]', darkBg: 'dark:bg-[#1C4D2E]', darkText: 'dark:text-[#BBF7D0]', match: ['CLOSED'], apiStatus: 'CLOSED' },
 ];
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');

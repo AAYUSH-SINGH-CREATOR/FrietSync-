@@ -32,8 +32,8 @@ import { formatFigmaDate } from '../../issues/utils/issueUtils';
 import NoWorkspace from './NoWorkspace';
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
-const isResolved = (s) => ['DONE', 'RESOLVED', 'CLOSED', 'COMPLETED'].includes(normalize(s));
-const isInProgress = (s) => ['IN_PROGRESS', 'IN_REVIEW', 'ACTIVE'].includes(normalize(s));
+const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
+const isInProgress = (s) => normalize(s) === 'IN_PROGRESS';
 
 const DashboardOverview = () => {
   const navigate = useNavigate();
@@ -232,7 +232,7 @@ const DashboardOverview = () => {
     const totalSprints = sprints.length;
     const activeSprintsCount = sprints.filter((s) => {
       const norm = normalize(s.status);
-      return norm === 'ACTIVE' || norm === 'IN_PROGRESS' || norm === 'STARTED';
+      return norm === 'ACTIVE';
     }).length;
 
     // Team Members
@@ -394,7 +394,7 @@ const DashboardOverview = () => {
     const activeSprint =
       sprints.find((s) => {
         const norm = normalize(s.status);
-        return norm === 'ACTIVE' || norm === 'IN_PROGRESS';
+        return norm === 'ACTIVE';
       }) ||
       sprints[0] ||
       null;
