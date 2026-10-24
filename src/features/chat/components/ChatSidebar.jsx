@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FiSearch, FiX, FiPlus, FiMessageSquare } from 'react-icons/fi';
+import { FiSearch, FiX, FiMessageSquare } from 'react-icons/fi';
 import { getInitials, getAvatarColor, formatMessagePreview } from '../services/chatApi';
 
 const ChatSidebar = ({
@@ -9,7 +9,6 @@ const ChatSidebar = ({
   searchQuery = '',
   onSearchChange,
   isLoadingProjects = false,
-  onNewChat,
 }) => {
   const [activeFilter, setActiveFilter] = useState('All');
 
@@ -32,17 +31,9 @@ const ChatSidebar = ({
 
   return (
     <div className="bg-[#F3F4F6] dark:bg-[#252525] rounded-2xl p-3 sm:p-4 flex flex-col h-full min-h-0 min-w-0 w-full overflow-hidden border border-slate-200/60 dark:border-white/5">
-      {/* 1. Header with Title and Plus Button */}
+      {/* 1. Header */}
       <div className="flex items-center justify-between shrink-0">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Chats</h2>
-        <button
-          type="button"
-          onClick={onNewChat}
-          title="Start new conversation"
-          className="w-8 h-8 rounded-full bg-[#007DFE] hover:bg-sky-600 active:bg-sky-700 text-white flex items-center justify-center transition shadow-xs cursor-pointer"
-        >
-          <FiPlus size={18} />
-        </button>
       </div>
 
       {/* 2. Capsule Search Input */}

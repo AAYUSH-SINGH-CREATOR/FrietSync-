@@ -503,7 +503,7 @@ const SettingsView = () => {
     setStatusMessage({ type: '', text: '' });
 
     try {
-      const expiresAt = formatExpiryToUtc();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       await sendInvite({
         email,
         role: 'OWNER',
