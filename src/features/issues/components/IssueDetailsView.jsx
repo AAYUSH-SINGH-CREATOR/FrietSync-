@@ -611,12 +611,7 @@ const IssueDetailsView = ({
                   );
                 })
               ) : (
-                <>
-                  <span className="rounded-full bg-sky-500/15 border border-sky-500/30 px-3 py-1 text-xs font-semibold text-sky-600 dark:text-sky-300">Authentication</span>
-                  <span className="rounded-full bg-purple-500/15 border border-purple-500/30 px-3 py-1 text-xs font-semibold text-purple-600 dark:text-purple-300">Bug</span>
-                  <span className="rounded-full bg-indigo-500/15 border border-indigo-500/30 px-3 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300">Token</span>
-                  <span className="rounded-full bg-rose-500/15 border border-rose-500/30 px-3 py-1 text-xs font-semibold text-rose-600 dark:text-rose-300">High Priority</span>
-                </>
+                <p className="text-xs text-slate-400 dark:text-[#888]">No labels attached.</p>
               )}
             </div>
           </Card>
@@ -1040,7 +1035,7 @@ const IssueDetailsView = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLabelOpen(false)}>
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Attach Label</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Label</h3>
               <button type="button" onClick={() => setIsLabelOpen(false)}><FiX size={16} /></button>
             </div>
             <form onSubmit={async (e) => {
@@ -1051,8 +1046,8 @@ const IssueDetailsView = ({
               setIsLabelOpen(false);
             }} className="mt-3 space-y-3 text-xs">
               <label className="block space-y-1">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Label Identifier / UUID</span>
-                <input required value={newLabelText} onChange={(e) => setNewLabelText(e.target.value)} placeholder="Enter label ID" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-[#38383e] dark:bg-[#252529] dark:text-white" />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Label name</span>
+                <input required maxLength={20} value={newLabelText} onChange={(e) => setNewLabelText(e.target.value)} placeholder="e.g. bug" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-[#38383e] dark:bg-[#252529] dark:text-white" />
               </label>
               <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
                 <button type="button" onClick={() => setIsLabelOpen(false)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#29292d]">Cancel</button>

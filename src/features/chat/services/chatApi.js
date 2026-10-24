@@ -1,16 +1,53 @@
 import axios from 'axios';
-import { getUserProfile } from '../../auth/services/authApi';
+import { getAccessToken, getUserProfile } from '../../auth/services/authApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const getAuthToken = () => {
-  const rawToken =
-    localStorage.getItem('frietSyncToken') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('token') ||
-    '';
-  return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
+  return getAccessToken();
+};
+
+export const uploadChatAttachment = async (projectId, file) => {
+  if (!projectId) throw new Error('Project ID is required to upload a chat attachment.');
+  if (!file) throw new Error('Choose a file to upload.');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  const token = getAuthToken();
+
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/projects/${projectId}/chat/attachments`,
+      formData,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    );
+    return response.data?.attachment || response.data?.data || response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Attachment upload failed.');
+  }
+};
+
+export const downloadChatAttachment = async (projectId, attachment) => {
+  if (!projectId || !attachment?.downloadUrl) {
+    throw new Error('Chat attachment download information is missing.');
+  }
+
+  const apiOrigin = BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const downloadUrl = /^https?:\/\//i.test(attachment.downloadUrl)
+    ? attachment.downloadUrl
+    : `${apiOrigin}${attachment.downloadUrl.startsWith('/') ? '' : '/'}${attachment.downloadUrl}`;
+  const token = getAuthToken();
+
+  try {
+    const response = await axios.get(downloadUrl, {
+      responseType: 'blob',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Attachment download failed.');
+  }
 };
 
 export const getInitials = (name = '') => {

@@ -168,7 +168,7 @@ export const resolveIssue = (id) => issueRequest('post', `/issues/${id}/resolve`
 export const reviewIssue = (id, decision, comment = '') => issueRequest('post', `/issues/${id}/review/${decision}`, comment.trim() ? { comment: comment.trim() } : {}, {}, `Failed to ${decision} issue review.`);
 export const getIssueHistory = (id, { page = 0, size = 20 } = {}) => issueRequest('get', `/issues/${id}/history`, undefined, { params: { page, size } }, 'Failed to load issue history.');
 export const getIssueLabels = (id) => issueRequest('get', `/issues/${id}/labels`, undefined, {}, 'Failed to load issue labels.');
-export const attachIssueLabel = (id, labelId) => issueRequest('post', `/issues/${id}/labels`, { labelId }, {}, 'Failed to attach label.');
+export const attachIssueLabel = (id, name) => issueRequest('post', `/issues/${id}/labels`, { name }, {}, 'Failed to add label.');
 export const removeIssueLabel = (id, labelId) => issueRequest('delete', `/issues/${id}/labels/${labelId}`, undefined, {}, 'Failed to remove label.');
 export const getIssueLinks = (id) => issueRequest('get', `/issues/${id}/links`, undefined, {}, 'Failed to load issue links.');
 export const createIssueLink = (id, targetIssueId, type) => issueRequest('post', `/issues/${id}/links`, { targetIssueId, type }, {}, 'Failed to create issue link.');

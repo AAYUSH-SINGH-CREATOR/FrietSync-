@@ -194,6 +194,7 @@ const ChatsView = () => {
               metadata: msg.metadata,
               type: msg.type || msg.messageType,
               text: msg.content || msg.message || '',
+              attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
               timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
               isOutgoing: outgoing,
             };
@@ -272,6 +273,7 @@ const ChatsView = () => {
         metadata: receivedMsg.metadata,
         type: receivedMsg.type || receivedMsg.messageType,
         text: text,
+        attachments: Array.isArray(receivedMsg.attachments) ? receivedMsg.attachments : [],
         timestamp: formatMessageTime(receivedMsg.createdAt || receivedMsg.timestamp || receivedMsg.sentAt || receivedMsg.time),
         isOutgoing: outgoing,
       };
@@ -341,6 +343,7 @@ const ChatsView = () => {
           metadata: msg.metadata,
           type: msg.type || msg.messageType,
           text: msg.content || msg.message || '',
+          attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
           timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
           isOutgoing: outgoing,
         };
@@ -362,15 +365,16 @@ const ChatsView = () => {
     }
   };
 
-  const handleSendMessage = (text) => {
-    if (!activeChat || !text || !text.trim()) return false;
-
-    const trimmedText = text.trim();
+  const handleSendMessage = (text, attachmentIds = []) => {
+    const trimmedText = String(text || '').trim();
+    const attachmentIdList = Array.isArray(attachmentIds) ? attachmentIds.filter(Boolean) : [];
+    if (!activeChat || (!trimmedText && attachmentIdList.length === 0)) return false;
 
     if (stompClientRef.current && stompClientRef.current.connected) {
       try {
         stompClientRef.current.publish(`/app/projects/${activeChat.id}/chat`, {
           content: trimmedText,
+          ...(attachmentIdList.length ? { attachmentIds: attachmentIdList } : {}),
         });
         return true;
       } catch (publishErr) {

@@ -10,6 +10,7 @@ import {
   FiBarChart2,
   FiX,
   FiFileText,
+  FiImage,
   FiDownload,
 } from 'react-icons/fi';
 import {
@@ -21,7 +22,8 @@ import {
   parseAttachmentFromText,
   getMessagePollId,
   stripPollMetadata,
-  compressImage,
+  uploadChatAttachment,
+  downloadChatAttachment,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
 
@@ -48,7 +50,9 @@ const ChatArea = ({
   currentUser: currentUserProp,
 }) => {
   const [inputText, setInputText] = useState('');
-  const [selectedAttachment, setSelectedAttachment] = useState(null);
+  const [selectedAttachments, setSelectedAttachments] = useState([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const [attachmentError, setAttachmentError] = useState('');
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -62,8 +66,35 @@ const ChatArea = ({
   const messagesContainerRef = useRef(null);
   const pendingScrollRef = useRef(null);
   const currentChatIdRef = useRef(activeChat?.id);
+  const attachmentProjectIdRef = useRef(activeChat?.id);
+  const uploadIdRef = useRef(0);
+  const previewObjectUrlRef = useRef(null);
 
   const currentUser = currentUserProp || getCurrentChatUser();
+
+  const closeImagePreview = useCallback(() => {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = null;
+    }
+    setPreviewImage(null);
+  }, []);
+
+  useEffect(() => () => {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (attachmentProjectIdRef.current === activeChat?.id) return;
+    attachmentProjectIdRef.current = activeChat?.id;
+    setSelectedAttachments([]);
+    setAttachmentError('');
+    setInputText('');
+    closeImagePreview();
+  }, [activeChat?.id, closeImagePreview]);
 
   useLayoutEffect(() => {
     const container = messagesContainerRef.current;
@@ -117,12 +148,12 @@ const ChatArea = ({
     const handleEsc = (e) => {
       if (e.key === 'Escape') {
         setIsEmojiPickerOpen(false);
-        setPreviewImage(null);
+        closeImagePreview();
       }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
+  }, [closeImagePreview]);
 
   const handleSelectEmoji = (emoji) => {
     setInputText((prev) => (prev ? `${prev} ${emoji}` : emoji));
@@ -131,82 +162,95 @@ const ChatArea = ({
   };
 
   const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    const projectId = activeChat?.id;
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (!projectId || files.length === 0) return;
 
-    const isImage = file.type?.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
-    if (isImage) {
-      try {
-        const compressed = await compressImage(file);
-        setSelectedAttachment({
-          name: file.name,
-          size: file.size,
-          type: file.type || 'image/jpeg',
-          url: compressed || '',
-          isImage: true,
-        });
-      } catch (err) {
-        console.warn('Failed to compress image:', err);
-        const reader = new FileReader();
-        reader.onload = (loadEvt) => {
-          setSelectedAttachment({
-            name: file.name,
-            size: file.size,
-            type: file.type || 'image/jpeg',
-            url: loadEvt.target.result,
-            isImage: true,
-          });
-        };
-        reader.readAsDataURL(file);
-      }
-    } else {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size exceeds the 2 MB limit for documents. Please choose a smaller file.');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        setSelectedAttachment({
-          name: file.name,
-          size: file.size,
-          type: file.type || 'application/octet-stream',
-          url: loadEvt.target.result,
-          isImage: false,
-        });
-      };
-      reader.readAsDataURL(file);
+    const slots = Math.max(0, 10 - selectedAttachments.length);
+    if (slots === 0) {
+      setAttachmentError('A message can include at most 10 attachments.');
+      return;
     }
+
+    const acceptedFiles = files.slice(0, slots).filter((file) => {
+      if (file.size > 25 * 1024 * 1024) {
+        setAttachmentError(`${file.name} exceeds the 25 MB attachment limit.`);
+        return false;
+      }
+      return true;
+    });
+    if (files.length > slots) {
+      setAttachmentError('A message can include at most 10 attachments.');
+    } else if (acceptedFiles.length > 0) {
+      setAttachmentError('');
+    }
+    if (acceptedFiles.length === 0) return;
+
+    setIsUploadingAttachments(true);
+    for (const file of acceptedFiles) {
+      const localId = `chat-upload-${++uploadIdRef.current}`;
+      setSelectedAttachments((current) => [...current, {
+        localId,
+        name: file.name,
+        size: file.size,
+        contentType: file.type || 'application/octet-stream',
+        status: 'uploading',
+      }]);
+
+      try {
+        const uploaded = await uploadChatAttachment(projectId, file);
+        const attachmentId = uploaded?.id || uploaded?.attachmentId;
+        if (!attachmentId) throw new Error('Upload response did not include an attachment ID.');
+        if (attachmentProjectIdRef.current !== projectId) continue;
+
+        setSelectedAttachments((current) => current.map((item) => item.localId === localId ? {
+          ...item,
+          id: attachmentId,
+          name: uploaded.fileName || uploaded.name || file.name,
+          size: uploaded.sizeBytes ?? uploaded.size ?? file.size,
+          contentType: uploaded.contentType || file.type || 'application/octet-stream',
+          downloadUrl: uploaded.downloadUrl,
+          status: 'uploaded',
+        } : item));
+      } catch (error) {
+        if (attachmentProjectIdRef.current !== projectId) continue;
+        setSelectedAttachments((current) => current.map((item) => item.localId === localId ? {
+          ...item,
+          status: 'failed',
+          error: error.message || 'Attachment upload failed.',
+        } : item));
+        setAttachmentError(error.message || 'Attachment upload failed. Remove the failed file before sending.');
+      }
+    }
+    setIsUploadingAttachments(false);
   };
 
-  const handleRemoveAttachment = () => {
-    setSelectedAttachment(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const handleRemoveAttachment = (localId) => {
+    setSelectedAttachments((current) => current.filter((item) => item.localId !== localId));
+    setAttachmentError('');
   };
 
   const handleSend = (e) => {
     e?.preventDefault();
     const text = inputText.trim();
-    if (!text && !selectedAttachment) return;
+    if (isUploadingAttachments) {
+      setAttachmentError('Wait for the selected files to finish uploading.');
+      return;
+    }
+    if (selectedAttachments.some((attachment) => attachment.status !== 'uploaded')) {
+      setAttachmentError('Remove failed attachments before sending.');
+      return;
+    }
+    if (!text && selectedAttachments.length === 0) return;
     if (text.length > 2000) return;
 
-    let payloadText = text;
-    if (selectedAttachment) {
-      const attData = {
-        name: selectedAttachment.name,
-        type: selectedAttachment.type,
-        size: selectedAttachment.size,
-        url: selectedAttachment.url,
-        isImage: selectedAttachment.isImage,
-      };
-      const attTag = `[ATTACHMENT:${JSON.stringify(attData)}]`;
-      payloadText = text ? `${text}\n${attTag}` : attTag;
-    }
-
-    const sent = onSendMessage(payloadText);
+    const attachmentIds = selectedAttachments.map((attachment) => attachment.id);
+    const sent = onSendMessage(text, attachmentIds);
     if (sent === false) return;
     setInputText('');
-    handleRemoveAttachment();
+    setSelectedAttachments([]);
+    setAttachmentError('');
     setSearchInChat('');
     setIsEmojiPickerOpen(false);
   };
@@ -218,14 +262,52 @@ const ChatArea = ({
     }
   };
 
+  const handleDownloadAttachment = async (attachment) => {
+    try {
+      const blob = await downloadChatAttachment(activeChat?.id, attachment);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.fileName || attachment.name || 'chat-attachment';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      setAttachmentError(error.message || 'Attachment download failed.');
+    }
+  };
+
+  const handlePreviewAttachment = async (attachment) => {
+    try {
+      if (attachment.url && !attachment.downloadUrl) {
+        setPreviewImage(attachment);
+        return;
+      }
+      const blob = await downloadChatAttachment(activeChat?.id, attachment);
+      closeImagePreview();
+      const previewBlob = new Blob([blob], {
+        type: attachment.type || blob.type || 'application/octet-stream',
+      });
+      const url = URL.createObjectURL(previewBlob);
+      previewObjectUrlRef.current = url;
+      setPreviewImage({ ...attachment, name: attachment.fileName || attachment.name, url });
+    } catch (error) {
+      setAttachmentError(error.message || 'Image preview failed to load.');
+    }
+  };
+
   const displayedMessages = useMemo(() => {
     if (!searchInChat.trim()) return messages;
     const q = searchInChat.trim().toLowerCase();
     return messages.filter((m) => {
-      const { cleanText, attachment } = parseAttachmentFromText(m.text || '');
+      const { cleanText, attachment: legacyAttachment } = parseAttachmentFromText(m.text || '');
+      const attachments = Array.isArray(m.attachments) && m.attachments.length
+        ? m.attachments
+        : (legacyAttachment ? [legacyAttachment] : []);
       return (
         cleanText.toLowerCase().includes(q) ||
-        (attachment?.name || '').toLowerCase().includes(q) ||
+        attachments.some((attachment) => (attachment.name || attachment.fileName || '').toLowerCase().includes(q)) ||
         (m.sender || '').toLowerCase().includes(q)
       );
     });
@@ -380,8 +462,9 @@ const ChatArea = ({
             const senderName = isOutgoing ? 'You' : msg.sender || 'Member';
             const avatarColor = isOutgoing ? 'bg-[#D95295]' : getAvatarColor(senderName);
             const { cleanText, attachment: parsedAtt } = parseAttachmentFromText(msg.text || '');
-            const attachment = msg.attachment || (Array.isArray(msg.attachments) ? msg.attachments[0] : null) || parsedAtt;
-            const isImageAtt = attachment && (attachment.isImage || attachment.type?.startsWith('image/'));
+            const messageAttachments = Array.isArray(msg.attachments) && msg.attachments.length
+              ? msg.attachments
+              : (msg.attachment ? [msg.attachment] : parsedAtt ? [parsedAtt] : []);
             const displayText = stripPollMetadata(cleanText).replace('📊 Poll:', '🗳️ Poll:');
             const pollId = getMessagePollId(msg);
             const isLegacyPollMessage = msg.text?.includes('📊') && /\bpoll\b/i.test(msg.text);
@@ -409,59 +492,42 @@ const ChatArea = ({
                   >
                     {displayText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{displayText}</p>}
 
-                    {/* Image Attachment */}
-                    {isImageAtt && attachment.url && (
-                      <div className={`mt-2 rounded-xl overflow-hidden border ${isOutgoing ? 'border-sky-300 dark:border-white/10' : 'border-slate-200 dark:border-white/10'} bg-black/5 dark:bg-white/5`}>
-                        <img
-                          src={attachment.url}
-                          alt={attachment.name || 'Shared image'}
-                          onClick={() => setPreviewImage(attachment)}
-                          className="max-h-60 sm:max-h-72 w-full object-contain cursor-pointer hover:opacity-95 transition"
-                        />
-                        <div className="flex items-center justify-between gap-2 p-1.5 px-2.5 bg-black/50 text-white text-[11px]">
-                          <span className="truncate max-w-[180px]">{attachment.name}</span>
-                          <a
-                            href={attachment.url}
-                            download={attachment.name || 'image.jpg'}
-                            className="hover:text-sky-300 transition shrink-0 p-0.5 cursor-pointer"
-                            title="Download image"
-                          >
-                            <FiDownload size={14} />
-                          </a>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Document Attachment */}
-                    {attachment && !isImageAtt && (
-                      <div className={`mt-2 flex items-center gap-2.5 p-2.5 rounded-xl border ${
-                        isOutgoing
-                          ? 'bg-white/60 dark:bg-white/5 border-sky-300 dark:border-white/10 text-slate-900 dark:text-white'
-                          : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
-                      }`}>
-                        <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
-                          <FiFileText size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs sm:text-sm font-semibold truncate">{attachment.name}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                            {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
-                          </p>
-                        </div>
-                        {attachment.url && (
-                          <a
-                            href={attachment.url}
-                            download={attachment.name || 'document'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-white/80 dark:hover:bg-white/10 transition shrink-0 cursor-pointer"
-                            title="Download file"
-                          >
+                    {messageAttachments.map((rawAttachment, attachmentIndex) => {
+                      const attachment = {
+                        ...rawAttachment,
+                        name: rawAttachment.fileName || rawAttachment.name || 'Attachment',
+                        size: rawAttachment.sizeBytes ?? rawAttachment.size ?? 0,
+                        type: rawAttachment.contentType || rawAttachment.type || '',
+                        downloadUrl: rawAttachment.downloadUrl || rawAttachment.url,
+                      };
+                      const isImage = rawAttachment.isImage || attachment.type.startsWith('image/');
+                      return (
+                        <div key={rawAttachment.id || attachmentIndex} className={`mt-2 flex min-w-0 items-center gap-2.5 rounded-xl border p-2.5 ${
+                          isOutgoing
+                            ? 'bg-white/60 dark:bg-white/5 border-sky-300 dark:border-white/10 text-slate-900 dark:text-white'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
+                        }`}>
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-400">
+                            {isImage ? <FiImage size={18} /> : <FiFileText size={18} />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            {isImage ? (
+                              <button type="button" onClick={() => handlePreviewAttachment(attachment)} className="block max-w-full truncate text-left text-xs font-semibold hover:text-sky-600 dark:hover:text-sky-400">
+                                {attachment.name}
+                              </button>
+                            ) : (
+                              <p className="truncate text-xs font-semibold">{attachment.name}</p>
+                            )}
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
+                            </p>
+                          </div>
+                          <button type="button" onClick={() => handleDownloadAttachment(attachment)} className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-white/80 hover:text-sky-600 dark:hover:bg-white/10 dark:hover:text-sky-400" title="Download attachment">
                             <FiDownload size={16} />
-                          </a>
-                        )}
-                      </div>
-                    )}
+                          </button>
+                        </div>
+                      );
+                    })}
 
                     {(pollId || isLegacyPollMessage) && (
                       <button
@@ -485,38 +551,33 @@ const ChatArea = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Selected Attachment Preview Bar */}
-      {selectedAttachment && (
-        <div className="mx-2.5 sm:mx-3 mb-2 p-2 px-3 bg-white dark:bg-[#171717] rounded-2xl border border-sky-200 dark:border-white/10 shadow-sm flex items-center justify-between gap-3 shrink-0 animate-fadeIn z-10">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {selectedAttachment.isImage && selectedAttachment.url ? (
-              <img
-                src={selectedAttachment.url}
-                alt={selectedAttachment.name}
-                className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 shrink-0"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
-                <FiFileText size={20} />
+      {(selectedAttachments.length > 0 || attachmentError) && (
+        <div className="mx-2.5 sm:mx-3 mb-2 rounded-2xl border border-sky-200 bg-white p-2.5 shadow-sm dark:border-white/10 dark:bg-[#171717] shrink-0 z-10">
+          {attachmentError && (
+            <p role="alert" className="mb-2 px-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">{attachmentError}</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {selectedAttachments.map((attachment) => (
+              <div key={attachment.localId} className="flex min-w-0 max-w-full items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 dark:bg-[#252529]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
+                  {attachment.contentType?.startsWith('image/') ? <FiImage size={16} /> : <FiFileText size={16} />}
+                </div>
+                <div className="min-w-0">
+                  <p className="max-w-[180px] truncate text-[11px] font-semibold text-slate-800 dark:text-white">{attachment.name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {formatFileSize(attachment.size)} · {attachment.status === 'uploading' ? 'Uploading…' : attachment.status === 'failed' ? 'Upload failed' : 'Uploaded'}
+                  </p>
+                </div>
+                {attachment.status === 'uploading' ? (
+                  <span className="ml-1 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-500/30 border-t-sky-500" />
+                ) : (
+                  <button type="button" onClick={() => handleRemoveAttachment(attachment.localId)} title="Remove attachment" className="ml-1 shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30">
+                    <FiX size={14} />
+                  </button>
+                )}
               </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
-                {selectedAttachment.name}
-              </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                {formatFileSize(selectedAttachment.size)} • {selectedAttachment.isImage ? 'Image' : getFileExtension(selectedAttachment.name)}
-              </p>
-            </div>
+            ))}
           </div>
-          <button
-            type="button"
-            onClick={handleRemoveAttachment}
-            title="Remove attachment"
-            className="p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer shrink-0"
-          >
-            <FiX size={16} />
-          </button>
         </div>
       )}
 
@@ -525,6 +586,7 @@ const ChatArea = ({
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
           onChange={handleFileSelect}
           className="hidden"
@@ -533,8 +595,9 @@ const ChatArea = ({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          title="Attach document or image"
-          className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
+          disabled={isUploadingAttachments || selectedAttachments.length >= 10}
+          title="Attach files (up to 10, 25 MB each)"
+          className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <FiPaperclip size={18} />
         </button>
@@ -594,7 +657,7 @@ const ChatArea = ({
         {/* Send Action Button */}
         <button
           type="submit"
-          disabled={!inputText.trim() && !selectedAttachment}
+          disabled={isUploadingAttachments || selectedAttachments.some((attachment) => attachment.status === 'failed') || (!inputText.trim() && !selectedAttachments.some((attachment) => attachment.status === 'uploaded'))}
           title={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Send message'}
           className="p-2 rounded-full text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 disabled:opacity-40 transition cursor-pointer shrink-0"
         >
@@ -606,7 +669,7 @@ const ChatArea = ({
       {previewImage && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center p-4"
-          onClick={() => setPreviewImage(null)}
+          onClick={closeImagePreview}
         >
           <div
             className="relative max-w-4xl max-h-[90vh] flex flex-col items-center bg-[#171717] rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
@@ -615,17 +678,17 @@ const ChatArea = ({
             <div className="w-full flex items-center justify-between p-3 px-4 bg-white/5 border-b border-white/10 text-white text-xs sm:text-sm">
               <span className="truncate max-w-xs sm:max-w-md font-medium">{previewImage.name}</span>
               <div className="flex items-center gap-2">
-                <a
-                  href={previewImage.url}
-                  download={previewImage.name || 'image.jpg'}
+                <button
+                  type="button"
+                  onClick={() => handleDownloadAttachment(previewImage)}
                   className="p-1.5 rounded-lg hover:bg-white/10 text-white transition cursor-pointer"
                   title="Download image"
                 >
                   <FiDownload size={16} />
-                </a>
+                </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewImage(null)}
+                  onClick={closeImagePreview}
                   className="p-1.5 rounded-lg hover:bg-white/10 text-white transition cursor-pointer"
                   title="Close preview"
                 >
