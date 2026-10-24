@@ -20,8 +20,8 @@ import {
   FiChevronRight,
   FiCalendar,
   FiArrowRight,
+  FiAlertCircle,
 } from 'react-icons/fi';
-import { AiOutlineExclamationCircle } from 'react-icons/ai';
 
 import { getMyWorkspace, getWorkspaceMembers, getFriendlyErrorMessage } from '../services/workspaceApi';
 import { getMyProjects } from '../../projects/services/projectApi';
@@ -276,20 +276,15 @@ const DashboardOverview = () => {
       { name: 'Pending', value: pending || (total === 0 ? 1 : 0.001), color: '#52525b' },
     ];
 
-    const hasActiveSprint = sprints.some((s) => {
-      const norm = normalize(s.status);
-      return norm === 'ACTIVE' || norm === 'IN_PROGRESS';
-    });
-
     return {
       completed,
       inProgress,
       pending,
       completionRate,
       chartData,
-      statusLabel: hasActiveSprint ? 'Active Sprint' : total > 0 ? 'Issues Done' : 'No Issues',
+      statusLabel: inProgress > 0 ? 'Active Issues' : total > 0 ? 'Issues Done' : 'No Issues',
     };
-  }, [issues, sprints]);
+  }, [issues]);
 
   // Current user's tasks
   const myFilteredTasks = useMemo(() => {
@@ -599,7 +594,7 @@ const DashboardOverview = () => {
           onClick={() => navigate('/dashboard/projects')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-indigo-950/60 border border-indigo-700/40 text-indigo-400 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-[#2A2346] dark:text-[#A78BFA] flex items-center justify-center shrink-0 shadow-2xs">
             <FiFolder size={22} />
           </div>
           <div className="min-w-0">
@@ -624,8 +619,8 @@ const DashboardOverview = () => {
           onClick={() => navigate('/dashboard/issues')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-rose-950/60 border border-rose-700/40 text-rose-400 flex items-center justify-center shrink-0">
-            <AiOutlineExclamationCircle size={24} />
+          <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 dark:bg-[#432328] dark:text-[#F87171] flex items-center justify-center shrink-0 shadow-2xs">
+            <FiAlertCircle size={22} />
           </div>
           <div className="min-w-0">
             <span className="text-xs font-medium text-slate-500 dark:text-[#94a3b8] block">
@@ -647,7 +642,7 @@ const DashboardOverview = () => {
           onClick={() => navigate('/dashboard/sprints')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-purple-950/60 border border-purple-700/40 text-purple-400 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 dark:bg-[#2A2346] dark:text-[#A78BFA] flex items-center justify-center shrink-0 shadow-2xs">
             <FiRefreshCw size={20} />
           </div>
           <div className="min-w-0">
@@ -670,7 +665,7 @@ const DashboardOverview = () => {
           onClick={() => navigate('/dashboard/team')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-emerald-950/60 border border-emerald-700/40 text-emerald-400 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-[#1C3A2A] dark:text-[#4ADE80] flex items-center justify-center shrink-0 shadow-2xs">
             <FiUsers size={22} />
           </div>
           <div className="min-w-0">

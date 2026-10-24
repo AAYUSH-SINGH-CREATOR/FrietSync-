@@ -33,11 +33,15 @@ const SprintModalForm = ({
 
   useEffect(() => {
     if (!projectId) {
-      setMilestones([]);
+      Promise.resolve().then(() => {
+        setMilestones([]);
+      });
       return;
     }
     let isCurrent = true;
-    setIsLoadingMilestones(true);
+    Promise.resolve().then(() => {
+      if (isCurrent) setIsLoadingMilestones(true);
+    });
     getProjectMilestones(projectId)
       .then((response) => {
         if (isCurrent) setMilestones(getMilestoneList(response));
