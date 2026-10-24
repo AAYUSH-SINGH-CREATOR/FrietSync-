@@ -88,33 +88,33 @@ const getMilestoneStatusInfo = (status) => {
   if (['COMPLETED', 'ON_TRACK', 'RESOLVED'].includes(norm)) {
     return {
       label: 'On track',
-      badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-      dotClass: 'bg-emerald-400 ring-4 ring-emerald-950/60',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30',
+      dotClass: 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/60',
     };
   }
   if (['IN_PROGRESS', 'ACTIVE'].includes(norm)) {
     return {
       label: 'In progress',
-      badgeClass: 'bg-sky-500/20 text-sky-300 border border-sky-500/30',
-      dotClass: 'bg-sky-400 ring-4 ring-sky-950/60',
+      badgeClass: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30',
+      dotClass: 'bg-sky-500 ring-4 ring-sky-100 dark:ring-sky-950/60',
     };
   }
   return {
     label: 'Upcoming',
-    badgeClass: 'bg-slate-700/50 text-slate-300 border border-slate-600/50',
-    dotClass: 'bg-purple-300 ring-4 ring-purple-950/60',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-slate-600/50',
+    dotClass: 'bg-purple-500 ring-4 ring-purple-100 dark:ring-purple-950/60',
   };
 };
 
 const getSprintStatusBadge = (status) => {
   const norm = String(status || '').toUpperCase().replace(/[\s-]+/g, '_');
   if (['COMPLETED', 'CLOSED', 'DONE'].includes(norm)) {
-    return 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400';
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400';
   }
   if (['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm)) {
-    return 'border-sky-500/30 bg-sky-500/15 text-sky-400';
+    return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-400';
   }
-  return 'border-purple-500/30 bg-purple-500/15 text-purple-400';
+  return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/15 dark:text-purple-400';
 };
 
 const ProjectDetailsView = () => {
@@ -714,21 +714,21 @@ const ProjectDetailsView = () => {
       : project?.tags || project?.category || 'Web, UX';
 
   return (
-    <div className="w-full min-w-0 text-slate-100 space-y-6 animate-fadeIn pb-16 px-3 sm:px-6 lg:px-8">
+    <div className="w-full min-w-0 text-slate-900 dark:text-slate-100 space-y-6 animate-fadeIn pb-16 px-3 sm:px-6 lg:px-8">
       {/* Toast Notice */}
       {toastNotice && (
         <div
           className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm flex items-center justify-between gap-3 shadow-lg ${
             toastNotice.type === 'success'
-              ? 'bg-emerald-950/80 border border-emerald-600/40 text-emerald-300'
-              : 'bg-rose-950/80 border border-rose-600/40 text-rose-300'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/80 dark:border-emerald-600/40 dark:text-emerald-300'
+              : 'bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/80 dark:border-rose-600/40 dark:text-rose-300'
           }`}
         >
           <div className="flex items-center gap-2.5">
             {toastNotice.type === 'success' ? (
-              <FiCheckCircle className="shrink-0 text-emerald-400" size={17} />
+              <FiCheckCircle className="shrink-0 text-emerald-600 dark:text-emerald-400" size={17} />
             ) : (
-              <FiAlertCircle className="shrink-0 text-rose-400" size={17} />
+              <FiAlertCircle className="shrink-0 text-rose-600 dark:text-rose-400" size={17} />
             )}
             <span className="font-medium">{toastNotice.message}</span>
           </div>
@@ -746,7 +746,7 @@ const ProjectDetailsView = () => {
       <div className="flex items-center justify-between gap-4">
         <Link
           to="/dashboard/projects"
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
         >
           <FiArrowLeft size={16} />
           <span>Back to projects</span>
@@ -758,9 +758,9 @@ const ProjectDetailsView = () => {
             onClick={reloadData}
             disabled={isLoading}
             title="Refresh overview"
-            className="p-2 rounded-xl border border-[#35353d] bg-[#222228] text-slate-300 hover:bg-[#2b2b32] transition disabled:opacity-50 cursor-pointer"
+            className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2b2b32] transition disabled:opacity-50 cursor-pointer shadow-xs"
           >
-            <FiRefreshCw size={15} className={isLoading ? 'animate-spin text-sky-400' : ''} />
+            <FiRefreshCw size={15} className={isLoading ? 'animate-spin text-sky-500 dark:text-sky-400' : ''} />
           </button>
 
           {isAdmin && project && (
@@ -769,7 +769,7 @@ const ProjectDetailsView = () => {
                 type="button"
                 onClick={() => setIsEditModalOpen(true)}
                 title="Edit Project"
-                className="p-2 rounded-xl border border-[#35353d] bg-[#222228] text-slate-300 hover:bg-[#2b2b32] hover:text-sky-400 transition cursor-pointer"
+                className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2b2b32] hover:text-sky-600 dark:hover:text-sky-400 transition cursor-pointer shadow-xs"
               >
                 <FiEdit2 size={15} />
               </button>
@@ -777,7 +777,7 @@ const ProjectDetailsView = () => {
                 type="button"
                 onClick={() => setIsDeleteModalOpen(true)}
                 title="Delete Project"
-                className="p-2 rounded-xl border border-[#35353d] bg-[#222228] text-rose-400 hover:bg-rose-950/40 transition cursor-pointer"
+                className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shadow-xs"
               >
                 <FiTrash2 size={15} />
               </button>
@@ -788,7 +788,7 @@ const ProjectDetailsView = () => {
 
       {/* Error Alert */}
       {pageError && (
-        <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs sm:text-sm flex items-center justify-between gap-3">
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300 text-xs sm:text-sm flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FiAlertCircle size={18} className="shrink-0" />
             <span>{pageError}</span>
@@ -804,18 +804,18 @@ const ProjectDetailsView = () => {
       )}
 
       {/* Hero Header and Project Summary */}
-      <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 sm:p-8 space-y-6 shadow-sm">
+      <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           {/* Left: Folder Icon + Title + Description */}
           <div className="flex items-start gap-4 sm:gap-5 min-w-0">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#241f3d] border border-[#3b325c] flex items-center justify-center text-white shrink-0 shadow-sm">
-              <FiFolder size={28} className="text-indigo-400" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 dark:bg-[#241f3d] border border-indigo-100 dark:border-[#3b325c] flex items-center justify-center text-indigo-600 dark:text-white shrink-0 shadow-xs">
+              <FiFolder size={28} className="text-indigo-600 dark:text-indigo-400" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight truncate">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
                 {isLoading ? 'Loading project...' : project?.name || 'Website redesign'}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
                 {project?.description || 'Redesign and rebuild the marketing website with modern UI/UX'}
               </p>
             </div>
@@ -824,10 +824,10 @@ const ProjectDetailsView = () => {
           {/* Right: Overall Progress Bar */}
           <div className="lg:text-right shrink-0">
             <div className="flex items-center justify-between lg:justify-end gap-3 mb-1.5">
-              <span className="text-xs font-semibold text-slate-400">Overall Progress</span>
-              <span className="text-xs font-bold text-white">{overallProgress}%</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Overall Progress</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{overallProgress}%</span>
             </div>
-            <div className="h-2.5 sm:h-3 w-full sm:w-72 lg:w-80 bg-[#2b2b34] rounded-full overflow-hidden p-0.5">
+            <div className="h-2.5 sm:h-3 w-full sm:w-72 lg:w-80 bg-slate-100 dark:bg-[#2b2b34] rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-transparent">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-sky-400 to-[#38bdf8] transition-all duration-500 shadow-[0_0_12px_rgba(56,189,248,0.5)]"
                 style={{ width: `${overallProgress}%` }}
@@ -837,7 +837,7 @@ const ProjectDetailsView = () => {
         </div>
 
         {/* Hero Bottom Row: Schedule a meeting + Summary PDF + Project Manager + 4 Metric Cards */}
-        <div className="pt-4 border-t border-[#2d2d34] flex flex-col xl:flex-row xl:items-center justify-between gap-5 flex-wrap">
+        <div className="pt-4 border-t border-slate-100 dark:border-[#2d2d34] flex flex-col xl:flex-row xl:items-center justify-between gap-5 flex-wrap">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button
               type="button"
@@ -852,12 +852,12 @@ const ProjectDetailsView = () => {
               onClick={handleDownloadSummaryPdf}
               disabled={isDownloadingPdf}
               title="Download project summary PDF report"
-              className="inline-flex items-center gap-2 rounded-full border border-[#383842] bg-[#222228] hover:bg-[#2b2b32] text-slate-200 hover:text-white font-semibold text-xs sm:text-sm px-4 py-2.5 shadow-sm transition shrink-0 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-[#383842] bg-slate-100 dark:bg-[#222228] hover:bg-slate-200 dark:hover:bg-[#2b2b32] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-semibold text-xs sm:text-sm px-4 py-2.5 shadow-xs transition shrink-0 cursor-pointer disabled:opacity-50"
             >
               {isDownloadingPdf ? (
                 <span className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin inline-block" />
               ) : (
-                <FiDownload size={14} className="text-sky-400" />
+                <FiDownload size={14} className="text-sky-500 dark:text-sky-400" />
               )}
               <span>{isDownloadingPdf ? 'Exporting PDF...' : 'Summary PDF'}</span>
             </button>
@@ -867,11 +867,11 @@ const ProjectDetailsView = () => {
               <img
                 src={project?.projectManagerAvatar || project?.projectManager?.avatarUrl || defaultAvatar}
                 alt={projectManagerName}
-                className="w-11 h-11 rounded-full object-cover border border-slate-700 shrink-0"
+                className="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
               />
               <div>
-                <span className="text-[11px] text-slate-400 block font-medium">Project manager</span>
-                <span className="text-sm font-bold text-white block mt-0.5 leading-tight">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">Project manager</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white block mt-0.5 leading-tight">
                   {projectManagerName}
                 </span>
               </div>
@@ -881,60 +881,60 @@ const ProjectDetailsView = () => {
           {/* 4 Summary Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 shrink-0">
             {/* Active Sprints */}
-            <div className="rounded-2xl border border-[#2d2d34] bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px]">
-              <span className="h-7 w-7 rounded-lg bg-[#2f2249] text-purple-400 flex items-center justify-center shrink-0">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+              <span className="h-7 w-7 rounded-lg bg-purple-100 dark:bg-[#2f2249] text-purple-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiRepeat size={14} />
               </span>
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
                   Active sprints
                 </span>
-                <span className="text-base sm:text-lg font-bold text-white leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                   {isLoading ? '—' : activeSprintsCount}
                 </span>
               </div>
             </div>
 
             {/* Active Issues */}
-            <div className="rounded-2xl border border-[#2d2d34] bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px]">
-              <span className="h-7 w-7 rounded-lg bg-[#2f2249] text-purple-400 flex items-center justify-center shrink-0">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+              <span className="h-7 w-7 rounded-lg bg-rose-100 dark:bg-[#432328] text-rose-700 dark:text-[#F87171] flex items-center justify-center shrink-0">
                 <FiAlertTriangle size={14} />
               </span>
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
                   Active issues
                 </span>
-                <span className="text-base sm:text-lg font-bold text-white leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                   {isLoading ? '—' : activeIssuesCount}
                 </span>
               </div>
             </div>
 
             {/* My Tasks */}
-            <div className="rounded-2xl border border-[#2d2d34] bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px]">
-              <span className="h-7 w-7 rounded-lg bg-[#2f2249] text-purple-400 flex items-center justify-center shrink-0">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+              <span className="h-7 w-7 rounded-lg bg-indigo-100 dark:bg-[#2f2249] text-indigo-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiFolder size={14} />
               </span>
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
                   My tasks
                 </span>
-                <span className="text-base sm:text-lg font-bold text-white leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                   {isLoading ? '—' : myTasksCount}
                 </span>
               </div>
             </div>
 
             {/* Polls */}
-            <div className="rounded-2xl border border-[#2d2d34] bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px]">
-              <span className="h-7 w-7 rounded-lg bg-[#2f2249] text-purple-400 flex items-center justify-center shrink-0">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+              <span className="h-7 w-7 rounded-lg bg-sky-100 dark:bg-[#2f2249] text-sky-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiBarChart2 size={14} />
               </span>
               <div>
-                <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
                   Polls
                 </span>
-                <span className="text-base sm:text-lg font-bold text-white leading-tight">
+                <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                   {isLoading ? '—' : polls.length}
                 </span>
               </div>
@@ -951,7 +951,7 @@ const ProjectDetailsView = () => {
             <button
               type="button"
               onClick={() => setViewingAllPolls(false)}
-              className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition cursor-pointer"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition cursor-pointer"
             >
               <FiArrowLeft size={16} />
               <span>Back to Project Overview</span>
@@ -970,80 +970,80 @@ const ProjectDetailsView = () => {
           {/* Top Row: Project Information + Upcoming Milestones (Recently Assigned Tasks Removed) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Project Information Card */}
-            <div className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm flex flex-col justify-between">
+            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white mb-5">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-5">
                   Project Information
                 </h2>
                 <div className="space-y-3.5 text-xs sm:text-sm">
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Project Name</span>
-                    <span className="text-white font-semibold text-right truncate max-w-[220px]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Project Name</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
                       {project?.name || 'Website Refresh'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Description</span>
-                    <span className="text-white font-semibold text-right truncate max-w-[220px]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Description</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
                       {project?.description || 'Website redesign'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Status</span>
-                    <span className="text-white font-semibold text-right capitalize">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Status</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right capitalize">
                       {String(project?.status || 'In progress').toLowerCase().replace(/_/g, ' ')}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Project manager</span>
-                    <span className="text-white font-semibold text-right truncate max-w-[220px]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Project manager</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
                       {projectManagerName}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Team leader</span>
-                    <span className="text-white font-semibold text-right truncate max-w-[220px]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Team leader</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
                       {teamLeadName}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Start date</span>
-                    <span className="text-white font-semibold text-right">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Start date</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right">
                       {formatDate(project?.startDate) || 'Oct 01, 2026'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Target end date</span>
-                    <span className="text-white font-semibold text-right">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Target end date</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right">
                       {formatDate(project?.deadline) || 'Dec 15, 2026'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-400 font-medium">Tags</span>
-                    <span className="text-white font-semibold text-right truncate max-w-[220px]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Tags</span>
+                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
                       {projectTags}
                     </span>
                   </div>
-                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-[#27272e]">
-                    <span className="text-slate-400 font-medium">Schedule report</span>
+                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-slate-100 dark:border-[#27272e]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Schedule report</span>
                     <button
                       type="button"
                       onClick={handleDownloadSummaryPdf}
                       disabled={isDownloadingPdf}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition cursor-pointer disabled:opacity-50"
                     >
                       <FiDownload size={13} />
                       <span>{isDownloadingPdf ? 'Downloading...' : 'Download PDF Summary'}</span>
                     </button>
                   </div>
-                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-[#27272e]">
-                    <span className="text-slate-400 font-medium flex items-center gap-1.5">
-                      <FiGithub size={14} className="text-slate-300" />
+                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-slate-100 dark:border-[#27272e]">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                      <FiGithub size={14} className="text-slate-600 dark:text-slate-300" />
                       <span>GitHub Repository</span>
                     </span>
                     {linkedRepo ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-semibold text-xs font-mono bg-[#25252c] px-2 py-0.5 rounded-md border border-[#32323a] truncate max-w-[150px]">
+                        <span className="text-slate-900 dark:text-white font-semibold text-xs font-mono bg-slate-100 dark:bg-[#25252c] px-2 py-0.5 rounded-md border border-slate-200 dark:border-[#32323a] truncate max-w-[150px]">
                           {linkedRepo.owner}/{linkedRepo.repository}
                         </span>
                         {canManageMilestones && (
@@ -1051,7 +1051,7 @@ const ProjectDetailsView = () => {
                             type="button"
                             onClick={handleUnlinkRepository}
                             disabled={isUnlinkingRepo}
-                            className="text-xs text-rose-400 hover:text-rose-300 hover:underline cursor-pointer font-medium disabled:opacity-50"
+                            className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-500 dark:hover:text-rose-300 hover:underline cursor-pointer font-medium disabled:opacity-50"
                           >
                             {isUnlinkingRepo ? 'Unlinking…' : 'Unlink'}
                           </button>
@@ -1062,7 +1062,7 @@ const ProjectDetailsView = () => {
                         <button
                           type="button"
                           onClick={() => setIsLinkRepoModalOpen(true)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition cursor-pointer"
                         >
                           <FiPlus size={13} />
                           <span>Link Repository</span>
@@ -1075,14 +1075,14 @@ const ProjectDetailsView = () => {
             </div>
 
             {/* Upcoming Milestones Card */}
-            <div className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm flex flex-col justify-between">
+            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg font-bold text-white">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                       Upcoming Milestones
                     </h2>
-                    <span className="rounded-full bg-[#27272e] px-2 py-0.5 text-xs font-semibold text-slate-300">
+                    <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                       {milestones.length}
                     </span>
                   </div>
@@ -1093,7 +1093,7 @@ const ProjectDetailsView = () => {
                         setEditingMilestone(null);
                         setIsMilestoneModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-semibold transition cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
                       title="Add Milestone"
                     >
                       <FiPlus size={13} />
@@ -1105,12 +1105,12 @@ const ProjectDetailsView = () => {
                 {isLoading ? (
                   <div className="space-y-4 py-2">
                     {[1, 2, 3].map((n) => (
-                      <div key={n} className="h-10 rounded-xl bg-[#27272e] animate-pulse" />
+                      <div key={n} className="h-10 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                     ))}
                   </div>
                 ) : milestones.length === 0 ? (
-                  <div className="py-8 text-center text-slate-400">
-                    <p className="text-xs sm:text-sm font-medium text-slate-300">
+                  <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                       No upcoming milestones
                     </p>
                     <p className="text-xs mt-1">
@@ -1123,7 +1123,7 @@ const ProjectDetailsView = () => {
                           setEditingMilestone(null);
                           setIsMilestoneModalOpen(true);
                         }}
-                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-semibold transition cursor-pointer"
+                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
                       >
                         <FiPlus size={13} /> Add First Milestone
                       </button>
@@ -1131,7 +1131,7 @@ const ProjectDetailsView = () => {
                   </div>
                 ) : (
                   <div>
-                    <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700/60 max-h-[260px] overflow-y-auto pr-1">
+                    <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/60 max-h-[260px] overflow-y-auto pr-1">
                       {milestones.slice(0, showAllMilestones ? undefined : 4).map((m, idx) => {
                         const mId = m.id || m._id || m.milestoneId || idx;
                         const statusInfo = getMilestoneStatusInfo(m.status);
@@ -1144,15 +1144,15 @@ const ProjectDetailsView = () => {
                               className={`absolute -left-6 top-2 h-2.5 w-2.5 rounded-full ${statusInfo.dotClass}`}
                             />
                             <div className="min-w-0 pr-2">
-                              <p className="text-xs sm:text-sm font-semibold text-white truncate">
+                              <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
                                 {m.name || m.title || `Milestone ${idx + 1}`}
                               </p>
                               {m.description && (
-                                <p className="text-[11px] text-slate-400 truncate mt-0.5 max-w-xs">
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5 max-w-xs">
                                   {m.description}
                                 </p>
                               )}
-                              <p className="text-[11px] text-slate-500 mt-0.5">
+                              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                                 Due: {formatMilestoneDate(m.dueDate || m.targetDate || m.deadline)}
                               </p>
                             </div>
@@ -1171,7 +1171,7 @@ const ProjectDetailsView = () => {
                                       setIsMilestoneModalOpen(true);
                                     }}
                                     title="Edit Milestone"
-                                    className="p-1 rounded text-slate-400 hover:text-sky-400 hover:bg-[#25252c] transition cursor-pointer"
+                                    className="p-1 rounded text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-[#25252c] transition cursor-pointer"
                                   >
                                     <FiEdit2 size={12} />
                                   </button>
@@ -1182,7 +1182,7 @@ const ProjectDetailsView = () => {
                                       setIsDeleteMilestoneOpen(true);
                                     }}
                                     title="Delete Milestone"
-                                    className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition cursor-pointer"
+                                    className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                                   >
                                     <FiTrash2 size={12} />
                                   </button>
@@ -1197,7 +1197,7 @@ const ProjectDetailsView = () => {
                       <button
                         type="button"
                         onClick={() => setShowAllMilestones((prev) => !prev)}
-                        className="mt-3 text-xs font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer"
+                        className="mt-3 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition cursor-pointer"
                       >
                         {showAllMilestones ? 'Show fewer' : `View all (${milestones.length})`}
                       </button>
@@ -1211,13 +1211,13 @@ const ProjectDetailsView = () => {
           {/* Middle Row: Sprint Overview + Recent Activity + Recent Poll */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* Sprint Overview Card */}
-            <div className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm flex flex-col justify-between">
+            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-base sm:text-lg font-bold text-white">Sprint overview</h2>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Sprint overview</h2>
                   <Link
                     to="/dashboard/sprints"
-                    className="text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1"
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center gap-1"
                   >
                     View all <FiArrowRight size={13} />
                   </Link>
@@ -1246,44 +1246,44 @@ const ProjectDetailsView = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-end pb-1.5 pointer-events-none">
-                    <span className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
                       {sprintGaugeMetrics.progressRate}%
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                       {sprintGaugeMetrics.statusLabel}
                     </span>
                   </div>
                 </div>
 
                 {/* Legend */}
-                <div className="flex items-center justify-center gap-3.5 text-[11px] mt-4 pt-2 border-t border-[#2d2d34]">
-                  <span className="flex items-center gap-1.5 text-slate-300">
+                <div className="flex items-center justify-center gap-3.5 text-[11px] mt-4 pt-2 border-t border-slate-100 dark:border-[#2d2d34]">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                     <span className="h-2 w-2 rounded-full bg-[#38bdf8]" /> Completed
                   </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                     <span className="h-2 w-2 rounded-full bg-[#0284c7]" /> In Progress
                   </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-[#334155]" /> Pending
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-[#334155]" /> Pending
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Recent Activity Card */}
-            <div className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm flex flex-col justify-between">
+            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white mb-4">Recent Activity</h2>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Activity</h2>
 
                 {isLoading ? (
                   <div className="space-y-3 py-2">
                     {[1, 2, 3].map((n) => (
-                      <div key={n} className="h-9 rounded-xl bg-[#27272e] animate-pulse" />
+                      <div key={n} className="h-9 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                     ))}
                   </div>
                 ) : activities.length === 0 ? (
-                  <div className="py-10 text-center text-slate-400">
-                    <p className="text-xs sm:text-sm font-medium text-slate-300">
+                  <div className="py-10 text-center text-slate-500 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                       No recent activity
                     </p>
                     <p className="text-xs mt-1">Activity logs will appear as team members work.</p>
@@ -1303,15 +1303,15 @@ const ProjectDetailsView = () => {
                             {act.initials}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-white font-bold truncate leading-tight">
+                            <p className="text-slate-900 dark:text-white font-bold truncate leading-tight">
                               {act.actor}
                             </p>
-                            <p className="text-slate-400 text-[11px] truncate max-w-[170px] sm:max-w-xs mt-0.5">
+                            <p className="text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[170px] sm:max-w-xs mt-0.5">
                               {act.action}
                             </p>
                           </div>
                         </div>
-                        <span className="text-[11px] text-slate-400 font-medium shrink-0">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0">
                           {act.time}
                         </span>
                       </div>
@@ -1322,14 +1322,14 @@ const ProjectDetailsView = () => {
             </div>
 
             {/* Recent Poll Card */}
-            <div className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm flex flex-col justify-between">
+            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-base sm:text-lg font-bold text-white">Recent Poll</h2>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Recent Poll</h2>
                   <button
                     type="button"
                     onClick={() => setViewingAllPolls(true)}
-                    className="text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center gap-1 cursor-pointer"
                   >
                     View all <FiArrowRight size={13} />
                   </button>
@@ -1338,17 +1338,17 @@ const ProjectDetailsView = () => {
                 {isLoading ? (
                   <div className="space-y-2 py-2">
                     {[1, 2, 3].map((n) => (
-                      <div key={n} className="h-8 rounded-xl bg-[#27272e] animate-pulse" />
+                      <div key={n} className="h-8 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                     ))}
                   </div>
                 ) : !recentPoll ? (
-                  <div className="py-10 text-center text-slate-400">
-                    <p className="text-xs sm:text-sm font-medium text-slate-300">No active polls</p>
+                  <div className="py-10 text-center text-slate-500 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">No active polls</p>
                     <p className="text-xs mt-1">Create a poll to collect team votes on decisions.</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-xs sm:text-sm font-semibold text-white mb-3 leading-snug">
+                    <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-3 leading-snug">
                       Q. {recentPoll.question || 'Which approach should we finalize?'}
                     </p>
 
@@ -1381,10 +1381,10 @@ const ProjectDetailsView = () => {
                               !isClosed ? 'cursor-pointer' : ''
                             }`}
                           >
-                            <span className="text-xs font-bold text-white w-3 text-center shrink-0">
+                            <span className="text-xs font-bold text-slate-700 dark:text-white w-3 text-center shrink-0">
                               {letter}
                             </span>
-                            <div className="flex-1 h-3.5 rounded-md bg-[#2a2a32] overflow-hidden p-0.5">
+                            <div className="flex-1 h-3.5 rounded-md bg-slate-100 dark:bg-[#2a2a32] overflow-hidden p-0.5 border border-slate-200/60 dark:border-transparent">
                               <div
                                 className={`h-full rounded-sm transition-all duration-300 ${
                                   idx % 2 === 0 ? 'bg-[#7dd3fc]' : 'bg-[#38bdf8]'
@@ -1392,7 +1392,7 @@ const ProjectDetailsView = () => {
                                 style={{ width: `${barPct}%` }}
                               />
                             </div>
-                            <span className="text-xs font-bold text-slate-300 w-4 text-right shrink-0">
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-300 w-4 text-right shrink-0">
                               {votes}
                             </span>
                           </div>
@@ -1406,20 +1406,20 @@ const ProjectDetailsView = () => {
           </div>
 
           {/* Under Dashboard: Project Sprints (Top 5 + View all) */}
-          <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d34] pb-4">
+          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-purple-950/40 text-purple-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 flex items-center justify-center shrink-0">
                   <FiRepeat size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-bold text-white">Project Sprints</h3>
-                    <span className="rounded-full bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-300">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Sprints</h3>
+                    <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                       {sprints.length}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Planned and active sprint cycles for this project.
                   </p>
                 </div>
@@ -1427,7 +1427,7 @@ const ProjectDetailsView = () => {
 
               <Link
                 to="/dashboard/sprints"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#35353d] bg-[#26262c] hover:bg-[#32323a] text-xs font-semibold text-slate-300 hover:text-white transition"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
               >
                 <span>View all</span>
                 <FiArrowRight size={13} />
@@ -1437,12 +1437,12 @@ const ProjectDetailsView = () => {
             {isLoading ? (
               <div className="space-y-2 py-2">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="h-11 rounded-xl bg-[#27272e] animate-pulse" />
+                  <div key={n} className="h-11 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                 ))}
               </div>
             ) : sprints.length === 0 ? (
-              <div className="py-8 text-center text-slate-400">
-                <p className="text-xs sm:text-sm font-semibold text-slate-300">
+              <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                   No sprints created for this project yet
                 </p>
                 <p className="text-xs mt-1">
@@ -1453,7 +1453,7 @@ const ProjectDetailsView = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-xs">
                   <thead>
-                    <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-[#2d2d34]">
+                    <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-[#2d2d34]">
                       <th className="py-2.5 px-3">Sprint</th>
                       <th className="py-2.5 px-3">Status</th>
                       <th className="py-2.5 px-3">Duration</th>
@@ -1461,15 +1461,15 @@ const ProjectDetailsView = () => {
                       <th className="py-2.5 px-3 w-8" />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2a2a30]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#2a2a30]">
                     {sprints.slice(0, 5).map((sprint, idx) => (
                       <tr
                         key={sprint.id || sprint._id || idx}
                         onClick={() => navigate('/dashboard/sprints')}
-                        className="cursor-pointer hover:bg-[#27272e] transition"
+                        className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#27272e] transition"
                       >
                         <td className="py-3 px-3">
-                          <p className="font-semibold text-white truncate max-w-xs">
+                          <p className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">
                             {sprint.name || `Sprint ${idx + 1}`}
                           </p>
                         </td>
@@ -1482,15 +1482,15 @@ const ProjectDetailsView = () => {
                             {String(sprint.status || 'PLANNED').replace(/[_-]/g, ' ')}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
+                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {sprint.startDate || sprint.endDate
                             ? `${formatDate(sprint.startDate)} – ${formatDate(sprint.endDate)}`
                             : 'Dates not set'}
                         </td>
-                        <td className="py-3 px-3 text-slate-400 truncate max-w-xs">
+                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400 truncate max-w-xs">
                           {sprint.goal || sprint.description || '—'}
                         </td>
-                        <td className="py-3 px-3 text-slate-500">
+                        <td className="py-3 px-3 text-slate-400 dark:text-slate-500">
                           <FiChevronRight size={15} />
                         </td>
                       </tr>
@@ -1502,20 +1502,20 @@ const ProjectDetailsView = () => {
           </section>
 
           {/* Under Dashboard: Project Issues (Top 5 + View all + Create Issue) */}
-          <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d34] pb-4">
+          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-950/40 text-sky-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 flex items-center justify-center shrink-0">
                   <FiAlertTriangle size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-bold text-white">Project Issues</h3>
-                    <span className="rounded-full bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-300">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Issues</h3>
+                    <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                       {issues.length}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Tasks and defects logged for {project?.name || 'this project'}.
                   </p>
                 </div>
@@ -1525,14 +1525,14 @@ const ProjectDetailsView = () => {
                 <button
                   type="button"
                   onClick={() => setIsCreateIssueOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-xs font-semibold text-white transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-xs font-semibold text-white transition cursor-pointer shadow-xs"
                 >
                   <FiPlus size={14} />
                   <span>Create Issue</span>
                 </button>
                 <Link
                   to={`/dashboard/issues?projectId=${projectId}`}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#35353d] bg-[#26262c] hover:bg-[#32323a] text-xs font-semibold text-slate-300 hover:text-white transition"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
                 >
                   <span>View all</span>
                   <FiArrowRight size={13} />
@@ -1543,19 +1543,19 @@ const ProjectDetailsView = () => {
             {isLoading ? (
               <div className="space-y-2 py-2">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="h-11 rounded-xl bg-[#27272e] animate-pulse" />
+                  <div key={n} className="h-11 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                 ))}
               </div>
             ) : issues.length === 0 ? (
-              <div className="py-8 text-center text-slate-400">
-                <p className="text-xs sm:text-sm font-semibold text-slate-300">
+              <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                   No issues in this project yet
                 </p>
                 <p className="text-xs mt-1">Create issues to track tasks, bugs, and deliverables.</p>
                 <button
                   type="button"
                   onClick={() => setIsCreateIssueOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
+                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition cursor-pointer shadow-xs"
                 >
                   <FiPlus size={13} /> Create Issue
                 </button>
@@ -1564,7 +1564,7 @@ const ProjectDetailsView = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-xs">
                   <thead>
-                    <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-[#2d2d34]">
+                    <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-[#2d2d34]">
                       <th className="py-2.5 px-3">Issue</th>
                       <th className="py-2.5 px-3">Status</th>
                       <th className="py-2.5 px-3">Priority</th>
@@ -1572,18 +1572,18 @@ const ProjectDetailsView = () => {
                       <th className="py-2.5 px-3 w-8" />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2a2a30]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#2a2a30]">
                     {issues.slice(0, 5).map((issue, index) => (
                       <tr
                         key={issue.id || issue._id || issue.issueId || index}
-                        className="cursor-pointer hover:bg-[#27272e] transition"
+                        className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#27272e] transition"
                         onClick={() => setSelectedIssue(issue)}
                       >
                         <td className="py-3 px-3">
-                          <span className="font-mono text-[10px] text-slate-500">
+                          <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
                             {issue.issueNumber ? `#${issue.issueNumber}` : ''}
                           </span>
-                          <p className="mt-0.5 font-semibold text-white truncate max-w-xs">
+                          <p className="mt-0.5 font-semibold text-slate-900 dark:text-white truncate max-w-xs">
                             {issue.title || 'Untitled issue'}
                           </p>
                         </td>
@@ -1605,10 +1605,10 @@ const ProjectDetailsView = () => {
                             {String(issue.priority || 'MEDIUM').replace(/[_-]/g, ' ')}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
+                        <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {issue.dueDate ? formatDate(issue.dueDate) : '—'}
                         </td>
-                        <td className="py-3 px-3 text-slate-500">
+                        <td className="py-3 px-3 text-slate-400 dark:text-slate-500">
                           <FiChevronRight size={15} />
                         </td>
                       </tr>
@@ -1620,20 +1620,20 @@ const ProjectDetailsView = () => {
           </section>
 
           {/* Under Dashboard: Project Releases */}
-          <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d34] pb-4">
+          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-cyan-950/40 text-cyan-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400 flex items-center justify-center shrink-0">
                   <FiPackage size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-bold text-white">Project Releases</h3>
-                    <span className="rounded-full bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-300">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Releases</h3>
+                    <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                       {releases.length}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Published version tags, attached deliverables, and artifact distribution.
                   </p>
                 </div>
@@ -1657,12 +1657,12 @@ const ProjectDetailsView = () => {
             {isLoading ? (
               <div className="space-y-3 py-2">
                 {[1, 2].map((n) => (
-                  <div key={n} className="h-20 rounded-2xl bg-[#27272e] animate-pulse" />
+                  <div key={n} className="h-20 rounded-2xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                 ))}
               </div>
             ) : releases.length === 0 ? (
-              <div className="py-8 text-center text-slate-400">
-                <p className="text-xs sm:text-sm font-semibold text-slate-300">
+              <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                   No releases published yet
                 </p>
                 <p className="text-xs mt-1">
@@ -1696,17 +1696,17 @@ const ProjectDetailsView = () => {
                   return (
                     <div
                       key={rId}
-                      className="p-4 sm:p-5 rounded-2xl bg-[#1b1b1f] border border-[#2d2d34] hover:border-[#3b3b44] transition space-y-3"
+                      className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 dark:bg-[#1b1b1f] border border-slate-200/80 dark:border-[#2d2d34] hover:border-slate-300 dark:hover:border-[#3b3b44] transition space-y-3"
                     >
                       {/* Release Header */}
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0 flex-wrap">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-950/50 border border-cyan-800/60 text-cyan-300 text-xs font-bold tracking-wide">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 dark:bg-cyan-950/50 dark:border-cyan-800/60 dark:text-cyan-300 text-xs font-bold tracking-wide">
                             <FiTag size={12} />
                             <span>{releaseName}</span>
                           </span>
                           {rDate && (
-                            <span className="text-xs text-slate-400 font-medium">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                               Released {formatDate(rDate)}
                             </span>
                           )}
@@ -1715,7 +1715,7 @@ const ProjectDetailsView = () => {
                               href={release.releaseUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-sky-400 hover:underline"
+                              className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 dark:text-sky-400 hover:underline"
                             >
                               <span>External Link</span>
                               <FiExternalLink size={12} />
@@ -1732,7 +1732,7 @@ const ProjectDetailsView = () => {
                                 setIsReleaseModalOpen(true);
                               }}
                               title="Edit Release"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-[#27272e] transition cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-[#27272e] transition cursor-pointer"
                             >
                               <FiEdit2 size={14} />
                             </button>
@@ -1743,7 +1743,7 @@ const ProjectDetailsView = () => {
                                 setIsDeleteReleaseOpen(true);
                               }}
                               title="Delete Release"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                             >
                               <FiTrash2 size={14} />
                             </button>
@@ -1753,17 +1753,17 @@ const ProjectDetailsView = () => {
 
                       {/* Release Description */}
                       {release.description && (
-                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                           {release.description}
                         </p>
                       )}
 
                       {/* Interactive Meta Bars: Issues & File Artifact */}
-                      <div className="pt-2 border-t border-[#2d2d34] flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="pt-2 border-t border-slate-200/80 dark:border-[#2d2d34] flex flex-wrap items-center justify-between gap-3 text-xs">
                         {/* Attached Issues info */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-slate-400 font-medium">Attached Issues:</span>
-                          <span className="font-semibold text-white px-2 py-0.5 rounded-md bg-[#25252c] border border-[#32323a]">
+                          <span className="text-slate-500 dark:text-slate-400 font-medium">Attached Issues:</span>
+                          <span className="font-semibold text-slate-900 dark:text-white px-2 py-0.5 rounded-md bg-white dark:bg-[#25252c] border border-slate-200 dark:border-[#32323a]">
                             {issueCount} {issueCount === 1 ? 'issue' : 'issues'}
                           </span>
                           {canAttachIssues && (
@@ -1773,7 +1773,7 @@ const ProjectDetailsView = () => {
                                 setAttachingRelease(release);
                                 setIsAttachIssuesOpen(true);
                               }}
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-sky-400 hover:text-sky-300 hover:underline cursor-pointer ml-1"
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 hover:underline cursor-pointer ml-1"
                             >
                               <FiPlus size={12} /> Attach / Manage Issues
                             </button>
@@ -1789,13 +1789,13 @@ const ProjectDetailsView = () => {
                                 download
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 hover:bg-emerald-950/60 font-semibold text-xs transition"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 font-semibold text-xs transition"
                               >
                                 <FiDownload size={13} />
                                 <span className="truncate max-w-[150px]">{fileName || 'Download Artifact'}</span>
                               </a>
                               {canManageReleases && (
-                                <label className="text-[11px] text-slate-400 hover:text-slate-200 cursor-pointer underline ml-1">
+                                <label className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer underline ml-1">
                                   <span>{isUploadingThis ? 'Uploading...' : 'Replace file'}</span>
                                   <input
                                     type="file"
@@ -1812,11 +1812,11 @@ const ProjectDetailsView = () => {
                             </div>
                           ) : (
                             canManageReleases && (
-                              <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-[#3a3a44] bg-[#24242b] hover:bg-[#2e2e36] text-slate-300 hover:text-white font-semibold text-xs transition cursor-pointer">
+                              <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-slate-200 dark:border-[#3a3a44] bg-white dark:bg-[#24242b] hover:bg-slate-100 dark:hover:bg-[#2e2e36] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-semibold text-xs transition cursor-pointer shadow-xs">
                                 {isUploadingThis ? (
                                   <span className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin inline-block" />
                                 ) : (
-                                  <FiUploadCloud size={14} className="text-cyan-400" />
+                                  <FiUploadCloud size={14} className="text-cyan-600 dark:text-cyan-400" />
                                 )}
                                 <span>{isUploadingThis ? 'Uploading (max 100MB)...' : 'Upload Artifact (S3)'}</span>
                                 <input
@@ -1842,20 +1842,20 @@ const ProjectDetailsView = () => {
           </section>
 
           {/* Under Dashboard: Project Members (with Add Member) */}
-          <section className="rounded-3xl border border-[#2d2d34] bg-[#171717] p-6 shadow-sm space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d34] pb-4">
+          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-950/40 text-indigo-400 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 flex items-center justify-center shrink-0">
                   <FiUsers size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-bold text-white">Project Members</h3>
-                    <span className="rounded-full bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-300">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Members</h3>
+                    <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                       {members.length}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Collaborators assigned to work on this project.
                   </p>
                 </div>
@@ -1864,7 +1864,7 @@ const ProjectDetailsView = () => {
               <button
                 type="button"
                 onClick={() => setIsAddMemberModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-xs sm:text-sm font-semibold text-white shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171717]"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-xs sm:text-sm font-semibold text-white shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
               >
                 <FiUserPlus size={15} />
                 <span>Add Member</span>
@@ -1874,12 +1874,12 @@ const ProjectDetailsView = () => {
             {isLoading ? (
               <div className="space-y-2 py-2">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="h-12 rounded-xl bg-[#27272e] animate-pulse" />
+                  <div key={n} className="h-12 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                 ))}
               </div>
             ) : members.length === 0 ? (
-              <div className="py-8 text-center text-slate-400">
-                <p className="text-xs sm:text-sm font-semibold text-slate-300">
+              <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                   No members assigned yet
                 </p>
                 <p className="text-xs mt-1">
@@ -1888,7 +1888,7 @@ const ProjectDetailsView = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberModalOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171717]"
+                  className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
                 >
                   <FiUserPlus size={14} /> Add First Member
                 </button>
@@ -1906,7 +1906,7 @@ const ProjectDetailsView = () => {
                   return (
                     <div
                       key={memberUserId || email || idx}
-                      className="flex items-center justify-between p-3.5 rounded-2xl bg-[#171717] border border-[#2d2d34] hover:border-[#3d3d46] transition gap-3"
+                      className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 dark:bg-[#171717] border border-slate-200/80 dark:border-[#2d2d34] hover:border-slate-300 dark:hover:border-[#3d3d46] transition gap-3"
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
                         <div
@@ -1917,7 +1917,7 @@ const ProjectDetailsView = () => {
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-xs sm:text-sm font-bold text-white truncate">
+                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                               {name}
                             </p>
                             <span
@@ -1927,7 +1927,7 @@ const ProjectDetailsView = () => {
                             </span>
                           </div>
                           {email && (
-                            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                               {email}
                             </p>
                           )}
@@ -1942,7 +1942,7 @@ const ProjectDetailsView = () => {
                           onClick={() => handleRemoveMember(member)}
                           title={`Remove ${name} from project`}
                           aria-label={`Remove ${name} from project`}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition cursor-pointer disabled:opacity-50"
+                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer disabled:opacity-50"
                         >
                           {isRemoving ? (
                             <span className="w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin inline-block" />

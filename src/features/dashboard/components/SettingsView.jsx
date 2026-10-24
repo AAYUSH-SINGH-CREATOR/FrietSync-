@@ -503,7 +503,7 @@ const SettingsView = () => {
     setStatusMessage({ type: '', text: '' });
 
     try {
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const expiresAt = formatExpiryToUtc();
       await sendInvite({
         email,
         role: 'OWNER',
@@ -1098,11 +1098,7 @@ const SettingsView = () => {
                         <span>Transfer Workspace Ownership</span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-[#94a3b8] leading-relaxed">
-                        Transfer full ownership of this workspace to another person. An invitation with purpose{' '}
-                        <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#20232c] text-amber-600 dark:text-amber-400 font-mono text-[11px]">
-                          OWNERSHIP_TRANSFER
-                        </code>{' '}
-                        will be sent to their email.
+                        Transfer full ownership of this workspace to another person.
                       </p>
 
                       <form
@@ -1125,7 +1121,7 @@ const SettingsView = () => {
                               setTransferEmail(e.target.value);
                               if (showTransferConfirm) setShowTransferConfirm(false);
                             }}
-                            placeholder="Recipient's Gmail / email address"
+                            placeholder="Email address"
                             list="transfer-members-list"
                             disabled={isTransferringOwnership}
                             className="flex-1 px-4 py-2 rounded-xl bg-slate-50 dark:bg-[#131418] border border-slate-200 dark:border-[#2a2c36] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-amber-500 transition disabled:opacity-50"
@@ -1177,7 +1173,7 @@ const SettingsView = () => {
 
                         {showTransferConfirm && (
                           <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-300 animate-fadeIn">
-                            Are you sure you want to transfer workspace ownership to <strong>{transferEmail.trim()}</strong>? An invitation with purpose <code>OWNERSHIP_TRANSFER</code> will be dispatched.
+                            Are you sure you want to transfer workspace ownership to <strong>{transferEmail.trim()}</strong>?
                           </div>
                         )}
                       </form>
