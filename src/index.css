@@ -80,6 +80,11 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+.dashboard-burndown-chart .recharts-wrapper:focus,
+.dashboard-burndown-chart .recharts-surface:focus {
+  outline: none;
+}
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

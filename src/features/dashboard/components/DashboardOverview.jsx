@@ -5,6 +5,12 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
 } from 'recharts';
 import {
   FiFolder,
@@ -29,6 +35,56 @@ import NoWorkspace from './NoWorkspace';
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
 const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
 const isInProgress = (s) => normalize(s) === 'IN_PROGRESS';
+
+const asDate = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const buildBurndownPoints = (sprint, sprintIssues) => {
+  const start = asDate(sprint?.startDate);
+  const end = asDate(sprint?.endDate);
+  if (!start || !end || end < start || sprintIssues.length === 0) return [];
+
+  const durationDays = Math.max(1, Math.ceil((end - start) / 86400000));
+  const useMonths = durationDays > 62;
+  const intervalDays = useMonths ? 30 : durationDays > 21 ? 7 : Math.max(1, Math.ceil(durationDays / 7));
+  const dates = [new Date(start)];
+  for (let offset = intervalDays; offset < durationDays; offset += intervalDays) {
+    const date = new Date(start);
+    date.setDate(date.getDate() + offset);
+    dates.push(date);
+  }
+  if (dates[dates.length - 1].getTime() !== end.getTime()) dates.push(new Date(end));
+
+  const startTime = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  const total = sprintIssues.length;
+
+  return dates.map((date, index) => {
+    const timestamp = date.getTime();
+    const remaining = sprintIssues.filter((issue) => {
+      const createdAt = asDate(issue.createdAt);
+      const createdTime = createdAt?.getTime() ?? startTime;
+      const resolvedAt = asDate(issue.resolvedAt || issue.closedAt || issue.completedAt);
+      const resolvedTime = resolvedAt?.getTime();
+      const isDoneNow = isResolved(issue.status);
+      const completionTime = resolvedTime ?? (isDoneNow ? asDate(issue.updatedAt)?.getTime() : null);
+      return createdTime <= timestamp && !(completionTime !== null && completionTime <= timestamp);
+    }).length;
+
+    const elapsed = Math.min(1, Math.max(0, (timestamp - start.getTime()) / Math.max(1, end.getTime() - start.getTime())));
+    const ideal = Math.max(0, Math.round(total * (1 - elapsed)));
+    return {
+      date: timestamp,
+      label: useMonths
+        ? date.toLocaleDateString(undefined, { month: 'short' })
+        : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      remaining,
+      ideal,
+    };
+  });
+};
 
 const DashboardOverview = () => {
   const navigate = useNavigate();
@@ -384,27 +440,45 @@ const DashboardOverview = () => {
 
   // Sprint Progress & Burndown Data
   const sprintData = useMemo(() => {
-    const activeSprint =
-      sprints.find((s) => {
-        const norm = normalize(s.status);
-        return norm === 'ACTIVE';
-      }) ||
-      sprints[0] ||
-      null;
+    const activeSprint = sprints.find((s) => normalize(s.status) === 'ACTIVE') ||
+      sprints.find((s) => normalize(s.status) === 'PLANNED') ||
+      [...sprints].sort((a, b) => String(b.endDate || '').localeCompare(String(a.endDate || '')))[0] || null;
+    const activeSprintId = activeSprint?.id || activeSprint?._id || activeSprint?.sprintId;
+    const sprintIssueIds = new Set([
+      ...(Array.isArray(activeSprint?.issueIds) ? activeSprint.issueIds : []),
+      ...(Array.isArray(activeSprint?.issues) ? activeSprint.issues.map((issue) => issue?.id || issue?._id || issue) : []),
+    ].map((id) => String(id?.id || id?._id || id)));
 
     const sprintIssuesList = activeSprint
-      ? issues.filter((i) => String(i.sprintId || i.sprint?.id || '') === String(activeSprint.id || activeSprint._id || ''))
+      ? issues.filter((issue) => {
+          const issueSprintId = issue.sprintId || issue.sprint?.id || issue.sprint?._id;
+          const belongsToSprint = String(issueSprintId || '') === String(activeSprintId || '') ||
+            sprintIssueIds.has(String(issue.id || issue._id || issue.issueId));
+          const belongsToProject = !issue.projectId || String(issue.projectId) === String(activeSprint.projectId);
+          const dueDate = asDate(issue.dueDate);
+          const sprintStart = asDate(activeSprint.startDate);
+          const sprintEnd = asDate(activeSprint.endDate);
+          // Current backend timeline grouping associates issues with a sprint by due date.
+          const matchesSprintWindow = dueDate && sprintStart && sprintEnd &&
+            dueDate >= new Date(sprintStart.getFullYear(), sprintStart.getMonth(), sprintStart.getDate()) &&
+            dueDate <= new Date(sprintEnd.getFullYear(), sprintEnd.getMonth(), sprintEnd.getDate(), 23, 59, 59, 999);
+          return (belongsToSprint || matchesSprintWindow) && belongsToProject;
+        })
       : [];
 
     const totalIssues = sprintIssuesList.length;
     const completedIssues = sprintIssuesList.filter((i) => isResolved(i.status)).length;
     const progressPct = totalIssues > 0 ? Math.round((completedIssues / totalIssues) * 100) : null;
+    const burndownPoints = buildBurndownPoints(activeSprint, sprintIssuesList);
 
     return {
       activeSprint,
       progressPct,
       startDate: activeSprint?.startDate || null,
       endDate: activeSprint?.endDate || null,
+      totalIssues,
+      completedIssues,
+      burndownPoints,
     };
   }, [sprints, issues]);
 
@@ -929,8 +1003,48 @@ const DashboardOverview = () => {
 
             {/* Burndown data and sprint dates */}
             <div className="flex items-center gap-3">
-              <div className="flex min-h-36 flex-1 items-center justify-center text-center text-xs text-slate-500 dark:text-slate-400">
-                Burndown data is unavailable.
+              <div className="dashboard-burndown-chart h-40 min-w-0 flex-1">
+                {sprintData.burndownPoints.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sprintData.burndownPoints} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+                      <CartesianGrid strokeDasharray="4 5" stroke="#71717a" vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        tick={{ fill: '#71717a', fontSize: 10 }}
+                        axisLine={{ stroke: '#a1a1aa' }}
+                        tickLine={false}
+                        minTickGap={8}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        domain={[0, Math.max(1, sprintData.totalIssues)]}
+                        tick={{ fill: '#71717a', fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={32}
+                      />
+                      <Tooltip
+                        labelFormatter={(_, payload) => {
+                          const timestamp = payload?.[0]?.payload?.date;
+                          return timestamp ? new Date(timestamp).toLocaleDateString() : '';
+                        }}
+                        formatter={(value, name) => [value, name === 'ideal' ? 'Ideal remaining' : 'Issues remaining']}
+                        contentStyle={{ backgroundColor: '#171717', border: '1px solid #3f3f46', borderRadius: 10, color: '#f4f4f5', fontSize: 11 }}
+                        labelStyle={{ color: '#d4d4d8' }}
+                      />
+                      <Line type="monotone" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} />
+                      <Line type="monotone" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center px-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {!sprintData.activeSprint
+                      ? 'No sprint is available yet.'
+                      : sprintData.totalIssues === 0
+                        ? 'No issues are linked to this sprint yet.'
+                        : 'Add valid start and end dates to see the burndown.'}
+                  </div>
+                )}
               </div>
 
               {/* Start & End Date boxes with down arrow */}
