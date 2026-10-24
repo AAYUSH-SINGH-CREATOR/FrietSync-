@@ -3,6 +3,10 @@ import { getAccessToken } from '../../auth/services/authApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+const V2_BASE_URL =
+  BASE_URL && BASE_URL.includes('/api/v1')
+    ? BASE_URL.replace(/\/api\/v1\/?$/, '/api/v2')
+    : 'https://frietsync.live/api/v2';
 
 const getAuthHeaders = (params = {}) => {
   const token = getAccessToken();
@@ -81,15 +85,31 @@ export const createIssue = async (projectId, issueData) => {
       title: issueData.title?.trim(),
       description: issueData.description?.trim() || '',
       priority: (issueData.priority || 'HIGH').toUpperCase(),
-      dueDate: issueData.dueDate || '',
-      estimatedHours:
-        issueData.estimatedHours !== undefined && issueData.estimatedHours !== ''
-          ? Number(issueData.estimatedHours)
-          : 0,
+      githubAction: issueData.githubAction || 'LOCAL',
     };
 
+    if (
+      payload.githubAction === 'LINK_EXISTING' &&
+      issueData.githubIssueNumber !== undefined &&
+      issueData.githubIssueNumber !== ''
+    ) {
+      payload.githubIssueNumber = Number(issueData.githubIssueNumber);
+    }
+
+    if (issueData.dueDate) {
+      payload.dueDate = issueData.dueDate;
+    }
+
+    if (issueData.estimatedHours !== undefined && issueData.estimatedHours !== '') {
+      payload.estimatedHours = Number(issueData.estimatedHours);
+    }
+
+    if (issueData.assigneeId) {
+      payload.assigneeId = issueData.assigneeId;
+    }
+
     const response = await axios.post(
-      `${BASE_URL}/projects/${projectId}/issues`,
+      `${V2_BASE_URL}/projects/${projectId}/issues`,
       payload,
       getAuthHeaders()
     );

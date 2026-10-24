@@ -87,6 +87,15 @@ export const getFriendlyErrorMessage = (error, context = '') => {
   }
 
   if (status === 403) {
+    const backendMsg =
+      error?.data?.message ||
+      error?.data?.error ||
+      error?.data?.msg ||
+      (typeof error?.data === 'string' ? error.data : null) ||
+      error?.message;
+    if (backendMsg && !isTechnicalError(backendMsg) && backendMsg.toLowerCase() !== 'forbidden') {
+      return backendMsg;
+    }
     return 'Access denied.';
   }
 
