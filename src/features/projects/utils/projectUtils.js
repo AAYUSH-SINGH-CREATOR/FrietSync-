@@ -24,12 +24,21 @@ export const formatDate = (dateStr) => {
 };
 
 export const getProjectProgress = (project) => {
-  const rawProgress = project?.progress;
+  const rawProgress = project?.progressPercentage ?? project?.progress;
   if (rawProgress === null || rawProgress === undefined || rawProgress === '') return null;
 
   const progress = Number(rawProgress);
   return Number.isFinite(progress) && progress >= 0 && progress <= 100 ? progress : null;
 };
+
+export const formatProjectRoleLabel = (role) =>
+  String(role || '')
+    .trim()
+    .toLowerCase()
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 
 export const getStatusBadge = (status) => {
   const norm = (status || '').toUpperCase();

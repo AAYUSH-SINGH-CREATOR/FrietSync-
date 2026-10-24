@@ -40,7 +40,7 @@ import {
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import { getProjectIssues, normalizeIssuePage, getIssueHistory } from '../../issues/services/issueApi';
 import { getProjectPolls, voteInPoll } from '../../polls/services/pollApi';
-import { formatDate, getProjectProgress, isUserAdmin, getRoleBadge } from '../utils/projectUtils';
+import { formatDate, formatProjectRoleLabel, getProjectProgress, isUserAdmin, getRoleBadge } from '../utils/projectUtils';
 import { getPriorityBadge, getStatusBadge as getIssueStatusBadge } from '../../issues/utils/issueUtils';
 import EditProjectModal from '../components/EditProjectModal';
 import DeleteProjectModal from '../components/DeleteProjectModal';
@@ -1958,6 +1958,7 @@ const ProjectDetailsView = () => {
                   const email = member.email || memberUser.email || '';
                   const memberAvatar = member.profilePictureUrl || member.avatarUrl || memberUser.profilePictureUrl || memberUser.avatarUrl || '';
                   const role = member.role || member.projectRole || memberUser.role || 'CONTRIBUTOR';
+                  const roleLabel = formatProjectRoleLabel(role);
                   const roleBadgeClass = getRoleBadge(role);
                   const isRemoving = removingMemberId === memberUserId;
 
@@ -1989,7 +1990,7 @@ const ProjectDetailsView = () => {
                             <span
                               className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${roleBadgeClass}`}
                             >
-                              {role}
+                              {roleLabel}
                             </span>
                           </div>
                           {email && (
