@@ -245,7 +245,7 @@ const SprintsView = () => {
   const canCreateSprint = isLoadingUserProfile === false && canManage;
 
   const loadSprintRequests = useCallback(async () => {
-    if (!projectId || !canManage) {
+    if (!projectId || !canApproveSprintRequests) {
       setSprintRequests([]);
       return;
     }
@@ -261,10 +261,10 @@ const SprintsView = () => {
     } finally {
       setSprintRequestsLoading(false);
     }
-  }, [projectId, canManage, showToast]);
+  }, [projectId, canApproveSprintRequests, showToast]);
 
   useEffect(() => {
-    if (!projectId || !canManage) return undefined;
+    if (!projectId || !canApproveSprintRequests) return undefined;
     let isMounted = true;
     getProjectSprintRequests(projectId)
       .then((response) => {
@@ -279,9 +279,9 @@ const SprintsView = () => {
         setSprintRequestsProjectId(String(projectId));
       });
     return () => { isMounted = false; };
-  }, [projectId, canManage, showToast]);
+  }, [projectId, canApproveSprintRequests, showToast]);
 
-  const isLoadingSprintRequests = sprintRequestsLoading || (canManage && projectId && sprintRequestsProjectId !== String(projectId));
+  const isLoadingSprintRequests = sprintRequestsLoading || (canApproveSprintRequests && projectId && sprintRequestsProjectId !== String(projectId));
   const pendingSprintRequests = useMemo(
     () => sprintRequests.filter((request) => String(request.status || '').toUpperCase() === 'PENDING'),
     [sprintRequests]
@@ -378,6 +378,7 @@ const SprintsView = () => {
           projectId={projectId}
           projectName={currentProject?.name}
           canManage={canManage}
+          canViewSprintRequests={canApproveSprintRequests}
           currentUserProfile={currentUserProfile}
           onBack={() => { setSelectedSprintId(''); setSelectedSprint(null); }}
           onSprintUpdated={loadSprints}
@@ -462,7 +463,7 @@ const SprintsView = () => {
         completedSprints={summaryMetrics.completedSprints}
       />
 
-      {canManage && (
+      {canApproveSprintRequests && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#303030] dark:bg-[#1f1f1f] sm:p-5">
           <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-[#303030]">
             <div className="flex items-center gap-2">

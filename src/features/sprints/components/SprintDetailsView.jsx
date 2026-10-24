@@ -49,6 +49,7 @@ const SprintDetailsView = ({
   onSprintDeleted,
   onOpenEdit,
   canManage = false,
+  canViewSprintRequests = false,
   onIssueClick,
   currentUserProfile = null,
 }) => {
@@ -124,7 +125,7 @@ const SprintDetailsView = ({
   // Load members if manager
   useEffect(() => {
     const pid = projectId || sprint?.projectId || sprint?.project?.id;
-    if (!pid || !canManage) return undefined;
+    if (!pid || !canViewSprintRequests) return undefined;
     let isMounted = true;
     getProjectMembers(pid)
       .then((data) => {
@@ -153,7 +154,7 @@ const SprintDetailsView = ({
       })
       .catch((err) => console.warn('Failed loading sprint requests:', err));
     return () => { isMounted = false; };
-  }, [projectId, sprint?.projectId, sprint?.project?.id, canManage, requestsTrigger]);
+  }, [projectId, sprint?.projectId, sprint?.project?.id, canViewSprintRequests, requestsTrigger]);
 
   const currentStatus = String(sprint?.status || sprint?.state || 'PLANNED').toUpperCase();
   const isCompleted = ['COMPLETED', 'CLOSED', 'DONE'].includes(currentStatus);
@@ -484,7 +485,7 @@ const SprintDetailsView = ({
       </div>
 
       {/* Assignment Requests Section (for sprint managers) */}
-      {canManage && sprintRequests.length > 0 && (
+      {canViewSprintRequests && sprintRequests.length > 0 && (
         <section className="rounded-3xl border border-slate-200/80 bg-white p-5 dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
             <div className="flex items-center gap-2">
