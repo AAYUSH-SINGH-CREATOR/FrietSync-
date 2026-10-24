@@ -1,7 +1,5 @@
 import axios from 'axios';
-import { clearAuthStorage, getAccessToken, refreshAccessToken } from './authApi';
-
-let refreshInProgress = null;
+import { expireAuthSession, getAccessToken, refreshAccessToken } from './authApi';
 
 const isAuthEndpoint = (url = '') =>
   [
@@ -19,11 +17,6 @@ const readBearerToken = (authorization = '') =>
 
 const isDefinitiveRefreshFailure = (error) =>
   [400, 401, 403].includes(error?.response?.status || error?.status);
-
-const redirectToLogin = () => {
-  if (typeof window === 'undefined' || window.location.pathname === '/login') return;
-  window.location.replace('/login');
-};
 
 axios.interceptors.request.use((config) => {
   if (isAuthEndpoint(config.url)) return config;
@@ -60,21 +53,9 @@ axios.interceptors.response.use(
       return axios.request(request);
     }
 
-    if (!localStorage.getItem('frietSyncRefreshToken')) {
-      clearAuthStorage();
-      redirectToLogin();
-      return Promise.reject(error);
-    }
-
     request.__authRefreshRetried = true;
     try {
-      if (!refreshInProgress) {
-        refreshInProgress = refreshAccessToken().finally(() => {
-          refreshInProgress = null;
-        });
-      }
-
-      await refreshInProgress;
+      await refreshAccessToken();
       const refreshedToken = getAccessToken();
       if (!refreshedToken) {
         const tokenError = new Error('Access token was not available after refresh.');
@@ -87,8 +68,7 @@ axios.interceptors.response.use(
       return axios.request(request);
     } catch (refreshError) {
       if (isDefinitiveRefreshFailure(refreshError)) {
-        clearAuthStorage();
-        redirectToLogin();
+        expireAuthSession();
       }
       return Promise.reject(refreshError);
     }

@@ -24,10 +24,13 @@ import ProjectsView from './features/projects/pages/ProjectsView';
 import ProjectDetailsView from './features/projects/pages/ProjectDetailsView';
 import InvitesView from './features/invites/components/InvitesView';
 import Invite from './features/invites/pages/Invite';
+import AuthSessionManager from './features/auth/components/AuthSessionManager';
 
 function App() {
   return (
-    <Routes>
+    <>
+      <AuthSessionManager />
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/privacy" element={<LegalPage type="privacy" />} />
       <Route path="/terms" element={<LegalPage type="terms" />} />
@@ -64,7 +67,8 @@ function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 
