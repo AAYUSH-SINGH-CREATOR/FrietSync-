@@ -742,11 +742,6 @@ const ProjectDetailsView = () => {
   const teamLeadName =
     project?.teamLead?.name || project?.teamLeadName || teamLeadUser.name || 'Not assigned';
 
-  const projectTags =
-    Array.isArray(project?.tags)
-      ? project.tags.join(', ')
-      : project?.tags || project?.category || '—';
-
   return (
     <div className="w-full min-w-0 text-slate-900 dark:text-slate-100 space-y-6 animate-fadeIn pb-16 px-3 sm:px-6 lg:px-8">
       {/* Toast Notice */}
@@ -1062,12 +1057,6 @@ const ProjectDetailsView = () => {
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Target end date</span>
                     <span className="text-slate-900 dark:text-white font-semibold text-right">
                       {project?.deadline ? formatDate(project.deadline) : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Tags</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {projectTags}
                     </span>
                   </div>
                   <div className="pt-2 flex items-center justify-between gap-4 border-t border-slate-100 dark:border-[#27272e]">

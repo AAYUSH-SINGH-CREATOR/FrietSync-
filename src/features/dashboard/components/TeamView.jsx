@@ -388,7 +388,6 @@ const TeamView = () => {
         overdue: overdueCount,
         progressPct,
         color: CHART_COLORS[index % CHART_COLORS.length],
-        status: member.presence || member.status || member.availability || null,
       };
     });
   }, [members, issues]);
@@ -437,61 +436,6 @@ const TeamView = () => {
       return true;
     });
   }, [memberMetrics, searchQuery, roleFilter]);
-
-  // Helper to render availability badge
-  const renderStatusBadge = (item, isCurrent) => {
-    const rawStatus = String(item.status || '').toUpperCase().trim();
-
-    if (isCurrent || rawStatus === 'ONLINE') {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/60 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span>Online</span>
-        </span>
-      );
-    }
-
-    if (['IN_MEETING', 'MEETING', 'BUSY'].includes(rawStatus)) {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-200/60 bg-purple-50 px-2.5 py-0.5 text-[11px] font-semibold text-purple-700 dark:border-purple-800/40 dark:bg-purple-950/40 dark:text-purple-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-          <span>In meeting</span>
-        </span>
-      );
-    }
-
-    if (['ON_LEAVE', 'LEAVE', 'AWAY'].includes(rawStatus)) {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/60 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/40 dark:text-amber-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-          <span>On leave</span>
-        </span>
-      );
-    }
-
-    if (rawStatus === 'OFFLINE') {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-[#38383e] dark:bg-[#28282c] dark:text-[#888]">
-          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-          <span>Offline</span>
-        </span>
-      );
-    }
-
-    // Default: If member has active tasks, show Active status; else Offline
-    if (item.active > 0) {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/60 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /><span>Active</span></span>
-      );
-    }
-
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-[#38383e] dark:bg-[#28282c] dark:text-[#888]">
-        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-        <span>Offline</span>
-      </span>
-    );
-  };
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
@@ -870,7 +814,7 @@ const TeamView = () => {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-[#2e2e34] text-[11px] font-bold uppercase text-slate-400 dark:text-[#888]">
-                    <th className="py-2.5 px-2">Member</th><th className="py-2.5 px-2">Role</th><th className="py-2.5 px-2">Status</th>
+                    <th className="py-2.5 px-2">Member</th><th className="py-2.5 px-2">Role</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[#26262a]">
@@ -924,9 +868,6 @@ const TeamView = () => {
                           </span>
                         </td>
 
-                        <td className="py-2.5 px-2">
-                          {renderStatusBadge(member, isCurrent)}
-                        </td>
                       </tr>
                     );
                   })}

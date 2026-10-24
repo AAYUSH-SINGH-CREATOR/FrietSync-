@@ -160,17 +160,14 @@ const SummaryCard = ({ icon: Icon, label, value, hint, color }) => (
 );
 
 const WorkTable = ({
-  tasks, loading, page, totalPages, total, selectedIds, onToggleAll, onToggleRow, onChangePage, onOpenTask,
+  tasks, loading, page, totalPages, total, onChangePage, onOpenTask,
 }) => {
-  const allOnPageSelected = tasks.length > 0 && tasks.every((task) => selectedIds.has(task.id));
-
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[950px] border-collapse text-left text-xs">
           <thead>
             <tr className="h-11 border-b border-slate-200 bg-slate-100/70 text-[11px] font-semibold text-slate-700 dark:border-[#2b2b30] dark:bg-[#1b1b1b] dark:text-[#aaa]">
-              <th className="w-12 px-4"><input type="checkbox" aria-label="Select all work items" checked={allOnPageSelected} onChange={onToggleAll} className="h-3.5 w-3.5 accent-sky-500" /></th>
               {['Task', 'Issue', 'Start date', 'End date', 'Status', 'Progress', 'Assignee', 'Velocity'].map((heading) => (
                 <th key={heading} className="px-4 py-2.5 font-bold uppercase tracking-wider text-slate-500 dark:text-[#888]">{heading}</th>
               ))}
@@ -178,18 +175,15 @@ const WorkTable = ({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-[#26262b]">
             {loading ? Array.from({ length: 6 }, (_, index) => (
-              <tr key={index} className="h-14 animate-pulse"><td colSpan="9" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#25252a]" /></td></tr>
+              <tr key={index} className="h-14 animate-pulse"><td colSpan="8" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#25252a]" /></td></tr>
             )) : tasks.length === 0 ? (
-              <tr><td colSpan="9" className="py-16 text-center text-slate-400 dark:text-[#777]">
+              <tr><td colSpan="8" className="py-16 text-center text-slate-400 dark:text-[#777]">
                 <FiInbox size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No work items found</p>
                 <p className="mt-1 text-xs">Try adjusting your filters, or check back when work is assigned to you.</p>
               </td></tr>
             ) : tasks.map((task, index) => (
               <tr key={task.id} onClick={() => onOpenTask(task)} className="group h-14 cursor-pointer transition hover:bg-slate-50/80 dark:hover:bg-[#27272c]">
-                <td className="px-4" onClick={(event) => event.stopPropagation()}>
-                  <input type="checkbox" aria-label={`Select ${task.key}`} checked={selectedIds.has(task.id)} onChange={(event) => onToggleRow(task.id, event)} className="h-3.5 w-3.5 accent-sky-500" />
-                </td>
                 <td className="px-4 py-2.5">
                   <span className="block font-mono text-xs font-bold text-sky-600 dark:text-sky-400">{task.key}</span>
                   <span className="block max-w-[180px] truncate text-xs font-medium text-slate-800 dark:text-[#eee]">{task.taskName}</span>
@@ -256,7 +250,6 @@ const MyWorkView = () => {
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('due-asc');
   const [page, setPage] = useState(0);
-  const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   const userId = String(currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id || '');
   const userEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase().trim();
@@ -474,25 +467,6 @@ const MyWorkView = () => {
     setPage(0);
   };
 
-  const toggleAllOnPage = () => {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      const allSelected = pageTasks.length > 0 && pageTasks.every((task) => next.has(task.id));
-      pageTasks.forEach((task) => allSelected ? next.delete(task.id) : next.add(task.id));
-      return next;
-    });
-  };
-
-  const toggleRow = (id, event) => {
-    event.stopPropagation();
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   const openTask = (task) => {
     if (task.type === 'sprint') {
       setSelectedIssue(null);
@@ -608,9 +582,6 @@ const MyWorkView = () => {
         page={currentPage}
         totalPages={totalPages}
         total={sortedTasks.length}
-        selectedIds={selectedIds}
-        onToggleAll={toggleAllOnPage}
-        onToggleRow={toggleRow}
         onChangePage={(nextPage) => setPage(Math.max(0, Math.min(totalPages - 1, nextPage)))}
         onOpenTask={openTask}
       />

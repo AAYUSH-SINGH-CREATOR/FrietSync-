@@ -630,7 +630,7 @@ const IssueDetailsView = ({
               <h3 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base">Activity</h3>
               {/* Activity Sub-Tabs */}
               <div className="flex items-center gap-1">
-                {['all', 'comments', 'history', 'work log'].map((tab) => (
+                {['all', 'comments', 'history'].map((tab) => (
                   <button
                     key={tab}
                     type="button"
@@ -649,12 +649,6 @@ const IssueDetailsView = ({
 
             {/* Comment composer / thread / timeline */}
             <div className="mt-3 space-y-3">
-              {activityTab === 'work log' && (
-                <div className="rounded-xl bg-slate-50 dark:bg-[#252529] p-3 text-xs text-slate-500 dark:text-[#999] leading-relaxed">
-                  Work logs for this issue are recorded via the project activity stream and issue history timeline.
-                </div>
-              )}
-
               {/* Comments Thread */}
               {(activityTab === 'comments' || activityTab === 'all') && (
                 <div className="space-y-2">
