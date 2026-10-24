@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const formatDate = (dateStr) => {
@@ -33,8 +33,6 @@ const SprintsTable = ({
   pageSize = 10,
   onPageChange,
 }) => {
-  const [selectedIds, setSelectedIds] = useState(new Set());
-
   const paginatedSprints = useMemo(() => {
     const start = page * pageSize;
     return sprints.slice(start, start + pageSize);
@@ -42,39 +40,12 @@ const SprintsTable = ({
 
   const totalPages = Math.max(1, Math.ceil(sprints.length / pageSize));
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === paginatedSprints.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(paginatedSprints.map((s) => String(s.id || s._id))));
-    }
-  };
-
-  const toggleSelect = (id, e) => {
-    e.stopPropagation();
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[850px] border-collapse text-left text-xs">
           <thead>
             <tr className="h-10 border-b border-slate-200 bg-slate-100/70 text-[11px] font-semibold text-slate-700 dark:border-[#2b2b30] dark:bg-[#1b1b1b] dark:text-[#aaa]">
-              <th className="w-10 px-4">
-                <input
-                  type="checkbox"
-                  aria-label="Select all sprints"
-                  checked={paginatedSprints.length > 0 && selectedIds.size === paginatedSprints.length}
-                  onChange={toggleSelectAll}
-                  className="h-3.5 w-3.5 rounded border-slate-300 accent-sky-500 cursor-pointer"
-                />
-              </th>
               <th className="px-4 py-2.5 font-bold uppercase tracking-wider text-slate-400 dark:text-[#888]">Sprint</th>
               <th className="px-4 py-2.5 font-bold uppercase tracking-wider text-slate-400 dark:text-[#888]">Goal</th>
               <th className="px-4 py-2.5 font-bold uppercase tracking-wider text-slate-400 dark:text-[#888]">Start date</th>
@@ -89,19 +60,18 @@ const SprintsTable = ({
             {isLoading ? (
               Array.from({ length: 5 }, (_, i) => (
                 <tr key={i} className="h-14 animate-pulse">
-                  <td colSpan="9" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#25252a]" /></td>
+                  <td colSpan="8" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#25252a]" /></td>
                 </tr>
               ))
             ) : paginatedSprints.length === 0 ? (
               <tr>
-                <td colSpan="9" className="py-12 text-center text-slate-400">
+                <td colSpan="8" className="py-12 text-center text-slate-400">
                   No sprints match the selected criteria.
                 </td>
               </tr>
             ) : (
               paginatedSprints.map((sprint, idx) => {
                 const id = String(sprint.id || sprint._id || idx);
-                const isSelected = selectedIds.has(id);
                 const statusPill = getStatusPill(sprint.status || sprint.state);
                 const num = sprint.sprintNumber || sprint.number || (sprint.id ? String(sprint.id).slice(-2) : idx + 1);
                 const sprintKey = sprint.key || `SPR-${num}`;
@@ -127,15 +97,6 @@ const SprintsTable = ({
                     onClick={() => onSprintClick?.(sprint)}
                     className="group h-13 cursor-pointer transition hover:bg-slate-50/80 dark:hover:bg-[#292929]"
                   >
-                    <td className="px-4" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${sprint.name || 'sprint'}`}
-                        checked={isSelected}
-                        onChange={(e) => toggleSelect(id, e)}
-                        className="h-3.5 w-3.5 rounded border-slate-300 accent-sky-500 cursor-pointer"
-                      />
-                    </td>
                     <td className="px-4 py-2">
                       <span className="block font-mono text-xs font-bold text-sky-600 hover:underline dark:text-sky-400">
                         {sprintKey}

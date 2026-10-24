@@ -26,6 +26,16 @@ import {
 } from '../services/calendarApi';
 
 const DEFAULT_CATEGORIES = ['meeting', 'issue', 'sprint', 'milestone', 'google'];
+let projectsRequestInFlight = null;
+
+const loadCalendarProjects = () => {
+  if (!projectsRequestInFlight) {
+    projectsRequestInFlight = getMyProjects().finally(() => {
+      projectsRequestInFlight = null;
+    });
+  }
+  return projectsRequestInFlight;
+};
 
 const CalendarView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,6 +43,7 @@ const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [view, setView] = useState('month');
   const [projects, setProjects] = useState([]);
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
   const [selectedProject, setSelectedProject] = useState('all');
   const [activeCategories, setActiveCategories] = useState(DEFAULT_CATEGORIES);
 
@@ -112,7 +123,7 @@ const CalendarView = () => {
   // Load Projects
   useEffect(() => {
     let isMounted = true;
-    getMyProjects()
+    loadCalendarProjects()
       .then((data) => {
         if (isMounted) {
           const list = Array.isArray(data) ? data : data?.projects || [];
@@ -121,6 +132,9 @@ const CalendarView = () => {
       })
       .catch((err) => {
         console.warn('Failed to load user projects:', err);
+      })
+      .finally(() => {
+        if (isMounted) setProjectsLoaded(true);
       });
 
     return () => {
@@ -137,23 +151,11 @@ const CalendarView = () => {
       // 1. Fetch user's direct meetings
       const myMeetingsPromise = getMyMeetings().catch(() => []);
 
-      // 2. Resolve accessible projects
-      let projectList = projects;
-      if (!projectList || projectList.length === 0) {
-        try {
-          const pData = await getMyProjects();
-          projectList = Array.isArray(pData) ? pData : pData?.projects || [];
-          setProjects(projectList);
-        } catch {
-          projectList = [];
-        }
-      }
-
       // Filter projects to query based on selectedProject
       const targetProjects =
         selectedProject === 'all'
-          ? projectList
-          : projectList.filter((p) => (p.id || p._id) === selectedProject);
+          ? projects
+          : projects.filter((p) => String(p.id || p._id) === String(selectedProject));
 
       // 3. For each target project, fetch its calendar resources in parallel
       const projectDataPromises = targetProjects.map(async (project) => {
@@ -249,6 +251,8 @@ const CalendarView = () => {
   }, [projects, selectedProject]);
 
   useEffect(() => {
+    if (!projectsLoaded) return undefined;
+
     let isMounted = true;
     Promise.resolve().then(() => {
       if (isMounted) fetchCalendarData();
@@ -256,7 +260,7 @@ const CalendarView = () => {
     return () => {
       isMounted = false;
     };
-  }, [fetchCalendarData]);
+  }, [fetchCalendarData, projectsLoaded]);
 
   // Filter events based on active category checkboxes
   const filteredEvents = useMemo(() => {

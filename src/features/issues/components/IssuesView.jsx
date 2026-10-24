@@ -563,13 +563,12 @@ const IssuesView = () => {
                 <table className="w-full min-w-[780px] border-collapse text-left">
                   <thead>
                     <tr className="h-[38px] bg-slate-100 text-xs font-semibold text-slate-800 dark:bg-[#202020] dark:text-[#eee]">
-                      <th className="w-10 px-3"><span className="sr-only">Select issues</span><input aria-label="Select issues" type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-sky-500" /></th>
                       <th className="p-4">Issue</th><th className="p-5">ID</th><th className="p-5">Project</th><th className="p-5">Status</th><th className="px-3">Priority</th><th className="px-3">Assignee</th><th className="px-3">Due date</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-[#343434]">
                     {isLoadingIssues ? Array.from({ length: 5 }, (_, idx) => (
-                      <tr key={idx} className="h-[43px] animate-pulse"><td colSpan="8" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#333]" /></td></tr>
+                      <tr key={idx} className="h-[43px] animate-pulse"><td colSpan="7" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#333]" /></td></tr>
                     )) : filteredIssues.map((issueItem, idx) => {
                       const id = issueId(issueItem);
                       const number = issueItem.issueNumber || (id ? String(id).slice(-6) : `#${idx + 1}`);
@@ -583,7 +582,6 @@ const IssuesView = () => {
                           tabIndex={0}
                           className="h-[43px] cursor-pointer text-xs transition hover:bg-slate-50 dark:hover:bg-[#2e2e2e]"
                         >
-                          <td className="px-3"><input aria-label={`Select ${issueItem.title || 'issue'}`} type="checkbox" onClick={(e) => e.stopPropagation()} className="h-3.5 w-3.5 rounded border-slate-300 accent-sky-500 dark:border-[#555]" /></td>
                           <td className="max-w-[250px] px-2"><span className="inline-block max-w-full truncate rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-900 dark:bg-[#303030] dark:text-white" title={issueItem.title}>{issueItem.title || 'Untitled issue'}</span></td>
                           <td className="px-3"><span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-700 dark:bg-[#303030] dark:text-[#ddd]">{String(number).startsWith('#') ? number : `#${number}`}</span></td>
                           <td className="px-3"><span className="inline-flex max-w-[150px] items-center gap-1 truncate rounded-md bg-slate-100 px-2 py-1 text-slate-700 dark:bg-[#303030] dark:text-[#ddd]"><FiLayers size={11} className="shrink-0" />{issueItem.projectName || projectMap.get(String(issueItem.projectId)) || issueItem.project?.name || '—'}</span></td>
@@ -596,7 +594,7 @@ const IssuesView = () => {
                     })}
                     {!isLoadingIssues && filteredIssues.length === 0 && (
                       <tr>
-                        <td colSpan="8" className="px-4 py-12 text-center">
+                        <td colSpan="7" className="px-4 py-12 text-center">
                           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-300">
                             <AiOutlineBug size={24} />
                           </div>
