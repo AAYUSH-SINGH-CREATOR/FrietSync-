@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   FiPlus, FiSearch, FiRefreshCw, FiFolder, FiAlertCircle, FiCheckCircle,
   FiChevronDown, FiChevronLeft, FiChevronRight, FiActivity,
@@ -60,6 +60,8 @@ const FilterSelect = ({ label, value, onChange, options }) => (
 
 const IssuesView = () => {
   const { currentUserProfile } = useOutletContext() || {};
+  const location = useLocation();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [members, setMembers] = useState([]);
   const [projectMembers, setProjectMembers] = useState({});
@@ -84,6 +86,7 @@ const IssuesView = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [pendingStatusIssueIds, setPendingStatusIssueIds] = useState(() => new Set());
   const pendingStatusIssueIdsRef = useRef(new Set());
+  const globalSearchIssueRequestRef = useRef({ id: null, promise: null });
 
   // Tab mode: 'all' (project issues), 'assigned' (assigned to me), 'requests' (assignment requests)
   const [userSelectedTab, setUserSelectedTab] = useState(null);
@@ -94,6 +97,36 @@ const IssuesView = () => {
     setToastNotice({ type, message });
     window.setTimeout(() => setToastNotice(null), 4500);
   }, []);
+
+  useEffect(() => {
+    const target = location.state?.globalSearchIssue;
+    if (!target?.id) return undefined;
+
+    let active = true;
+    const targetId = String(target.id);
+    if (globalSearchIssueRequestRef.current.id !== targetId) {
+      globalSearchIssueRequestRef.current = { id: targetId, promise: getIssueDetails(target.id) };
+    }
+    globalSearchIssueRequestRef.current.promise
+      .then((details) => {
+        if (!active || !details) return;
+        setSelectedIssueForDetails({
+          ...details,
+          id: details.id || details.issueId || target.id,
+          projectId: details.projectId || target.projectId,
+          projectName: details.projectName || target.projectName || 'Project',
+        });
+        navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+      })
+      .catch((err) => {
+        if (!active) return;
+        globalSearchIssueRequestRef.current = { id: null, promise: null };
+        showToast('error', getFriendlyErrorMessage(err, 'issue'));
+        navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+      });
+
+    return () => { active = false; };
+  }, [location.pathname, location.search, location.state, navigate, showToast]);
 
   const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id;
   const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();

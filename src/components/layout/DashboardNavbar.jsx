@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  FiPlus,
   FiBell,
   FiLogOut,
   FiSun,
@@ -31,9 +30,8 @@ import {
 } from '../../features/dashboard/services/notificationApi';
 import { getSharedStompClient } from '../../features/chat/services/stompClient';
 import { useTheme } from '../../context/ThemeContext';
-import InviteModal from '../../features/invites/components/InviteModal';
+import NavbarSearch from './NavbarSearch';
 import InvitesBellModal from '../../features/invites/components/InvitesBellModal';
-import { canSendInvites } from '../../features/invites/utils/invitePermissions';
 import logo from '../../assets/logo.svg';
 
 const getNotificationIcon = (type) => {
@@ -80,14 +78,12 @@ const getNotificationFallbackTitle = (type) => {
 
 const DashboardNavbar = ({
   currentUserProfile,
-  isLoadingUserProfile,
   unreadNotificationCount: initialUnreadCount,
   onToggleMobileSidebar,
   isMobileSidebarOpen = false,
 }) => {
   const navigate = useNavigate();
   const { isDarkMode, toggleTheme } = useTheme() || {};
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isInvitesModalOpen, setIsInvitesModalOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -109,8 +105,6 @@ const DashboardNavbar = ({
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [notifError, setNotifError] = useState('');
   const notificationMenuRef = useRef(null);
-
-  const canSendInvite = !isLoadingUserProfile && canSendInvites(currentUserProfile);
 
   useEffect(() => {
     initialUnreadCountRef.current = initialUnreadCount;
@@ -346,6 +340,10 @@ const DashboardNavbar = ({
 
         </div>
 
+        <div className="flex flex-1 justify-center px-4 lg:px-8">
+          <NavbarSearch />
+        </div>
+
         <div className="flex items-center gap-2 sm:gap-3">
 
           {toggleTheme && (
@@ -361,17 +359,6 @@ const DashboardNavbar = ({
               ) : (
                 <FiMoon size={17} className="text-slate-600" />
               )}
-            </button>
-          )}
-
-          {canSendInvite && (
-            <button
-              type="button"
-              onClick={() => setIsInviteOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 shadow-sm shadow-sky-600/20 transition cursor-pointer"
-            >
-              <FiPlus size={16} />
-              <span>Invite</span>
             </button>
           )}
 
@@ -616,31 +603,23 @@ const DashboardNavbar = ({
       </header>
 
       {/* Mobile Navbar Header */}
-      <header className="flex md:hidden bg-[#81ebfe] px-4 h-[54px] items-center justify-between sticky top-0 z-40 w-full shadow-xs select-none">
-        {/* Left: Hamburger Icon */}
-        <button
-          type="button"
-          onClick={onToggleMobileSidebar}
-          aria-label={isMobileSidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
-          className="flex items-center justify-center p-2 -ml-2 text-black hover:opacity-75 active:scale-95 transition cursor-pointer"
-        >
-          <FiMenu size={24} className="stroke-[2.5]" />
-        </button>
+      <header className="flex md:hidden flex-col gap-2 bg-[#81ebfe] px-4 py-2 sticky top-0 z-40 w-full shadow-xs select-none">
+        <div className="flex h-[38px] w-full items-center justify-between">
+          <button
+            type="button"
+            onClick={onToggleMobileSidebar}
+            aria-label={isMobileSidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            className="flex items-center justify-center p-2 -ml-2 text-black hover:opacity-75 active:scale-95 transition cursor-pointer"
+          >
+            <FiMenu size={24} className="stroke-[2.5]" />
+          </button>
 
-        {/* Center: Logo + "Frietsync" */}
-        <Link to="/dashboard" className="flex items-center gap-2 select-none">
-          <img
-            src={logo}
-            alt="FrietSync Logo"
-            className="w-7 h-7 object-contain"
-          />
-          <span className="text-[22px] font-bold text-black tracking-tight font-sans">
-            Frietsync
-          </span>
-        </Link>
+          <Link to="/dashboard" className="flex items-center gap-2 select-none">
+            <img src={logo} alt="FrietSync Logo" className="w-7 h-7 object-contain" />
+            <span className="text-[22px] font-bold text-black tracking-tight font-sans">Frietsync</span>
+          </Link>
 
-        {/* Right: Circular Profile Avatar with White Border */}
-        <div className="relative" ref={mobileProfileMenuRef}>
+          <div className="relative" ref={mobileProfileMenuRef}>
           <button
             type="button"
             onClick={() => setIsProfileMenuOpen((prev) => !prev)}
@@ -706,16 +685,10 @@ const DashboardNavbar = ({
               </button>
             </div>
           )}
+          </div>
         </div>
+        <NavbarSearch compact />
       </header>
-
-      {canSendInvite && (
-        <InviteModal
-          isOpen={isInviteOpen}
-          onClose={() => setIsInviteOpen(false)}
-          onInviteSent={refreshInviteCount}
-        />
-      )}
 
       <InvitesBellModal
         isOpen={isInvitesModalOpen}
