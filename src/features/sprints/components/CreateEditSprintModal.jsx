@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FiX } from 'react-icons/fi';
 import { createSprint, updateSprint, getFriendlyErrorMessage } from '../services/sprintsApi';
+import { getProjectMilestones } from '../../projects/services/projectApi';
+
+const getMilestoneList = (response) => {
+  const candidates = [response, response?.data, response?.milestones, response?.items, response?.content];
+  return candidates.find(Array.isArray) || [];
+};
 
 const SprintModalForm = ({
   onClose,
@@ -20,16 +26,40 @@ const SprintModalForm = ({
     sprintToEdit?.endDate ? String(sprintToEdit.endDate).slice(0, 10) : ''
   );
   const [milestoneId, setMilestoneId] = useState(sprintToEdit?.milestoneId || sprintToEdit?.milestone?.id || '');
+  const [milestones, setMilestones] = useState([]);
+  const [isLoadingMilestones, setIsLoadingMilestones] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    if (!projectId) {
+      setMilestones([]);
+      return;
+    }
+    let isCurrent = true;
+    setIsLoadingMilestones(true);
+    getProjectMilestones(projectId)
+      .then((response) => {
+        if (isCurrent) setMilestones(getMilestoneList(response));
+      })
+      .catch((error) => {
+        if (isCurrent) setFormError(getFriendlyErrorMessage(error, 'project'));
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingMilestones(false);
+      });
+    return () => { isCurrent = false; };
+  }, [projectId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
 
     const cleanName = name.trim();
-    if (!cleanName || !startDate || !endDate) {
-      setFormError('Sprint name, start date, and end date are required.');
+    const cleanGoal = goal.trim();
+    const cleanMilestoneId = milestoneId.trim();
+    if (!cleanName || !cleanGoal || !startDate || !endDate || !cleanMilestoneId) {
+      setFormError('Please fill in the sprint name, goal, dates, and select a milestone.');
       return;
     }
 
@@ -40,10 +70,10 @@ const SprintModalForm = ({
 
     const payload = {
       name: cleanName,
-      goal: goal.trim(),
+      goal: cleanGoal,
       startDate,
       endDate,
-      ...(milestoneId.trim() ? { milestoneId: milestoneId.trim() } : {}),
+      milestoneId: cleanMilestoneId,
     };
 
     setIsSaving(true);
@@ -103,7 +133,7 @@ const SprintModalForm = ({
 
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Goal <span className="font-normal text-slate-400">(optional)</span>
+              Goal <span className="text-rose-500">*</span>
             </label>
             <textarea
               value={goal}
@@ -111,6 +141,7 @@ const SprintModalForm = ({
               placeholder="What are the key goals and delivery outcomes for this sprint?"
               rows={2}
               maxLength={500}
+              required
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] placeholder:text-slate-400 dark:placeholder:text-[#888] resize-none"
             />
           </div>
@@ -144,16 +175,27 @@ const SprintModalForm = ({
 
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Milestone ID <span className="font-normal text-slate-400">(optional)</span>
+              Milestone <span className="text-rose-500">*</span>
             </label>
-            <input
-              type="text"
+            <select
               value={milestoneId}
               onChange={(e) => setMilestoneId(e.target.value)}
-              placeholder="e.g., milestone-v1"
-              maxLength={80}
+              required
+              disabled={isLoadingMilestones || milestones.length === 0}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white dark:border-[#35353a] dark:bg-[#222226] dark:text-white dark:focus:border-sky-400 dark:focus:bg-[#222226] placeholder:text-slate-400 dark:placeholder:text-[#888]"
-            />
+            >
+              <option value="" disabled>
+                {isLoadingMilestones ? 'Loading milestones…' : milestones.length ? 'Select a milestone' : 'No milestones available'}
+              </option>
+              {milestones.map((milestone, index) => {
+                const id = milestone.id || milestone._id || milestone.milestoneId;
+                if (!id) return null;
+                return <option key={id} value={id}>{milestone.name || milestone.title || `Milestone ${index + 1}`}</option>;
+              })}
+            </select>
+            {!isLoadingMilestones && milestones.length === 0 && (
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-[#999]">Add a milestone to this project before creating a sprint.</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#2b2b2e]">
