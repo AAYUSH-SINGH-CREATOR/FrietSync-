@@ -76,7 +76,7 @@ const SettingsView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
+  const { currentUserProfile, refreshCurrentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
 
   // Expanded categories state
   const [expandedSection, setExpandedSection] = useState(() => {
@@ -127,15 +127,22 @@ const SettingsView = () => {
 
   // Google Calendar Integration State
   const [isGoogleConnected, setIsGoogleConnected] = useState(() => {
+    if (typeof currentUserProfile?.googleConnected === 'boolean') {
+      return currentUserProfile.googleConnected;
+    }
     return (
       localStorage.getItem('frietSyncGoogleConnected') === 'true' ||
       new URLSearchParams(window.location.search).get('google') === 'connected'
     );
   });
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+  const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
 
   // GitHub Integration State
   const [isGithubConnected, setIsGithubConnected] = useState(() => {
+    if (typeof currentUserProfile?.githubConnected === 'boolean') {
+      return currentUserProfile.githubConnected;
+    }
     return (
       localStorage.getItem('frietSyncGithubConnected') === 'true' ||
       new URLSearchParams(window.location.search).get('github') === 'connected'
@@ -143,6 +150,34 @@ const SettingsView = () => {
   });
   const [isConnectingGithub, setIsConnectingGithub] = useState(false);
   const [isDisconnectingGithub, setIsDisconnectingGithub] = useState(false);
+
+  // Synchronize Google and GitHub connected flags from currentUserProfile
+  useEffect(() => {
+    if (currentUserProfile) {
+      Promise.resolve().then(() => {
+        if (typeof currentUserProfile.googleConnected === 'boolean') {
+          setIsGoogleConnected(currentUserProfile.googleConnected);
+        }
+        if (typeof currentUserProfile.githubConnected === 'boolean') {
+          setIsGithubConnected(currentUserProfile.githubConnected);
+        }
+      });
+      if (typeof currentUserProfile.googleConnected === 'boolean') {
+        if (currentUserProfile.googleConnected) {
+          localStorage.setItem('frietSyncGoogleConnected', 'true');
+        } else {
+          localStorage.removeItem('frietSyncGoogleConnected');
+        }
+      }
+      if (typeof currentUserProfile.githubConnected === 'boolean') {
+        if (currentUserProfile.githubConnected) {
+          localStorage.setItem('frietSyncGithubConnected', 'true');
+        } else {
+          localStorage.removeItem('frietSyncGithubConnected');
+        }
+      }
+    }
+  }, [currentUserProfile]);
 
   // Handle URL query parameters for GitHub and Google OAuth callbacks
   useEffect(() => {
@@ -156,6 +191,7 @@ const SettingsView = () => {
           setIsGithubConnected(true);
           setStatusMessage({ type: 'success', text: 'GitHub account connected successfully.' });
           setExpandedSection((prev) => ({ ...prev, connected: true }));
+          refreshCurrentUserProfile?.();
         });
       } else if (githubParam === 'denied') {
         Promise.resolve().then(() => {
@@ -180,6 +216,7 @@ const SettingsView = () => {
           setIsGoogleConnected(true);
           setStatusMessage({ type: 'success', text: 'Google Calendar successfully connected.' });
           setExpandedSection((prev) => ({ ...prev, connected: true }));
+          refreshCurrentUserProfile?.();
         });
       } else if (googleParam === 'denied') {
         Promise.resolve().then(() => {
@@ -196,7 +233,7 @@ const SettingsView = () => {
       newParams.delete('google');
       setSearchParams(newParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, refreshCurrentUserProfile]);
 
   const handleConnectGoogle = async () => {
     setIsConnectingGoogle(true);
@@ -215,6 +252,7 @@ const SettingsView = () => {
   };
 
   const handleDisconnectGoogle = async () => {
+    setIsDisconnectingGoogle(true);
     try {
       await disconnectGoogleCalendar();
       setIsGoogleConnected(false);
@@ -223,11 +261,14 @@ const SettingsView = () => {
         type: 'success',
         text: 'Google Calendar disconnected successfully.',
       });
+      await refreshCurrentUserProfile?.();
     } catch (err) {
       setStatusMessage({
         type: 'error',
         text: err?.message || 'Failed to disconnect Google Calendar.',
       });
+    } finally {
+      setIsDisconnectingGoogle(false);
     }
   };
 
@@ -259,6 +300,7 @@ const SettingsView = () => {
         type: 'success',
         text: 'GitHub account disconnected successfully.',
       });
+      await refreshCurrentUserProfile?.();
     } catch (err) {
       setStatusMessage({
         type: 'error',
@@ -805,15 +847,17 @@ const SettingsView = () => {
                 <div className="shrink-0">
                   {isGoogleConnected ? (
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1.5 border border-emerald-200/80 dark:border-emerald-800/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         Connected
                       </span>
                       <button
                         type="button"
                         onClick={handleDisconnectGoogle}
-                        className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:underline cursor-pointer"
+                        disabled={isDisconnectingGoogle}
+                        className="px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                       >
-                        Disconnect
+                        {isDisconnectingGoogle ? 'Disconnecting…' : 'Disconnect'}
                       </button>
                     </div>
                   ) : (
@@ -821,7 +865,7 @@ const SettingsView = () => {
                       type="button"
                       onClick={handleConnectGoogle}
                       disabled={isConnectingGoogle}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 shadow-xs"
                     >
                       {isConnectingGoogle ? 'Connecting…' : 'Connect'}
                     </button>
@@ -848,14 +892,15 @@ const SettingsView = () => {
                 <div className="shrink-0">
                   {isGithubConnected ? (
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1.5 border border-emerald-200/80 dark:border-emerald-800/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         Connected
                       </span>
                       <button
                         type="button"
                         onClick={handleDisconnectGithub}
                         disabled={isDisconnectingGithub}
-                        className="px-2.5 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                       >
                         {isDisconnectingGithub ? 'Disconnecting…' : 'Disconnect'}
                       </button>
@@ -865,7 +910,7 @@ const SettingsView = () => {
                       type="button"
                       onClick={handleConnectGithub}
                       disabled={isConnectingGithub}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-50"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-50 shadow-xs"
                     >
                       {isConnectingGithub ? 'Connecting…' : 'Connect'}
                     </button>
