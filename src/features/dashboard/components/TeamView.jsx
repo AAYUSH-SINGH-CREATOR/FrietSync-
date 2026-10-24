@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 import { useOutletContext, Link } from 'react-router-dom';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { FiUsers, FiUserPlus, FiSearch, FiRefreshCw, FiSettings, FiCheckSquare, FiClock, FiAlertTriangle, FiCheckCircle, FiActivity, FiPlus, FiAlertCircle, FiCheck, FiLayers } from 'react-icons/fi';
@@ -30,26 +31,7 @@ const getAvatarColor = (name = '') => {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 };
 
-const formatRole = (role = '') => {
-  const norm = String(role || 'CONTRIBUTOR').toUpperCase().replace(/[\s-]+/g, '_');
-  switch (norm) {
-    case 'OWNER':
-      return 'Owner';
-    case 'WORKSPACE_ADMIN':
-    case 'ADMIN':
-      return 'Admin';
-    case 'PROJECT_MANAGER':
-      return 'Project Manager';
-    case 'TEAM_LEAD':
-    case 'LEAD':
-      return 'Team Lead';
-    case 'REPORTER':
-      return 'Reporter';
-    case 'CONTRIBUTOR':
-    default:
-      return 'Contributor';
-  }
-};
+const formatRole = (role = '') => formatRoleLabel(role || 'CONTRIBUTOR');
 
 const getRoleBadgeStyle = (role = '') => {
   const norm = String(role || '').toUpperCase().replace(/[\s-]+/g, '_');

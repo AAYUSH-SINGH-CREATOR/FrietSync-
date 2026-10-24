@@ -8,6 +8,7 @@ import {
 import { updateProfile, uploadAvatar } from '../services/profileApi';
 import profileBanner from '../../../assets/profile-banner.png';
 import defaultAvatar from '../../../assets/oggy-img.png';
+import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 
 const mapProfile = (data) => ({
   id: data?.id || '',
@@ -203,7 +204,7 @@ const ProfileView = () => {
                   </p>
                   <div className="mt-2 flex justify-center">
                     <span className="inline-block px-5 py-1 rounded-full bg-[#252525] text-white text-[11px] font-medium border border-sky-400/40 shadow-xs">
-                      {profile.role || 'Role not set'}
+                      {formatRoleLabel(profile.role) || 'Role not set'}
                     </span>
                   </div>
                 </div>
@@ -285,7 +286,7 @@ const ProfileView = () => {
                     <div className="relative flex-1">
                       <input
                         type="text"
-                        value={profile.role}
+                        value={formatRoleLabel(profile.role)}
                         disabled
                         className="w-full h-9 appearance-none px-4 rounded-full bg-slate-100 dark:bg-[#171717] border border-slate-300 dark:border-white/20 text-slate-600 dark:text-white text-xs sm:text-sm shadow-inner"
                       />

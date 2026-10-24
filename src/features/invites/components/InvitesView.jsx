@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 import { useOutletContext } from 'react-router-dom';
 import {
   FiCheck,
@@ -99,7 +100,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
     try {
       if (action === 'ACCEPTED') {
         await acceptInvite(inviteId);
-        setActionSuccess(`Accepted invitation to join as ${invite.role || 'Member'}!`);
+        setActionSuccess(`Accepted invitation to join as ${formatRoleLabel(invite.role) || 'Member'}!`);
       } else {
         await rejectInvite(inviteId);
         setActionSuccess('Invitation declined.');
@@ -202,7 +203,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
                 <div key={inviteId} className="rounded-xl px-3 sm:px-4 py-4 hover:bg-slate-50 dark:hover:bg-[#242424] transition">
                   <div className="grid grid-cols-1 md:grid-cols-[minmax(180px,1.3fr)_minmax(130px,0.8fr)_minmax(180px,1.3fr)_minmax(120px,0.8fr)_minmax(130px,1fr)] gap-3 md:gap-4 md:items-center">
                     <div className="flex items-center gap-2.5 min-w-0"><span className="h-8 w-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0" style={{ backgroundColor: getAvatarColor(assignee) }}>{getInitials(assignee)}</span><span className="truncate text-sm text-slate-800 dark:text-[#e5e5e5]">{assignee}</span></div>
-                    <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Role</span><span className="text-xs text-slate-700 dark:text-[#ddd]">{(invite.role || 'CONTRIBUTOR').replaceAll('_', ' ')}</span></div>
+                    <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Role</span><span className="text-xs text-slate-700 dark:text-[#ddd]">{formatRoleLabel(invite.role || 'CONTRIBUTOR')}</span></div>
                     <div className="flex items-center gap-2 md:block min-w-0"><span className="md:hidden text-[11px] text-slate-500">Project</span><span className="truncate block text-xs text-slate-700 dark:text-[#ddd]">{project}</span></div>
                     <div className="flex items-center gap-2 md:block"><span className="md:hidden text-[11px] text-slate-500">Status</span><span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${statusStyle}`}>{status.replaceAll('_', ' ')}</span></div>
                     <div className="flex items-center justify-between gap-3">

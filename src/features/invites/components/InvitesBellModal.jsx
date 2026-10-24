@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 import { FiX, FiCheck, FiXCircle, FiInbox, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 import { getMyInvites, acceptInvite, rejectInvite, getFriendlyErrorMessage } from '../services/inviteApi';
 
@@ -64,7 +65,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
     setErrorMessage('');
     try {
       await acceptInvite(inviteId);
-      setActionSuccess(`Accepted invitation to join as ${invite.role || 'Member'}!`);
+      setActionSuccess(`Accepted invitation to join as ${formatRoleLabel(invite.role) || 'Member'}!`);
       setInvites((prev) => prev.filter((item) => (item._id || item.id || item.inviteId) !== inviteId));
       if (onInviteAction) onInviteAction();
     } catch (error) {
@@ -177,7 +178,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
                         {invite.workspaceName || invite.senderEmail || invite.email || 'Workspace Invite'}
                       </p>
                       <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-sky-50 dark:bg-blue-950/50 text-sky-700 dark:text-[#d7d0ff] border border-sky-100 dark:border-blue-800/40">
-                        {invite.role || 'CONTRIBUTOR'}
+                        {formatRoleLabel(invite.role || 'CONTRIBUTOR')}
                       </span>
                     </div>
                     {invite.senderEmail && (

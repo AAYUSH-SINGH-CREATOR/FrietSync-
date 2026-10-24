@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 import {
   FiArrowLeft, FiCalendar, FiClock, FiUser, FiCheckCircle, FiEdit2,
   FiTrash2, FiRefreshCw, FiPlay, FiCheck, FiLayers, FiAlertCircle,
@@ -625,7 +626,7 @@ const SprintDetailsView = ({
               {members.map((m) => {
                 const mid = m.userId || m.id || m._id;
                 const mname = m.name || m.fullName || m.email || 'Member';
-                return <option key={mid} value={mid}>{mname} ({m.role || 'Member'})</option>;
+                return <option key={mid} value={mid}>{mname} ({formatRoleLabel(m.role) || 'Member'})</option>;
               })}
             </select>
             <div className="flex justify-end gap-2 pt-2">

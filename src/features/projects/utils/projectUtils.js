@@ -1,4 +1,5 @@
 import { getUserProfile } from '../../auth/services/authApi';
+import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 
 export const canCreateProject = (profile) => {
   const role = String(profile?.role || profile?.user?.role || '')
@@ -31,14 +32,7 @@ export const getProjectProgress = (project) => {
   return Number.isFinite(progress) && progress >= 0 && progress <= 100 ? progress : null;
 };
 
-export const formatProjectRoleLabel = (role) =>
-  String(role || '')
-    .trim()
-    .toLowerCase()
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+export const formatProjectRoleLabel = formatRoleLabel;
 
 export const getStatusBadge = (status) => {
   const norm = (status || '').toUpperCase();
