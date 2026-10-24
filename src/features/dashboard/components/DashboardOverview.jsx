@@ -5,12 +5,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
 } from 'recharts';
 import {
   FiFolder,
@@ -25,6 +19,7 @@ import {
 
 import { getMyWorkspace, getWorkspaceMembers, getFriendlyErrorMessage } from '../services/workspaceApi';
 import { getMyProjects } from '../../projects/services/projectApi';
+import { getProjectProgress } from '../../projects/utils/projectUtils';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import IssueDetailsView from '../../issues/components/IssueDetailsView';
@@ -369,16 +364,14 @@ const DashboardOverview = () => {
     return projects.slice(0, 4).map((p) => {
       const pid = String(p.id || p._id || p.projectId);
       const projectIssuesList = issues.filter((i) => String(i.projectId) === pid);
-      const total = projectIssuesList.length;
-      const completed = projectIssuesList.filter((i) => isResolved(i.status)).length;
-      const progressPct = total > 0 ? Math.round((completed / total) * 100) : p.status === 'COMPLETED' ? 100 : 56;
+      const progressPct = getProjectProgress(p);
 
       const isOverdue = p.deadline && !isNaN(new Date(p.deadline).getTime()) && new Date(p.deadline) < now;
       const overdueIssues = projectIssuesList.filter((i) => {
         return !isResolved(i.status) && i.dueDate && new Date(i.dueDate) < now;
       }).length;
 
-      const isAtRisk = (isOverdue && progressPct < 100) || overdueIssues > 0;
+      const isAtRisk = (isOverdue && progressPct !== null && progressPct < 100) || overdueIssues > 0;
 
       return {
         id: pid,
@@ -403,41 +396,15 @@ const DashboardOverview = () => {
       ? issues.filter((i) => String(i.sprintId || i.sprint?.id || '') === String(activeSprint.id || activeSprint._id || ''))
       : [];
 
-    const totalIssues = sprintIssuesList.length > 0 ? sprintIssuesList.length : issues.length;
-    const completedIssues = (sprintIssuesList.length > 0 ? sprintIssuesList : issues).filter((i) => isResolved(i.status)).length;
-    const progressPct = totalIssues > 0 ? Math.round((completedIssues / totalIssues) * 100) : 56;
-
-    const now = new Date();
-    const startDate = activeSprint?.startDate || new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const endDate = activeSprint?.endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-
-    // Construct 6 points for burndown chart matching screenshot
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const totalPoints = Math.max(totalIssues, 26);
-
-    const burndownPoints = monthNames.map((m, idx) => {
-      const ideal = Math.max(0, Math.round(totalPoints - (totalPoints / (monthNames.length - 1)) * idx));
-      // Actual trend curving down smoothly
-      let actual = totalPoints;
-      if (idx === 1) actual = Math.round(totalPoints * 0.85);
-      else if (idx === 2) actual = Math.round(totalPoints * 0.72);
-      else if (idx === 3) actual = Math.round(totalPoints * 0.52);
-      else if (idx === 4) actual = Math.round(totalPoints * 0.32);
-      else if (idx === 5) actual = Math.round(totalPoints * 0.05);
-
-      return {
-        name: m,
-        ideal,
-        actual,
-      };
-    });
+    const totalIssues = sprintIssuesList.length;
+    const completedIssues = sprintIssuesList.filter((i) => isResolved(i.status)).length;
+    const progressPct = totalIssues > 0 ? Math.round((completedIssues / totalIssues) * 100) : null;
 
     return {
       activeSprint,
       progressPct,
-      startDate,
-      endDate,
-      burndownPoints,
+      startDate: activeSprint?.startDate || null,
+      endDate: activeSprint?.endDate || null,
     };
   }, [sprints, issues]);
 
@@ -892,21 +859,27 @@ const DashboardOverview = () => {
                     <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 truncate w-32 shrink-0 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition">
                       {p.name}
                     </span>
-                    <div className="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-[#27272a] overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-[#38bdf8] transition-all duration-500"
-                        style={{ width: `${p.progressPct}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300 w-9 text-right shrink-0">
-                      {p.progressPct}%
-                    </span>
+                  {p.progressPct === null ? (
+                    <span className="flex-1 text-xs text-slate-500 dark:text-slate-400">Progress unavailable</span>
+                  ) : (
+                    <>
+                      <div className="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-[#27272a] overflow-hidden" role="progressbar" aria-label={`${p.name || 'Project'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={p.progressPct}>
+                        <div
+                          className="h-full rounded-full bg-[#38bdf8] transition-all duration-500"
+                          style={{ width: `${p.progressPct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300 w-9 text-right shrink-0">
+                        {p.progressPct}%
+                      </span>
+                    </>
+                  )}
                     <span
                       className={`text-xs font-semibold w-16 text-right shrink-0 ${
                         p.isAtRisk ? 'text-[#f87171]' : 'text-[#4ade80]'
                       }`}
                     >
-                      {p.isAtRisk ? 'At Risk' : 'On Track'}
+                    {p.isAtRisk ? 'At Risk' : p.progressPct === null ? '—' : 'On Track'}
                     </span>
                   </div>
                 ))
@@ -932,15 +905,21 @@ const DashboardOverview = () => {
 
             {/* Top overall sprint progress bar */}
             <div className="flex items-center gap-3 mt-3 mb-3">
-              <div className="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-[#27272a] overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#0284c7] to-[#38bdf8] transition-all duration-500"
-                  style={{ width: `${sprintData.progressPct}%` }}
-                />
-              </div>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 min-w-[34px] text-right">
-                {sprintData.progressPct}%
-              </span>
+              {sprintData.progressPct === null ? (
+                <span className="text-xs text-slate-500 dark:text-slate-400">Sprint progress unavailable.</span>
+              ) : (
+                <>
+                  <div className="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-[#27272a] overflow-hidden" role="progressbar" aria-label="Sprint issue completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={sprintData.progressPct}>
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#0284c7] to-[#38bdf8] transition-all duration-500"
+                      style={{ width: `${sprintData.progressPct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 min-w-[34px] text-right">
+                    {sprintData.progressPct}%
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Burndown Chart label */}
@@ -948,43 +927,10 @@ const DashboardOverview = () => {
               Burndown Chart
             </h3>
 
-            {/* Burndown chart + Start/End dates */}
+            {/* Burndown data and sprint dates */}
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-36 min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={sprintData.burndownPoints} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                    <XAxis dataKey="name" stroke="#71717a" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#71717a" fontSize={10} tickLine={false} domain={[0, 'auto']} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#18181b',
-                        borderColor: '#27272a',
-                        borderRadius: '8px',
-                        fontSize: '11px',
-                        color: '#fff',
-                      }}
-                    />
-                    <Line
-                      type="linear"
-                      dataKey="ideal"
-                      stroke="#52525b"
-                      strokeDasharray="4 4"
-                      dot={false}
-                      strokeWidth={1.5}
-                      name="Ideal"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="actual"
-                      stroke="#38bdf8"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: '#38bdf8' }}
-                      activeDot={{ r: 5 }}
-                      name="Actual"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="flex min-h-36 flex-1 items-center justify-center text-center text-xs text-slate-500 dark:text-slate-400">
+                Burndown data is unavailable.
               </div>
 
               {/* Start & End Date boxes with down arrow */}
@@ -995,7 +941,7 @@ const DashboardOverview = () => {
                   </span>
                   <div className="bg-slate-100 dark:bg-[#27272a] border border-slate-200 dark:border-[#3f3f46]/50 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium">
                     <FiCalendar className="text-slate-400 shrink-0" size={13} />
-                    <span>{formatFigmaDate(sprintData.startDate)}</span>
+                    <span>{sprintData.startDate ? formatFigmaDate(sprintData.startDate) : '—'}</span>
                   </div>
                 </div>
 
@@ -1007,7 +953,7 @@ const DashboardOverview = () => {
                   </span>
                   <div className="bg-slate-100 dark:bg-[#27272a] border border-slate-200 dark:border-[#3f3f46]/50 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium">
                     <FiCalendar className="text-slate-400 shrink-0" size={13} />
-                    <span>{formatFigmaDate(sprintData.endDate)}</span>
+                    <span>{sprintData.endDate ? formatFigmaDate(sprintData.endDate) : '—'}</span>
                   </div>
                 </div>
               </div>

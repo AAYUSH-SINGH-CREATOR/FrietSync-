@@ -98,14 +98,12 @@ const SprintsBoard = ({
               const isPending = id && pendingSprintIds.has(String(id));
               const num = sprint.sprintNumber || sprint.number || (sprint.id ? String(sprint.id).slice(-2) : idx + 1);
               const sprintKey = sprint.key || `SPR-${num}`;
-              const assigneeName = sprint.contributorName || sprint.contributor?.name || 'HV';
-              const assigneeInitials = assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'HV';
+              const assigneeName = sprint.contributorName || sprint.contributor?.name || sprint.assigneeName || 'Unassigned';
+              const assigneeInitials = assigneeName === 'Unassigned' ? '—' : assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
               const avatarColor = avatarColors[(assigneeName.charCodeAt(0) || idx) % avatarColors.length];
-
-              let progress = 0;
-              if (typeof sprint.progress === 'number') progress = sprint.progress;
-      else if (col.id === 'COMPLETED') progress = 100;
-              else if (col.id === 'ACTIVE') progress = 67;
+              const rawProgress = sprint.progress;
+              const parsedProgress = rawProgress === null || rawProgress === undefined || rawProgress === '' ? Number.NaN : Number(rawProgress);
+              const progress = Number.isFinite(parsedProgress) && parsedProgress >= 0 && parsedProgress <= 100 ? parsedProgress : null;
 
               return (
                 <div
@@ -152,15 +150,21 @@ const SprintsBoard = ({
 
                   {/* Progress bar */}
                   <div className="mt-2.5 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 rounded-full bg-slate-100 dark:bg-[#28282c] overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          progress >= 100 ? 'bg-emerald-500' : progress >= 80 ? 'bg-pink-500' : progress > 0 ? 'bg-sky-500' : 'bg-slate-300'
-                        }`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-600 dark:text-[#bbb]">{progress}%</span>
+                    {progress === null ? (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">Progress unavailable</span>
+                    ) : (
+                      <>
+                        <div className="h-1.5 flex-1 rounded-full bg-slate-100 dark:bg-[#28282c] overflow-hidden" role="progressbar" aria-label={`${sprint.name || 'Sprint'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                          <div
+                            className={`h-full rounded-full ${
+                              progress >= 100 ? 'bg-emerald-500' : progress >= 80 ? 'bg-pink-500' : progress > 0 ? 'bg-sky-500' : 'bg-slate-300'
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-600 dark:text-[#bbb]">{progress}%</span>
+                      </>
+                    )}
                   </div>
 
                   {/* Footer Dates */}

@@ -23,6 +23,14 @@ export const formatDate = (dateStr) => {
   }
 };
 
+export const getProjectProgress = (project) => {
+  const rawProgress = project?.progress;
+  if (rawProgress === null || rawProgress === undefined || rawProgress === '') return null;
+
+  const progress = Number(rawProgress);
+  return Number.isFinite(progress) && progress >= 0 && progress <= 100 ? progress : null;
+};
+
 export const getStatusBadge = (status) => {
   const norm = (status || '').toUpperCase();
   switch (norm) {

@@ -718,21 +718,8 @@ const IssueDetailsView = ({
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2.5 text-xs">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">HM</div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-slate-800 dark:text-slate-200"><strong className="font-semibold text-slate-900 dark:text-white">Harsh Mehta</strong> changed the status from Open to In progress</p>
-                          <span className="text-[10px] text-slate-400 dark:text-[#777]">16/10/2026, 1:12 PM</span>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2.5 text-xs">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">AS</div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-slate-800 dark:text-slate-200"><strong className="font-semibold text-slate-900 dark:text-white">Aarav Singh</strong> added the label Authentication</p>
-                          <span className="text-[10px] text-slate-400 dark:text-[#777]">15/10/2026, 10:45 AM</span>
-                        </div>
-                      </div>
+                    <div className="py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                      No issue history is available yet.
                     </div>
                   )}
                 </div>

@@ -62,16 +62,22 @@ const getAvatarColor = (name = '', index = 0) => {
 const getStatusPresentation = (status, type) => {
   const value = normalize(status) || (type === 'sprint' ? 'PLANNED' : 'OPEN');
   const presentations = {
-    OPEN: { label: 'Open', className: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-[#3a3a3a] dark:bg-[#242424] dark:text-[#e0e0e0]', progress: 0 },
-    PLANNED: { label: 'Planned', className: 'border-purple-500/30 bg-purple-500/15 text-purple-700 dark:text-purple-300', progress: 0 },
-    IN_PROGRESS: { label: type === 'sprint' ? 'Active' : 'In progress', className: 'border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300', progress: 67 },
-    ACTIVE: { label: 'Active', className: 'border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300', progress: 67 },
-    RESOLVED: { label: 'Resolved', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300', progress: 100 },
-    CLOSED: { label: 'Closed', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300', progress: 100 },
-    COMPLETED: { label: 'Completed', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300', progress: 100 },
-    REOPENED: { label: 'Reopened', className: 'border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300', progress: 0 },
+    OPEN: { label: 'Open', className: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-[#3a3a3a] dark:bg-[#242424] dark:text-[#e0e0e0]' },
+    PLANNED: { label: 'Planned', className: 'border-purple-500/30 bg-purple-500/15 text-purple-700 dark:text-purple-300' },
+    IN_PROGRESS: { label: type === 'sprint' ? 'Active' : 'In progress', className: 'border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300' },
+    ACTIVE: { label: 'Active', className: 'border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300' },
+    RESOLVED: { label: 'Resolved', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
+    CLOSED: { label: 'Closed', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
+    COMPLETED: { label: 'Completed', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
+    REOPENED: { label: 'Reopened', className: 'border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300' },
   };
   return presentations[value] || presentations[type === 'sprint' ? 'PLANNED' : 'OPEN'];
+};
+
+const readProgress = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const progress = Number(value);
+  return Number.isFinite(progress) && progress >= 0 && progress <= 100 ? progress : null;
 };
 
 const isCompleted = (status) => ['RESOLVED', 'CLOSED', 'COMPLETED'].includes(normalize(status));
@@ -194,10 +200,16 @@ const WorkTable = ({
                 <td className="px-4 py-2.5"><span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${task.statusPresentation.className}`}>{task.statusPresentation.label}</span></td>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-[#303035] sm:w-20">
-                      <div className={`h-full rounded-full transition-all ${task.progress >= 100 ? 'bg-emerald-500' : task.progress > 0 ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'}`} style={{ width: `${task.progress}%` }} />
-                    </div>
-                    <span className="w-8 text-[11px] font-bold text-slate-700 dark:text-[#ccc]">{task.progress}%</span>
+                    {task.progress === null ? (
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                    ) : (
+                      <>
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-[#303035] sm:w-20">
+                          <div className={`h-full rounded-full transition-all ${task.progress >= 100 ? 'bg-emerald-500' : task.progress > 0 ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'}`} style={{ width: `${task.progress}%` }} />
+                        </div>
+                        <span className="w-8 text-[11px] font-bold text-slate-700 dark:text-[#ccc]">{task.progress}%</span>
+                      </>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-2.5">
@@ -366,12 +378,12 @@ const MyWorkView = () => {
         endDate: sprint.endDate,
         status,
         statusPresentation,
-        progress: Number.isFinite(sprint.progress) ? Math.min(100, Math.max(0, sprint.progress)) : statusPresentation.progress,
+        progress: readProgress(sprint.progress),
         priority: 'MEDIUM',
         assigneeName,
         assigneeInitials: assigneeName === 'Unassigned' ? '—' : getInitials(assigneeName),
         otherAssigneesCount: Array.isArray(sprint.assignees) ? Math.max(0, sprint.assignees.length - 1) : 0,
-        velocity: sprint.velocity ?? sprint.storyPoints ?? sprint.estimatedPoints ?? sprint.issuesCount ?? 28,
+        velocity: sprint.velocity ?? sprint.storyPoints ?? sprint.estimatedPoints ?? sprint.issuesCount ?? '—',
         projectId: sprint.projectId,
         projectName: sprint.projectName || 'Project',
       };
@@ -395,12 +407,12 @@ const MyWorkView = () => {
         endDate: issue.dueDate || issue.deadline,
         status,
         statusPresentation,
-        progress: Number.isFinite(issue.progress) ? Math.min(100, Math.max(0, issue.progress)) : statusPresentation.progress,
+        progress: readProgress(issue.progress),
         priority: normalize(issue.priority || 'MEDIUM'),
         assigneeName,
         assigneeInitials: assigneeName === 'Unassigned' ? '—' : getInitials(assigneeName),
         otherAssigneesCount: Math.max(0, assignedNames.length - 1),
-        velocity: issue.storyPoints ?? issue.estimate ?? issue.estimatedHours ?? 28,
+        velocity: issue.storyPoints ?? issue.estimate ?? issue.estimatedHours ?? '—',
         projectId: issue.projectId,
         projectName: issue.projectName || 'Project',
       };
@@ -448,7 +460,7 @@ const MyWorkView = () => {
       if (sortOrder === 'due-desc') return dateValue(b.endDate, -Infinity) - dateValue(a.endDate, -Infinity);
       if (sortOrder === 'start-asc') return dateValue(a.startDate, Infinity) - dateValue(b.startDate, Infinity);
       if (sortOrder === 'name-asc') return a.taskName.localeCompare(b.taskName);
-      if (sortOrder === 'progress-desc') return b.progress - a.progress;
+      if (sortOrder === 'progress-desc') return (b.progress ?? -1) - (a.progress ?? -1);
       return 0;
     });
   }, [filteredTasks, sortOrder]);

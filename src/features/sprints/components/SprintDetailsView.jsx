@@ -474,7 +474,9 @@ const SprintDetailsView = ({
             </h4>
             <div className="flex items-center gap-2 pt-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white">
-                {(sprint?.contributorName || sprint?.contributor?.name || 'HV').slice(0, 2).toUpperCase()}
+                {sprint?.contributorName || sprint?.contributor?.name
+                  ? (sprint.contributorName || sprint.contributor.name).slice(0, 2).toUpperCase()
+                  : '—'}
               </div>
               <div className="truncate">
                 <p className="font-semibold text-slate-900 dark:text-white truncate">

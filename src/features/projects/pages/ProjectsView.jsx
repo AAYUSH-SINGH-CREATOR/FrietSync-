@@ -15,7 +15,7 @@ import {
 import { getMyProjects, getProjectMembers, getFriendlyErrorMessage } from '../services/projectApi';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import CreateProjectModal from '../components/CreateProjectModal';
-import { canCreateProject, formatDate } from '../utils/projectUtils';
+import { canCreateProject, formatDate, getProjectProgress } from '../utils/projectUtils';
 const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
@@ -406,9 +406,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             const stats = projectStats[String(projectId)] || {};
             const memberCount = stats.memberCount ?? project.memberCount ?? project.members?.length ?? project.teamMembers?.length ?? '—';
             const issueCount = stats.issueCount ?? project.issueCount ?? project.totalIssues ?? project.issues?.length ?? '—';
-            const rawProgress = project.progress ?? 40;
-            const parsedProgress = rawProgress === '' ? Number.NaN : Number(rawProgress);
-            const progress = Number.isFinite(parsedProgress) ? Math.min(100, Math.max(0, parsedProgress)) : 40;
+            const progress = getProjectProgress(project);
             const description = String(project.description || 'No description provided.');
             const cardDescription = description.length > 50 ? `${description.slice(0, 50).trimEnd()}...` : description;
 
@@ -438,7 +436,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate font-sans text-[20px] font-medium leading-normal tracking-tight text-slate-900 dark:text-white" title={project.name}>
-                      {project.name || 'Untitled Project'}
+                    {project.name || 'Unnamed project'}
                     </h3>
                     <p className="mt-1 font-sans text-[12px] font-light leading-normal text-slate-600 dark:text-[#CBD5E1]" title={description}>
                       {cardDescription}
@@ -446,11 +444,17 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="h-3 w-[180px] max-w-[calc(100%-56px)] flex-none overflow-hidden rounded-full bg-slate-200 dark:bg-[#343434]" role="progressbar" aria-label={`${project.name || 'Project'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-                    <div className="h-full rounded-full bg-gradient-to-r from-sky-700 to-sky-400 dark:from-sky-700 dark:to-sky-400" style={{ width: `${progress}%` }} />
-                  </div>
-                  <span className="shrink-0 text-sm font-normal leading-5 text-sky-600 dark:text-sky-400">{progress}%</span>
+                <div className="mt-3 flex min-h-3 items-center gap-2">
+                  {progress === null ? (
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Progress unavailable</span>
+                  ) : (
+                    <>
+                      <div className="h-3 w-[180px] max-w-[calc(100%-56px)] flex-none overflow-hidden rounded-full bg-slate-200 dark:bg-[#343434]" role="progressbar" aria-label={`${project.name || 'Project'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                        <div className="h-full rounded-full bg-gradient-to-r from-sky-700 to-sky-400 dark:from-sky-700 dark:to-sky-400" style={{ width: `${progress}%` }} />
+                      </div>
+                      <span className="shrink-0 text-sm font-normal leading-5 text-sky-600 dark:text-sky-400">{progress}%</span>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 text-sm font-normal leading-5 text-slate-700 dark:text-[#CBD5E1]">

@@ -106,21 +106,20 @@ const SprintsTable = ({
                 const num = sprint.sprintNumber || sprint.number || (sprint.id ? String(sprint.id).slice(-2) : idx + 1);
                 const sprintKey = sprint.key || `SPR-${num}`;
 
-                // Calculate progress
-                let progress = 0;
-                if (typeof sprint.progress === 'number') progress = sprint.progress;
-                else if (statusPill.label === 'Completed') progress = 100;
-                else if (statusPill.label === 'Active') progress = 67;
+                const rawProgress = sprint.progress;
+                const parsedProgress = rawProgress === null || rawProgress === undefined || rawProgress === '' ? Number.NaN : Number(rawProgress);
+                const progress = Number.isFinite(parsedProgress) && parsedProgress >= 0 && parsedProgress <= 100 ? parsedProgress : null;
 
                 const progressColor = progress >= 100 ? 'bg-emerald-500' : progress >= 80 ? 'bg-pink-500' : progress > 0 ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700';
 
                 // Assignee derivation
-                const assigneeName = sprint.contributorName || sprint.contributor?.name || sprint.assigneeName || sprint.assignedTo?.name || 'HV';
-                const assigneeInitials = assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase() || 'HV';
+                const assigneeName = sprint.contributorName || sprint.contributor?.name || sprint.assigneeName || sprint.assignedTo?.name || 'Unassigned';
+                const assigneeInitials = assigneeName === 'Unassigned' ? '—' : assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
                 const avatarColor = avatarColors[(assigneeName.charCodeAt(0) || idx) % avatarColors.length];
+                const otherAssigneesCount = Array.isArray(sprint.assignees) ? Math.max(0, sprint.assignees.length - 1) : 0;
 
                 // Velocity derivation
-                const velocity = sprint.velocity ?? sprint.storyPoints ?? sprint.estimatedPoints ?? sprint.issuesCount ?? (24 + (idx % 7));
+                const velocity = sprint.velocity ?? sprint.storyPoints ?? sprint.estimatedPoints ?? sprint.issuesCount ?? '—';
 
                 return (
                   <tr
@@ -161,10 +160,16 @@ const SprintsTable = ({
                     </td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 rounded-full bg-slate-200 dark:bg-[#303035] overflow-hidden">
-                          <div className={`h-full rounded-full transition-all duration-300 ${progressColor}`} style={{ width: `${progress}%` }} />
-                        </div>
-                        <span className="text-[11px] font-semibold text-slate-700 dark:text-[#ccc] w-8">{progress}%</span>
+                        {progress === null ? (
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">—</span>
+                        ) : (
+                          <>
+                            <div className="h-1.5 w-16 rounded-full bg-slate-200 dark:bg-[#303035] overflow-hidden" role="progressbar" aria-label={`${sprint.name || 'Sprint'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                              <div className={`h-full rounded-full transition-all duration-300 ${progressColor}`} style={{ width: `${progress}%` }} />
+                            </div>
+                            <span className="text-[11px] font-semibold text-slate-700 dark:text-[#ccc] w-8">{progress}%</span>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-2">
@@ -172,7 +177,7 @@ const SprintsTable = ({
                         <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ${avatarColor}`}>
                           {assigneeInitials}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-[#888]">+4</span>
+                        {otherAssigneesCount > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-[#888]">+{otherAssigneesCount}</span>}
                       </div>
                     </td>
                     <td className="px-4 py-2 font-mono text-xs font-semibold text-slate-700 dark:text-[#ddd]">

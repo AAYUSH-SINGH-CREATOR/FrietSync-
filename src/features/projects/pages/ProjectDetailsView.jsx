@@ -40,7 +40,7 @@ import {
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import { getProjectIssues, normalizeIssuePage, getIssueHistory } from '../../issues/services/issueApi';
 import { getProjectPolls, voteInPoll } from '../../polls/services/pollApi';
-import { formatDate, isUserAdmin, getRoleBadge } from '../utils/projectUtils';
+import { formatDate, getProjectProgress, isUserAdmin, getRoleBadge } from '../utils/projectUtils';
 import { getPriorityBadge, getStatusBadge as getIssueStatusBadge } from '../../issues/utils/issueUtils';
 import EditProjectModal from '../components/EditProjectModal';
 import DeleteProjectModal from '../components/DeleteProjectModal';
@@ -56,7 +56,6 @@ import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
 import { ProjectPollsSection } from '../../polls/components';
-import defaultAvatar from '../../../assets/profile-avatar.png';
 
 const AVATAR_COLORS = ['#86198f', '#0369a1', '#15803d', '#6b21a8', '#b45309', '#be123c'];
 
@@ -263,6 +262,7 @@ const ProjectDetailsView = () => {
         getProjectReleases(pId).catch(() => []),
       ]);
 
+    if (projectRes.status === 'rejected') throw projectRes.reason;
     const projectData = projectRes.status === 'fulfilled' ? projectRes.value : null;
     const summaryData = summaryRes.status === 'fulfilled' ? summaryRes.value : null;
     const membersData =
@@ -595,20 +595,8 @@ const ProjectDetailsView = () => {
     showToast('success', 'Issues attached to release.');
   };
 
-  // Calculations for Hero Summary
-  const overallProgress = useMemo(() => {
-    if (summary?.totalIssues && summary.totalIssues > 0) {
-      const closed = (summary.resolvedIssues || 0) + (summary.closedIssues || 0);
-      return Math.min(100, Math.round((closed / summary.totalIssues) * 100));
-    }
-    if (issues.length > 0) {
-      const closed = issues.filter((iss) =>
-        ['RESOLVED', 'CLOSED'].includes(String(iss.status || '').toUpperCase())
-      ).length;
-      return Math.min(100, Math.round((closed / issues.length) * 100));
-    }
-    return 0;
-  }, [summary, issues]);
+  // Project progress is shown only when the project API provides a valid value.
+  const overallProgress = getProjectProgress(project);
 
   const activeSprintsCount = useMemo(() => {
     if (summary?.activeSprints !== undefined && summary.activeSprints !== null) {
@@ -660,19 +648,20 @@ const ProjectDetailsView = () => {
     }
 
     const total = completed + inProgress + pending;
-    const progressRate = total > 0 ? Math.round((completed / total) * 100) : overallProgress;
-
-    const chartData = [
-      { name: 'Completed', value: completed || (total === 0 ? 0 : 0.01), color: '#38bdf8' },
-      { name: 'In Progress', value: inProgress || (total === 0 ? 0 : 0.01), color: '#0284c7' },
-      { name: 'Pending', value: pending || (total === 0 ? 1 : 0.01), color: '#334155' },
-    ];
+    const progressRate = total > 0 ? Math.round((completed / total) * 100) : null;
+    const chartData = total > 0
+      ? [
+          { name: 'Completed', value: completed, color: '#38bdf8' },
+          { name: 'In Progress', value: inProgress, color: '#0284c7' },
+          { name: 'Pending', value: pending, color: '#334155' },
+        ].filter((item) => item.value > 0)
+      : [];
 
     const statusLabel =
-      activeSprintsCount > 0 ? 'Active Sprint' : project?.status === 'COMPLETED' ? 'Project Ended' : 'In Progress';
+      total === 0 ? 'Issue data unavailable' : activeSprintsCount > 0 ? 'Active Sprint' : project?.status === 'COMPLETED' ? 'Project Ended' : 'In Progress';
 
     return { progressRate, chartData, statusLabel };
-  }, [summary, issues, overallProgress, activeSprintsCount, project?.status]);
+  }, [summary, issues, activeSprintsCount, project?.status]);
 
   // Recent Poll (First poll in the list)
   const recentPoll = useMemo(() => {
@@ -721,20 +710,42 @@ const ProjectDetailsView = () => {
     }
   };
 
+  const managerEmail = String(
+    project?.projectManagerEmail || project?.projectManager?.email || project?.projectManager?.user?.email || ''
+  ).toLowerCase();
+  const teamLeadEmail = String(
+    project?.teamLeadEmail || project?.teamLead?.email || project?.teamLead?.user?.email || ''
+  ).toLowerCase();
+  const projectManagerMember = members.find((member) => {
+    const role = String(member.role || member.projectRole || member.user?.role || '').toUpperCase();
+    const email = String(member.email || member.user?.email || '').toLowerCase();
+    return role === 'PROJECT_MANAGER' || (managerEmail && email === managerEmail);
+  });
+  const teamLeadMember = members.find((member) => {
+    const role = String(member.role || member.projectRole || member.user?.role || '').toUpperCase();
+    const email = String(member.email || member.user?.email || '').toLowerCase();
+    return ['TEAM_LEAD', 'LEAD'].includes(role) || (teamLeadEmail && email === teamLeadEmail);
+  });
+  const managerUser = project?.projectManager?.user || projectManagerMember?.user || projectManagerMember || {};
+  const teamLeadUser = project?.teamLead?.user || teamLeadMember?.user || teamLeadMember || {};
   const projectManagerName =
-    project?.projectManager?.name ||
-    project?.projectManagerName ||
-    (project?.projectManagerEmail ? project.projectManagerEmail.split('@')[0] : 'Maya Patel');
-
+    project?.projectManager?.name || project?.projectManagerName || managerUser.name || 'Not assigned';
+  const projectManagerAvatar =
+    project?.projectManager?.profilePictureUrl ||
+    project?.projectManager?.avatarUrl ||
+    project?.projectManager?.user?.profilePictureUrl ||
+    project?.projectManager?.user?.avatarUrl ||
+    project?.projectManagerAvatar ||
+    managerUser.profilePictureUrl ||
+    managerUser.avatarUrl ||
+    '';
   const teamLeadName =
-    project?.teamLead?.name ||
-    project?.teamLeadName ||
-    (project?.teamLeadEmail ? project.teamLeadEmail.split('@')[0] : 'Alex Morgan');
+    project?.teamLead?.name || project?.teamLeadName || teamLeadUser.name || 'Not assigned';
 
   const projectTags =
     Array.isArray(project?.tags)
       ? project.tags.join(', ')
-      : project?.tags || project?.category || 'Web, UX';
+      : project?.tags || project?.category || '—';
 
   return (
     <div className="w-full min-w-0 text-slate-900 dark:text-slate-100 space-y-6 animate-fadeIn pb-16 px-3 sm:px-6 lg:px-8">
@@ -836,10 +847,10 @@ const ProjectDetailsView = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-                {isLoading ? 'Loading project...' : project?.name || 'Website redesign'}
+                {isLoading ? 'Loading project...' : project?.name || 'Unnamed project'}
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                {project?.description || 'Redesign and rebuild the marketing website with modern UI/UX'}
+                {project?.description || 'No description provided.'}
               </p>
             </div>
           </div>
@@ -848,14 +859,20 @@ const ProjectDetailsView = () => {
           <div className="lg:text-right shrink-0">
             <div className="flex items-center justify-between lg:justify-end gap-3 mb-1.5">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Overall Progress</span>
-              <span className="text-xs font-bold text-slate-900 dark:text-white">{overallProgress}%</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                {overallProgress === null ? 'Unavailable' : `${overallProgress}%`}
+              </span>
             </div>
-            <div className="h-2.5 sm:h-3 w-full sm:w-72 lg:w-80 bg-slate-100 dark:bg-[#2b2b34] rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-transparent">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-sky-400 to-[#38bdf8] transition-all duration-500 shadow-[0_0_12px_rgba(56,189,248,0.5)]"
-                style={{ width: `${overallProgress}%` }}
-              />
-            </div>
+            {overallProgress === null ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">Project progress is unavailable.</p>
+            ) : (
+              <div className="h-2.5 sm:h-3 w-full sm:w-72 lg:w-80 bg-slate-100 dark:bg-[#2b2b34] rounded-full overflow-hidden p-0.5 border border-slate-200/60 dark:border-transparent" role="progressbar" aria-label="Project progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={overallProgress}>
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-sky-400 to-[#38bdf8] transition-all duration-500 shadow-[0_0_12px_rgba(56,189,248,0.5)]"
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -887,11 +904,17 @@ const ProjectDetailsView = () => {
 
             {/* Project Manager Avatar and Name */}
             <div className="flex items-center gap-3 ml-1 sm:ml-2">
-              <img
-                src={project?.projectManagerAvatar || project?.projectManager?.avatarUrl || defaultAvatar}
-                alt={projectManagerName}
-                className="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-              />
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-[#26262b] dark:text-slate-300">
+                {projectManagerName !== 'Not assigned' ? getInitials(projectManagerName) : <FiUsers size={16} />}
+                {projectManagerAvatar && (
+                  <img
+                    src={projectManagerAvatar}
+                    alt={projectManagerName}
+                    className="absolute inset-0 h-full w-full rounded-full object-cover"
+                    onError={(event) => event.currentTarget.remove()}
+                  />
+                )}
+              </div>
               <div>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">Project manager</span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white block mt-0.5 leading-tight">
@@ -1002,19 +1025,19 @@ const ProjectDetailsView = () => {
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Project Name</span>
                     <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {project?.name || 'Website Refresh'}
+                      {project?.name || 'Unnamed project'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Description</span>
                     <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {project?.description || 'Website redesign'}
+                      {project?.description || 'No description provided.'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Status</span>
                     <span className="text-slate-900 dark:text-white font-semibold text-right capitalize">
-                      {String(project?.status || 'In progress').toLowerCase().replace(/_/g, ' ')}
+                      {project?.status ? String(project.status).toLowerCase().replace(/_/g, ' ') : '—'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
@@ -1032,13 +1055,13 @@ const ProjectDetailsView = () => {
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Start date</span>
                     <span className="text-slate-900 dark:text-white font-semibold text-right">
-                      {formatDate(project?.startDate) || 'Oct 01, 2026'}
+                      {project?.startDate ? formatDate(project.startDate) : '—'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Target end date</span>
                     <span className="text-slate-900 dark:text-white font-semibold text-right">
-                      {formatDate(project?.deadline) || 'Dec 15, 2026'}
+                      {project?.deadline ? formatDate(project.deadline) : '—'}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
@@ -1270,7 +1293,7 @@ const ProjectDetailsView = () => {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-end pb-1.5 pointer-events-none">
                     <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
-                      {sprintGaugeMetrics.progressRate}%
+                      {sprintGaugeMetrics.progressRate === null ? '—' : `${sprintGaugeMetrics.progressRate}%`}
                     </span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                       {sprintGaugeMetrics.statusLabel}
@@ -1929,10 +1952,12 @@ const ProjectDetailsView = () => {
             ) : (
               <div className="space-y-2.5">
                 {members.map((member, idx) => {
-                  const memberUserId = member.userId || member.id || member._id;
-                  const name = member.name || member.email?.split('@')[0] || 'Member';
-                  const email = member.email || '';
-                  const role = member.role || 'CONTRIBUTOR';
+                  const memberUser = member.user || member;
+                  const memberUserId = member.userId || member.id || member._id || memberUser.id || memberUser._id;
+                  const name = member.name || memberUser.name || member.email?.split('@')[0] || memberUser.email?.split('@')[0] || 'Member';
+                  const email = member.email || memberUser.email || '';
+                  const memberAvatar = member.profilePictureUrl || member.avatarUrl || memberUser.profilePictureUrl || memberUser.avatarUrl || '';
+                  const role = member.role || member.projectRole || memberUser.role || 'CONTRIBUTOR';
                   const roleBadgeClass = getRoleBadge(role);
                   const isRemoving = removingMemberId === memberUserId;
 
@@ -1943,10 +1968,18 @@ const ProjectDetailsView = () => {
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
                         <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-xs"
+                          className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-xs text-white shadow-xs"
                           style={{ backgroundColor: getAvatarColor(name || email) }}
                         >
                           {getInitials(name || email)}
+                          {memberAvatar && (
+                            <img
+                              src={memberAvatar}
+                              alt={name}
+                              className="absolute inset-0 h-full w-full rounded-full object-cover"
+                              onError={(event) => event.currentTarget.remove()}
+                            />
+                          )}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
