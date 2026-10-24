@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { BrowserRouter } from 'react-router-dom'
+import './features/auth/services/authInterceptors.js'
 
 createRoot(document.getElementById('root')).render(
   <ThemeProvider>

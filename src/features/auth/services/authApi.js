@@ -193,17 +193,21 @@ export const refreshAccessToken = async () => {
     const newToken = data.accessToken || data.data?.accessToken;
     const newRefreshToken = data.refreshToken || data.data?.refreshToken;
 
-    if (newToken) {
-      localStorage.setItem('frietSyncToken', newToken);
-      localStorage.setItem('accessToken', newToken);
+    if (!newToken) {
+      const error = new Error('Refresh response did not include an access token.');
+      error.status = 502;
+      error.response = { status: 502, data };
+      throw error;
     }
+
+    localStorage.setItem('frietSyncToken', newToken);
+    localStorage.setItem('accessToken', newToken);
     if (newRefreshToken) {
       localStorage.setItem('frietSyncRefreshToken', newRefreshToken);
     }
 
     return data;
   } catch (error) {
-    clearAuthStorage();
     handleAxiosError(error, 'Session expired. Please log in again.');
   }
 };
@@ -231,36 +235,15 @@ export const logoutUser = async () => {
 };
 
 export const fetchWithAuth = async (url, options = {}) => {
-  let token = getAccessToken();
-
-  const headers = {
-    ...options.headers,
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-
   try {
+    const token = getAccessToken();
+    const headers = {
+      ...options.headers,
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
     const response = await axios({ url, ...options, headers });
     return response;
   } catch (error) {
-    if (error.response?.status === 401 && localStorage.getItem('frietSyncRefreshToken')) {
-      try {
-        await refreshAccessToken();
-      } catch {
-        await logoutUser();
-        window.location.href = '/login';
-        throw error;
-      }
-      token = getAccessToken();
-      const retryHeaders = {
-        ...options.headers,
-        ...(token && { Authorization: `Bearer ${token}` }),
-      };
-      try {
-        return await axios({ url, ...options, headers: retryHeaders });
-      } catch (retryError) {
-        handleAxiosError(retryError, 'Request failed');
-      }
-    }
     handleAxiosError(error, 'Request failed');
   }
 };
