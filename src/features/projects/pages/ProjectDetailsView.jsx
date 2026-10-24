@@ -51,6 +51,7 @@ import ReleaseModal from '../components/ReleaseModal';
 import DeleteReleaseModal from '../components/DeleteReleaseModal';
 import AttachReleaseIssuesModal from '../components/AttachReleaseIssuesModal';
 import LinkRepositoryModal from '../components/LinkRepositoryModal';
+import ProjectContributionsSection from '../components/ProjectContributionsSection';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
@@ -189,6 +190,28 @@ const ProjectDetailsView = () => {
     }
     return null;
   });
+
+  // Synchronize linked repo from project payload if provided by backend
+  useEffect(() => {
+    if (project) {
+      const owner = project.githubOwner || project.repositoryOwner || project.repoOwner;
+      const repo = project.githubRepo || project.githubRepositoryName || project.repositoryName || project.repoName;
+      if (owner && repo) {
+        Promise.resolve().then(() => {
+          setLinkedRepo({ owner, repository: repo });
+        });
+      } else if (
+        project.githubRepository &&
+        typeof project.githubRepository === 'string' &&
+        project.githubRepository.includes('/')
+      ) {
+        const [o, r] = project.githubRepository.split('/');
+        Promise.resolve().then(() => {
+          setLinkedRepo({ owner: o, repository: r });
+        });
+      }
+    }
+  }, [project]);
 
   const isAdmin = isUserAdmin();
 
@@ -1840,6 +1863,16 @@ const ProjectDetailsView = () => {
               </div>
             )}
           </section>
+
+          {/* GitHub Contributions & Code Activity */}
+          <ProjectContributionsSection
+            projectId={projectId}
+            linkedRepo={linkedRepo}
+            canManage={canManageMilestones}
+            onOpenLinkModal={() => setIsLinkRepoModalOpen(true)}
+            onUnlinkRepo={handleUnlinkRepository}
+            isUnlinkingRepo={isUnlinkingRepo}
+          />
 
           {/* Under Dashboard: Project Members (with Add Member) */}
           <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
