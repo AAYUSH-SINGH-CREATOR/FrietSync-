@@ -325,7 +325,7 @@ const IssueDetailsView = ({
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/50 transition cursor-pointer"
             >
               <FiTrash2 size={14} /> Delete
             </button>
@@ -334,7 +334,7 @@ const IssueDetailsView = ({
             type="button"
             onClick={() => { reloadIssue(); refreshAuxData(); }}
             title="Refresh details"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-[#38383e] dark:bg-[#222226] dark:text-slate-300 transition cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-[#38383e] dark:bg-[#222226] dark:text-slate-300 dark:hover:bg-[#2b2b30] transition cursor-pointer"
           >
             <FiRefreshCw size={14} className={busyAction ? 'animate-spin' : ''} />
           </button>
@@ -580,7 +580,7 @@ const IssueDetailsView = ({
                   <button
                     type="button"
                     onClick={() => setIsLabelOpen(true)}
-                    className="inline-flex items-center gap-1 rounded-md bg-sky-50 dark:bg-sky-950/40 px-2.5 py-1 text-[11px] font-semibold text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40 hover:bg-sky-100 transition cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-md bg-sky-50 dark:bg-sky-950/40 px-2.5 py-1 text-[11px] font-semibold text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800/40 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition cursor-pointer"
                   >
                     + Add label
                   </button>

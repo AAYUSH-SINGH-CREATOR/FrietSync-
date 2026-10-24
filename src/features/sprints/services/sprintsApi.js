@@ -74,6 +74,14 @@ export const updateSprint = (sprintId, sprintData) => {
   );
 };
 
+export const updateSprintStatus = (sprintId, status) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.patch(`${BASE_URL}/sprints/${sprintId}/status`, { status }, getAuthHeaders()),
+    'Failed to update sprint status.'
+  );
+};
+
 export const startSprint = (sprintId) => {
   if (!sprintId) throw new Error('Sprint ID is required.');
   return request(

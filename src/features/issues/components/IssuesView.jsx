@@ -9,7 +9,7 @@ import {
 import { AiOutlineBug, AiOutlineExclamationCircle } from 'react-icons/ai';
 import {
   getProjectIssues, getIssueDetails, getProjectIssueRequests, manageProjectIssueRequest,
-  deleteProjectIssueRequest, resolveIssue, reviewIssue, getFriendlyErrorMessage,
+  deleteProjectIssueRequest, resolveIssue, reviewIssue, updateIssueStatus, getFriendlyErrorMessage,
 } from '../services/issueApi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { getPriorityBadge, getStatusBadge } from '../utils/issueUtils';
@@ -297,10 +297,25 @@ const IssuesView = () => {
     try {
       const currentStatus = normalize(issue.status || 'OPEN');
       const targetStatus = normalize(newStatus);
-      if (currentStatus === 'IN_PROGRESS' && targetStatus === 'RESOLVED') await resolveIssue(id);
-      else if (currentStatus === 'RESOLVED' && targetStatus === 'CLOSED') await reviewIssue(id, 'approve');
-      else if (currentStatus === 'RESOLVED' && targetStatus === 'REOPENED') await reviewIssue(id, 'reject');
-      else {
+      const projectId = issue.projectId || issue.project?.id || issue.project?.projectId;
+      const isProjectManager = globalRole === 'PROJECT_MANAGER' ||
+        (projectMembers[String(projectId)] || []).some((member) => {
+          const memberUserId = memberId(member);
+          const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
+          const isCurrentUser = (currentUserId && String(memberUserId) === String(currentUserId)) ||
+            (currentUserEmail && memberEmail === currentUserEmail);
+          return isCurrentUser && memberRole(member) === 'PROJECT_MANAGER';
+        });
+
+      if (isGlobalAdmin || isProjectManager) {
+        await updateIssueStatus(id, targetStatus);
+      } else if (currentStatus === 'IN_PROGRESS' && targetStatus === 'RESOLVED') {
+        await resolveIssue(id);
+      } else if (currentStatus === 'RESOLVED' && targetStatus === 'CLOSED') {
+        await reviewIssue(id, 'approve');
+      } else if (currentStatus === 'RESOLVED' && targetStatus === 'REOPENED') {
+        await reviewIssue(id, 'reject');
+      } else {
         showToast('error', 'That transition needs an assignment or review action and cannot be completed from the board.');
         return;
       }
@@ -320,7 +335,7 @@ const IssuesView = () => {
       pendingStatusIssueIdsRef.current.delete(String(id));
       setPendingStatusIssueIds(new Set(pendingStatusIssueIdsRef.current));
     }
-  }, [issues, showToast]);
+  }, [issues, showToast, globalRole, isGlobalAdmin, projectMembers, currentUserId, currentUserEmail]);
 
   // Handle assignment request decisions in tab
   const handleApproveRequest = async (req) => {
@@ -463,7 +478,7 @@ const IssuesView = () => {
                       <button
                         type="button"
                         onClick={() => handleRejectRequest(req)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 px-3 py-1.5 font-semibold text-rose-700 dark:text-rose-300 transition cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 px-3 py-1.5 font-semibold text-rose-700 dark:text-rose-300 transition cursor-pointer"
                       >
                         <FiX size={13} /> Reject
                       </button>

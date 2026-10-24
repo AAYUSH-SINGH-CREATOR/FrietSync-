@@ -17,6 +17,7 @@ import {
   getProjectSprints,
   getProjectSprintRequests,
   approveSprintRequest,
+  updateSprintStatus,
   startSprint,
   completeSprint,
   getFriendlyErrorMessage,
@@ -215,21 +216,32 @@ const SprintsView = () => {
       showToast('error', 'Only the project manager or assigned sprint contributor can change sprint status.');
       return;
     }
+    const canSetAnyStatus = isAdmin || isProjectManager;
     const isStartTransition = currentStatus === 'PLANNED' && destinationColumnId === 'ACTIVE';
     const isCompleteTransition = currentStatus === 'ACTIVE' && destinationColumnId === 'COMPLETED';
-
-    if (!isStartTransition && !isCompleteTransition) {
+    if (!canSetAnyStatus && !isStartTransition && !isCompleteTransition) {
       showToast('error', 'That sprint status transition is not supported by the available sprint actions.');
       return;
     }
-    if (isCompleteTransition && !window.confirm('Complete this sprint? This marks current delivery goals as finished.')) return;
 
     pendingSprintIdsRef.current.add(key);
     setPendingSprintIds(new Set(pendingSprintIdsRef.current));
     try {
-      if (isStartTransition) await startSprint(sprintId);
-      else await completeSprint(sprintId);
-      showToast('success', isStartTransition ? 'Sprint started successfully.' : 'Sprint completed successfully.');
+      if (canSetAnyStatus) {
+        await updateSprintStatus(sprintId, destinationColumnId);
+      } else if (isStartTransition) {
+        await startSprint(sprintId);
+      } else {
+        await completeSprint(sprintId);
+      }
+      showToast(
+        'success',
+        canSetAnyStatus
+          ? `Sprint moved to ${destinationColumnId.replace(/[_-]/g, ' ').toLowerCase()}.`
+          : isStartTransition
+          ? 'Sprint started successfully.'
+          : 'Sprint completed successfully.'
+      );
       loadSprints();
     } catch (error) {
       showToast('error', getFriendlyErrorMessage(error, 'sprint'));
@@ -237,7 +249,7 @@ const SprintsView = () => {
       pendingSprintIdsRef.current.delete(key);
       setPendingSprintIds(new Set(pendingSprintIdsRef.current));
     }
-  }, [loadSprints, showToast, currentUserProfile, globalRole, members, currentUserEmail]);
+  }, [loadSprints, showToast, currentUserProfile, globalRole, members, currentUserEmail, isAdmin]);
 
   const loadProjects = useCallback(() => {
     setProjectsLoading(true);
@@ -430,7 +442,7 @@ const SprintsView = () => {
             onClick={() => Promise.all([loadProjects(), loadSprints()])}
             disabled={projectsLoading || sprintsLoading}
             title="Refresh sprints"
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#2b2b30] dark:bg-[#1a1a1d] dark:text-[#ccc] cursor-pointer"
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-[#3a3a3a] dark:bg-[#202020] dark:text-[#ddd] dark:hover:bg-[#333] cursor-pointer"
           >
             <FiRefreshCw size={15} className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} />
           </button>

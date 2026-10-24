@@ -191,7 +191,6 @@ const SprintDetailsView = ({
   };
 
   const handleComplete = async () => {
-    if (!window.confirm('Complete this sprint? This marks current delivery goals as finished.')) return;
     setBusyAction('complete');
     try {
       await completeSprint(sprintId);
@@ -307,7 +306,7 @@ const SprintDetailsView = ({
             onClick={loadDetails}
             disabled={isLoading || Boolean(busyAction)}
             title="Refresh sprint"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-[#303030] dark:bg-[#1d1d1d] dark:text-[#e0e0e0] cursor-pointer disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-[#303030] dark:bg-[#1d1d1d] dark:text-[#e0e0e0] dark:hover:bg-[#292929] cursor-pointer disabled:opacity-50"
           >
             <FiRefreshCw size={15} className={isLoading ? 'animate-spin text-sky-600' : ''} />
           </button>
@@ -339,14 +338,14 @@ const SprintDetailsView = ({
               <button
                 type="button"
                 onClick={() => onOpenEdit?.(sprint)}
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#303030] dark:bg-[#1d1d1d] dark:text-[#e0e0e0] cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#303030] dark:bg-[#1d1d1d] dark:text-[#e0e0e0] dark:hover:bg-[#292929] cursor-pointer"
               >
                 <FiEdit2 size={14} /> Edit
               </button>
               <button
                 type="button"
                 onClick={() => setIsAssignModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#303030] dark:bg-[#1d1d1d] dark:text-[#e0e0e0] cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#303030] dark:bg-[#1d1d1d] dark:text-[#e0e0e0] dark:hover:bg-[#292929] cursor-pointer"
               >
                 <FiUserPlus size={14} /> Assign
               </button>
@@ -358,7 +357,7 @@ const SprintDetailsView = ({
               type="button"
               onClick={handleRequestAssignment}
               disabled={Boolean(busyAction)}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-sky-200 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-700 hover:bg-sky-100 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-sky-200 bg-sky-50 px-3.5 py-2.5 text-xs font-semibold text-sky-700 hover:bg-sky-100 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/50 cursor-pointer disabled:opacity-50"
             >
               <FiUser size={14} /> Request Assignment
             </button>
@@ -369,7 +368,7 @@ const SprintDetailsView = ({
               type="button"
               onClick={handleDelete}
               disabled={Boolean(busyAction)}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:bg-[#1d1d1d] dark:text-rose-400 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:bg-[#1d1d1d] dark:text-rose-400 dark:hover:bg-rose-950/50 cursor-pointer disabled:opacity-50"
             >
               <FiTrash2 size={14} /> Delete
             </button>

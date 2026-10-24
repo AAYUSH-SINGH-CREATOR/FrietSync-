@@ -162,6 +162,7 @@ const issueRequest = async (method, path, payload, config = {}, fallback = 'Issu
 };
 
 export const updateIssue = (id, fields) => issueRequest('patch', `/issues/${id}`, fields, {}, 'Failed to update issue.');
+export const updateIssueStatus = (id, status) => issueRequest('patch', `/issues/${id}/status`, { status }, {}, 'Failed to update issue status.');
 export const deleteIssue = (id) => issueRequest('delete', `/issues/${id}`, undefined, {}, 'Failed to delete issue.');
 export const assignIssue = (id, userIds) => issueRequest('post', `/issues/${id}/assign`, { userIds }, {}, 'Failed to assign issue.');
 export const resolveIssue = (id) => issueRequest('post', `/issues/${id}/resolve`, {}, {}, 'Failed to resolve issue.');
