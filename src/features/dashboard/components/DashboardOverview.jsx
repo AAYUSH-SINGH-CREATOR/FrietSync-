@@ -573,11 +573,11 @@ const DashboardOverview = () => {
                 {summaryMetrics.totalProjects}
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
-              {summaryMetrics.newProjectsThisMonth > 0
-                ? `+${summaryMetrics.newProjectsThisMonth} from last month`
-                : '+2 from last month'}
-            </span>
+            {summaryMetrics.newProjectsThisMonth > 0 && (
+              <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
+                +{summaryMetrics.newProjectsThisMonth} this month
+              </span>
+            )}
           </div>
         </div>
 
@@ -644,11 +644,11 @@ const DashboardOverview = () => {
                 {summaryMetrics.totalMembers}
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
-              {summaryMetrics.newMembersThisMonth > 0
-                ? `+${summaryMetrics.newMembersThisMonth} from last month`
-                : '+2 from last month'}
-            </span>
+            {summaryMetrics.newMembersThisMonth > 0 && (
+              <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
+                +{summaryMetrics.newMembersThisMonth} this month
+              </span>
+            )}
           </div>
         </div>
       </div>
