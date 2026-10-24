@@ -369,7 +369,7 @@ const IssuesView = () => {
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={refresh} disabled={isLoadingIssues} title="Refresh issues" className="flex h-[38px] w-[38px] items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-[#3a3a3a] dark:bg-[#202020] dark:text-[#ddd] dark:hover:bg-[#333] cursor-pointer"><FiRefreshCw size={15} className={isLoadingIssues ? 'animate-spin' : ''} /></button>
-          {canCreateIssue && <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex h-[38px] items-center gap-2 rounded-md bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:text-sm cursor-pointer"><FiPlus size={16} />Create Issue</button>}
+          {canCreateIssue && <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex h-[38px] items-center gap-2 rounded-md bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:text-sm cursor-pointer"><FiPlus size={16} />Create Issue</button>}
         </div>
       </div>
 

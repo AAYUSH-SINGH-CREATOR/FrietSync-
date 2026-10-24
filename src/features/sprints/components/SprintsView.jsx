@@ -439,7 +439,7 @@ const SprintsView = () => {
               type="button"
               onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
               disabled={!projectId}
-              className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 sm:text-sm cursor-pointer disabled:opacity-50"
+              className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 sm:text-sm cursor-pointer disabled:opacity-50"
             >
               <FiPlus size={16} /> New sprint
             </button>

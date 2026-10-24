@@ -210,7 +210,7 @@ const InvitesBellModal = ({ isOpen, onClose, onInviteAction }) => {
                       type="button"
                       disabled={isProcessing}
                       onClick={() => handleAccept(invite)}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 shadow-md shadow-sky-600/25 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 active:bg-sky-800 shadow-md shadow-sky-600/25 dark:shadow-blue-900/30 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
                       {isProcessing ? (
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

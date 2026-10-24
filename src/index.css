@@ -134,7 +134,7 @@ body {
 .action-icon { padding: 0.4rem; color: var(--text-secondary); }
 .action-icon:hover { background: var(--bg-hover); }
 
-.dark .action-primary { background: #2563eb; }
-.dark .action-primary:hover { background: #3b82f6; }
+.dark .action-primary { background: #0284c7; }
+.dark .action-primary:hover { background: #0369a1; }
 .dark .action-danger { border-color: #7f1d1d; background: #3f1519; color: #fda4af; }
 .dark .action-danger:hover { background: #551b22; }

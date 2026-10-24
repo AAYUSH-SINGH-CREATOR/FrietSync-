@@ -1116,7 +1116,7 @@ const ProjectDetailsView = () => {
                         setEditingMilestone(null);
                         setIsMilestoneModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
                       title="Add Milestone"
                     >
                       <FiPlus size={13} />
@@ -1146,7 +1146,7 @@ const ProjectDetailsView = () => {
                           setEditingMilestone(null);
                           setIsMilestoneModalOpen(true);
                         }}
-                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
+                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs"
                       >
                         <FiPlus size={13} /> Add First Milestone
                       </button>
@@ -1164,7 +1164,7 @@ const ProjectDetailsView = () => {
                             className="relative flex items-center justify-between gap-3 text-xs group py-0.5"
                           >
                             <span
-                              className={`absolute -left-6 top-2 h-2.5 w-2.5 rounded-full ${statusInfo.dotClass}`}
+                              className={`absolute -left-5 top-2 h-2.5 w-2.5 rounded-full ${statusInfo.dotClass}`}
                             />
                             <div className="min-w-0 pr-2">
                               <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
@@ -1669,7 +1669,7 @@ const ProjectDetailsView = () => {
                     setEditingRelease(null);
                     setIsReleaseModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-xs sm:text-sm font-semibold text-slate-950 shadow-md shadow-cyan-600/20 transition cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-xs sm:text-sm font-semibold text-white shadow-md shadow-sky-600/20 transition cursor-pointer"
                 >
                   <FiPlus size={15} />
                   <span>Create Release</span>
@@ -1698,7 +1698,7 @@ const ProjectDetailsView = () => {
                       setEditingRelease(null);
                       setIsReleaseModalOpen(true);
                     }}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-semibold transition cursor-pointer"
+                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold transition cursor-pointer"
                   >
                     <FiPlus size={14} /> Create First Release
                   </button>
@@ -1897,7 +1897,7 @@ const ProjectDetailsView = () => {
               <button
                 type="button"
                 onClick={() => setIsAddMemberModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-xs sm:text-sm font-semibold text-white shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-xs sm:text-sm font-semibold text-white shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
               >
                 <FiUserPlus size={15} />
                 <span>Add Member</span>
@@ -1921,7 +1921,7 @@ const ProjectDetailsView = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberModalOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
+                  className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white text-xs font-semibold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
                 >
                   <FiUserPlus size={14} /> Add First Member
                 </button>

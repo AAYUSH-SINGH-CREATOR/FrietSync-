@@ -316,7 +316,7 @@ const SprintDetailsView = ({
               type="button"
               onClick={handleStart}
               disabled={Boolean(busyAction)}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-sky-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-sky-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-sky-700 cursor-pointer disabled:opacity-50"
             >
               <FiPlay size={14} /> Start Sprint
             </button>

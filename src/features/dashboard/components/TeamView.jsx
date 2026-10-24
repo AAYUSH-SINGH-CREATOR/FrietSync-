@@ -559,7 +559,7 @@ const TeamView = () => {
             <button
               type="button"
               onClick={() => setIsInviteModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-700 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition cursor-pointer"
             >
               <FiUserPlus size={16} />
               <span>Invite Members</span>

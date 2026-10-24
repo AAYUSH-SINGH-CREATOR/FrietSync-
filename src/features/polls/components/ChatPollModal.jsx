@@ -90,7 +90,7 @@ const ChatPollModal = ({
             <button
               type="button"
               onClick={() => setIsCreateOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-sky-700 transition cursor-pointer"
             >
               <FiPlus size={14} /> New Poll
             </button>
@@ -134,7 +134,7 @@ const ChatPollModal = ({
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(true)}
-                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition cursor-pointer"
+                className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-700 transition cursor-pointer"
               >
                 <FiPlus size={14} /> Create First Poll
               </button>

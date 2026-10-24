@@ -204,7 +204,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-5 py-2 font-semibold text-white shadow-sm hover:bg-sky-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-5 py-2 font-semibold text-white shadow-sm hover:bg-sky-700 transition cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? 'Creating poll...' : 'Create Poll'}
             </button>
