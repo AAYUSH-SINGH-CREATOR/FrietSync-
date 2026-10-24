@@ -176,25 +176,64 @@ function Header({ isAuthenticated, scrolled, scrollToSection, mobileMenuOpen, se
             </>
           )}
         </div>
-        <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white sm:hidden" aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}>
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:hidden"
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+        >
           {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
         </button>
       </div>
       {mobileMenuOpen && (
-        <div className="space-y-3 border-b border-white/10 bg-slate-900/95 px-6 py-5 backdrop-blur-xl sm:hidden">
-          <button type="button" onClick={() => scrollToSection('features')} className="block w-full py-2 text-left text-sm font-medium text-white">Features</button>
-          <button type="button" onClick={() => scrollToSection('about')} className="block w-full py-2 text-left text-sm font-medium text-white">About</button>
-          <div className="flex flex-col gap-2 border-t border-white/10 pt-4">
-            {isAuthenticated ? (
-              <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="rounded-full bg-white py-2.5 text-center text-sm font-bold text-slate-900">Go to Dashboard</Link>
-            ) : (
-              <>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="rounded-full bg-white/20 py-2.5 text-center text-sm font-semibold text-white">Log in</Link>
-                <Link to="/signup" onClick={() => setMobileMenuOpen(false)} className="rounded-full bg-white py-2.5 text-center text-sm font-bold text-slate-900">Join us</Link>
-              </>
-            )}
-          </div>
-        </div>
+        <>
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px] sm:hidden"
+          />
+          <nav
+            id="mobile-navigation"
+            aria-label="Mobile navigation"
+            className="absolute left-3 right-3 top-[calc(100%+0.5rem)] z-50 mx-auto max-w-sm rounded-2xl border border-slate-200/80 bg-white p-3 text-slate-900 shadow-2xl shadow-slate-950/20 sm:hidden"
+          >
+            <div className="space-y-1">
+              {[
+                { label: 'Features', section: 'features' },
+                { label: 'About', section: 'about' },
+              ].map(({ label, section }) => (
+                <button
+                  key={section}
+                  type="button"
+                  onClick={() => scrollToSection(section)}
+                  className="group flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                >
+                  {label}
+                  <FiArrowRight className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-700" size={16} />
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
+              {isAuthenticated ? (
+                <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="col-span-2 rounded-xl bg-sky-500 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+                    Log in
+                  </Link>
+                  <Link to="/signup" onClick={() => setMobileMenuOpen(false)} className="rounded-xl bg-sky-500 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2">
+                    Join us
+                  </Link>
+                </>
+              )}
+            </div>
+          </nav>
+        </>
       )}
     </header>
   );
@@ -209,7 +248,7 @@ function Hero({ scrollToSection }) {
       </div>
 
       <div className="relative mx-auto mb-5 w-full max-w-[1440px] select-none px-2 text-center sm:mb-10 sm:px-8 lg:px-14">
-        <h1 className="whitespace-nowrap font-anton text-[clamp(2rem,12vw,10.625rem)] uppercase leading-none tracking-tight text-white/90 sm:text-[110px] md:text-[140px] lg:text-[170px]">
+        <h1 className="w-full whitespace-nowrap font-anton text-[clamp(2rem,9vw,10rem)] uppercase leading-none tracking-tight text-white/90">
           Make Work Flow
         </h1>
       </div>
