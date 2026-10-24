@@ -92,6 +92,7 @@ const Login = () => {
 
   return (
     <AuthLayout
+      onBack={() => navigate('/', { replace: true })}
       leftTitle="Welcome back to Frietsync"
       leftBrand=""
       leftImage={loginImg}

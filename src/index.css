@@ -105,6 +105,25 @@ body {
 .auththeme {
   color-scheme: light;
 }
+
+@keyframes showcase-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.showcase-marquee-track {
+  animation: showcase-marquee-scroll 28s linear infinite;
+}
+
+.showcase-marquee:hover .showcase-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase-marquee-track {
+    animation: none;
+  }
+}
 .action-secondary,
 .action-primary,
 .action-danger,

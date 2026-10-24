@@ -80,7 +80,7 @@ const testimonials = [
 
 const workspaceTools = [ ['Backlog', '#FF5259'], ['Kanban charts', '#70D982'], ['Issue reviews', '#D19BFA'], ['Calendar', '#99D1F1'], ['Tasks', '#FFB671'], ['My work', '#B06982'], ['Chats', '#6987C9'], ['Sprints managment', '#FF95C9'], ['Project Updates', '#FFD269']];
 
-const showcaseCards = [lncard1, lncard2, lncard3, lncard4, lncard1, lncard2];
+const showcaseCards = [lncard1, lncard2, lncard3, lncard4];
 const roleCards = ['Project manager', 'Reporter', 'Senior Designer', 'Full-Stack Developer'];
 
 const ArrowLink = ({ to = '/signup', children, className = '' }) => (
@@ -156,7 +156,7 @@ function Header({ isAuthenticated, scrolled, scrollToSection, mobileMenuOpen, se
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'border-b border-white/10 bg-slate-900/80 py-3 shadow-lg backdrop-blur-md' : 'bg-transparent py-3 sm:py-5'}`}>
       <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 sm:px-8 lg:px-14">
         <Link to="/" className="group flex shrink-0 items-center gap-2.5">
-          <img src={faviconLogo || logoIcon} alt="Frietsync logo" className="h-7 w-7 object-contain transition-transform group-hover:scale-105 sm:h-9 sm:w-9" />
+          <img src={logoIcon || faviconLogo} alt="Frietsync logo" className="h-7 w-7 object-contain transition-transform group-hover:scale-105 sm:h-9 sm:w-9" />
           <span className="text-lg font-bold tracking-tight text-white sm:text-2xl">Frietsync</span>
         </Link>
         <nav className="hidden items-center md:flex">
@@ -384,12 +384,18 @@ function ShowcaseSection() {
     <section className="w-full overflow-hidden bg-[#C1E8FF] py-14 sm:py-28">
       <div className="mx-auto max-w-[1440px] space-y-10 px-6 text-center sm:space-y-12 sm:px-12">
         <h2 className="text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">One Platform. Endless Possibilities</h2>
-        <div className="flex flex-wrap items-center justify-center gap-4 pb-4 pt-2 sm:gap-6">
-          {showcaseCards.map((image, index) => (
-            <div key={`${image}-${index}`} className={`w-[140px] shrink-0 overflow-hidden rounded-2xl border border-white/40 shadow-lg transition duration-300 hover:-translate-y-2 sm:w-[220px] ${index % 2 ? '-translate-y-2 sm:-translate-y-3' : ''}`}>
-              <img src={image} alt={`Frietsync platform feature ${index + 1}`} className="h-auto w-full object-cover" />
-            </div>
-          ))}
+        <div className="showcase-marquee overflow-hidden pb-4 pt-2" aria-label="Frietsync product feature cards">
+          <div className="showcase-marquee-track flex w-max">
+            {[0, 1].map((setIndex) => (
+              <div key={setIndex} className="flex shrink-0 items-center gap-3 pr-3 sm:gap-6 sm:pr-6" aria-hidden={setIndex === 1}>
+                {showcaseCards.map((image, index) => (
+                  <div key={`${setIndex}-${image}`} className={`w-[140px] shrink-0 overflow-hidden rounded-2xl border border-white/40 shadow-lg transition-transform duration-300 hover:-translate-y-2 sm:w-[220px] ${index % 2 ? '-translate-y-2 sm:-translate-y-3' : ''}`}>
+                    <img src={image} alt={setIndex === 0 ? `Frietsync platform feature ${index + 1}` : ''} className="h-auto w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -515,7 +521,7 @@ function Footer({ scrollToSection }) {
         <div className="grid grid-cols-1 items-start gap-8 border-t border-amber-300/40 pt-8 md:grid-cols-12">
           <div className="space-y-4 text-left md:col-span-6">
             <Link to="/" className="inline-flex items-center gap-2.5">
-              <img src={faviconLogo || logoIcon} alt="Frietsync logo" className="h-8 w-8 object-contain" />
+              <img src={logoIcon || faviconLogo} alt="Frietsync logo" className="h-8 w-8 object-contain" />
               <span className="text-2xl font-bold tracking-tight text-slate-900">Frietsync</span>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-slate-600">
