@@ -247,3 +247,69 @@ function Hero({ isAuthenticated, scrollToSection }) {
     </section>
   );
 }
+
+function AboutSection() {
+  return (
+    <section id="about" className="relative z-10 -mt-5 w-full rounded-t-[26px] bg-white py-8 sm:py-28">
+      <div className="mx-auto max-w-[1440px] space-y-6 px-8 sm:space-y-20 sm:px-12 lg:px-20">
+        <SectionIntro
+          eyebrow="About Frietsync"
+          title={<>Great work happens when<br />everything is in sync.</>}
+          description="Frietsync brings your projects, sprints, and issues together in one clear, connected workspace so your team can move faster, stay aligned, and turn ideas into progress."
+        />
+        <div className="grid grid-cols-4 gap-2 sm:gap-8">
+          {metrics.map(({ value, label }) => (
+            <div key={value} className="space-y-1 sm:space-y-3 sm:rounded-3xl sm:border sm:border-slate-100 sm:bg-slate-50/80 sm:p-6">
+              <div className="font-anton text-[26px] leading-none text-[#FF5AA8] sm:text-7xl lg:text-8xl">{value}</div>
+              <p className="text-[7px] font-medium leading-snug text-slate-800 sm:text-lg">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PlanSection() {
+  return (
+    <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#FFF3A1] via-[#FFAACF] to-[#C1E8FF] py-8 sm:py-28">
+      <div className="relative z-10 mx-auto max-w-[1440px] px-8 sm:px-12 lg:px-20">
+        <div className="grid grid-cols-[0.9fr_1.1fr] items-center gap-3 sm:grid-cols-12 sm:gap-10">
+          <div className="space-y-2 text-left sm:col-span-6 sm:space-y-8">
+            <h2 className="font-anton text-[25px] leading-[0.95] tracking-tight text-slate-950 sm:text-7xl lg:text-8xl">Plan.<br />Track.<br />Collaborate.</h2>
+            <p className="max-w-lg text-[7px] font-medium leading-relaxed text-slate-800 sm:text-xl">From big ideas to tiny bugs, Frietsync keeps your work organized, your team aligned, and your goals in sight.</p>
+            <ArrowLink>Create your project</ArrowLink>
+          </div>
+          <div className="flex items-center justify-center sm:col-span-6">
+            <img src={lnrender} alt="A visual preview of planning, tracking, and collaboration" className="w-full max-w-[640px] object-contain drop-shadow-2xl transition-transform hover:scale-[1.02]" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhySection() {
+  return (
+    <section id="features" className="w-full bg-white py-8 sm:py-28">
+      <div className="mx-auto max-w-[1440px] space-y-6 px-8 sm:space-y-16 sm:px-12 lg:px-20">
+        <SectionIntro
+          eyebrow="Why Frietsync?"
+          title={<>Everything you need to<br />move work forward.</>}
+          description="Powerful features, a delightful experience, and the flexibility to fit any team. FrietSync helps you go from chaos to clarity without the busywork."
+        />
+        <div className="grid grid-cols-4 gap-2 sm:gap-6">
+          {featurePillars.map(({ icon: Icon, title, description }) => (
+            <article key={title} className="space-y-1 rounded-xl bg-transparent p-0 transition hover:border-sky-300 hover:shadow-lg sm:space-y-4 sm:rounded-3xl sm:border sm:border-slate-100 sm:bg-slate-50 sm:p-7">
+              <div className="flex h-7 w-7 items-center justify-center rounded-2xl text-[#007DFE] sm:h-12 sm:w-12 sm:bg-sky-100">
+                <Icon size={22} />
+              </div>
+              <h3 className="text-[7px] font-bold leading-snug text-slate-900 sm:text-lg">{title}</h3>
+              <p className="text-[7px] leading-tight text-slate-600 sm:text-sm sm:leading-relaxed">{description}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
