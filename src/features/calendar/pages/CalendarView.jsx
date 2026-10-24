@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { FiRefreshCw, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import CalendarHeader from '../components/CalendarHeader';
 import MonthView from '../components/MonthView';
@@ -54,8 +54,13 @@ const CalendarView = () => {
     initialIssue: null,
   });
 
+  const { currentUserProfile, refreshCurrentUserProfile } = useOutletContext() || {};
+
   // Google Calendar OAuth status
   const [isGoogleConnected, setIsGoogleConnected] = useState(() => {
+    if (typeof currentUserProfile?.googleConnected === 'boolean') {
+      return currentUserProfile.googleConnected;
+    }
     return (
       localStorage.getItem('frietSyncGoogleConnected') === 'true' ||
       new URLSearchParams(window.location.search).get('google') === 'connected'
@@ -63,6 +68,20 @@ const CalendarView = () => {
   });
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [googleNotice, setGoogleNotice] = useState(null);
+
+  // Synchronize Google connected status from profile
+  useEffect(() => {
+    if (currentUserProfile && typeof currentUserProfile.googleConnected === 'boolean') {
+      Promise.resolve().then(() => {
+        setIsGoogleConnected(currentUserProfile.googleConnected);
+      });
+      if (currentUserProfile.googleConnected) {
+        localStorage.setItem('frietSyncGoogleConnected', 'true');
+      } else {
+        localStorage.removeItem('frietSyncGoogleConnected');
+      }
+    }
+  }, [currentUserProfile]);
 
   // Check URL query parameters for Google OAuth callback results
   useEffect(() => {
@@ -73,6 +92,7 @@ const CalendarView = () => {
         Promise.resolve().then(() => {
           setIsGoogleConnected(true);
           setGoogleNotice({ type: 'success', message: 'Google Calendar successfully connected!' });
+          refreshCurrentUserProfile?.();
         });
       } else if (googleParam === 'denied') {
         Promise.resolve().then(() => {
@@ -87,7 +107,7 @@ const CalendarView = () => {
       newParams.delete('google');
       setSearchParams(newParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, refreshCurrentUserProfile]);
 
   // Load Projects
   useEffect(() => {
@@ -294,6 +314,7 @@ const CalendarView = () => {
       setIsGoogleConnected(false);
       localStorage.removeItem('frietSyncGoogleConnected');
       setGoogleNotice({ type: 'success', message: 'Google Calendar disconnected.' });
+      await refreshCurrentUserProfile?.();
     } catch (err) {
       setGoogleNotice({
         type: 'error',
