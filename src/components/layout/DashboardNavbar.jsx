@@ -13,6 +13,7 @@ import {
   FiMessageSquare,
   FiUserPlus,
   FiRefreshCw,
+  FiMenu,
 } from 'react-icons/fi';
 import { IoPersonCircle } from 'react-icons/io5';
 import { logoutUser } from '../../features/auth/services/authApi';
@@ -81,6 +82,8 @@ const DashboardNavbar = ({
   currentUserProfile,
   isLoadingUserProfile,
   unreadNotificationCount: initialUnreadCount,
+  onToggleMobileSidebar,
+  isMobileSidebarOpen = false,
 }) => {
   const navigate = useNavigate();
   const { isDarkMode, toggleTheme } = useTheme() || {};
@@ -90,6 +93,7 @@ const DashboardNavbar = ({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const mobileProfileMenuRef = useRef(null);
 
   // Notifications state
   const [localUnreadCount, setLocalUnreadCount] = useState(null);
@@ -287,7 +291,10 @@ const DashboardNavbar = ({
     if (!isProfileMenuOpen) return undefined;
 
     const handlePointerDown = (event) => {
-      if (!profileMenuRef.current?.contains(event.target)) {
+      if (
+        !profileMenuRef.current?.contains(event.target) &&
+        !mobileProfileMenuRef.current?.contains(event.target)
+      ) {
         setIsProfileMenuOpen(false);
       }
     };
@@ -320,7 +327,8 @@ const DashboardNavbar = ({
 
   return (
     <>
-      <header className="bg-white dark:bg-[#1f1f1f] border-b border-gray-200 dark:border-[#303030] px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
+      {/* Desktop Header */}
+      <header className="hidden md:flex bg-white dark:bg-[#1f1f1f] border-b border-gray-200 dark:border-[#303030] px-4 sm:px-8 py-3.5 items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="flex items-center gap-2 group">
             <img
@@ -604,6 +612,100 @@ const DashboardNavbar = ({
               </div>
             )}
           </div>
+        </div>
+      </header>
+
+      {/* Mobile Navbar Header */}
+      <header className="flex md:hidden bg-[#81ebfe] px-4 h-[54px] items-center justify-between sticky top-0 z-40 w-full shadow-xs select-none">
+        {/* Left: Hamburger Icon */}
+        <button
+          type="button"
+          onClick={onToggleMobileSidebar}
+          aria-label={isMobileSidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          className="flex items-center justify-center p-2 -ml-2 text-black hover:opacity-75 active:scale-95 transition cursor-pointer"
+        >
+          <FiMenu size={24} className="stroke-[2.5]" />
+        </button>
+
+        {/* Center: Logo + "Frietsync" */}
+        <Link to="/dashboard" className="flex items-center gap-2 select-none">
+          <img
+            src={logo}
+            alt="FrietSync Logo"
+            className="w-7 h-7 object-contain"
+          />
+          <span className="text-[22px] font-bold text-black tracking-tight font-sans">
+            Frietsync
+          </span>
+        </Link>
+
+        {/* Right: Circular Profile Avatar with White Border */}
+        <div className="relative" ref={mobileProfileMenuRef}>
+          <button
+            type="button"
+            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+            aria-label="Profile"
+            aria-haspopup="menu"
+            aria-expanded={isProfileMenuOpen}
+            className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-xs focus:outline-none cursor-pointer shrink-0 block"
+          >
+            {currentUserProfile?.profilePictureUrl ? (
+              <img
+                src={currentUserProfile.profilePictureUrl}
+                alt={currentUserProfile?.name || 'Profile'}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : (
+              <div className="w-full h-full bg-sky-300 flex items-center justify-center text-slate-800 font-bold text-xs">
+                {(currentUserProfile?.name || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
+          </button>
+
+          {isProfileMenuOpen && (
+            <div
+              role="menu"
+              aria-label="Profile menu"
+              className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-gray-200 dark:border-[#383838] bg-white dark:bg-[#252525] shadow-2xl z-50 animate-fadeIn text-left"
+            >
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-[#383838]">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                  {currentUserProfile?.name || 'Your account'}
+                </p>
+                {currentUserProfile?.email && (
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {currentUserProfile.email}
+                  </p>
+                )}
+              </div>
+              <Link
+                to="/dashboard/settings/profile"
+                role="menuitem"
+                onClick={() => setIsProfileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#303030] transition"
+              >
+                <FiUser size={16} /> Profile
+              </Link>
+              <Link
+                to="/dashboard/settings"
+                role="menuitem"
+                onClick={() => setIsProfileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#303030] transition"
+              >
+                <FiSettings size={16} /> Settings
+              </Link>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/30 transition disabled:opacity-50 text-left cursor-pointer"
+              >
+                <FiLogOut size={16} /> {isLoggingOut ? 'Logging out…' : 'Logout'}
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

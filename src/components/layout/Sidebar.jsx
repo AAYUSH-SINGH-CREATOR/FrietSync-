@@ -12,9 +12,16 @@ import {
   FiChevronsRight,
   FiChevronDown,
   FiChevronRight,
+  FiX,
+  FiSun,
+  FiMoon,
+  FiLogOut,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
 import { IoChatboxEllipsesOutline, IoMailOutline } from 'react-icons/io5';
+import logo from '../../assets/logo.svg';
+import { useTheme } from '../../context/ThemeContext';
+import { logoutUser } from '../../features/auth/services/authApi';
 
 const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
   <>
@@ -47,21 +54,36 @@ const Sidebar = ({
   projectFilter = 'all',
   setProjectFilter,
   pendingInviteCount = 0,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme() || {};
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !isCollapsed) {
-        setIsCollapsed(true);
+      if (e.key === 'Escape') {
+        if (!isCollapsed) setIsCollapsed(true);
+        if (isMobileOpen) onCloseMobile?.();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCollapsed]);
+  }, [isCollapsed, isMobileOpen, onCloseMobile]);
+
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileOpen]);
 
   const mainNavItems = [
     { id: 'dashboard', to: '/dashboard', end: true, label: 'Dashboard', icon: FiHome },
@@ -109,7 +131,7 @@ const Sidebar = ({
 
       <aside
         aria-label="Sidebar navigation"
-        className={`fixed left-2 sm:left-4 top-[74px] bottom-3 select-none z-40 transition-all duration-300 ease-in-out ${
+        className={`hidden md:flex fixed left-2 sm:left-4 top-[74px] bottom-3 select-none z-40 transition-all duration-300 ease-in-out ${
           isCollapsed ? 'w-[68px]' : 'w-64'
         }`}
       >
@@ -337,6 +359,172 @@ const Sidebar = ({
           </div>
         </div>
       </aside>
+
+      {/* Mobile Sidebar Overlay + Drawer */}
+      {isMobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden animate-fadeIn"
+            onClick={onCloseMobile}
+            aria-hidden="true"
+          />
+          <aside
+            aria-label="Mobile navigation drawer"
+            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#181818] border-r border-slate-200 dark:border-[#303030] shadow-2xl flex flex-col justify-between p-4 sm:p-5 md:hidden text-left select-none overflow-y-auto"
+          >
+            <div>
+              {/* Header with Logo and Close */}
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-[#2e2e2e]">
+                <div className="flex items-center gap-2.5">
+                  <img src={logo} alt="FrietSync Logo" className="w-7 h-7 object-contain" />
+                  <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">
+                    FrietSync
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onCloseMobile}
+                  aria-label="Close navigation"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#252525] transition cursor-pointer"
+                >
+                  <FiX size={19} />
+                </button>
+              </div>
+
+              {/* Main Nav Items */}
+              <nav className="mt-4 space-y-1">
+                {mainNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = checkIsActive(item);
+
+                  return (
+                    <div key={item.id}>
+                      <NavLink
+                        to={item.to}
+                        end={item.end}
+                        onClick={() => {
+                          if (item.hasSubmenu) {
+                            setIsProjectsExpanded((prev) => !prev);
+                          } else {
+                            onCloseMobile?.();
+                          }
+                        }}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer ${
+                          isActive
+                            ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-[#60A5FA] font-semibold'
+                            : 'text-slate-700 dark:text-[#d0d0d0] hover:bg-slate-100 dark:hover:bg-[#242424] hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon
+                            size={19}
+                            className={isActive ? 'text-sky-600 dark:text-[#60A5FA]' : 'text-slate-500 dark:text-[#999]'}
+                          />
+                          <span>{item.label}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {item.badge > 0 && (
+                            <span className="min-w-[18px] h-[18px] px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                              {item.badge}
+                            </span>
+                          )}
+                          {item.hasSubmenu && (
+                            isProjectsExpanded ? <FiChevronDown size={15} /> : <FiChevronRight size={15} />
+                          )}
+                        </div>
+                      </NavLink>
+
+                      {/* Submenu for Projects */}
+                      {item.hasSubmenu && isProjectsExpanded && (
+                        <div className="pl-9 pr-2 py-1 space-y-1">
+                          {item.subItems.map((sub) => (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => {
+                                setProjectFilter?.(sub.id);
+                                onCloseMobile?.();
+                                navigate('/dashboard/projects');
+                              }}
+                              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                                projectFilter === sub.id
+                                  ? 'text-sky-600 dark:text-sky-400 bg-sky-50/60 dark:bg-sky-950/20 font-semibold'
+                                  : 'text-slate-500 dark:text-[#a0a0a0] hover:text-slate-800 dark:hover:text-white'
+                              }`}
+                            >
+                              {sub.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+
+              {/* Divider */}
+              <div className="my-3.5 border-t border-slate-100 dark:border-[#2e2e2e]" />
+
+              {/* Bottom Nav Items */}
+              <div className="space-y-1">
+                {bottomNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = checkIsActive(item);
+
+                  return (
+                    <NavLink
+                      key={item.id}
+                      to={item.to}
+                      onClick={onCloseMobile}
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer ${
+                        isActive
+                          ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-[#60A5FA] font-semibold'
+                          : 'text-slate-700 dark:text-[#d0d0d0] hover:bg-slate-100 dark:hover:bg-[#242424] hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon
+                        size={19}
+                        className={isActive ? 'text-sky-600 dark:text-[#60A5FA]' : 'text-slate-500 dark:text-[#999]'}
+                      />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Actions: Theme Toggle & Logout */}
+            <div className="pt-3.5 border-t border-slate-100 dark:border-[#2e2e2e] space-y-1.5">
+              {toggleTheme && (
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#242424] transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    {isDarkMode ? <FiSun size={16} className="text-amber-400" /> : <FiMoon size={16} className="text-slate-600" />}
+                    <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">{isDarkMode ? 'Dark' : 'Light'}</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={async () => {
+                  onCloseMobile?.();
+                  await logoutUser();
+                  window.location.replace('/login');
+                }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer text-left"
+              >
+                <FiLogOut size={16} />
+                <span>Log out</span>
+              </button>
+            </div>
+          </aside>
+        </>
+      )}
     </>
   );
 };

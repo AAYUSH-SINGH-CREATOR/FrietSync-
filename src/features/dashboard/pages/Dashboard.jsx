@@ -40,6 +40,13 @@ const Dashboard = () => {
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [isLoadingUserProfile, setIsLoadingUserProfile] = useState(true);
   const [userProfileError, setUserProfileError] = useState('');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+
+  if (prevPathname !== location.pathname) {
+    setPrevPathname(location.pathname);
+    setIsMobileSidebarOpen(false);
+  }
 
   const refreshCurrentUserProfile = useCallback(async () => {
     setIsLoadingUserProfile(true);
@@ -129,20 +136,24 @@ const Dashboard = () => {
         unreadNotificationCount={unreadNotificationCount}
         currentUserProfile={currentUserProfile}
         isLoadingUserProfile={isLoadingUserProfile}
+        onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+        isMobileSidebarOpen={isMobileSidebarOpen}
       />
 
       <Sidebar
         projectFilter={projectFilter}
         setProjectFilter={setProjectFilter}
         pendingInviteCount={pendingInviteCount}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
       <div
         className={`flex-1 w-full min-w-0 ${
           isChat
-            ? 'pl-[76px] sm:pl-[88px] pr-2 sm:pr-4 pt-2 pb-2 sm:pb-2.5 flex flex-col min-h-0 min-w-0 overflow-hidden'
+            ? 'pl-0 md:pl-[76px] lg:pl-[88px] pr-2 sm:pr-4 pt-2 pb-2 sm:pb-2.5 flex flex-col min-h-0 min-w-0 overflow-hidden'
             : isFullWidthFeature
-            ? 'pl-[76px] sm:pl-[88px] pr-2 sm:pr-4 py-4 sm:py-5 lg:py-6'
-            : 'pl-[84px] sm:pl-[104px] pr-4 sm:pr-8 py-6'
+            ? 'pl-0 md:pl-[76px] lg:pl-[88px] px-3 sm:px-4 md:pr-4 py-3 sm:py-5 lg:py-6'
+            : 'pl-0 md:pl-[84px] lg:pl-[104px] px-4 sm:px-6 md:pr-8 py-4 sm:py-6'
         }`}
       >
         <main

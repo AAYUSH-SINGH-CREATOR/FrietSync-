@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { expireAuthSession, getAccessToken, refreshAccessToken } from './authApi';
 
+// Ensure credentials (cookies) are included on requests so refresh cookies work reliably
+axios.defaults.withCredentials = true;
+
 const isAuthEndpoint = (url = '') =>
   [
     '/auth/login',
@@ -13,7 +16,7 @@ const isAuthEndpoint = (url = '') =>
   ].some((path) => url.includes(path));
 
 const readBearerToken = (authorization = '') =>
-  String(authorization).replace(/^Bearer\s+/i, '').trim();
+  String(authorization || '').replace(/^Bearer\s+/i, '').trim();
 
 const isDefinitiveRefreshFailure = (error) =>
   [400, 401, 403].includes(error?.response?.status || error?.status);
@@ -24,7 +27,12 @@ axios.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    if (typeof config.headers.set === 'function') {
+      config.headers.set('Authorization', `Bearer ${token}`);
+    } else {
+      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -43,13 +51,22 @@ axios.interceptors.response.use(
     }
 
     const currentToken = getAccessToken();
-    const sentToken = readBearerToken(request.headers?.Authorization);
+    const sentAuth =
+      request.headers?.Authorization ||
+      request.headers?.authorization ||
+      (typeof request.headers?.get === 'function' ? request.headers.get('Authorization') : '');
+    const sentToken = readBearerToken(sentAuth);
 
     // Another request may already have refreshed the token while this 401 was in flight.
     if (currentToken && sentToken && currentToken !== sentToken) {
       request.__authRefreshRetried = true;
-      request.headers = request.headers || {};
-      request.headers.Authorization = `Bearer ${currentToken}`;
+      if (typeof request.headers?.set === 'function') {
+        request.headers.set('Authorization', `Bearer ${currentToken}`);
+      } else {
+        request.headers = request.headers || {};
+        request.headers.Authorization = `Bearer ${currentToken}`;
+        request.headers.authorization = `Bearer ${currentToken}`;
+      }
       return axios.request(request);
     }
 
@@ -63,8 +80,13 @@ axios.interceptors.response.use(
         return Promise.reject(tokenError);
       }
 
-      request.headers = request.headers || {};
-      request.headers.Authorization = `Bearer ${refreshedToken}`;
+      if (typeof request.headers?.set === 'function') {
+        request.headers.set('Authorization', `Bearer ${refreshedToken}`);
+      } else {
+        request.headers = request.headers || {};
+        request.headers.Authorization = `Bearer ${refreshedToken}`;
+        request.headers.authorization = `Bearer ${refreshedToken}`;
+      }
       return axios.request(request);
     } catch (refreshError) {
       if (isDefinitiveRefreshFailure(refreshError)) {

@@ -105,17 +105,15 @@ export const initializeAccessTokenRefresh = () => {
   const token = getAccessToken();
   if (!token) return;
 
-  // Older saved tokens may lack an expiry timestamp. Refresh once on startup
-  // so the app can establish a reliable schedule from the new access token.
-  if (!getTokenExpiry(token) && !localStorage.getItem('frietSyncTokenIssuedAt')) {
+  const expiry = getTokenExpiry(token);
+  const now = Date.now();
+
+  // If token is already expired according to JWT exp, proactively refresh
+  if (expiry && expiry <= now) {
     refreshAccessToken().catch((error) => {
       const status = error?.response?.status || error?.status;
-      if ([400, 401, 403].includes(status)) expireAuthSession();
-      else if (getAccessToken()) {
-        scheduledRefreshTimeout = window.setTimeout(
-          () => scheduleAccessTokenRefresh(),
-          ACCESS_TOKEN_REFRESH_RETRY_MS
-        );
+      if ([400, 401, 403].includes(status)) {
+        expireAuthSession();
       }
     });
     return;
@@ -264,7 +262,12 @@ export const refreshAccessToken = () => {
         withCredentials: true,
       });
       const data = response.data;
-      const newToken = data.accessToken;
+      const newToken =
+        data?.accessToken ||
+        data?.token ||
+        data?.data?.accessToken ||
+        data?.data?.token ||
+        (typeof data === 'string' && data.startsWith('ey') ? data.trim() : null);
 
       if (!newToken) {
         const error = new Error('Refresh response did not include an access token.');
