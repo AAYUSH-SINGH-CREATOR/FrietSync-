@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiArrowDown, FiArrowRight, FiBarChart2, FiCheck, FiGithub, FiGlobe, FiLinkedin, FiSend, FiSettings, FiTwitter, FiUsers, FiZap} from 'react-icons/fi';
+import { FiArrowDown, FiArrowRight, FiBarChart2, FiCheck, FiSend, FiSettings, FiUsers, FiZap } from 'react-icons/fi';
+import { AiFillBug } from 'react-icons/ai';
 import { getAccessToken } from '../../../features/auth/services/authApi';
 import lnheroimg from '../../../assets/lnheroimg.png';
 import lnrender from '../../../assets/lnrender.png';
@@ -8,8 +9,6 @@ import lncard1 from '../../../assets/lncard1.jpg';
 import lncard2 from '../../../assets/lncard2.webp';
 import lncard3 from '../../../assets/lncard3.webp';
 import lncard4 from '../../../assets/lncard4.jpg';
-import lnlaptopMockup from '../../../assets/lnlaptop_mockup.png';
-import lnissuesPreview from '../../../assets/lnissues_preview.png';
 import lnuser1 from '../../../assets/lnuser1.png';
 import lnuser2 from '../../../assets/lnuser2.png';
 import lnuser3 from '../../../assets/lnuser3.png';
@@ -82,13 +81,6 @@ const workspaceTools = [ ['Backlog', '#FF5259'], ['Kanban charts', '#70D982'], [
 const showcaseCards = [lncard1, lncard2, lncard3, lncard4, lncard1, lncard2];
 const roleCards = ['Project manager', 'Reporter', 'Senior Designer', 'Full-Stack Developer'];
 
-const socialLinks = [
-  { label: 'GitHub', href: 'https://github.com', Icon: FiGithub },
-  { label: 'Twitter / X', href: 'https://twitter.com', Icon: FiTwitter },
-  { label: 'LinkedIn', href: 'https://linkedin.com', Icon: FiLinkedin },
-  { label: 'Website', href: 'https://frietsync.me', Icon: FiGlobe },
-];
-
 const ArrowLink = ({ to = '/signup', children, className = '' }) => (
   <Link
     to={to}
@@ -142,7 +134,7 @@ const LandingPage = () => {
     <div className="min-h-screen w-full overflow-x-hidden bg-white font-sans text-slate-900 antialiased selection:bg-sky-200 selection:text-slate-900">
       <Header isAuthenticated={isAuthenticated} scrolled={scrolled} scrollToSection={scrollToSection} />
       <main>
-        <Hero isAuthenticated={isAuthenticated} scrollToSection={scrollToSection} />
+        <Hero scrollToSection={scrollToSection} />
         <AboutSection />
         <PlanSection />
         <WhySection />
@@ -151,7 +143,7 @@ const LandingPage = () => {
         <ShowcaseSection />
         <ProductCardsSection tasks={tasks} completedCount={completedCount} toggleTask={toggleTask} />
       </main>
-      <Footer scrollToSection={scrollToSection} />
+      <Footer />
     </div>
   );
 };
@@ -184,7 +176,7 @@ function Header({ isAuthenticated, scrolled, scrollToSection }) {
   );
 }
 
-function Hero({ isAuthenticated, scrollToSection }) {
+function Hero({ scrollToSection }) {
   return (
     <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#6EB0EF] via-[#8195EF] to-[#74A7EF] pb-8 pt-12 sm:pb-24 sm:pt-36">
       <div className="pointer-events-none absolute left-1/2 top-0 h-[700px] w-[1440px] -translate-x-1/2 select-none opacity-80">
@@ -313,3 +305,195 @@ function WhySection() {
     </section>
   );
 }
+
+function TestimonialsSection() {
+  return (
+    <section className="w-full rounded-t-[24px] bg-[#FFA7CE] py-8 sm:py-28">
+      <div className="mx-auto max-w-[1440px] space-y-5 px-8 sm:space-y-16 sm:px-12 lg:px-20">
+        <h2 className="mx-auto max-w-3xl text-center text-[16px] font-semibold leading-tight text-slate-900 sm:text-5xl">
+          See how teams bring their projects, people, and ideas together with Frietsync.
+        </h2>
+        <div className="grid grid-cols-3 gap-2 sm:gap-8">
+          {testimonials.map((testimonial) => (
+            <article key={testimonial.name} className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm transition hover:shadow-md sm:space-y-6 sm:rounded-3xl sm:p-8">
+              <div className="space-y-2 sm:space-y-4">
+                <div aria-label="5 out of 5 stars" className="select-none text-[7px] tracking-widest text-amber-400 sm:text-lg">★★★★★</div>
+                <p className="text-[6px] italic leading-tight text-slate-700 sm:text-base sm:leading-relaxed">“{testimonial.quote}”</p>
+              </div>
+              <div className="flex items-center gap-1 border-t border-slate-100 pt-1 sm:gap-3 sm:pt-4">
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[6px] font-bold text-white shadow-sm sm:h-10 sm:w-10 sm:text-sm ${testimonial.color}`}>
+                  {testimonial.initial}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="truncate text-[6px] font-bold text-slate-900 sm:text-sm">{testimonial.name}</h3>
+                  <p className="text-[6px] text-slate-500 sm:text-xs">{testimonial.title}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function QuickAccessSection() {
+  return (
+    <section className="w-full bg-white py-8 sm:py-28">
+      <div className="mx-auto max-w-[1440px] space-y-6 px-8 text-center sm:space-y-12 sm:px-12 lg:px-20">
+        <h2 className="text-[16px] font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Quickly access<br />what you need frequently</h2>
+        <div className="mx-auto grid max-w-4xl grid-cols-3 items-center justify-items-center gap-x-1 gap-y-2 pt-1 sm:flex sm:flex-wrap sm:justify-center sm:gap-4 sm:pt-4">
+          {workspaceTools.map(([label, color]) => (
+            <div key={label} className="inline-flex items-center gap-1 rounded-md border border-slate-200/80 bg-slate-100 px-2 py-1 text-[7px] font-semibold text-slate-800 shadow-xs transition hover:bg-slate-200 sm:gap-2.5 sm:rounded-full sm:px-5 sm:py-2.5 sm:text-sm">
+              <span className="h-1.5 w-1.5 rounded-full shadow-xs sm:h-2.5 sm:w-2.5" style={{ backgroundColor: color }} />
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ShowcaseSection() {
+  return (
+    <section className="w-full overflow-hidden bg-[#C1E8FF] py-8 sm:py-28">
+      <div className="mx-auto max-w-[1440px] space-y-5 px-0 text-center sm:space-y-12 sm:px-12">
+        <h2 className="text-[16px] font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">One Platform. Endless Possibilities</h2>
+        <div className="flex flex-nowrap items-center justify-center gap-2 overflow-hidden pb-2 pt-1 sm:gap-6 sm:overflow-x-auto sm:pb-4 sm:pt-4">
+          {showcaseCards.map((image, index) => (
+            <div key={`${image}-${index}`} className={`w-[82px] shrink-0 overflow-hidden rounded-lg border border-white/40 shadow-lg transition duration-300 hover:-translate-y-2 sm:w-[220px] sm:rounded-2xl ${index > 2 ? 'hidden sm:block' : ''} ${index % 2 ? '-translate-y-1 sm:-translate-y-3' : ''}`}>
+              <img src={image} alt={`Frietsync platform feature ${index + 1}`} className="h-auto w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductCardsSection({ tasks, completedCount, toggleTask }) {
+  return (
+    <section className="w-full bg-white py-8 sm:py-28">
+      <div className="mx-auto max-w-[1440px] space-y-5 px-8 sm:space-y-16 sm:px-12 lg:px-20">
+        <h2 className="text-center text-[16px] font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Simplify work. Amplify progress.</h2>
+        <div className="grid grid-cols-3 gap-2 sm:gap-8">
+          <ChatCard />
+          <ChecklistCard tasks={tasks} completedCount={completedCount} toggleTask={toggleTask} />
+          <RolesCard />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductCard({ title, color, children }) {
+  return (
+    <article className={`flex flex-col justify-between space-y-2 rounded-lg border p-2 shadow-lg sm:space-y-6 sm:rounded-[32px] sm:p-8 ${color}`}>
+      <div className="space-y-2 sm:space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[7px] font-semibold text-slate-950 sm:text-2xl">{title}</h3>
+          <span className="flex h-3 w-3 items-center justify-center rounded-full bg-black/10 sm:h-7 sm:w-7">
+            <FiArrowRight className="text-slate-900 sm:hidden" size={7} />
+            <FiArrowRight className="hidden text-slate-900 sm:block" size={14} />
+          </span>
+        </div>
+        {children}
+      </div>
+    </article>
+  );
+}
+
+function ChatCard() {
+  return (
+    <ProductCard title="Real-time team chat" color="border-pink-300/60 bg-[#FFAACF]">
+      <div className="space-y-2 pt-1 sm:space-y-3 sm:pt-2">
+        <div className="flex items-start gap-1 sm:gap-2.5">
+          <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[5px] font-bold text-white sm:h-7 sm:w-7 sm:text-[11px]">DJ</span>
+          <p className="max-w-[220px] rounded-lg bg-white/90 p-1 text-[6px] leading-tight text-slate-900 shadow-xs sm:rounded-2xl sm:rounded-tl-sm sm:p-3 sm:text-xs sm:leading-relaxed">
+            can you tell me the deadline for the task submission ?
+          </p>
+        </div>
+        <div className="flex items-start justify-end gap-1 sm:gap-2.5">
+          <p className="max-w-[220px] rounded-lg bg-slate-900 p-1 text-[6px] leading-tight text-white shadow-xs sm:rounded-2xl sm:rounded-tr-sm sm:p-3 sm:text-xs sm:leading-relaxed">Sure, its on Monday next week</p>
+          <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[5px] font-bold text-white sm:h-7 sm:w-7 sm:text-[11px]">SV</span>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center gap-1 rounded-full border border-white/60 bg-white/90 px-2 py-1 shadow-sm sm:mt-4 sm:gap-2 sm:px-4 sm:py-2.5">
+        <span className="flex-1 text-[6px] text-slate-400 sm:text-xs">Type here....</span>
+        <span className="flex h-3 w-3 items-center justify-center rounded-full bg-sky-500 text-white shadow-xs sm:h-6 sm:w-6"><FiSend size={8} className="sm:hidden" /><FiSend size={11} className="ml-0.5 hidden sm:block" /></span>
+      </div>
+    </ProductCard>
+  );
+}
+
+function ChecklistCard({ tasks, completedCount, toggleTask }) {
+  return (
+    <ProductCard title="Keep tasks organized" color="border-amber-300/60 bg-[#FFF2A1]">
+      <div className="space-y-1 rounded-lg bg-white/90 p-1 shadow-sm sm:space-y-4 sm:rounded-2xl sm:p-5">
+        <div className="flex items-center justify-between text-[6px] font-bold text-slate-900 sm:text-xs">
+          <span>Checklist</span>
+          <span className="text-slate-500">{completedCount} / {tasks.length} completed</span>
+        </div>
+        <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200 sm:h-2">
+          <div className="h-full rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${(completedCount / tasks.length) * 100}%` }} />
+        </div>
+        <div className="space-y-1 pt-1 sm:space-y-2">
+          {tasks.map((task) => (
+            <button key={task.id} type="button" onClick={() => toggleTask(task.id)} className="flex w-full cursor-pointer select-none items-center gap-1 text-left text-[6px] text-slate-800 transition hover:text-slate-950 sm:gap-2.5 sm:text-xs">
+              <span className={`flex h-2 w-2 items-center justify-center rounded-sm text-[6px] transition sm:h-4 sm:w-4 sm:rounded-md sm:text-[10px] ${task.completed ? 'bg-emerald-500 text-white' : 'border border-slate-300 bg-white'}`}>
+                {task.completed && <FiCheck size={8} />}
+              </span>
+              <span className={task.completed ? 'font-medium text-slate-400 line-through' : 'font-semibold text-slate-800'}>{task.text}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="text-[6px] font-semibold text-slate-700 sm:text-xs">
+        <span className="sm:hidden">Tap tasks to check them.</span>
+        <span className="hidden sm:inline">Click tasks above to interact with the live checklist!</span>
+      </p>
+    </ProductCard>
+  );
+}
+
+function RolesCard() {
+  return (
+    <ProductCard title="Made for everyone" color="border-sky-300/60 bg-[#C1E8FF]">
+      <div className="grid grid-cols-2 gap-1 pt-1 sm:gap-3 sm:pt-2">
+        {roleCards.map((role) => (
+          <div key={role} className="flex h-9 flex-col justify-between rounded-md bg-white/90 p-1 shadow-xs transition hover:bg-white sm:h-24 sm:rounded-2xl sm:p-4">
+            <span className="h-1 w-1 rounded-full bg-sky-500 sm:h-2.5 sm:w-2.5" />
+            <span className="text-[6px] font-bold leading-snug text-slate-900 sm:text-xs">{role}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[6px] font-medium leading-relaxed text-slate-700 sm:text-xs">Tailored views, permission controls, and notifications built for every team role.</p>
+    </ProductCard>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="w-full bg-[#FFF6C2] px-3 py-6 text-black sm:px-8 sm:py-7">
+      <div className="mx-auto flex max-w-[1440px] flex-nowrap items-center justify-between gap-1 text-[9px] font-normal sm:gap-6 sm:text-xl">
+        <RibbonItem Icon={FiZap}>Organize Projects</RibbonItem>
+        <RibbonItem Icon={FiUsers}>Collaborate with teams</RibbonItem>
+        <RibbonItem Icon={FiBarChart2}>Track real progress</RibbonItem>
+        <RibbonItem Icon={AiFillBug}>Resolve issues</RibbonItem>
+      </div>
+    </footer>
+  );
+}
+
+function RibbonItem({ Icon, children }) {
+  return (
+    <div className="flex items-center gap-1 whitespace-nowrap sm:gap-2">
+      <Icon size={10} className="shrink-0 sm:hidden" />
+      <Icon size={19} className="hidden shrink-0 sm:block" />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+export default LandingPage;
