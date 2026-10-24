@@ -16,6 +16,8 @@ import { getPriorityBadge, getStatusBadge } from '../utils/issueUtils';
 import CreateIssueModal from './CreateIssueModal';
 import IssueDetailsView from './IssueDetailsView';
 import KanbanBoardView from './KanbanBoardView';
+import EmptyState from '../../../components/ui/EmptyState';
+import esissues from '../../../assets/esissues.png';
 
 const PAGE_SIZE = 20;
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
@@ -368,6 +370,55 @@ const IssuesView = () => {
           currentUserProfile={currentUserProfile}
         />
       </section>
+    );
+  }
+
+  if (!isLoadingIssues && !error && filteredIssues.length === 0) {
+    return (
+      <>
+        <section className="min-h-[calc(100vh-7.5rem)] rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7">
+          <EmptyState
+            title="Issues"
+            subtitle={issues.length === 0
+              ? 'No issues yet. Create an issue to start tracking work.'
+              : 'No issues match your current search or filters.'}
+            illustration={esissues}
+            illustrationAlt="No issues yet"
+            actionButton={issues.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('all');
+                  setProjectFilter('all');
+                  setStatusFilter('all');
+                  setPriorityFilter('all');
+                  setAssigneeFilter('all');
+                  setSearchQuery('');
+                  setPage(0);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                <FiRefreshCw size={15} /> Reset filters
+              </button>
+            ) : canCreateIssue ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                <FiPlus size={16} /> Create Issue
+              </button>
+            ) : null}
+          />
+        </section>
+        <CreateIssueModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          projects={projects}
+          defaultProjectId={projectFilter !== 'all' ? projectFilter : projects[0]?.id || projects[0]?._id || ''}
+          onIssueCreated={handleIssueCreated}
+        />
+      </>
     );
   }
 

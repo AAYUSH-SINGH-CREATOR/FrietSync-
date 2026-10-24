@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FiArrowLeft, FiEdit2, FiTrash2, FiCheckCircle, FiCheck, FiUserPlus,
-  FiPaperclip, FiDownload, FiPlus, FiX, FiActivity, FiRefreshCw,
+  FiPaperclip, FiDownload, FiX, FiActivity, FiRefreshCw,
   FiAlertCircle, FiClock, FiCalendar, FiSend,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
@@ -379,18 +379,18 @@ const IssueDetailsView = ({
           </div>
         </div>
 
-        {/* Action Button from Screenshot (Add Log + / Quick Action) */}
-        <button
-          type="button"
-          onClick={() => {
-            if (isManager) setIsAssignOpen(true);
-            else if (!isAssignee && !myRequest) runAction('req', () => requestIssueAssignment(issueId, 'Interested in taking this task.'), 'Assignment requested!');
-            else setIsEditOpen(true);
-          }}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
-        >
-          {isManager ? <><FiUserPlus size={15} /> Assign Member</> : !isAssignee ? <><FiSend size={15} /> Request Task</> : <><FiPlus size={15} /> Add Log</>}
-        </button>
+        {(isManager || !isAssignee) && (
+          <button
+            type="button"
+            onClick={() => {
+              if (isManager) setIsAssignOpen(true);
+              else if (!myRequest) runAction('req', () => requestIssueAssignment(issueId, 'Interested in taking this task.'), 'Assignment requested!');
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
+          >
+            {isManager ? <><FiUserPlus size={15} /> Assign Member</> : <><FiSend size={15} /> Request Task</>}
+          </button>
+        )}
       </div>
 
       {/* 3. Main 2-Column Responsive Grid (Left / Right Cards) */}

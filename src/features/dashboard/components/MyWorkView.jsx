@@ -18,6 +18,8 @@ import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import SprintDetailsView from '../../sprints/components/SprintDetailsView';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
+import EmptyState from '../../../components/ui/EmptyState';
+import esmywork from '../../../assets/esmywork.png';
 
 const PAGE_SIZE = 10;
 const normalize = (value) => String(value || '').toUpperCase().replace(/[\s-]+/g, '_');
@@ -509,6 +511,38 @@ const MyWorkView = () => {
         />
         {issueDetailsModal}
       </div>
+    );
+  }
+
+  if (!isLoading && !error && sortedTasks.length === 0) {
+    return (
+      <main className="min-h-full p-4 text-slate-900 dark:text-slate-100 sm:p-6 lg:p-8">
+        <EmptyState
+          title="My Work"
+          subtitle={tasks.length === 0 ? 'No work assigned yet.' : 'No work items match your current filters.'}
+          illustration={esmywork}
+          illustrationAlt="No work assigned yet"
+          illustrationClassName="max-w-[500px] sm:max-w-[580px] md:max-w-[620px]"
+          actionButton={tasks.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setTypeFilter('all');
+                setSearchQuery('');
+                setStatusFilter('all');
+                setPriorityFilter('all');
+                setProjectFilter('all');
+                setAssigneeFilter('all');
+                setSortOrder('due-asc');
+                setPage(0);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+            >
+              <FiRefreshCw size={15} /> Reset filters
+            </button>
+          ) : null}
+        />
+      </main>
     );
   }
 

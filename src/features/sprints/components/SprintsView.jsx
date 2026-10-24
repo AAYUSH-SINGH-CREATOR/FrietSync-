@@ -27,6 +27,8 @@ import SprintsTable from './SprintsTable';
 import SprintsBoard from './SprintsBoard';
 import SprintDetailsView from './SprintDetailsView';
 import CreateEditSprintModal from './CreateEditSprintModal';
+import EmptyState from '../../../components/ui/EmptyState';
+import essprints from '../../../assets/essprints.png';
 
 const getCollection = (value, keys) => {
   const containers = [value, value?.data, value?.result];
@@ -421,6 +423,61 @@ const SprintsView = () => {
           }}
         />
       </section>
+    );
+  }
+
+  const hasNoSprintsToShow = !projectsLoading && !projectsError && !sprintsLoading && !sprintsError &&
+    (projects.length === 0 || (projectId && filteredSprints.length === 0));
+  if (hasNoSprintsToShow) {
+    const hasNoProjects = projects.length === 0;
+    return (
+      <>
+        <section className="min-h-[calc(100vh-7.5rem)] rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7">
+          <EmptyState
+            title="Sprints"
+            subtitle={hasNoProjects
+              ? 'Create or join a project to start planning sprints.'
+              : sprints.length === 0
+              ? 'No sprints yet. Create a sprint to plan your next delivery.'
+              : 'No sprints match your current search or filters.'}
+            illustration={essprints}
+            illustrationAlt="No sprints yet"
+            actionButton={!hasNoProjects && sprints.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setAssigneeFilter('all');
+                  setPage(0);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                <FiRefreshCw size={15} /> Reset filters
+              </button>
+            ) : !hasNoProjects && canCreateSprint ? (
+              <button
+                type="button"
+                onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                <FiPlus size={16} /> Create Sprint
+              </button>
+            ) : null}
+          />
+        </section>
+        <CreateEditSprintModal
+          isOpen={isCreateEditOpen && !sprintToEdit && canCreateSprint && Boolean(projectId)}
+          onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
+          projectId={projectId}
+          projectName={currentProject?.name}
+          sprintToEdit={sprintToEdit}
+          onSprintSaved={() => {
+            loadSprints();
+            showToast('success', 'Sprint created.');
+          }}
+        />
+      </>
     );
   }
 

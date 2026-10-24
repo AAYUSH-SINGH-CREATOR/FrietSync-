@@ -15,6 +15,8 @@ import {
 import { getMyProjects, getProjectMembers, getFriendlyErrorMessage } from '../services/projectApi';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import CreateProjectModal from '../components/CreateProjectModal';
+import EmptyState from '../../../components/ui/EmptyState';
+import esproject from '../../../assets/esproject.png';
 import { canCreateProject, formatDate, getProjectProgress } from '../utils/projectUtils';
 const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
   const navigate = useNavigate();
@@ -167,6 +169,41 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
     });
   }, [projects, filter, searchQuery, sortOrder]);
 
+  if (!isLoading && !error && filteredProjects.length === 0) {
+    return (
+      <>
+        <div className="px-3 sm:px-6 lg:px-8">
+          <EmptyState
+            title="Projects"
+            subtitle={projects.length === 0
+              ? "No projects yet. Create one to organize your team's work."
+              : 'No projects match your current search or filters.'}
+            illustration={esproject}
+            illustrationAlt="No projects yet"
+            onCreateProject={() => setIsCreateModalOpen(true)}
+            actionButton={projects.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  onFilterChange?.('all');
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                <FiRefreshCw size={15} /> Show all projects
+              </button>
+            ) : null}
+          />
+        </div>
+        <CreateProjectModal
+          isOpen={canCreateProjectButton && isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onProjectCreated={handleProjectCreated}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
       {/* Top Header */}
@@ -317,7 +354,10 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
       {/* Loading Skeleton */}
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div
+          className="grid gap-5 sm:gap-6"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 300px))' }}
+        >
           {[1, 2, 3].map((n) => (
             <div
               key={n}
@@ -347,60 +387,12 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
       )}
 
-      {/* Empty State: No Projects Created Yet */}
-      {!isLoading && projects.length === 0 && (
-        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-[#303030] shadow-md shadow-slate-200/50 dark:shadow-none text-center max-w-2xl mx-auto my-6">
-          <div className="w-20 h-20 rounded-3xl bg-sky-50 dark:bg-blue-950/40 text-sky-600 dark:text-[#60A5FA] mx-auto flex items-center justify-center mb-5 shadow-xs">
-            <FiFolder size={36} />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-[#F1F5F9] mb-2">
-            No Projects Yet
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-[#b3b3b3] max-w-md mx-auto leading-relaxed mb-6">
-            Get started by adding your first project to organize issues, sprints,
-            deadlines, and collaborate with your team.
-          </p>
-          {canCreateProjectButton && (
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer"
-            >
-              <FiPlus size={18} />
-              <span>Create Your First Project</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Empty State: Search/Filter returned 0 results */}
-      {!isLoading && projects.length > 0 && filteredProjects.length === 0 && (
-        <div className="bg-white dark:bg-[#1d1d1d] rounded-3xl p-8 border border-slate-200/80 dark:border-[#303030] text-center max-w-lg mx-auto my-6">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#242424] text-slate-400 dark:text-[#858585] mx-auto flex items-center justify-center mb-3">
-            <FiSearch size={22} />
-          </div>
-          <h3 className="text-base font-bold text-slate-800 dark:text-[#F1F5F9] mb-1">
-            No matching projects found
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-[#b3b3b3] mb-4">
-            No projects matched your search query or filter. Try clearing or modifying your filters.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery('');
-              if (onFilterChange) onFilterChange('all');
-            }}
-            className="text-xs font-semibold text-sky-600 dark:text-[#60A5FA] hover:text-sky-700 dark:hover:text-[#d7d0ff] cursor-pointer"
-          >
-            Reset Filters
-          </button>
-        </div>
-      )}
-
       {/* Projects Grid */}
       {!isLoading && filteredProjects.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        <div
+          className="grid gap-5 sm:gap-6"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 300px))' }}
+        >
           {filteredProjects.map((project, idx) => {
             const projectId = project.id || project._id || project.projectId;
             const stats = projectStats[String(projectId)] || {};
