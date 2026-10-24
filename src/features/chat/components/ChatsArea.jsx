@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import {
   FiSend,
   FiMoreVertical,
@@ -42,6 +42,9 @@ const ChatArea = ({
   onOpenGroupDetails,
   connectionStatus = 'disconnected',
   isLoadingMessages = false,
+  hasOlderMessages = false,
+  isLoadingOlder = false,
+  onLoadOlder,
   currentUser: currentUserProp,
 }) => {
   const [inputText, setInputText] = useState('');
@@ -56,12 +59,47 @@ const ChatArea = ({
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const pendingScrollRef = useRef(null);
+  const currentChatIdRef = useRef(activeChat?.id);
 
   const currentUser = currentUserProp || getCurrentChatUser();
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (currentChatIdRef.current !== activeChat?.id) {
+      currentChatIdRef.current = activeChat?.id;
+      pendingScrollRef.current = null;
+      container.scrollTop = container.scrollHeight;
+      return;
+    }
+
+    if (pendingScrollRef.current) {
+      container.scrollTop = pendingScrollRef.current.scrollTop + container.scrollHeight - pendingScrollRef.current.scrollHeight;
+      pendingScrollRef.current = null;
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages, activeChat?.id]);
+
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (container.scrollTop <= 60 && hasOlderMessages && !isLoadingOlder) {
+      pendingScrollRef.current = {
+        scrollTop: container.scrollTop,
+        scrollHeight: container.scrollHeight,
+      };
+      Promise.resolve(onLoadOlder?.()).then((loaded) => {
+        if (!loaded) {
+          pendingScrollRef.current = null;
+        }
+      });
+    }
+  }, [hasOlderMessages, isLoadingOlder, onLoadOlder]);
 
   useEffect(() => {
     const handleOutside = (e) => {
@@ -312,7 +350,16 @@ const ChatArea = ({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden no-scrollbar p-3.5 sm:p-5 space-y-3.5">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden no-scrollbar p-3.5 sm:p-5 space-y-3.5"
+      >
+        {isLoadingOlder && (
+          <div className="flex justify-center py-2 shrink-0">
+            <span className="w-4 h-4 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin" />
+          </div>
+        )}
         {isLoadingMessages ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
             <span className="w-5 h-5 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-2" />

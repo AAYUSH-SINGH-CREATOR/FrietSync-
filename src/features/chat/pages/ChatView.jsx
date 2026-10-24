@@ -20,6 +20,9 @@ const ChatsView = () => {
 
   const [projects, setProjects] = useState([]);
   const [messagesMap, setMessagesMap] = useState({});
+  const [nextHistoryPage, setNextHistoryPage] = useState({});
+  const [hasOlderMessages, setHasOlderMessages] = useState({});
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState(urlProjectId || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(Boolean(urlProjectId));
@@ -31,6 +34,7 @@ const ChatsView = () => {
 
   const stompClientRef = useRef(null);
   const unsubscribeRef = useRef(null);
+  const olderRequestsRef = useRef(new Set());
 
   const currentUser = useMemo(() => ({ ...getCurrentChatUser(), profilePictureUrl: currentUserProfile?.profilePictureUrl || '' }), [currentUserProfile]);
 
@@ -172,7 +176,7 @@ const ChatsView = () => {
     const projectId = activeProjectId;
     let isMounted = true;
 
-    getProjectChatMessages(projectId, 50)
+    getProjectChatMessages(projectId, 0, 50)
       .then((serverMessages) => {
         if (!isMounted) return;
 
@@ -198,17 +202,16 @@ const ChatsView = () => {
           setMessagesMap((prev) => {
             const currentList = prev[projectId] || [];
             const combinedMap = new Map();
-            normalized.forEach((m) => combinedMap.set(m.id, m));
             currentList.forEach((m) => {
-              if (!combinedMap.has(m.id)) {
-                combinedMap.set(m.id, m);
-              }
+              combinedMap.set(String(m.id), m);
             });
+            normalized.forEach((m) => combinedMap.set(String(m.id), m));
             return {
               ...prev,
               [projectId]: Array.from(combinedMap.values()),
             };
           });
+          setHasOlderMessages((prev) => (prev[projectId] === undefined ? { ...prev, [projectId]: normalized.length === 50 } : prev));
 
           if (normalized.length > 0) {
             const last = normalized[normalized.length - 1];
@@ -318,6 +321,47 @@ const ChatsView = () => {
     }
   };
 
+  const loadOlderMessages = async () => {
+    if (!activeProjectId || isLoadingOlder || olderRequestsRef.current.has(activeProjectId) || !hasOlderMessages[activeProjectId]) return;
+    const page = nextHistoryPage[activeProjectId] || 1;
+    olderRequestsRef.current.add(activeProjectId);
+    setIsLoadingOlder(true);
+    try {
+      const serverMessages = await getProjectChatMessages(activeProjectId, page, 50);
+      const older = serverMessages.map((msg) => {
+        const outgoing = isOutgoingMessage(msg);
+        return {
+          id: msg.id || `${msg.createdAt || msg.timestamp}-${msg.senderId || msg.senderEmail}-${msg.content || msg.message}`,
+          sender: outgoing ? 'You' : msg.senderName || msg.senderEmail || 'Member',
+          senderId: msg.senderId,
+          senderEmail: msg.senderEmail,
+          senderAvatar: msg.senderProfilePictureUrl || msg.profilePictureUrl || msg.avatarUrl || '',
+          pollId: msg.pollId || msg.poll?.id || msg.poll?._id || msg.metadata?.pollId || msg.metadata?.poll?.id,
+          poll: msg.poll || msg.metadata?.poll,
+          metadata: msg.metadata,
+          type: msg.type || msg.messageType,
+          text: msg.content || msg.message || '',
+          timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
+          isOutgoing: outgoing,
+        };
+      });
+      setMessagesMap((prev) => {
+        const merged = new Map();
+        [...older, ...(prev[activeProjectId] || [])].forEach((message) => merged.set(String(message.id), message));
+        return { ...prev, [activeProjectId]: Array.from(merged.values()) };
+      });
+      setNextHistoryPage((prev) => ({ ...prev, [activeProjectId]: page + 1 }));
+      setHasOlderMessages((prev) => ({ ...prev, [activeProjectId]: older.length === 50 }));
+      return older.length > 0;
+    } catch (error) {
+      showToast('error', error.message || 'Failed to load older messages.');
+      return false;
+    } finally {
+      olderRequestsRef.current.delete(activeProjectId);
+      setIsLoadingOlder(false);
+    }
+  };
+
   const handleSendMessage = (text) => {
     if (!activeChat || !text || !text.trim()) return false;
 
@@ -406,6 +450,9 @@ const ChatsView = () => {
             onBackToList={() => setIsMobileThreadOpen(false)}
             connectionStatus={connectionStatus}
             isLoadingMessages={isLoadingMessages}
+            hasOlderMessages={hasOlderMessages[activeProjectId]}
+            isLoadingOlder={isLoadingOlder}
+            onLoadOlder={loadOlderMessages}
             currentUser={currentUser}
           />
         </div>
