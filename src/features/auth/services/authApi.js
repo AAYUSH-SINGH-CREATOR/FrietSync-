@@ -4,7 +4,7 @@ import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 export { getFriendlyErrorMessage };
 
-const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 10 * 60_000;
+const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 14 * 60_000;
 const ACCESS_TOKEN_REFRESH_RETRY_MS = 30_000;
 let refreshRequestPromise = null;
 let scheduledRefreshTimeout = null;
@@ -75,7 +75,9 @@ export const scheduleAccessTokenRefresh = (token = getAccessToken()) => {
   const storedIssueTime = Number(localStorage.getItem('frietSyncTokenIssuedAt'));
   const refreshAt = storedIssueTime
     ? storedIssueTime + ACCESS_TOKEN_REFRESH_INTERVAL_MS
-    : now + ACCESS_TOKEN_REFRESH_INTERVAL_MS;
+    : getTokenExpiry(token)
+      ? getTokenExpiry(token) - 60_000
+      : now + ACCESS_TOKEN_REFRESH_INTERVAL_MS;
 
   scheduledRefreshTimeout = window.setTimeout(async () => {
     scheduledRefreshTimeout = null;
@@ -88,13 +90,31 @@ export const scheduleAccessTokenRefresh = (token = getAccessToken()) => {
       if ([400, 401, 403].includes(status)) {
         expireAuthSession();
       } else if (getAccessToken()) {
-        scheduledRefreshTimeout = window.setTimeout(
-          () => scheduleAccessTokenRefresh(),
-          ACCESS_TOKEN_REFRESH_RETRY_MS
-        );
+        scheduleRefreshRetry();
       }
     }
   }, Math.max(0, refreshAt - now));
+};
+
+const scheduleRefreshRetry = () => {
+  clearScheduledRefreshTimeout();
+  if (!refreshScheduleActive || !getAccessToken() || typeof window === 'undefined') return;
+
+  scheduledRefreshTimeout = window.setTimeout(async () => {
+    scheduledRefreshTimeout = null;
+    if (!refreshScheduleActive || !getAccessToken()) return;
+
+    try {
+      await refreshAccessToken();
+    } catch (error) {
+      const status = error?.response?.status || error?.status;
+      if ([400, 401, 403].includes(status)) {
+        expireAuthSession();
+      } else if (getAccessToken()) {
+        scheduleRefreshRetry();
+      }
+    }
+  }, ACCESS_TOKEN_REFRESH_RETRY_MS);
 };
 
 export const initializeAccessTokenRefresh = () => {
@@ -111,6 +131,8 @@ export const initializeAccessTokenRefresh = () => {
       const status = error?.response?.status || error?.status;
       if ([400, 401, 403].includes(status)) {
         expireAuthSession();
+      } else if (getAccessToken()) {
+        scheduleRefreshRetry();
       }
     });
     return;
@@ -200,6 +222,7 @@ export const loginUser = async (userData) => {
     if (token) {
       saveAccessToken(token);
       localStorage.removeItem('frietSyncRefreshToken');
+      initializeAccessTokenRefresh();
     }
     saveUserData(data, userData);
     return response.data;
@@ -255,16 +278,11 @@ export const refreshAccessToken = () => {
 
   refreshRequestPromise = (async () => {
     try {
-      const response = await axios.post(`${BASE_URL}/auth/refresh`, null, {
+      const response = await axios.post(`${BASE_URL}/auth/refresh`, undefined, {
         withCredentials: true,
       });
       const data = response.data;
-      const newToken =
-        data?.accessToken ||
-        data?.token ||
-        data?.data?.accessToken ||
-        data?.data?.token ||
-        (typeof data === 'string' && data.startsWith('ey') ? data.trim() : null);
+      const newToken = typeof data?.accessToken === 'string' ? data.accessToken.trim() : '';
 
       if (!newToken) {
         const error = new Error('Refresh response did not include an access token.');

@@ -4,7 +4,6 @@ import workspaceHero from '../../../assets/workspace-hero.png';
 import workspaceFolderIcon from '../../../assets/workspace-icon-folder.png';
 import workspaceCollaborateIcon from '../../../assets/workspace-icon-collaborate.png';
 import workspaceIssuesIcon from '../../../assets/workspace-icon-issues.png';
-import { canCreateProject } from '../../projects/utils/projectUtils';
 
 const NoWorkspace = ({
   userName: propUserName,
@@ -14,7 +13,6 @@ const NoWorkspace = ({
 }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
-  const canCreateProjectCard = outletContext.isLoadingUserProfile === false && canCreateProject(outletContext.currentUserProfile);
   const userName =
     propUserName ||
     outletContext?.currentUserProfile?.name ||
@@ -84,7 +82,7 @@ const NoWorkspace = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[940px] mx-auto mt-8 sm:mt-12 w-full px-2">
-        {canCreateProjectCard && <div
+        <div
           onClick={handleCreateProjectClick}
           role="button"
           tabIndex={0}
@@ -96,17 +94,17 @@ const NoWorkspace = ({
           <div>
             <img
               src={workspaceFolderIcon}
-              alt="Create a project"
+              alt="Create a workspace"
               className="w-14 h-11 object-contain mb-6 transition-transform duration-200 group-hover:scale-105"
             />
             <h3 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-              Create a project
+              Create a workspace
             </h3>
             <p className="text-sm font-normal text-slate-500 dark:text-[#94A3B8] leading-relaxed">
-              organise work tasks and sprints in one place
+              Set up a workspace for your projects, tasks, and sprints.
             </p>
           </div>
-        </div>}
+        </div>
 
         <div
           onClick={handleCollaborateClick}
