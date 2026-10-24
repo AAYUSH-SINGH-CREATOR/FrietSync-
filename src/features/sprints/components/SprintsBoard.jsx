@@ -2,10 +2,9 @@ import { useRef, useState } from 'react';
 import { FiCalendar, FiClock, FiPlus } from 'react-icons/fi';
 
 const COLUMNS = [
-  { id: 'PLANNED', label: 'Planned', bg: 'bg-[#CBB0FF]', text: 'text-[#2e1065]', darkBg: 'dark:bg-[#4c3875]', darkText: 'dark:text-[#E9D8FD]', match: ['PLANNED', 'PLANNING', 'FUTURE'] },
-  { id: 'ACTIVE', label: 'Active', bg: 'bg-[#9BD4FD]', text: 'text-[#0c4a6e]', darkBg: 'dark:bg-[#1E3A5F]', darkText: 'dark:text-[#BAE6FD]', match: ['ACTIVE', 'IN_PROGRESS', 'STARTED'] },
-  { id: 'IN_REVIEW', label: 'In review', bg: 'bg-[#F8A0CB]', text: 'text-[#831843]', darkBg: 'dark:bg-[#5E1E3C]', darkText: 'dark:text-[#FBCFE8]', match: ['IN_REVIEW', 'REVIEW', 'TESTING'] },
-  { id: 'COMPLETED', label: 'Completed', bg: 'bg-[#86EFAC]', text: 'text-[#14532d]', darkBg: 'dark:bg-[#1C4D2E]', darkText: 'dark:text-[#BBF7D0]', match: ['COMPLETED', 'CLOSED', 'DONE'] },
+  { id: 'PLANNED', label: 'Planned', bg: 'bg-[#CBB0FF]', text: 'text-[#2e1065]', darkBg: 'dark:bg-[#4c3875]', darkText: 'dark:text-[#E9D8FD]', match: ['PLANNED'] },
+  { id: 'ACTIVE', label: 'Active', bg: 'bg-[#9BD4FD]', text: 'text-[#0c4a6e]', darkBg: 'dark:bg-[#1E3A5F]', darkText: 'dark:text-[#BAE6FD]', match: ['ACTIVE'] },
+  { id: 'COMPLETED', label: 'Completed', bg: 'bg-[#86EFAC]', text: 'text-[#14532d]', darkBg: 'dark:bg-[#1C4D2E]', darkText: 'dark:text-[#BBF7D0]', match: ['COMPLETED'] },
 ];
 
 const formatDate = (dateStr) => {
@@ -105,8 +104,7 @@ const SprintsBoard = ({
 
               let progress = 0;
               if (typeof sprint.progress === 'number') progress = sprint.progress;
-              else if (col.id === 'COMPLETED') progress = 100;
-              else if (col.id === 'IN_REVIEW') progress = 90;
+      else if (col.id === 'COMPLETED') progress = 100;
               else if (col.id === 'ACTIVE') progress = 67;
 
               return (

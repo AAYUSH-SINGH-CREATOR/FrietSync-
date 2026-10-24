@@ -63,6 +63,7 @@ const FilterSelect = ({ label, value, onChange, options }) => (
 const SprintsView = () => {
   const { currentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
   const globalRole = String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase();
+  const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
   const isAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
 
   const [projects, setProjects] = useState([]);
@@ -200,10 +201,22 @@ const SprintsView = () => {
     if (pendingSprintIdsRef.current.has(key)) return;
 
     const currentStatus = String(sprint.status || sprint.state || 'PLANNED').toUpperCase().replace(/[\s-]+/g, '_');
-    const plannedStatuses = ['PLANNED', 'PLANNING', 'FUTURE'];
-    const activeStatuses = ['ACTIVE', 'IN_PROGRESS', 'STARTED'];
-    const isStartTransition = plannedStatuses.includes(currentStatus) && destinationColumnId === 'ACTIVE';
-    const isCompleteTransition = activeStatuses.includes(currentStatus) && destinationColumnId === 'COMPLETED';
+    const userId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
+    const contributorId = sprint.contributorId || sprint.assignedContributorId || sprint.contributor?.id || sprint.contributor?._id || sprint.contributor?.userId;
+    const isProjectManager = globalRole === 'PROJECT_MANAGER' || members.some((member) => {
+      const memberId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
+      const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
+      return ((userId && String(memberId) === String(userId)) || (currentUserEmail && memberEmail === currentUserEmail)) &&
+        String(member.role || member.projectRole || member.user?.role || '').toUpperCase() === 'PROJECT_MANAGER';
+    });
+    const assignedToCurrentUser = (userId && String(contributorId) === String(userId)) ||
+      (currentUserEmail && String(sprint.contributorEmail || sprint.contributor?.email || '').toLowerCase() === currentUserEmail);
+    if (!isProjectManager && !assignedToCurrentUser) {
+      showToast('error', 'Only the project manager or assigned sprint contributor can change sprint status.');
+      return;
+    }
+    const isStartTransition = currentStatus === 'PLANNED' && destinationColumnId === 'ACTIVE';
+    const isCompleteTransition = currentStatus === 'ACTIVE' && destinationColumnId === 'COMPLETED';
 
     if (!isStartTransition && !isCompleteTransition) {
       showToast('error', 'That sprint status transition is not supported by the available sprint actions.');
@@ -224,7 +237,7 @@ const SprintsView = () => {
       pendingSprintIdsRef.current.delete(key);
       setPendingSprintIds(new Set(pendingSprintIdsRef.current));
     }
-  }, [loadSprints, showToast]);
+  }, [loadSprints, showToast, currentUserProfile, globalRole, members, currentUserEmail]);
 
   const loadProjects = useCallback(() => {
     setProjectsLoading(true);
@@ -232,7 +245,6 @@ const SprintsView = () => {
   }, []);
 
   const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
-  const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
   const currentProjectRole = members.find((member) => {
     if (String(membersProjectId) !== String(projectId)) return false;
     const memberUserId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
@@ -309,15 +321,15 @@ const SprintsView = () => {
     const totalSprints = sprints.length;
     const activeSprints = sprints.filter((s) => {
       const norm = String(s.status || s.state || '').toUpperCase();
-      return ['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm);
+      return norm === 'ACTIVE';
     }).length;
     const completedSprints = sprints.filter((s) => {
       const norm = String(s.status || s.state || '').toUpperCase();
-      return ['COMPLETED', 'CLOSED', 'DONE'].includes(norm);
+      return norm === 'COMPLETED';
     }).length;
     const openIssues = projectIssues.filter((i) => {
       const norm = String(i.status || '').toUpperCase();
-      return !['DONE', 'RESOLVED', 'CLOSED', 'COMPLETED'].includes(norm);
+      return !['RESOLVED', 'CLOSED'].includes(norm);
     }).length;
 
     return { totalSprints, activeSprints, completedSprints, openIssues };
@@ -337,10 +349,9 @@ const SprintsView = () => {
     if (statusFilter !== 'all') {
       result = result.filter((s) => {
         const norm = String(s.status || s.state || 'PLANNED').toUpperCase();
-        if (statusFilter === 'PLANNED') return ['PLANNED', 'PLANNING', 'FUTURE'].includes(norm);
-        if (statusFilter === 'ACTIVE') return ['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm);
-        if (statusFilter === 'IN_REVIEW') return ['IN_REVIEW', 'REVIEW', 'TESTING'].includes(norm);
-        if (statusFilter === 'COMPLETED') return ['COMPLETED', 'CLOSED', 'DONE'].includes(norm);
+        if (statusFilter === 'PLANNED') return norm === 'PLANNED';
+        if (statusFilter === 'ACTIVE') return norm === 'ACTIVE';
+        if (statusFilter === 'COMPLETED') return norm === 'COMPLETED';
         return norm === statusFilter;
       });
     }
@@ -378,6 +389,7 @@ const SprintsView = () => {
           projectId={projectId}
           projectName={currentProject?.name}
           canManage={canManage}
+          currentProjectRoleName={currentProjectRoleName}
           canViewSprintRequests={canApproveSprintRequests}
           currentUserProfile={currentUserProfile}
           onBack={() => { setSelectedSprintId(''); setSelectedSprint(null); }}
@@ -557,7 +569,6 @@ const SprintsView = () => {
             options={[
               { value: 'PLANNED', label: 'Planned' },
               { value: 'ACTIVE', label: 'Active' },
-              { value: 'IN_REVIEW', label: 'In review' },
               { value: 'COMPLETED', label: 'Completed' },
             ]}
           />

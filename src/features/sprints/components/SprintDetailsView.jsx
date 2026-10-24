@@ -27,14 +27,11 @@ const formatDate = (dateStr) => {
 
 const getStatusBadge = (status) => {
   const norm = String(status || '').toUpperCase().replace(/[\s-]+/g, '_');
-  if (['COMPLETED', 'CLOSED', 'DONE'].includes(norm)) {
+  if (norm === 'COMPLETED') {
     return { label: 'Completed', className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' };
   }
-  if (['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm)) {
+  if (norm === 'ACTIVE') {
     return { label: 'Active', className: 'border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-300' };
-  }
-  if (['IN_REVIEW', 'REVIEW', 'TESTING'].includes(norm)) {
-    return { label: 'In review', className: 'border-pink-500/40 bg-pink-500/15 text-pink-700 dark:text-pink-300' };
   }
   return { label: 'Planned', className: 'border-purple-500/40 bg-purple-500/15 text-purple-700 dark:text-purple-300' };
 };
@@ -49,6 +46,7 @@ const SprintDetailsView = ({
   onSprintDeleted,
   onOpenEdit,
   canManage = false,
+  currentProjectRoleName = '',
   canViewSprintRequests = false,
   onIssueClick,
   currentUserProfile = null,
@@ -125,7 +123,7 @@ const SprintDetailsView = ({
   // Load members if manager
   useEffect(() => {
     const pid = projectId || sprint?.projectId || sprint?.project?.id;
-    if (!pid || !canViewSprintRequests) return undefined;
+    if (!pid || !canManage) return undefined;
     let isMounted = true;
     getProjectMembers(pid)
       .then((data) => {
@@ -144,7 +142,7 @@ const SprintDetailsView = ({
 
   useEffect(() => {
     const pid = projectId || sprint?.projectId || sprint?.project?.id;
-    if (!pid || !canManage) return undefined;
+    if (!pid || !canViewSprintRequests) return undefined;
     let isMounted = true;
     getProjectSprintRequests(pid)
       .then((data) => {
@@ -157,9 +155,16 @@ const SprintDetailsView = ({
   }, [projectId, sprint?.projectId, sprint?.project?.id, canViewSprintRequests, requestsTrigger]);
 
   const currentStatus = String(sprint?.status || sprint?.state || 'PLANNED').toUpperCase();
-  const isCompleted = ['COMPLETED', 'CLOSED', 'DONE'].includes(currentStatus);
-  const isActive = ['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(currentStatus);
-  const isPlanned = ['PLANNED', 'PLANNING', 'FUTURE'].includes(currentStatus);
+  const isCompleted = currentStatus === 'COMPLETED';
+  const isActive = currentStatus === 'ACTIVE';
+  const isPlanned = currentStatus === 'PLANNED';
+  const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
+  const sprintContributorId = sprint?.contributorId || sprint?.assignedContributorId || sprint?.contributor?.id || sprint?.contributor?._id || sprint?.contributor?.userId;
+  const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
+  const canTransitionSprint = currentProjectRoleName === 'PROJECT_MANAGER' ||
+    String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase() === 'PROJECT_MANAGER' ||
+    (currentUserId && String(sprintContributorId) === String(currentUserId)) ||
+    (currentUserEmail && String(sprint?.contributorEmail || sprint?.contributor?.email || '').toLowerCase() === currentUserEmail);
 
   const statusBadge = getStatusBadge(currentStatus);
 
@@ -306,7 +311,7 @@ const SprintDetailsView = ({
             <FiRefreshCw size={15} className={isLoading ? 'animate-spin text-sky-600' : ''} />
           </button>
 
-          {isPlanned && canManage && (
+          {isPlanned && canTransitionSprint && (
             <button
               type="button"
               onClick={handleStart}
@@ -317,7 +322,7 @@ const SprintDetailsView = ({
             </button>
           )}
 
-          {isActive && canManage && (
+          {isActive && canTransitionSprint && (
             <button
               type="button"
               onClick={handleComplete}

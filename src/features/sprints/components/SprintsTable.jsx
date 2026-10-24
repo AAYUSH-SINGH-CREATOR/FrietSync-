@@ -14,14 +14,11 @@ const formatDate = (dateStr) => {
 
 const getStatusPill = (status) => {
   const norm = String(status || '').toUpperCase().replace(/[\s-]+/g, '_');
-  if (['COMPLETED', 'CLOSED', 'DONE'].includes(norm)) {
+  if (norm === 'COMPLETED') {
     return { label: 'Completed', className: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' };
   }
-  if (['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm)) {
+  if (norm === 'ACTIVE') {
     return { label: 'Active', className: 'border-sky-500/30 bg-sky-500/15 text-sky-600 dark:text-sky-300' };
-  }
-  if (['IN_REVIEW', 'REVIEW', 'TESTING'].includes(norm)) {
-    return { label: 'In review', className: 'border-pink-500/30 bg-pink-500/15 text-pink-600 dark:text-pink-300' };
   }
   return { label: 'Planned', className: 'border-purple-500/30 bg-purple-500/15 text-purple-600 dark:text-purple-300' };
 };
@@ -113,7 +110,6 @@ const SprintsTable = ({
                 let progress = 0;
                 if (typeof sprint.progress === 'number') progress = sprint.progress;
                 else if (statusPill.label === 'Completed') progress = 100;
-                else if (statusPill.label === 'In review') progress = 90;
                 else if (statusPill.label === 'Active') progress = 67;
 
                 const progressColor = progress >= 100 ? 'bg-emerald-500' : progress >= 80 ? 'bg-pink-500' : progress > 0 ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700';
