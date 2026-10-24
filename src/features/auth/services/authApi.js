@@ -4,7 +4,7 @@ import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 export { getFriendlyErrorMessage };
 
-const ACCESS_TOKEN_REFRESH_EARLY_MS = 60_000;
+const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 10 * 60_000;
 const ACCESS_TOKEN_REFRESH_RETRY_MS = 30_000;
 let refreshRequestPromise = null;
 let scheduledRefreshTimeout = null;
@@ -72,13 +72,10 @@ export const scheduleAccessTokenRefresh = (token = getAccessToken()) => {
   if (!refreshScheduleActive || !token || typeof window === 'undefined') return;
 
   const now = Date.now();
-  const expiry = getTokenExpiry(token);
   const storedIssueTime = Number(localStorage.getItem('frietSyncTokenIssuedAt'));
-  const refreshAt = expiry
-    ? expiry - ACCESS_TOKEN_REFRESH_EARLY_MS
-    : storedIssueTime
-      ? storedIssueTime + 14 * 60_000
-      : now;
+  const refreshAt = storedIssueTime
+    ? storedIssueTime + ACCESS_TOKEN_REFRESH_INTERVAL_MS
+    : now + ACCESS_TOKEN_REFRESH_INTERVAL_MS;
 
   scheduledRefreshTimeout = window.setTimeout(async () => {
     scheduledRefreshTimeout = null;
