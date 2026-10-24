@@ -8,6 +8,8 @@ import {
   FiAlertCircle,
   FiFlag,
   FiCheck,
+  FiGithub,
+  FiLink,
 } from 'react-icons/fi';
 import { createIssue } from '../services/issueApi';
 import { getMyProjects } from '../../projects/services/projectApi';
@@ -36,6 +38,8 @@ const CreateIssueModal = ({
   const [priority, setPriority] = useState('HIGH');
   const [dueDate, setDueDate] = useState('');
   const [estimatedHours, setEstimatedHours] = useState('');
+  const [githubAction, setGithubAction] = useState('LOCAL');
+  const [githubIssueNumber, setGithubIssueNumber] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
@@ -72,6 +76,8 @@ const CreateIssueModal = ({
     setPriority('HIGH');
     setDueDate('');
     setEstimatedHours('');
+    setGithubAction('LOCAL');
+    setGithubIssueNumber('');
     setFieldErrors({});
     setErrorMessage('');
     setIsSubmitting(false);
@@ -105,6 +111,12 @@ const CreateIssueModal = ({
     if (!title.trim()) {
       errors.title = 'Issue title is required.';
     }
+    if (githubAction === 'LINK_EXISTING') {
+      const num = Number(githubIssueNumber);
+      if (!githubIssueNumber || isNaN(num) || num <= 0 || !Number.isInteger(num)) {
+        errors.githubIssueNumber = 'Please enter a valid positive GitHub issue number (e.g. 42).';
+      }
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -116,13 +128,26 @@ const CreateIssueModal = ({
     setIsSubmitting(true);
 
     try {
-      const created = await createIssue(projectId, {
+      const payload = {
         title: title.trim(),
         description: description.trim(),
         priority,
-        dueDate: dueDate || '',
-        estimatedHours: estimatedHours !== '' ? Number(estimatedHours) : 0,
-      });
+        githubAction,
+      };
+
+      if (githubAction === 'LINK_EXISTING') {
+        payload.githubIssueNumber = Number(githubIssueNumber);
+      }
+
+      if (dueDate) {
+        payload.dueDate = dueDate;
+      }
+
+      if (estimatedHours !== '' && !isNaN(Number(estimatedHours))) {
+        payload.estimatedHours = Number(estimatedHours);
+      }
+
+      const created = await createIssue(projectId, payload);
 
       handleClose();
 
@@ -359,6 +384,167 @@ const CreateIssueModal = ({
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-900 dark:text-[#F1F5F9] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition"
               />
             </div>
+          </div>
+
+          {/* GitHub Action */}
+          <div className="pt-2 border-t border-slate-100 dark:border-[#303030]">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider">
+                GitHub Action
+              </label>
+              <span className="text-[11px] text-slate-500 dark:text-[#a0a0a0] flex items-center gap-1.5 font-medium">
+                <FiGithub size={13} className="text-slate-700 dark:text-slate-300" />
+                <span>Repository Sync</span>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {/* Option 1: LOCAL */}
+              <button
+                type="button"
+                onClick={() => {
+                  setGithubAction('LOCAL');
+                  if (fieldErrors.githubIssueNumber) {
+                    setFieldErrors((prev) => ({ ...prev, githubIssueNumber: '' }));
+                  }
+                }}
+                className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                  githubAction === 'LOCAL'
+                    ? 'border-sky-500 bg-sky-50/60 dark:border-sky-400 dark:bg-sky-950/30 ring-1 ring-sky-500 dark:ring-sky-400'
+                    : 'border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] hover:border-slate-300 dark:hover:border-[#4a4a4a]'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="font-semibold text-xs text-slate-900 dark:text-[#F1F5F9]">
+                    FrietSync Only
+                  </span>
+                  {githubAction === 'LOCAL' ? (
+                    <span className="w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] shrink-0">
+                      <FiCheck size={11} />
+                    </span>
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-slate-300 dark:border-[#555] shrink-0" />
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-[#9e9e9e] leading-snug">
+                  Keep issue local in FrietSync
+                </p>
+              </button>
+
+              {/* Option 2: CREATE_NEW */}
+              <button
+                type="button"
+                onClick={() => {
+                  setGithubAction('CREATE_NEW');
+                  if (fieldErrors.githubIssueNumber) {
+                    setFieldErrors((prev) => ({ ...prev, githubIssueNumber: '' }));
+                  }
+                }}
+                className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                  githubAction === 'CREATE_NEW'
+                    ? 'border-sky-500 bg-sky-50/60 dark:border-sky-400 dark:bg-sky-950/30 ring-1 ring-sky-500 dark:ring-sky-400'
+                    : 'border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] hover:border-slate-300 dark:hover:border-[#4a4a4a]'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="font-semibold text-xs text-slate-900 dark:text-[#F1F5F9] flex items-center gap-1.5">
+                    <FiGithub size={13} className="text-slate-800 dark:text-slate-200 shrink-0" />
+                    Create New
+                  </span>
+                  {githubAction === 'CREATE_NEW' ? (
+                    <span className="w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] shrink-0">
+                      <FiCheck size={11} />
+                    </span>
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-slate-300 dark:border-[#555] shrink-0" />
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-[#9e9e9e] leading-snug">
+                  Publish to GitHub repo
+                </p>
+              </button>
+
+              {/* Option 3: LINK_EXISTING */}
+              <button
+                type="button"
+                onClick={() => setGithubAction('LINK_EXISTING')}
+                className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                  githubAction === 'LINK_EXISTING'
+                    ? 'border-sky-500 bg-sky-50/60 dark:border-sky-400 dark:bg-sky-950/30 ring-1 ring-sky-500 dark:ring-sky-400'
+                    : 'border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] hover:border-slate-300 dark:hover:border-[#4a4a4a]'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="font-semibold text-xs text-slate-900 dark:text-[#F1F5F9] flex items-center gap-1.5">
+                    <FiLink size={13} className="text-slate-800 dark:text-slate-200 shrink-0" />
+                    Link Existing
+                  </span>
+                  {githubAction === 'LINK_EXISTING' ? (
+                    <span className="w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] shrink-0">
+                      <FiCheck size={11} />
+                    </span>
+                  ) : (
+                    <span className="w-4 h-4 rounded-full border border-slate-300 dark:border-[#555] shrink-0" />
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-[#9e9e9e] leading-snug">
+                  Link existing GitHub issue #
+                </p>
+              </button>
+            </div>
+
+            {/* Input for LINK_EXISTING */}
+            {githubAction === 'LINK_EXISTING' && (
+              <div className="mt-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#202020] border border-slate-200/80 dark:border-[#353535] animate-fadeIn">
+                <label
+                  htmlFor="github-issue-number"
+                  className="block text-xs font-bold text-slate-800 dark:text-[#e0e0e0] uppercase tracking-wider mb-1"
+                >
+                  GitHub Issue Number <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#b3b3b3] font-mono text-xs font-bold">
+                    #
+                  </span>
+                  <input
+                    id="github-issue-number"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 42"
+                    value={githubIssueNumber}
+                    disabled={isSubmitting}
+                    onChange={(e) => {
+                      setGithubIssueNumber(e.target.value);
+                      if (fieldErrors.githubIssueNumber) {
+                        setFieldErrors((prev) => ({ ...prev, githubIssueNumber: '' }));
+                      }
+                    }}
+                    className={`w-full pl-8 pr-3.5 py-2 rounded-xl border ${
+                      fieldErrors.githubIssueNumber
+                        ? 'border-rose-500 dark:border-rose-500'
+                        : 'border-slate-200 dark:border-[#3a3a3a]'
+                    } bg-white dark:bg-[#181818] text-slate-900 dark:text-[#F1F5F9] placeholder:text-slate-400 dark:placeholder-[#777] text-xs sm:text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-950/40 transition`}
+                  />
+                </div>
+                {fieldErrors.githubIssueNumber && (
+                  <p className="text-[11px] text-rose-500 mt-1">{fieldErrors.githubIssueNumber}</p>
+                )}
+                <p className="text-[11px] text-slate-500 dark:text-[#999] mt-1.5">
+                  Enter the number of the issue in the linked GitHub repository (e.g. 42).
+                </p>
+              </div>
+            )}
+
+            {/* Helper notice when GitHub action selected */}
+            {githubAction !== 'LOCAL' && (
+              <div className="mt-2.5 flex items-start gap-2 p-2.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 text-[11px] text-amber-800 dark:text-amber-300">
+                <FiAlertCircle size={14} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                <span>
+                  GitHub actions require a connected GitHub account and an active linked repository on this project.
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#303030]">
