@@ -16,6 +16,7 @@ import {
   FiRotateCcw,
   FiUsers,
   FiGithub,
+  FiShare2,
 } from 'react-icons/fi';
 import profileBanner from '../../../assets/profile-banner.png';
 import { clearAuthStorage, logoutUser, sendForgotPasswordOtp, getFriendlyErrorMessage as getAuthErrorMessage } from '../../auth/services/authApi';
@@ -40,6 +41,7 @@ import {
   getGithubConnectUrl,
   disconnectGithub,
 } from '../../projects/services/projectApi';
+import { sendInvite, formatExpiryToUtc } from '../../invites/services/inviteApi';
 import { CiLock } from "react-icons/ci";
 
 
@@ -105,6 +107,14 @@ const SettingsView = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
   const [workspaceMembersCount, setWorkspaceMembersCount] = useState(0);
+  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [transferEmail, setTransferEmail] = useState('');
+  const [isTransferringOwnership, setIsTransferringOwnership] = useState(false);
+  const [showTransferConfirm, setShowTransferConfirm] = useState(false);
+
+  const isWorkspaceAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(
+    String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase()
+  );
 
   // Account State
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -327,7 +337,10 @@ const SettingsView = () => {
           setRenameInput(ws.name || '');
           const wid = ws.id || ws._id || ws.workspaceId;
           getWorkspaceMembers(wid).then((m) => {
-            if (isMounted && Array.isArray(m)) setWorkspaceMembersCount(m.length);
+            if (isMounted && Array.isArray(m)) {
+              setWorkspaceMembersCount(m.length);
+              setWorkspaceMembers(m);
+            }
           }).catch(() => {});
         } else {
           setWorkspace(null);
@@ -464,6 +477,52 @@ const SettingsView = () => {
       });
     } finally {
       setIsDeletingWorkspace(false);
+    }
+  };
+
+  // Transfer Workspace Ownership
+  const handleTransferOwnership = async (e) => {
+    if (e) e.preventDefault();
+    const email = transferEmail.trim();
+    if (!email) {
+      setStatusMessage({ type: 'error', text: 'Please enter the email address to transfer ownership.' });
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setStatusMessage({ type: 'error', text: 'Please enter a valid email address.' });
+      return;
+    }
+    const myEmail = (currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase().trim();
+    if (myEmail && email.toLowerCase() === myEmail) {
+      setStatusMessage({ type: 'error', text: "You cannot transfer workspace ownership to yourself." });
+      return;
+    }
+
+    setIsTransferringOwnership(true);
+    setStatusMessage({ type: '', text: '' });
+
+    try {
+      const expiresAt = formatExpiryToUtc();
+      await sendInvite({
+        email,
+        role: 'OWNER',
+        purpose: 'OWNERSHIP_TRANSFER',
+        expiresAt,
+      });
+      setTransferEmail('');
+      setShowTransferConfirm(false);
+      setStatusMessage({
+        type: 'success',
+        text: `Ownership transfer invitation sent to ${email} successfully.`,
+      });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || 'Failed to send ownership transfer invitation. Please try again.',
+      });
+    } finally {
+      setIsTransferringOwnership(false);
     }
   };
 
@@ -971,7 +1030,7 @@ const SettingsView = () => {
                         </strong>
                         . Workspace administrators can restore it at any time during this grace period.
                       </p>
-                      {['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase()) && (
+                      {isWorkspaceAdmin && (
                         <div className="pt-1">
                           <button
                             type="button"
@@ -1031,6 +1090,100 @@ const SettingsView = () => {
                     </form>
                   </div>
 
+                  {/* Transfer Workspace Ownership (Admins Only) */}
+                  {isWorkspaceAdmin && (
+                    <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] space-y-3">
+                      <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-sm">
+                        <FiShare2 size={16} className="text-amber-500 shrink-0" />
+                        <span>Transfer Workspace Ownership</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-[#94a3b8] leading-relaxed">
+                        Transfer full ownership of this workspace to another person. An invitation with purpose{' '}
+                        <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#20232c] text-amber-600 dark:text-amber-400 font-mono text-[11px]">
+                          OWNERSHIP_TRANSFER
+                        </code>{' '}
+                        will be sent to their email.
+                      </p>
+
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!transferEmail.trim()) {
+                            setStatusMessage({ type: 'error', text: 'Please enter the email address to transfer ownership.' });
+                            return;
+                          }
+                          setShowTransferConfirm(true);
+                        }}
+                        className="space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="email"
+                            required
+                            value={transferEmail}
+                            onChange={(e) => {
+                              setTransferEmail(e.target.value);
+                              if (showTransferConfirm) setShowTransferConfirm(false);
+                            }}
+                            placeholder="Recipient's Gmail / email address"
+                            list="transfer-members-list"
+                            disabled={isTransferringOwnership}
+                            className="flex-1 px-4 py-2 rounded-xl bg-slate-50 dark:bg-[#131418] border border-slate-200 dark:border-[#2a2c36] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-amber-500 transition disabled:opacity-50"
+                          />
+                          {Array.isArray(workspaceMembers) && workspaceMembers.length > 0 && (
+                            <datalist id="transfer-members-list">
+                              {workspaceMembers.map((m) => {
+                                const email = m.email || m.user?.email || '';
+                                const name = m.name || m.user?.name || '';
+                                return email ? (
+                                  <option key={m.id || m._id || email} value={email}>
+                                    {name ? `${name} (${email})` : email}
+                                  </option>
+                                ) : null;
+                              })}
+                            </datalist>
+                          )}
+
+                          {!showTransferConfirm ? (
+                            <button
+                              type="submit"
+                              disabled={isTransferringOwnership || !transferEmail.trim()}
+                              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition cursor-pointer disabled:opacity-50 shrink-0"
+                            >
+                              Transfer Ownership
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => setShowTransferConfirm(false)}
+                                disabled={isTransferringOwnership}
+                                className="px-3 py-2 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#20232c] transition cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleTransferOwnership}
+                                disabled={isTransferringOwnership}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-sm transition cursor-pointer disabled:opacity-50"
+                              >
+                                {isTransferringOwnership ? <FiRefreshCw className="animate-spin" size={13} /> : null}
+                                <span>{isTransferringOwnership ? 'Transferring...' : 'Confirm Transfer'}</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {showTransferConfirm && (
+                          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-300 animate-fadeIn">
+                            Are you sure you want to transfer workspace ownership to <strong>{transferEmail.trim()}</strong>? An invitation with purpose <code>OWNERSHIP_TRANSFER</code> will be dispatched.
+                          </div>
+                        )}
+                      </form>
+                    </div>
+                  )}
+
                   {/* Workspace Actions / Danger Zone */}
                   <div className="space-y-3 pt-1">
                     {/* Leave Workspace */}
@@ -1074,7 +1227,7 @@ const SettingsView = () => {
                     </div>
 
                     {/* Soft Delete Workspace (Admins Only) */}
-                    {['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase()) &&
+                    {isWorkspaceAdmin &&
                       !(workspace?.deletionRequestedAt || workspace?.permanentlyDeleteAt) && (
                         <div className="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-300/70 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div>
