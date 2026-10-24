@@ -100,7 +100,7 @@ const LinkRepositoryModal = ({ isOpen, onClose, projectId, onRepositoryLinked })
                 setOwner(e.target.value);
                 if (errorMessage) setErrorMessage('');
               }}
-              placeholder="e.g. facebook or aviralumrao"
+              placeholder="your username"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#353535] bg-white dark:bg-[#181818] text-gray-900 dark:text-white text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition"
               autoFocus
             />
@@ -117,7 +117,7 @@ const LinkRepositoryModal = ({ isOpen, onClose, projectId, onRepositoryLinked })
                 setRepository(e.target.value);
                 if (errorMessage) setErrorMessage('');
               }}
-              placeholder="e.g. react or FrietSync"
+              placeholder="e.g. frietsync"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#353535] bg-white dark:bg-[#181818] text-gray-900 dark:text-white text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition"
             />
           </div>
