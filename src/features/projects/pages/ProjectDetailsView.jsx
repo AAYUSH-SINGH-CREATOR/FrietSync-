@@ -108,10 +108,10 @@ const getMilestoneStatusInfo = (status) => {
 
 const getSprintStatusBadge = (status) => {
   const norm = String(status || '').toUpperCase().replace(/[\s-]+/g, '_');
-  if (['COMPLETED', 'CLOSED', 'DONE'].includes(norm)) {
+  if (norm === 'COMPLETED') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400';
   }
-  if (['ACTIVE', 'IN_PROGRESS', 'STARTED'].includes(norm)) {
+  if (norm === 'ACTIVE') {
     return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-400';
   }
   return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/15 dark:text-purple-400';
@@ -340,7 +340,7 @@ const ProjectDetailsView = () => {
           iss.code ||
           `#${iss.number || (iss.id ? String(iss.id).slice(0, 4) : '1')}`;
         const assignee = iss.assignee?.name || iss.assignedTo?.name || 'Collaborator';
-        const isDone = ['RESOLVED', 'CLOSED', 'DONE'].includes(
+        const isDone = ['RESOLVED', 'CLOSED'].includes(
           String(iss.status || '').toUpperCase()
         );
 
@@ -580,7 +580,7 @@ const ProjectDetailsView = () => {
     }
     if (issues.length > 0) {
       const closed = issues.filter((iss) =>
-        ['RESOLVED', 'CLOSED', 'DONE'].includes(String(iss.status || '').toUpperCase())
+        ['RESOLVED', 'CLOSED'].includes(String(iss.status || '').toUpperCase())
       ).length;
       return Math.min(100, Math.round((closed / issues.length) * 100));
     }
@@ -600,7 +600,7 @@ const ProjectDetailsView = () => {
     }
     return issues.filter(
       (iss) =>
-        !['RESOLVED', 'CLOSED', 'DONE'].includes(String(iss.status || '').toUpperCase())
+        !['RESOLVED', 'CLOSED'].includes(String(iss.status || '').toUpperCase())
     ).length;
   }, [summary, issues]);
 
@@ -628,10 +628,10 @@ const ProjectDetailsView = () => {
 
     if (!summary?.totalIssues && issues.length > 0) {
       completed = issues.filter((i) =>
-        ['RESOLVED', 'CLOSED', 'DONE'].includes(String(i.status || '').toUpperCase())
+        ['RESOLVED', 'CLOSED'].includes(String(i.status || '').toUpperCase())
       ).length;
       inProgress = issues.filter((i) =>
-        ['IN_PROGRESS', 'STARTED', 'IN_REVIEW'].includes(String(i.status || '').toUpperCase())
+        String(i.status || '').toUpperCase() === 'IN_PROGRESS'
       ).length;
       pending = Math.max(0, issues.length - completed - inProgress);
     }

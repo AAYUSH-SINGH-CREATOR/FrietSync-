@@ -25,6 +25,7 @@ const Dashboard = () => {
     location.pathname === '/dashboard' ||
     location.pathname === '/dashboard/settings' ||
     location.pathname.startsWith('/dashboard/issues') ||
+    location.pathname.startsWith('/dashboard/my-work') ||
     location.pathname.startsWith('/dashboard/team') ||
     location.pathname.startsWith('/dashboard/invites') ||
     location.pathname.startsWith('/dashboard/sprints') ||

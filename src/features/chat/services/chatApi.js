@@ -146,13 +146,13 @@ export const formatMessageTime = (dateStr) => {
   }
 };
 
-export const getProjectChatMessages = async (projectId, limit = 50) => {
+export const getProjectChatMessages = async (projectId, page = 0, size = 50) => {
   if (!projectId) return [];
   try {
     const response = await axios.get(
       `${BASE_URL}/projects/${projectId}/chat/messages`,
       {
-        params: { limit: Math.min(Math.max(limit, 1), 100) },
+        params: { page: Math.max(0, page), size: Math.min(Math.max(size, 1), 100) },
         ...getAuthHeaders(),
       }
     );

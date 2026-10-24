@@ -9,7 +9,7 @@ import {
 import { AiOutlineBug, AiOutlineExclamationCircle } from 'react-icons/ai';
 import {
   getProjectIssues, getIssueDetails, getProjectIssueRequests, manageProjectIssueRequest,
-  deleteProjectIssueRequest, updateIssue, getFriendlyErrorMessage,
+  deleteProjectIssueRequest, resolveIssue, reviewIssue, getFriendlyErrorMessage,
 } from '../services/issueApi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { getPriorityBadge, getStatusBadge } from '../utils/issueUtils';
@@ -25,8 +25,8 @@ const memberRole = (m) => String(m?.role || m?.projectRole || m?.user?.role || '
 const assigneeIds = (i) => i?.assigneeIds || i?.assignedUserIds || i?.assignees?.map(memberId) || i?.assignedTo?.map?.(memberId) || (i?.assigneeId ? [i.assigneeId] : []);
 const memberName = (m) => m?.name || m?.fullName || m?.user?.name || m?.email || m?.user?.email || '';
 const personLabel = (i) => i?.assigneeName || i?.assignedTo?.name || i?.assignedTo?.fullName || i?.assignee?.name || i?.assigneeEmail || '';
-const isResolved = (s) => ['DONE', 'RESOLVED', 'CLOSED', 'COMPLETED'].includes(normalize(s));
-const isInProgress = (s) => ['IN_PROGRESS', 'IN_REVIEW', 'ACTIVE'].includes(normalize(s));
+const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
+const isInProgress = (s) => normalize(s) === 'IN_PROGRESS';
 const compactDate = (d) => {
   if (!d) return '—';
   const p = new Date(d);
@@ -295,19 +295,25 @@ const IssuesView = () => {
     pendingStatusIssueIdsRef.current.add(String(id));
     setPendingStatusIssueIds(new Set(pendingStatusIssueIdsRef.current));
     try {
-      // Keep the existing PATCH contract, then verify the server's persisted
-      // state before moving the card locally or reporting success.
-      await updateIssue(id, { status: newStatus });
+      const currentStatus = normalize(issue.status || 'OPEN');
+      const targetStatus = normalize(newStatus);
+      if (currentStatus === 'IN_PROGRESS' && targetStatus === 'RESOLVED') await resolveIssue(id);
+      else if (currentStatus === 'RESOLVED' && targetStatus === 'CLOSED') await reviewIssue(id, 'approve');
+      else if (currentStatus === 'RESOLVED' && targetStatus === 'REOPENED') await reviewIssue(id, 'reject');
+      else {
+        showToast('error', 'That transition needs an assignment or review action and cannot be completed from the board.');
+        return;
+      }
       const persistedIssue = await getIssueDetails(id);
-      if (!persistedIssue?.status || normalize(persistedIssue.status) !== normalize(newStatus)) {
-        throw new Error(`The server did not confirm the status change to ${newStatus.replace(/[_-]/g, ' ')}.`);
+      if (!persistedIssue?.status || normalize(persistedIssue.status) !== targetStatus) {
+        throw new Error(`The server did not confirm the status change to ${targetStatus.replace(/[_-]/g, ' ')}.`);
       }
       setIssues((current) => current.map((item) => (
         String(issueId(item)) === String(id)
           ? { ...item, ...persistedIssue, projectId: item.projectId, projectName: item.projectName }
           : item
       )));
-      showToast('success', `Issue moved to ${newStatus.replace(/[_-]/g, ' ')}.`);
+      showToast('success', `Issue moved to ${targetStatus.replace(/[_-]/g, ' ')}.`);
     } catch (err) {
       showToast('error', getFriendlyErrorMessage(err, 'issue'));
     } finally {
