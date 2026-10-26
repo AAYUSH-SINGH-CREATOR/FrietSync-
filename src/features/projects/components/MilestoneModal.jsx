@@ -59,7 +59,7 @@ const MilestoneModal = ({ isOpen, onClose, projectId, milestone, onMilestoneSave
       } else {
         saved = await createProjectMilestone(projectId, payload);
       }
-      onMilestoneSaved?.(saved || { ...payload, id: milestoneId || Date.now() });
+      onMilestoneSaved?.(saved || { ...payload, ...(milestoneId ? { id: milestoneId } : {}) });
       onClose();
     } catch (err) {
       setErrorMessage(getFriendlyErrorMessage(err, 'project'));

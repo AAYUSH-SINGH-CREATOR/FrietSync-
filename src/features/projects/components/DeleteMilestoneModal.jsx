@@ -16,7 +16,8 @@ const DeleteMilestoneModal = ({ isOpen, onClose, milestone, onMilestoneDeleted }
 
   if (!isOpen || !milestone) return null;
 
-  const milestoneId = milestone.id || milestone._id || milestone.milestoneId;
+  const milestoneId = milestone.id || milestone._id || milestone.milestoneId ||
+    milestone.milestone?.id || milestone.milestone?._id || milestone.milestone?.milestoneId;
   const milestoneName = milestone.name || milestone.title || 'this milestone';
 
   const handleDelete = async () => {

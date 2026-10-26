@@ -33,7 +33,6 @@ import {
   getProjectSummaryPdf,
   getProjectReleases,
   uploadReleaseFile,
-  getProjectTimeline,
   unlinkProjectRepository,
   getFriendlyErrorMessage,
 } from '../services/projectApi';
@@ -140,6 +139,7 @@ const ProjectDetailsView = () => {
   const [issues, setIssues] = useState([]);
   const [sprints, setSprints] = useState([]);
   const [milestones, setMilestones] = useState([]);
+  const [milestoneLoadError, setMilestoneLoadError] = useState('');
   const [releases, setReleases] = useState([]);
   const [polls, setPolls] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -225,21 +225,41 @@ const ProjectDetailsView = () => {
     });
   }, [members, currentUserId, currentUserEmail]);
 
-  const currentRoleName = String(
-    currentProjectRole?.role ||
-    currentProjectRole?.projectRole ||
-    currentUserProfile?.role ||
-    ''
-  ).toUpperCase();
+  const normalizeRole = (role) => String(role || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+  const currentRoleNames = [
+    currentProjectRole?.role,
+    currentProjectRole?.projectRole,
+    currentProjectRole?.userRole,
+    currentProjectRole?.user?.role,
+    currentUserProfile?.role,
+    currentUserProfile?.user?.role,
+  ].map(normalizeRole);
+  const currentProjectRoleNames = [
+    currentProjectRole?.role,
+    currentProjectRole?.projectRole,
+    currentProjectRole?.userRole,
+    currentProjectRole?.user?.role,
+  ].map(normalizeRole);
+  const currentUserIds = [
+    currentUserProfile?.id,
+    currentUserProfile?._id,
+    currentUserProfile?.userId,
+    currentUserProfile?.user?.id,
+    currentUserProfile?.user?._id,
+  ].filter(Boolean).map(String);
+  const projectManagerIds = [
+    project?.projectManagerId,
+    project?.projectManager?.id,
+    project?.projectManager?._id,
+    project?.projectManager?.userId,
+  ].filter(Boolean).map(String);
 
-  const isProjectManager =
-    isAdmin ||
-    ['PROJECT_MANAGER', 'ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(currentRoleName) ||
-    (project?.projectManagerId && String(project.projectManagerId) === String(currentUserId));
+  const isProjectManager = currentUserIds.some((id) => projectManagerIds.includes(id)) ||
+    currentProjectRoleNames.includes('PROJECT_MANAGER');
 
   const canManageMilestones = isProjectManager;
   const canManageReleases = isProjectManager;
-  const canAttachIssues = isProjectManager || ['TEAM_LEAD', 'LEAD'].includes(currentRoleName);
+  const canAttachIssues = isProjectManager || currentRoleNames.some((role) => ['TEAM_LEAD', 'LEAD'].includes(role));
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -286,30 +306,26 @@ const ProjectDetailsView = () => {
           : releasesRes.value?.releases || releasesRes.value?.items || releasesRes.value?.data || []
         : [];
 
-    // 2. Fetch milestones from project milestones API with timeline fallback
+    // Milestones must come from this API so every row has a real milestone ID
+    // that can be edited or deleted through the milestone endpoints.
     let milestoneList = [];
+    let milestoneError = '';
     try {
-      const msRes = await getProjectMilestones(pId).catch(() => null);
-      if (msRes) {
-        milestoneList = Array.isArray(msRes)
-          ? msRes
-          : msRes.milestones || msRes.items || msRes.data || [];
-      }
-      if (milestoneList.length === 0) {
-        const tlRes = await getProjectTimeline(pId).catch(() => null);
-        const groups = tlRes?.groups || (Array.isArray(tlRes) ? tlRes : []);
-        const msGroups = groups.filter((g) => String(g?.type || '').toUpperCase() === 'MILESTONE');
-        if (msGroups.length > 0) {
-          milestoneList = msGroups.map((g) => ({
-            id: g.id || g.groupId,
-            name: g.name || g.title,
-            targetDate: g.endDate || g.date || g.startDate,
-            status: g.status || 'PLANNED',
-          }));
-        }
-      }
-    } catch {
+      const msRes = await getProjectMilestones(pId);
+      const candidates = [
+        msRes,
+        msRes?.data,
+        msRes?.milestones,
+        msRes?.data?.milestones,
+        msRes?.items,
+        msRes?.data?.items,
+        msRes?.content,
+        msRes?.data?.content,
+      ];
+      milestoneList = candidates.find(Array.isArray) || [];
+    } catch (error) {
       milestoneList = [];
+      milestoneError = getFriendlyErrorMessage(error, 'project');
     }
 
     // 3. Fetch activity history from recent issues
@@ -412,6 +428,7 @@ const ProjectDetailsView = () => {
       sprints: sprintsData,
       issues: issuesData,
       milestones: milestoneList,
+      milestoneError,
       releases: releasesData,
       polls: pollsData,
       activities: formattedActivities,
@@ -431,6 +448,7 @@ const ProjectDetailsView = () => {
         setSprints(data.sprints);
         setIssues(data.issues);
         setMilestones(data.milestones);
+        setMilestoneLoadError(data.milestoneError || '');
         setReleases(data.releases);
         setPolls(data.polls);
         setActivities(data.activities);
@@ -455,6 +473,7 @@ const ProjectDetailsView = () => {
         setSprints(data.sprints);
         setIssues(data.issues);
         setMilestones(data.milestones);
+        setMilestoneLoadError(data.milestoneError || '');
         setReleases(data.releases);
         setPolls(data.polls);
         setActivities(data.activities);
@@ -555,6 +574,12 @@ const ProjectDetailsView = () => {
 
   const handleMilestoneSaved = (saved) => {
     const sId = saved?.id || saved?._id || saved?.milestoneId;
+    if (!sId) {
+      reloadData();
+      showToast('success', 'Milestone saved. Refreshing milestone list…');
+      return;
+    }
+    setMilestoneLoadError('');
     setMilestones((prev) => {
       const exists = prev.some((m) => String(m.id || m._id || m.milestoneId) === String(sId));
       if (exists) {
@@ -567,6 +592,7 @@ const ProjectDetailsView = () => {
 
   const handleMilestoneDeleted = (deletedId) => {
     setMilestones((prev) => prev.filter((m) => String(m.id || m._id || m.milestoneId) !== String(deletedId)));
+    setMilestoneLoadError('');
     showToast('success', 'Milestone was deleted.');
   };
 
@@ -1143,6 +1169,17 @@ const ProjectDetailsView = () => {
                       <div key={n} className="h-10 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                     ))}
                   </div>
+                ) : milestoneLoadError ? (
+                  <div className="py-6 text-center">
+                    <p className="text-xs text-rose-600 dark:text-rose-400">{milestoneLoadError}</p>
+                    <button
+                      type="button"
+                      onClick={reloadData}
+                      className="mt-2 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400"
+                    >
+                      Retry
+                    </button>
+                  </div>
                 ) : milestones.length === 0 ? (
                   <div className="py-8 text-center text-slate-500 dark:text-slate-400">
                     <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -1166,9 +1203,12 @@ const ProjectDetailsView = () => {
                   </div>
                 ) : (
                   <div>
-                    <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/60 max-h-[260px] overflow-y-auto pr-1">
-                      {milestones.slice(0, showAllMilestones ? undefined : 4).map((m, idx) => {
-                        const mId = m.id || m._id || m.milestoneId || idx;
+                    <div className="max-h-[260px] overflow-y-auto pr-1">
+                      <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/60">
+                        {milestones.slice(0, showAllMilestones ? undefined : 4).map((m, idx) => {
+                        const persistedMilestoneId = m.id || m._id || m.milestoneId || m.milestone?.id || m.milestone?._id;
+                        const mId = persistedMilestoneId || idx;
+                        const hasPersistedMilestoneId = Boolean(persistedMilestoneId);
                         const statusInfo = getMilestoneStatusInfo(m.status);
                         return (
                           <div
@@ -1197,8 +1237,8 @@ const ProjectDetailsView = () => {
                               >
                                 {statusInfo.label}
                               </span>
-                              {canManageMilestones && (
-                                <div className="flex items-center opacity-70 group-hover:opacity-100 transition">
+                              {canManageMilestones && hasPersistedMilestoneId && (
+                                <div className="flex items-center gap-0.5">
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -1206,9 +1246,11 @@ const ProjectDetailsView = () => {
                                       setIsMilestoneModalOpen(true);
                                     }}
                                     title="Edit Milestone"
-                                    className="p-1 rounded text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-[#25252c] transition cursor-pointer"
+                                    aria-label={`Edit ${m.name || m.title || 'milestone'}`}
+                                    className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-[#25252c] transition cursor-pointer"
                                   >
                                     <FiEdit2 size={12} />
+                                    <span className="hidden sm:inline">Edit</span>
                                   </button>
                                   <button
                                     type="button"
@@ -1217,16 +1259,19 @@ const ProjectDetailsView = () => {
                                       setIsDeleteMilestoneOpen(true);
                                     }}
                                     title="Delete Milestone"
-                                    className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                                    aria-label={`Delete ${m.name || m.title || 'milestone'}`}
+                                    className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                                   >
                                     <FiTrash2 size={12} />
+                                    <span className="hidden sm:inline">Delete</span>
                                   </button>
                                 </div>
                               )}
                             </div>
                           </div>
                         );
-                      })}
+                        })}
+                      </div>
                     </div>
                     {milestones.length > 4 && (
                       <button
