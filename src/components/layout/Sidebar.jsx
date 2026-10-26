@@ -131,7 +131,7 @@ const Sidebar = ({
 
       <aside
         aria-label="Sidebar navigation"
-        className={`hidden md:flex fixed left-2 sm:left-4 top-[74px] bottom-3 select-none z-40 transition-all duration-300 ease-in-out ${
+        className={`hidden md:block fixed left-2 sm:left-4 top-[74px] bottom-3 select-none z-40 transition-all duration-300 ease-in-out ${
           isCollapsed ? 'w-[68px]' : 'w-64'
         }`}
       >
