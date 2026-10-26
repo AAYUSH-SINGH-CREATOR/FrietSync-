@@ -52,6 +52,7 @@ export const updateProfile = async (profileData) => {
     jobTitle: profileData.jobTitle?.trim() || '',
     githubUrl: profileData.githubUrl?.trim() || null,
     linkedinUrl: profileData.linkedinUrl?.trim() || null,
+    portfolioUrl: profileData.portfolioUrl?.trim() || null,
   };
 
   try {

@@ -317,8 +317,17 @@ const ProfileView = () => {
                   ))}
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                    <span className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">Portfolio</span>
-                    {safeExternalUrl(profile.portfolioUrl) ? (
+                    <label className="text-sm font-normal text-slate-700 dark:text-white sm:w-24 shrink-0">Portfolio URL</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        value={profile.portfolioUrl}
+                        onChange={(e) => handleChange('portfolioUrl', e.target.value)}
+                        placeholder="https://"
+                        disabled={isLoadingUserProfile}
+                        className="flex-1 h-9 px-4 rounded-full bg-slate-50 dark:bg-[#171717] border border-slate-300 dark:border-white/20 text-slate-900 dark:text-white placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:border-sky-500 transition shadow-inner"
+                      />
+                    ) : safeExternalUrl(profile.portfolioUrl) ? (
                       <a href={safeExternalUrl(profile.portfolioUrl)} target="_blank" rel="noreferrer" className="flex-1 min-w-0 truncate text-sm text-sky-700 dark:text-sky-300 hover:underline">{profile.portfolioUrl}</a>
                     ) : (
                       <span className="flex-1 text-sm text-slate-400 dark:text-slate-500">Not provided</span>
