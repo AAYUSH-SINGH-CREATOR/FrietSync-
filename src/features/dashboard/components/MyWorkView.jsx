@@ -9,14 +9,17 @@ import {
   FiChevronRight,
   FiFolder,
   FiInbox,
+  FiPlus,
   FiRefreshCw,
   FiSearch,
 } from 'react-icons/fi';
 import { getProjectMembers, getMyProjects } from '../../projects/services/projectApi';
-import { getProjectIssues } from '../../issues/services/issueApi';
-import { getProjectSprints } from '../../sprints/services/sprintsApi';
+import { getProjectIssues, requestIssueAssignment } from '../../issues/services/issueApi';
+import { getProjectSprints, requestSprintAssignment } from '../../sprints/services/sprintsApi';
 import SprintDetailsView from '../../sprints/components/SprintDetailsView';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
+import CreateIssueModal from '../../issues/components/CreateIssueModal';
+import CreateEditSprintModal from '../../sprints/components/CreateEditSprintModal';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 import EmptyState from '../../../components/ui/EmptyState';
 import esmywork from '../../../assets/esmywork.png';
@@ -162,7 +165,7 @@ const SummaryCard = ({ icon: Icon, label, value, hint, color }) => (
 );
 
 const WorkTable = ({
-  tasks, loading, page, totalPages, total, onChangePage, onOpenTask,
+  tasks, loading, page, totalPages, total, onChangePage, onOpenTask, emptyContent,
 }) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
@@ -181,8 +184,12 @@ const WorkTable = ({
             )) : tasks.length === 0 ? (
               <tr><td colSpan="8" className="py-16 text-center text-slate-400 dark:text-[#777]">
                 <FiInbox size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No work items found</p>
-                <p className="mt-1 text-xs">Try adjusting your filters, or check back when work is assigned to you.</p>
+                {emptyContent || (
+                  <>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No work items found</p>
+                    <p className="mt-1 text-xs">Try adjusting your filters, or check back when work is assigned to you.</p>
+                  </>
+                )}
               </td></tr>
             ) : tasks.map((task, index) => (
               <tr key={task.id} onClick={() => onOpenTask(task)} className="group h-14 cursor-pointer transition hover:bg-slate-50/80 dark:hover:bg-[#27272c]">
@@ -244,6 +251,11 @@ const MyWorkView = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedSprint, setSelectedSprint] = useState(null);
   const [selectedIssue, setSelectedIssue] = useState(null);
+  const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
+  const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false);
+  const [requestChoice, setRequestChoice] = useState('');
+  const [assignmentRequestStates, setAssignmentRequestStates] = useState({});
+  const [assignmentRequestFeedback, setAssignmentRequestFeedback] = useState(null);
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -342,6 +354,49 @@ const MyWorkView = () => {
     if (globalManager) return true;
     return ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(getProjectRole(projectId));
   }, [globalManager, getProjectRole]);
+  const emptyActionProjectId = projectFilter !== 'all'
+    ? projectFilter
+    : String(getId(projects[0]) || '');
+  const selectedProjectRole = emptyActionProjectId ? getProjectRole(emptyActionProjectId) : '';
+  const canManageSelectedProject = Boolean(emptyActionProjectId) && canManageProject(emptyActionProjectId);
+  const canCreateIssueInSelectedProject = projectFilter !== 'all' && (
+    canManageSelectedProject || selectedProjectRole === 'REPORTER'
+  ) || (projectFilter === 'all' && canManageSelectedProject);
+  const canCreateSprintInSelectedProject = canManageSelectedProject;
+  const isContributor = globalRole === 'CONTRIBUTOR';
+  const requestProjectIds = new Set(projectFilter === 'all'
+    ? projects
+      .filter((project) => !isContributor || getProjectRole(getId(project)) === 'CONTRIBUTOR')
+      .map((project) => String(getId(project) || '')).filter(Boolean)
+    : [projectFilter]);
+  const requestableIssues = issues.filter((issue) => (
+    requestProjectIds.has(String(issue.projectId)) &&
+    !['RESOLVED', 'CLOSED'].includes(normalize(issue.status)) &&
+    getId(issue)
+  ));
+  const requestableSprints = sprints.filter((sprint) => (
+    requestProjectIds.has(String(sprint.projectId)) &&
+    normalize(sprint.status || sprint.state) !== 'COMPLETED' &&
+    getId(sprint)
+  ));
+
+  const handleAssignmentRequest = async (type, item) => {
+    const id = String(getId(item) || '');
+    if (!id) return;
+    const requestKey = `${type}:${id}`;
+    if (assignmentRequestStates[requestKey] === 'pending' || assignmentRequestStates[requestKey] === 'sent') return;
+    setAssignmentRequestStates((current) => ({ ...current, [requestKey]: 'pending' }));
+    setAssignmentRequestFeedback(null);
+    try {
+      if (type === 'issue') await requestIssueAssignment(id);
+      else await requestSprintAssignment(id);
+      setAssignmentRequestStates((current) => ({ ...current, [requestKey]: 'sent' }));
+      setAssignmentRequestFeedback({ type: 'success', message: 'Assignment request sent.' });
+    } catch (requestError) {
+      setAssignmentRequestStates((current) => ({ ...current, [requestKey]: 'idle' }));
+      setAssignmentRequestFeedback({ type: 'error', message: requestError?.message || 'Could not send the assignment request.' });
+    }
+  };
 
   const assignedIssueIds = useMemo(() => new Set(
     issues.filter((issue) => isIssueAssignedToUser(issue, userId, userEmail)).map((issue) => String(getId(issue)))
@@ -463,6 +518,95 @@ const MyWorkView = () => {
   const totalPages = Math.max(1, Math.ceil(sortedTasks.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages - 1);
   const pageTasks = useMemo(() => sortedTasks.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE), [sortedTasks, currentPage]);
+  const scopedProjectTasks = projectFilter === 'all'
+    ? tasks
+    : tasks.filter((task) => String(task.projectId) === projectFilter);
+  const scopedTasks = typeFilter === 'all'
+    ? scopedProjectTasks
+    : scopedProjectTasks.filter((task) => task.type === typeFilter);
+  const emptyContent = (
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-3 px-4">
+      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        {scopedTasks.length > 0
+          ? 'No work items match your current filters.'
+          : typeFilter === 'sprint'
+          ? `No sprints in ${projectFilter === 'all' ? 'your projects' : projects.find((project) => String(getId(project)) === projectFilter)?.name || 'this project'} yet.`
+          : typeFilter === 'issue'
+          ? `No issues in ${projectFilter === 'all' ? 'your projects' : projects.find((project) => String(getId(project)) === projectFilter)?.name || 'this project'} yet.`
+          : projectFilter === 'all'
+          ? 'No work items are available yet.'
+          : `No work in ${projects.find((project) => String(getId(project)) === projectFilter)?.name || 'this project'} yet.`}
+      </p>
+      {assignmentRequestFeedback && (
+        <p role="status" className={`text-xs font-medium ${assignmentRequestFeedback.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+          {assignmentRequestFeedback.message}
+        </p>
+      )}
+      {scopedTasks.length > 0 ? (
+        <button type="button" onClick={() => {
+          setTypeFilter('all');
+          setSearchQuery('');
+          setStatusFilter('all');
+          setPriorityFilter('all');
+          setProjectFilter('all');
+          setAssigneeFilter('all');
+          setSortOrder('due-asc');
+          setPage(0);
+        }} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white transition hover:bg-sky-700">
+          <FiRefreshCw size={14} /> Reset filters
+        </button>
+      ) : canManageSelectedProject ? (
+        <div className="flex flex-wrap justify-center gap-2">
+          {typeFilter !== 'sprint' && canCreateIssueInSelectedProject && (
+            <button type="button" onClick={() => setIsCreateIssueOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white transition hover:bg-sky-700">
+              <FiPlus size={14} /> Create Issue
+            </button>
+          )}
+          {typeFilter !== 'issue' && canCreateSprintInSelectedProject && (
+            <button type="button" onClick={() => setIsCreateSprintOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white transition hover:bg-sky-700">
+              <FiPlus size={14} /> Create Sprint
+            </button>
+          )}
+        </div>
+      ) : isContributor ? (
+        <div className="flex flex-wrap justify-center gap-2">
+          {typeFilter !== 'sprint' && <button type="button" onClick={() => setRequestChoice(requestChoice === 'issue' ? '' : 'issue')} disabled={!requestableIssues.length} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50">
+            <FiInbox size={14} /> Request Issue Assignment
+          </button>}
+          {typeFilter !== 'issue' && <button type="button" onClick={() => setRequestChoice(requestChoice === 'sprint' ? '' : 'sprint')} disabled={!requestableSprints.length} className="inline-flex h-9 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50">
+            <FiInbox size={14} /> Request Sprint Assignment
+          </button>}
+        </div>
+      ) : null}
+      {isContributor && requestChoice && (
+        <div className="max-h-56 w-full space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-left dark:border-[#35353d] dark:bg-[#24242a]">
+          <p className="mb-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+            {requestChoice === 'issue' ? 'Select an issue to request' : 'Select a sprint to request'}
+          </p>
+          {(requestChoice === 'issue' ? requestableIssues : requestableSprints).map((item) => {
+            const id = String(getId(item));
+            const requestKey = `${requestChoice}:${id}`;
+            const state = assignmentRequestStates[requestKey];
+            const projectName = item.projectName || projects.find((project) => String(getId(project)) === String(item.projectId))?.name;
+            return (
+              <div key={id} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-[#1b1b1f]">
+                <span className="min-w-0 truncate text-xs text-slate-700 dark:text-slate-200">
+                  {item.title || item.name || 'Untitled'}
+                  {projectFilter === 'all' && <span className="ml-1 text-slate-400">· {projectName || 'Project'}</span>}
+                </span>
+                <button type="button" onClick={() => handleAssignmentRequest(requestChoice, item)} disabled={state === 'pending' || state === 'sent'} className="shrink-0 rounded-lg bg-sky-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60">
+                  {state === 'pending' ? 'Sending…' : state === 'sent' ? 'Requested' : 'Request'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {isContributor && (typeFilter === 'all' ? !requestableIssues.length && !requestableSprints.length : typeFilter === 'issue' ? !requestableIssues.length : !requestableSprints.length) && scopedTasks.length === 0 && (
+        <p className="text-xs text-slate-500 dark:text-slate-400">There are no issues or sprints available to request here yet.</p>
+      )}
+    </div>
+  );
 
   const updateFilter = (setter) => (value) => {
     setter(value);
@@ -514,33 +658,15 @@ const MyWorkView = () => {
     );
   }
 
-  if (!isLoading && !error && sortedTasks.length === 0) {
+  if (!isLoading && !error && projects.length === 0) {
     return (
       <main className="min-h-full p-4 text-slate-900 dark:text-slate-100 sm:p-6 lg:p-8">
         <EmptyState
           title="My Work"
-          subtitle={tasks.length === 0 ? 'No work assigned yet.' : 'No work items match your current filters.'}
+          subtitle="Create or join a project to get started."
           illustration={esmywork}
-          illustrationAlt="No work assigned yet"
+          illustrationAlt="No projects yet"
           illustrationClassName="max-w-[500px] sm:max-w-[580px] md:max-w-[620px]"
-          actionButton={tasks.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => {
-                setTypeFilter('all');
-                setSearchQuery('');
-                setStatusFilter('all');
-                setPriorityFilter('all');
-                setProjectFilter('all');
-                setAssigneeFilter('all');
-                setSortOrder('due-asc');
-                setPage(0);
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
-            >
-              <FiRefreshCw size={15} /> Reset filters
-            </button>
-          ) : null}
         />
       </main>
     );
@@ -579,7 +705,7 @@ const MyWorkView = () => {
             ['sprint', `Sprints (${visibleSprints.length})`],
             ['issue', `Issues (${visibleIssues.length})`],
           ].map(([value, label]) => (
-            <button key={value} type="button" onClick={() => { setTypeFilter(value); setPage(0); }} className={`rounded-lg px-4 py-1.5 text-xs font-bold transition ${typeFilter === value ? 'bg-sky-200 text-sky-900 shadow-2xs dark:bg-sky-500/30 dark:text-sky-200' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}>
+            <button key={value} type="button" onClick={() => { setTypeFilter(value); setRequestChoice(''); setPage(0); }} className={`rounded-lg px-4 py-1.5 text-xs font-bold transition ${typeFilter === value ? 'bg-sky-200 text-sky-900 shadow-2xs dark:bg-sky-500/30 dark:text-sky-200' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}>
               {label}
             </button>
           ))}
@@ -618,9 +744,24 @@ const MyWorkView = () => {
         total={sortedTasks.length}
         onChangePage={(nextPage) => setPage(Math.max(0, Math.min(totalPages - 1, nextPage)))}
         onOpenTask={openTask}
+        emptyContent={emptyContent}
       />
 
       {issueDetailsModal}
+      <CreateIssueModal
+        isOpen={isCreateIssueOpen}
+        onClose={() => setIsCreateIssueOpen(false)}
+        projects={projects}
+        defaultProjectId={emptyActionProjectId}
+        onIssueCreated={() => { setIsCreateIssueOpen(false); refresh(); }}
+      />
+      <CreateEditSprintModal
+        isOpen={isCreateSprintOpen}
+        onClose={() => setIsCreateSprintOpen(false)}
+        projectId={emptyActionProjectId}
+        projectName={projects.find((project) => String(getId(project)) === emptyActionProjectId)?.name}
+        onSprintSaved={() => { setIsCreateSprintOpen(false); refresh(); }}
+      />
     </main>
   );
 };

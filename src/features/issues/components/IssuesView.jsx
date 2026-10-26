@@ -406,13 +406,17 @@ const IssuesView = () => {
     );
   }
 
-  if (!isLoadingIssues && !error && filteredIssues.length === 0) {
+  // Keep the feature layout available when a selected project has no issues,
+  // so project managers can create the first one from the table's inline action.
+  if (!isLoadingIssues && !error && filteredIssues.length === 0 && (issues.length > 0 || projects.length === 0)) {
     return (
       <>
         <section className="min-h-[calc(100vh-7.5rem)] rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7">
           <EmptyState
             title="Issues"
-            subtitle={issues.length === 0
+            subtitle={activeTab === 'assigned'
+              ? 'No issues are assigned to you yet.'
+              : issues.length === 0
               ? 'No issues yet. Create an issue to start tracking work.'
               : 'No issues match your current search or filters.'}
             illustration={esissues}
@@ -709,7 +713,7 @@ const IssuesView = () => {
                             <button type="button" onClick={() => setActiveTab('all')} className="mt-4 inline-flex h-[34px] items-center gap-1.5 rounded-md bg-sky-600 px-3.5 text-xs font-semibold text-white hover:bg-sky-700 cursor-pointer">
                               Browse Project Issues
                             </button>
-                          ) : !issues.length ? (
+                          ) : !issues.length && canCreateIssue ? (
                             <button type="button" onClick={() => setIsCreateModalOpen(true)} className="mt-4 inline-flex h-[34px] items-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-semibold text-white hover:bg-sky-700 cursor-pointer">
                               <FiPlus />Create Issue
                             </button>

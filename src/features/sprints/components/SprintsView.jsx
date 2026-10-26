@@ -31,13 +31,15 @@ import EmptyState from '../../../components/ui/EmptyState';
 import essprints from '../../../assets/essprints.png';
 
 const getCollection = (value, keys) => {
-  const containers = [value, value?.data, value?.result];
-  for (const container of containers) {
+  const queue = [value];
+  const visited = new Set();
+  while (queue.length) {
+    const container = queue.shift();
     if (Array.isArray(container)) return container;
-    if (container && typeof container === 'object') {
-      for (const key of keys) {
-        if (Array.isArray(container[key])) return container[key];
-      }
+    if (!container || typeof container !== 'object' || visited.has(container)) continue;
+    visited.add(container);
+    for (const key of [...keys, 'data', 'result']) {
+      if (container[key] !== undefined) queue.push(container[key]);
     }
   }
   return [];
@@ -80,7 +82,8 @@ const SprintsView = () => {
   const [sprintRequestsProjectId, setSprintRequestsProjectId] = useState('');
   const [pendingSprintIds, setPendingSprintIds] = useState(() => new Set());
   const pendingSprintIdsRef = useRef(new Set());
-  const [sprintsLoading, setSprintsLoading] = useState(false);
+  const [sprintsLoading, setSprintsLoading] = useState(true);
+  const [sprintsProjectId, setSprintsProjectId] = useState('');
   const [sprintsError, setSprintsError] = useState('');
 
   const [projectIssues, setProjectIssues] = useState([]);
@@ -148,19 +151,30 @@ const SprintsView = () => {
 
   // Load Sprints for active project
   useEffect(() => {
-    if (!projectId) return undefined;
+    if (!projectId) {
+      setSprints([]);
+      setSprintsProjectId('');
+      setSprintsLoading(false);
+      return undefined;
+    }
 
     let isMounted = true;
+    setSprints([]);
+    setSprintsProjectId('');
+    setSprintsError('');
+    setSprintsLoading(true);
     getProjectSprints(projectId)
       .then((response) => {
         if (!isMounted) return;
         setSprints(getCollection(response, ['sprints', 'items', 'content', 'results']));
+        setSprintsProjectId(String(projectId));
         setSprintsError('');
         setSprintsLoading(false);
       })
       .catch((error) => {
         if (!isMounted) return;
         setSprints([]);
+        setSprintsProjectId(String(projectId));
         setSprintsError(getFriendlyErrorMessage(error, 'sprint'));
         setSprintsLoading(false);
       });
@@ -426,8 +440,9 @@ const SprintsView = () => {
     );
   }
 
-  const hasNoSprintsToShow = !projectsLoading && !projectsError && !sprintsLoading && !sprintsError &&
-    (projects.length === 0 || (projectId && filteredSprints.length === 0));
+  const isCurrentProjectSprintsLoaded = Boolean(projectId) && sprintsProjectId === String(projectId);
+  const hasNoSprintsToShow = !projectsLoading && !projectsError && isCurrentProjectSprintsLoaded && !sprintsLoading && !sprintsError &&
+    (projects.length === 0 || (sprints.length > 0 && filteredSprints.length === 0));
   if (hasNoSprintsToShow) {
     const hasNoProjects = projects.length === 0;
     return (
@@ -682,8 +697,24 @@ const SprintsView = () => {
         </div>
       </div>
 
-      {/* 5. Main Content: Table or Board */}
-      {layoutView === 'list' ? (
+      {/* A project with no sprints keeps the normal controls and gets a direct create action. */}
+      {!sprintsLoading && sprints.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-10 text-center dark:border-[#414148] dark:bg-[#1f1f1f]/70">
+          <div>
+            <p className="text-sm font-semibold text-slate-800 dark:text-white">No sprints in {currentProject?.name || 'this project'} yet.</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">Create a sprint to start planning work for this project.</p>
+          </div>
+          {canCreateSprint && (
+            <button
+              type="button"
+              onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
+              className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700"
+            >
+              <FiPlus size={16} /> Create Sprint
+            </button>
+          )}
+        </div>
+      ) : layoutView === 'list' ? (
         <SprintsTable
           sprints={filteredSprints}
           isLoading={sprintsLoading}
