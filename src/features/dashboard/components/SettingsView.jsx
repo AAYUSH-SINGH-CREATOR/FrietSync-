@@ -910,7 +910,7 @@ const SettingsView = () => {
                       type="button"
                       onClick={handleConnectGithub}
                       disabled={isConnectingGithub}
-                      className="inline-flex min-w-20 items-center justify-center rounded-lg border border-[#24292f] bg-[#24292f] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-[#32383f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:focus-visible:ring-offset-[#181a20]"
+                      className="inline-flex min-w-20 items-center justify-center rounded-lg border border-blue-700 bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-400 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus-visible:ring-offset-[#181a20]"
                     >
                       {isConnectingGithub ? 'Connecting…' : 'Connect'}
                     </button>
