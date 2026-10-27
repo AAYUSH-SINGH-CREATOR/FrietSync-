@@ -193,8 +193,8 @@ const ProjectDetailsView = () => {
   // Synchronize linked repo from project payload if provided by backend
   useEffect(() => {
     if (project) {
-      const owner = project.githubOwner || project.repositoryOwner || project.repoOwner;
-      const repo = project.githubRepo || project.githubRepositoryName || project.repositoryName || project.repoName;
+      const owner = project.githubRepositoryOwner || project.githubOwner || project.repositoryOwner || project.repoOwner;
+      const repo = project.githubRepositoryName || project.githubRepo || project.repositoryName || project.repoName;
       if (owner && repo) {
         Promise.resolve().then(() => {
           setLinkedRepo({ owner, repository: repo });
@@ -256,6 +256,19 @@ const ProjectDetailsView = () => {
 
   const isProjectManager = currentUserIds.some((id) => projectManagerIds.includes(id)) ||
     currentProjectRoleNames.includes('PROJECT_MANAGER');
+
+  const repositoryManagerIds = [
+    project?.adminId,
+    project?.createdBy,
+    project?.projectManagerId,
+    project?.projectManager?.id,
+    project?.projectManager?._id,
+    project?.teamLeadId,
+    project?.teamLead?.id,
+    project?.teamLead?._id,
+  ].filter(Boolean).map(String);
+  const canManageGithubRepository = currentUserIds.some((id) => repositoryManagerIds.includes(id)) ||
+    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role));
 
   const canManageMilestones = isProjectManager;
   const canManageReleases = isProjectManager;
@@ -477,7 +490,10 @@ const ProjectDetailsView = () => {
         setReleases(data.releases);
         setPolls(data.polls);
         setActivities(data.activities);
-        const projectRepo = data.project?.githubRepository || data.project?.repository || data.project?.githubRepo;
+        const projectRepo = data.project?.githubRepository || data.project?.repository || data.project?.githubRepo ||
+          (data.project?.githubRepositoryOwner && data.project?.githubRepositoryName
+            ? { owner: data.project.githubRepositoryOwner, repository: data.project.githubRepositoryName }
+            : null);
         if (projectRepo) {
           if (typeof projectRepo === 'string') {
             const parts = projectRepo.split('/');
@@ -1104,10 +1120,16 @@ const ProjectDetailsView = () => {
                     </span>
                     {linkedRepo ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-900 dark:text-white font-semibold text-xs font-mono bg-slate-100 dark:bg-[#25252c] px-2 py-0.5 rounded-md border border-slate-200 dark:border-[#32323a] truncate max-w-[150px]">
+                        <a
+                          href={`https://github.com/${linkedRepo.owner}/${linkedRepo.repository}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`${linkedRepo.owner}/${linkedRepo.repository}`}
+                          className="text-slate-900 dark:text-white font-semibold text-xs font-mono bg-slate-100 dark:bg-[#25252c] px-2 py-0.5 rounded-md border border-slate-200 dark:border-[#32323a] truncate max-w-[220px] hover:border-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
+                        >
                           {linkedRepo.owner}/{linkedRepo.repository}
-                        </span>
-                        {canManageMilestones && (
+                        </a>
+                        {canManageGithubRepository && (
                           <button
                             type="button"
                             onClick={handleUnlinkRepository}
@@ -1119,7 +1141,7 @@ const ProjectDetailsView = () => {
                         )}
                       </div>
                     ) : (
-                      canManageMilestones && (
+                      canManageGithubRepository && (
                         <button
                           type="button"
                           onClick={() => setIsLinkRepoModalOpen(true)}
@@ -1925,7 +1947,7 @@ const ProjectDetailsView = () => {
           <ProjectContributionsSection
             projectId={projectId}
             linkedRepo={linkedRepo}
-            canManage={canManageMilestones}
+            canManage={canManageGithubRepository}
             onOpenLinkModal={() => setIsLinkRepoModalOpen(true)}
             onUnlinkRepo={handleUnlinkRepository}
             isUnlinkingRepo={isUnlinkingRepo}
