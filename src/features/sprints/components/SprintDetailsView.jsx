@@ -462,7 +462,9 @@ const SprintDetailsView = ({
               </div>
               <div className="flex justify-between text-slate-600 dark:text-[#bbb]">
                 <span>Milestone:</span>
-                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]">{sprint?.milestoneId || sprint?.milestoneName || '—'}</span>
+                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]" title={sprint?.milestoneName || sprint?.milestone?.name || undefined}>
+                  {sprint?.milestoneName || sprint?.milestone?.name || sprint?.milestoneId || '—'}
+                </span>
               </div>
             </div>
           </div>

@@ -226,14 +226,6 @@ const ProjectDetailsView = () => {
   }, [members, currentUserId, currentUserEmail]);
 
   const normalizeRole = (role) => String(role || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-  const currentRoleNames = [
-    currentProjectRole?.role,
-    currentProjectRole?.projectRole,
-    currentProjectRole?.userRole,
-    currentProjectRole?.user?.role,
-    currentUserProfile?.role,
-    currentUserProfile?.user?.role,
-  ].map(normalizeRole);
   const currentProjectRoleNames = [
     currentProjectRole?.role,
     currentProjectRole?.projectRole,
@@ -254,9 +246,12 @@ const ProjectDetailsView = () => {
     project?.projectManager?.userId,
   ].filter(Boolean).map(String);
   const projectAdminIds = [project?.adminId].filter(Boolean).map(String);
-
-  const isProjectManager = currentUserIds.some((id) => projectManagerIds.includes(id)) ||
-    currentProjectRoleNames.includes('PROJECT_MANAGER');
+  const teamLeadIds = [
+    project?.teamLeadId,
+    project?.teamLead?.id,
+    project?.teamLead?._id,
+    project?.teamLead?.userId,
+  ].filter(Boolean).map(String);
 
   const repositoryManagerIds = [
     project?.adminId,
@@ -274,8 +269,10 @@ const ProjectDetailsView = () => {
   const canManageMilestones = currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
-  const canManageReleases = isProjectManager;
-  const canAttachIssues = isProjectManager || currentRoleNames.some((role) => ['TEAM_LEAD', 'LEAD'].includes(role));
+  const canManageReleases = currentUserIds.some((id) =>
+    projectAdminIds.includes(id) || projectManagerIds.includes(id)
+  );
+  const canAttachIssues = canManageReleases || currentUserIds.some((id) => teamLeadIds.includes(id));
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -579,7 +576,7 @@ const ProjectDetailsView = () => {
           if (String(rId) === String(releaseId)) {
             return updated && typeof updated === 'object'
               ? { ...r, ...updated }
-              : { ...r, fileName: file.name, fileUrl: updated || r.fileUrl };
+              : { ...r, fileName: file.name, releaseFileUrl: updated || r.releaseFileUrl };
           }
           return r;
         })
@@ -1794,7 +1791,7 @@ const ProjectDetailsView = () => {
                   const rDate = release.releaseDate || release.date;
                   const attachedIssues = release.issues || release.issueIds || release.releaseIssues || [];
                   const issueCount = Array.isArray(attachedIssues) ? attachedIssues.length : 0;
-                  const fileUrl = release.fileUrl || release.artifactUrl || release.downloadUrl;
+                  const fileUrl = release.releaseFileUrl || release.fileUrl || release.artifactUrl || release.downloadUrl;
                   const fileName = release.fileName || release.filename || (fileUrl ? 'artifact-file' : null);
                   const isUploadingThis = String(uploadingReleaseId) === String(rId);
 
