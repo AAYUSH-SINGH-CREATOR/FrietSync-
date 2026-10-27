@@ -104,6 +104,11 @@ const SprintsTable = ({
                       <span className="block text-xs font-medium text-slate-800 dark:text-[#eee] truncate max-w-[170px]">
                         {sprint.name || 'Untitled Sprint'}
                       </span>
+                      {sprint.projectName && (
+                        <span className="mt-0.5 block max-w-[170px] truncate text-[10px] text-slate-400 dark:text-[#888]">
+                          {sprint.projectName}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2 text-slate-600 dark:text-[#aaa] truncate max-w-[200px]" title={sprint.goal}>
                       {sprint.goal || '—'}

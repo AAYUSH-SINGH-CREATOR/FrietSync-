@@ -142,6 +142,11 @@ const SprintsBoard = ({
                   <h4 className="mt-1.5 text-xs font-bold text-slate-900 group-hover:text-sky-600 dark:text-slate-100 dark:group-hover:text-sky-400 line-clamp-1 transition-colors">
                     {sprint.name || 'Untitled Sprint'}
                   </h4>
+                  {sprint.projectName && (
+                    <p className="mt-0.5 text-[10px] font-medium text-slate-400 dark:text-[#888] line-clamp-1">
+                      {sprint.projectName}
+                    </p>
+                  )}
                   {sprint.goal && (
                     <p className="mt-0.5 text-[11px] text-slate-500 dark:text-[#999] line-clamp-2">
                       {sprint.goal}

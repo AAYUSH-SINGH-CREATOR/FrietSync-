@@ -28,6 +28,7 @@ import SprintsBoard from './SprintsBoard';
 import SprintDetailsView from './SprintDetailsView';
 import CreateEditSprintModal from './CreateEditSprintModal';
 import EmptyState from '../../../components/ui/EmptyState';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 import essprints from '../../../assets/essprints.png';
 
 const getCollection = (value, keys) => {
@@ -47,6 +48,7 @@ const getCollection = (value, keys) => {
 
 const getProjectId = (project) => project?.id || project?.projectId || project?._id;
 const getSprintId = (sprint) => sprint?.id || sprint?.sprintId || sprint?._id;
+const getSprintProjectId = (sprint) => sprint?.projectId || sprint?.project?.id || sprint?.project?._id;
 
 const FilterSelect = ({ label, value, onChange, options }) => (
   <label className="relative min-w-[110px] flex-1 sm:flex-none">
@@ -72,6 +74,7 @@ const SprintsView = () => {
   const isAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
 
   const [projects, setProjects] = useState([]);
+  // Empty means the all projects view. A specific ID filters to one project.
   const [projectId, setProjectId] = useState('');
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState('');
@@ -119,6 +122,8 @@ const SprintsView = () => {
   }, []);
 
   const currentProject = projects.find((p) => String(getProjectId(p)) === projectId);
+  const selectedSprintProjectId = selectedSprint ? String(getSprintProjectId(selectedSprint) || '') : '';
+  const selectedSprintProject = projects.find((project) => String(getProjectId(project)) === selectedSprintProjectId);
 
   // Load Projects
   useEffect(() => {
@@ -131,8 +136,6 @@ const SprintsView = () => {
         setProjectId((currentId) =>
           currentId && records.some((project) => String(getProjectId(project)) === currentId)
             ? currentId
-            : getProjectId(records[0])
-            ? String(getProjectId(records[0]))
             : ''
         );
         setProjectsError('');
@@ -149,62 +152,88 @@ const SprintsView = () => {
     return () => { isMounted = false; };
   }, [projectRefreshTrigger]);
 
-  // Load Sprints for active project
+  // Load sprints for every project by default, or for the selected project.
   useEffect(() => {
-    if (!projectId) {
+    if (projectsLoading) return undefined;
+
+    const targetProjects = projectId
+      ? projects.filter((project) => String(getProjectId(project)) === String(projectId))
+      : projects;
+
+    if (targetProjects.length === 0) {
       setSprints([]);
-      setSprintsProjectId('');
+      setSprintsProjectId(projectId || 'all');
       setSprintsLoading(false);
       return undefined;
     }
 
     let isMounted = true;
-    setSprints([]);
     setSprintsProjectId('');
     setSprintsError('');
     setSprintsLoading(true);
-    getProjectSprints(projectId)
-      .then((response) => {
+    Promise.allSettled(targetProjects.map(async (project) => {
+      const id = String(getProjectId(project));
+      const response = await getProjectSprints(id);
+      return getCollection(response, ['sprints', 'items', 'content', 'results']).map((sprint) => ({
+        ...sprint,
+        projectId: sprint.projectId || sprint.project?.id || sprint.project?._id || id,
+        projectName: sprint.projectName || sprint.project?.name || project.name || 'Untitled project',
+      }));
+    }))
+      .then((results) => {
         if (!isMounted) return;
-        setSprints(getCollection(response, ['sprints', 'items', 'content', 'results']));
-        setSprintsProjectId(String(projectId));
-        setSprintsError('');
-        setSprintsLoading(false);
-      })
-      .catch((error) => {
-        if (!isMounted) return;
-        setSprints([]);
-        setSprintsProjectId(String(projectId));
-        setSprintsError(getFriendlyErrorMessage(error, 'sprint'));
+        const fulfilled = results.filter((result) => result.status === 'fulfilled');
+        const failed = results.filter((result) => result.status === 'rejected');
+        setSprints(fulfilled.flatMap((result) => result.value));
+        setSprintsProjectId(projectId || 'all');
+        setSprintsError(failed.length === targetProjects.length
+          ? getFriendlyErrorMessage(failed[0].reason, 'sprint')
+          : failed.length
+            ? 'Some project sprints could not be loaded.'
+            : '');
         setSprintsLoading(false);
       });
 
     return () => { isMounted = false; };
-  }, [projectId, sprintRefreshTrigger]);
+  }, [projectId, projects, projectsLoading, sprintRefreshTrigger]);
 
   // Load Project Issues & Members for accurate metrics & filters
   useEffect(() => {
-    if (!projectId) return undefined;
+    if (projectsLoading) return undefined;
+    const targetProjects = projectId
+      ? projects.filter((project) => String(getProjectId(project)) === String(projectId))
+      : projects;
+    if (targetProjects.length === 0) {
+      setProjectIssues([]);
+      setMembers([]);
+      return undefined;
+    }
     let isMounted = true;
-    getProjectIssues(projectId, { page: 0, size: 100 })
-      .then((data) => {
-        if (!isMounted) return;
-        const items = data?.items || data?.content || (Array.isArray(data) ? data : []);
-        setProjectIssues(items);
-      })
-      .catch(() => {});
-
-    getProjectMembers(projectId)
-      .then((data) => {
-        if (!isMounted) return;
-        const list = Array.isArray(data) ? data : (data?.members || []);
-        setMembers(list);
-        setMembersProjectId(String(projectId));
-      })
-      .catch(() => {});
+    Promise.all(targetProjects.map(async (project) => {
+      const id = String(getProjectId(project));
+      const [issuesResult, membersResult] = await Promise.allSettled([
+        getProjectIssues(id, { page: 0, size: 100 }),
+        getProjectMembers(id),
+      ]);
+      const issues = issuesResult.status === 'fulfilled'
+        ? getCollection(issuesResult.value, ['issues', 'items', 'content', 'results'])
+        : [];
+      const projectMembers = membersResult.status === 'fulfilled'
+        ? getCollection(membersResult.value, ['members', 'items', 'content', 'results'])
+        : [];
+      return {
+        issues: issues.map((issue) => ({ ...issue, projectId: issue.projectId || id })),
+        members: projectMembers.map((member) => ({ ...member, projectId: id })),
+      };
+    })).then((results) => {
+      if (!isMounted) return;
+      setProjectIssues(results.flatMap((result) => result.issues));
+      setMembers(results.flatMap((result) => result.members));
+      setMembersProjectId(projectId || 'all');
+    });
 
     return () => { isMounted = false; };
-  }, [projectId]);
+  }, [projectId, projects, projectsLoading]);
 
   const loadSprints = useCallback(() => {
     setSprintsLoading(true);
@@ -218,9 +247,11 @@ const SprintsView = () => {
     if (pendingSprintIdsRef.current.has(key)) return;
 
     const currentStatus = String(sprint.status || sprint.state || 'PLANNED').toUpperCase().replace(/[\s-]+/g, '_');
+    const sprintProjectId = String(getSprintProjectId(sprint) || '');
     const userId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
     const contributorId = sprint.contributorId || sprint.assignedContributorId || sprint.contributor?.id || sprint.contributor?._id || sprint.contributor?.userId;
     const isProjectManager = globalRole === 'PROJECT_MANAGER' || members.some((member) => {
+      if (String(member.projectId) !== sprintProjectId) return false;
       const memberId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
       const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
       return ((userId && String(memberId) === String(userId)) || (currentUserEmail && memberEmail === currentUserEmail)) &&
@@ -273,55 +304,64 @@ const SprintsView = () => {
   }, []);
 
   const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
-  const currentProjectRole = members.find((member) => {
-    if (String(membersProjectId) !== String(projectId)) return false;
+  const findProjectRole = useCallback((targetProjectId) => members.find((member) => {
+    if (String(member.projectId) !== String(targetProjectId)) return false;
     const memberUserId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
     const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
     return (currentUserId && String(memberUserId) === String(currentUserId)) || (currentUserEmail && memberEmail === currentUserEmail);
-  });
+  }), [members, currentUserId, currentUserEmail]);
+  const currentProjectRole = projectId ? findProjectRole(projectId) : null;
   const currentProjectRoleName = String(currentProjectRole?.role || currentProjectRole?.projectRole || currentProjectRole?.user?.role || '').toUpperCase();
+  const selectedSprintProjectRole = selectedSprintProjectId ? findProjectRole(selectedSprintProjectId) : null;
+  const selectedSprintProjectRoleName = String(selectedSprintProjectRole?.role || selectedSprintProjectRole?.projectRole || selectedSprintProjectRole?.user?.role || '').toUpperCase();
+  const canManageSelectedSprint = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(selectedSprintProjectRoleName);
+  const canApproveSelectedSprintRequests = selectedSprintProjectRoleName === 'PROJECT_MANAGER';
   const canManage = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(currentProjectRoleName);
-  const canApproveSprintRequests = currentProjectRoleName === 'PROJECT_MANAGER';
+  const canApproveSprintRequests = projectId
+    ? currentProjectRoleName === 'PROJECT_MANAGER'
+    : members.some((member) => String(member.role || member.projectRole || member.user?.role || '').toUpperCase() === 'PROJECT_MANAGER');
   const canCreateSprint = isLoadingUserProfile === false && canManage;
 
   const loadSprintRequests = useCallback(async () => {
-    if (!projectId || !canApproveSprintRequests) {
+    if (!canApproveSprintRequests) {
       setSprintRequests([]);
       return;
     }
+    const targetProjects = (projectId
+      ? projects.filter((project) => String(getProjectId(project)) === String(projectId))
+      : projects.filter((project) => {
+          const id = String(getProjectId(project));
+          const role = findProjectRole(id);
+          return String(role?.role || role?.projectRole || role?.user?.role || '').toUpperCase() === 'PROJECT_MANAGER';
+        }));
     setSprintRequestsLoading(true);
     try {
-      const response = await getProjectSprintRequests(projectId);
-      setSprintRequests(getCollection(response, ['requests', 'items', 'content', 'results']));
-      setSprintRequestsProjectId(String(projectId));
+      const results = await Promise.allSettled(targetProjects.map(async (project) => {
+        const id = String(getProjectId(project));
+        const response = await getProjectSprintRequests(id);
+        return getCollection(response, ['requests', 'items', 'content', 'results']).map((request) => ({
+          ...request,
+          projectId: request.projectId || id,
+          projectName: request.projectName || project.name || 'Untitled project',
+        }));
+      }));
+      setSprintRequests(results.filter((result) => result.status === 'fulfilled').flatMap((result) => result.value));
+      setSprintRequestsProjectId(projectId || 'all');
     } catch (error) {
       showToast('error', getFriendlyErrorMessage(error, 'sprint'));
       setSprintRequests([]);
-      setSprintRequestsProjectId(String(projectId));
+      setSprintRequestsProjectId(projectId || 'all');
     } finally {
       setSprintRequestsLoading(false);
     }
-  }, [projectId, canApproveSprintRequests, showToast]);
+  }, [projectId, projects, canApproveSprintRequests, findProjectRole, showToast]);
 
   useEffect(() => {
-    if (!projectId || !canApproveSprintRequests) return undefined;
-    let isMounted = true;
-    getProjectSprintRequests(projectId)
-      .then((response) => {
-        if (!isMounted) return;
-        setSprintRequests(getCollection(response, ['requests', 'items', 'content', 'results']));
-        setSprintRequestsProjectId(String(projectId));
-      })
-      .catch((error) => {
-        if (!isMounted) return;
-        showToast('error', getFriendlyErrorMessage(error, 'sprint'));
-        setSprintRequests([]);
-        setSprintRequestsProjectId(String(projectId));
-      });
-    return () => { isMounted = false; };
-  }, [projectId, canApproveSprintRequests, showToast]);
+    if (projectsLoading) return;
+    loadSprintRequests();
+  }, [projectsLoading, loadSprintRequests]);
 
-  const isLoadingSprintRequests = sprintRequestsLoading || (canApproveSprintRequests && projectId && sprintRequestsProjectId !== String(projectId));
+  const isLoadingSprintRequests = sprintRequestsLoading || (canApproveSprintRequests && sprintRequestsProjectId !== (projectId || 'all'));
   const pendingSprintRequests = useMemo(
     () => sprintRequests.filter((request) => String(request.status || '').toUpperCase() === 'PENDING'),
     [sprintRequests]
@@ -407,6 +447,10 @@ const SprintsView = () => {
     setSelectedSprintId(String(id));
   };
 
+  if (projectsLoading && projects.length === 0) {
+    return <LoadingScreen fullScreen label="Loading sprint projects" />;
+  }
+
   // If a sprint is selected, render full dedicated SprintDetailsView
   if (selectedSprintId) {
     return (
@@ -414,11 +458,11 @@ const SprintsView = () => {
         <SprintDetailsView
           sprintId={selectedSprintId}
           initialSprint={selectedSprint}
-          projectId={projectId}
-          projectName={currentProject?.name}
-          canManage={canManage}
-          currentProjectRoleName={currentProjectRoleName}
-          canViewSprintRequests={canApproveSprintRequests}
+          projectId={selectedSprintProjectId}
+          projectName={selectedSprintProject?.name || selectedSprint?.projectName}
+          canManage={canManageSelectedSprint}
+          currentProjectRoleName={selectedSprintProjectRoleName}
+          canViewSprintRequests={canApproveSelectedSprintRequests}
           currentUserProfile={currentUserProfile}
           onBack={() => { setSelectedSprintId(''); setSelectedSprint(null); }}
           onSprintUpdated={loadSprints}
@@ -426,10 +470,10 @@ const SprintsView = () => {
           onOpenEdit={(s) => { setSprintToEdit(s); setIsCreateEditOpen(true); }}
         />
         <CreateEditSprintModal
-          isOpen={isCreateEditOpen && (sprintToEdit ? canManage : canCreateSprint)}
+          isOpen={isCreateEditOpen && (sprintToEdit ? canManageSelectedSprint : canCreateSprint && Boolean(projectId))}
           onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
-          projectId={projectId}
-          projectName={currentProject?.name}
+          projectId={sprintToEdit ? selectedSprintProjectId : projectId}
+          projectName={sprintToEdit ? selectedSprintProject?.name || selectedSprint?.projectName : currentProject?.name}
           sprintToEdit={sprintToEdit}
           onSprintSaved={() => {
             loadSprints();
@@ -440,7 +484,7 @@ const SprintsView = () => {
     );
   }
 
-  const isCurrentProjectSprintsLoaded = Boolean(projectId) && sprintsProjectId === String(projectId);
+  const isCurrentProjectSprintsLoaded = sprintsProjectId === (projectId || 'all');
   const hasNoSprintsToShow = !projectsLoading && !projectsError && isCurrentProjectSprintsLoaded && !sprintsLoading && !sprintsError &&
     (projects.length === 0 || (sprints.length > 0 && filteredSprints.length === 0));
   if (hasNoSprintsToShow) {
@@ -518,7 +562,7 @@ const SprintsView = () => {
           >
             <FiRefreshCw size={15} className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} />
           </button>
-          {canCreateSprint && (
+          {canCreateSprint && Boolean(projectId) && (
             <button
               type="button"
               onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
@@ -668,8 +712,8 @@ const SprintsView = () => {
           />
           <FilterSelect
             label="Project"
-            value={projectId}
-            onChange={(v) => { setProjectId(v); setPage(0); }}
+            value={projectId || 'all'}
+            onChange={(v) => { setProjectId(v === 'all' ? '' : v); setPage(0); }}
             options={projects.map((p) => ({
               value: String(getProjectId(p)),
               label: p.name || 'Untitled project',
@@ -698,13 +742,18 @@ const SprintsView = () => {
       </div>
 
       {/* A project with no sprints keeps the normal controls and gets a direct create action. */}
-      {!sprintsLoading && sprints.length === 0 ? (
+      {!projectId && sprints.length === 0 ? (
+        <div className="flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-10 text-center dark:border-[#414148] dark:bg-[#1f1f1f]/70">
+          <p className="text-sm font-semibold text-slate-800 dark:text-white">There are no sprints in your projects yet.</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">Create a sprint from a specific project.</p>
+        </div>
+      ) : !sprintsLoading && sprints.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-10 text-center dark:border-[#414148] dark:bg-[#1f1f1f]/70">
           <div>
             <p className="text-sm font-semibold text-slate-800 dark:text-white">No sprints in {currentProject?.name || 'this project'} yet.</p>
             <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">Create a sprint to start planning work for this project.</p>
           </div>
-          {canCreateSprint && (
+          {canCreateSprint && Boolean(projectId) && (
             <button
               type="button"
               onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
@@ -730,16 +779,16 @@ const SprintsView = () => {
           onSprintClick={handleSprintClick}
           onStatusChange={handleSprintStatusChange}
           pendingSprintIds={pendingSprintIds}
-          onCreateSprint={canCreateSprint ? () => { setSprintToEdit(null); setIsCreateEditOpen(true); } : undefined}
+          onCreateSprint={canCreateSprint && Boolean(projectId) ? () => { setSprintToEdit(null); setIsCreateEditOpen(true); } : undefined}
         />
       )}
 
       {/* Create / Edit Sprint Modal */}
       <CreateEditSprintModal
-        isOpen={isCreateEditOpen && (sprintToEdit ? canManage : canCreateSprint)}
+        isOpen={isCreateEditOpen && (sprintToEdit ? canManageSelectedSprint : canCreateSprint && Boolean(projectId))}
         onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
-        projectId={projectId}
-        projectName={currentProject?.name}
+        projectId={sprintToEdit ? selectedSprintProjectId : projectId}
+        projectName={sprintToEdit ? selectedSprintProject?.name || selectedSprint?.projectName : currentProject?.name}
         sprintToEdit={sprintToEdit}
         onSprintSaved={() => {
           loadSprints();
