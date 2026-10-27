@@ -253,6 +253,7 @@ const ProjectDetailsView = () => {
     project?.projectManager?._id,
     project?.projectManager?.userId,
   ].filter(Boolean).map(String);
+  const projectAdminIds = [project?.adminId].filter(Boolean).map(String);
 
   const isProjectManager = currentUserIds.some((id) => projectManagerIds.includes(id)) ||
     currentProjectRoleNames.includes('PROJECT_MANAGER');
@@ -270,7 +271,9 @@ const ProjectDetailsView = () => {
   const canManageGithubRepository = currentUserIds.some((id) => repositoryManagerIds.includes(id)) ||
     currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role));
 
-  const canManageMilestones = isProjectManager;
+  const canManageMilestones = currentUserIds.some((id) =>
+    projectAdminIds.includes(id) || projectManagerIds.includes(id)
+  );
   const canManageReleases = isProjectManager;
   const canAttachIssues = isProjectManager || currentRoleNames.some((role) => ['TEAM_LEAD', 'LEAD'].includes(role));
 
