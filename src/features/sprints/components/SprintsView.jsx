@@ -10,6 +10,8 @@ import {
   FiX,
   FiInbox,
   FiCheck,
+  FiLayers,
+  FiUser,
 } from 'react-icons/fi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { getProjectIssues } from '../../issues/services/issueApi';
@@ -80,6 +82,7 @@ const SprintsView = () => {
   const [projectsError, setProjectsError] = useState('');
 
   const [sprints, setSprints] = useState([]);
+  const [selectedView, setSelectedView] = useState('');
   const [sprintRequests, setSprintRequests] = useState([]);
   const [sprintRequestsLoading, setSprintRequestsLoading] = useState(false);
   const [sprintRequestsProjectId, setSprintRequestsProjectId] = useState('');
@@ -314,12 +317,28 @@ const SprintsView = () => {
   const currentProjectRoleName = String(currentProjectRole?.role || currentProjectRole?.projectRole || currentProjectRole?.user?.role || '').toUpperCase();
   const selectedSprintProjectRole = selectedSprintProjectId ? findProjectRole(selectedSprintProjectId) : null;
   const selectedSprintProjectRoleName = String(selectedSprintProjectRole?.role || selectedSprintProjectRole?.projectRole || selectedSprintProjectRole?.user?.role || '').toUpperCase();
+  const isProjectRequestManager = useCallback((targetProjectId) => {
+    const targetProject = projects.find((project) => String(getProjectId(project)) === String(targetProjectId));
+    return Boolean(currentUserId && targetProject && (
+      String(targetProject.adminId || '') === String(currentUserId) ||
+      String(targetProject.projectManagerId || targetProject.projectManager?.id || targetProject.projectManager?._id || '') === String(currentUserId)
+    ));
+  }, [projects, currentUserId]);
   const canManageSelectedSprint = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(selectedSprintProjectRoleName);
-  const canApproveSelectedSprintRequests = selectedSprintProjectRoleName === 'PROJECT_MANAGER';
+  const canApproveSelectedSprintRequests = isProjectRequestManager(selectedSprintProjectId);
   const canManage = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(currentProjectRoleName);
   const canApproveSprintRequests = projectId
-    ? currentProjectRoleName === 'PROJECT_MANAGER'
-    : members.some((member) => String(member.role || member.projectRole || member.user?.role || '').toUpperCase() === 'PROJECT_MANAGER');
+    ? isProjectRequestManager(projectId)
+    : projects.some((project) => isProjectRequestManager(getProjectId(project)));
+  const hasManagementRole = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(globalRole) || projects.some((project) => {
+    const role = findProjectRole(getProjectId(project));
+    return ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(
+      String(role?.role || role?.projectRole || role?.user?.role || '').toUpperCase()
+    );
+  });
+  const activeView = selectedView === 'assigned' && hasManagementRole
+    ? 'all'
+    : selectedView || (!hasManagementRole && globalRole === 'CONTRIBUTOR' ? 'assigned' : 'all');
   const canCreateSprint = isLoadingUserProfile === false && canManage;
 
   const loadSprintRequests = useCallback(async () => {
@@ -329,11 +348,7 @@ const SprintsView = () => {
     }
     const targetProjects = (projectId
       ? projects.filter((project) => String(getProjectId(project)) === String(projectId))
-      : projects.filter((project) => {
-          const id = String(getProjectId(project));
-          const role = findProjectRole(id);
-          return String(role?.role || role?.projectRole || role?.user?.role || '').toUpperCase() === 'PROJECT_MANAGER';
-        }));
+      : projects.filter((project) => isProjectRequestManager(getProjectId(project))));
     setSprintRequestsLoading(true);
     try {
       const results = await Promise.allSettled(targetProjects.map(async (project) => {
@@ -354,7 +369,7 @@ const SprintsView = () => {
     } finally {
       setSprintRequestsLoading(false);
     }
-  }, [projectId, projects, canApproveSprintRequests, findProjectRole, showToast]);
+  }, [projectId, projects, canApproveSprintRequests, isProjectRequestManager, showToast]);
 
   useEffect(() => {
     if (projectsLoading) return;
@@ -440,6 +455,16 @@ const SprintsView = () => {
     return result;
   }, [sprints, searchQuery, statusFilter, assigneeFilter, sortOrder]);
 
+  const visibleSprints = useMemo(() => {
+    if (activeView !== 'assigned') return filteredSprints;
+    return filteredSprints.filter((sprint) => {
+      const contributorId = sprint.contributorId || sprint.assignedContributorId || sprint.contributor?.id || sprint.contributor?._id || sprint.contributor?.userId;
+      const contributorEmail = String(sprint.contributorEmail || sprint.contributor?.email || '').toLowerCase();
+      return (currentUserId && String(contributorId || '') === String(currentUserId)) ||
+        (currentUserEmail && contributorEmail === currentUserEmail);
+    });
+  }, [activeView, filteredSprints, currentUserId, currentUserEmail]);
+
   const handleSprintClick = (sprint) => {
     const id = getSprintId(sprint);
     if (!id) return;
@@ -485,8 +510,8 @@ const SprintsView = () => {
   }
 
   const isCurrentProjectSprintsLoaded = sprintsProjectId === (projectId || 'all');
-  const hasNoSprintsToShow = !projectsLoading && !projectsError && isCurrentProjectSprintsLoaded && !sprintsLoading && !sprintsError &&
-    (projects.length === 0 || (sprints.length > 0 && filteredSprints.length === 0));
+  const hasNoSprintsToShow = activeView === 'all' && !projectsLoading && !projectsError && isCurrentProjectSprintsLoaded && !sprintsLoading && !sprintsError &&
+    sprints.length > 0 && visibleSprints.length === 0;
   if (hasNoSprintsToShow) {
     const hasNoProjects = projects.length === 0;
     return (
@@ -603,7 +628,36 @@ const SprintsView = () => {
         completedSprints={summaryMetrics.completedSprints}
       />
 
-      {canApproveSprintRequests && (
+      <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 pb-1 dark:border-[#38383e]">
+        <button
+          type="button"
+          onClick={() => { setSelectedView('all'); setPage(0); }}
+          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${activeView === 'all' ? 'bg-white text-slate-900 shadow-xs dark:bg-[#202020] dark:text-white' : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'}`}
+        >
+          <FiLayers size={14} /> Project Sprints
+        </button>
+        {!hasManagementRole && (
+          <button
+            type="button"
+            onClick={() => { setSelectedView('assigned'); setPage(0); }}
+            className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${activeView === 'assigned' ? 'bg-white text-slate-900 shadow-xs dark:bg-[#202020] dark:text-white' : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'}`}
+          >
+            <FiUser size={14} /> Assigned to Me
+          </button>
+        )}
+        {canApproveSprintRequests && (
+          <button
+            type="button"
+            onClick={() => setSelectedView('requests')}
+            className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${activeView === 'requests' ? 'bg-white text-slate-900 shadow-xs dark:bg-[#202020] dark:text-white' : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'}`}
+          >
+            <FiInbox size={14} /> Sprint Requests
+            {pendingSprintRequests.length > 0 && <span className="ml-1 rounded-full bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{pendingSprintRequests.length}</span>}
+          </button>
+        )}
+      </div>
+
+      {activeView === 'requests' && canApproveSprintRequests ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#303030] dark:bg-[#1f1f1f] sm:p-5">
           <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-[#303030]">
             <div className="flex items-center gap-2">
@@ -641,7 +695,8 @@ const SprintsView = () => {
             <p className="py-5 text-center text-xs text-slate-500 dark:text-[#999]">No sprint assignment requests for this project.</p>
           )}
         </section>
-      )}
+      ) : (
+      <>
 
      
 {/* Board / List View Switcher */}
@@ -742,16 +797,16 @@ const SprintsView = () => {
       </div>
 
       {/* A project with no sprints keeps the normal controls and gets a direct create action. */}
-      {!projectId && sprints.length === 0 ? (
+      {activeView !== 'assigned' && !projectId && sprints.length === 0 ? (
         <div className="flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-10 text-center dark:border-[#414148] dark:bg-[#1f1f1f]/70">
           <p className="text-sm font-semibold text-slate-800 dark:text-white">There are no sprints in your projects yet.</p>
           <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">Create a sprint from a specific project.</p>
         </div>
-      ) : !sprintsLoading && sprints.length === 0 ? (
+      ) : !sprintsLoading && (activeView === 'assigned' ? visibleSprints.length === 0 : sprints.length === 0) ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-10 text-center dark:border-[#414148] dark:bg-[#1f1f1f]/70">
           <div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">No sprints in {currentProject?.name || 'this project'} yet.</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">Create a sprint to start planning work for this project.</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-white">{activeView === 'assigned' ? 'No sprints are assigned to you yet.' : `No sprints in ${currentProject?.name || 'this project'} yet.`}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#aaa]">{activeView === 'assigned' ? 'Sprints assigned to you will appear here.' : 'Create a sprint to start planning work for this project.'}</p>
           </div>
           {canCreateSprint && Boolean(projectId) && (
             <button
@@ -765,7 +820,7 @@ const SprintsView = () => {
         </div>
       ) : layoutView === 'list' ? (
         <SprintsTable
-          sprints={filteredSprints}
+          sprints={visibleSprints}
           isLoading={sprintsLoading}
           onSprintClick={handleSprintClick}
           page={page}
@@ -774,13 +829,15 @@ const SprintsView = () => {
         />
       ) : (
         <SprintsBoard
-          sprints={filteredSprints}
+          sprints={visibleSprints}
           isLoading={sprintsLoading}
           onSprintClick={handleSprintClick}
           onStatusChange={handleSprintStatusChange}
           pendingSprintIds={pendingSprintIds}
           onCreateSprint={canCreateSprint && Boolean(projectId) ? () => { setSprintToEdit(null); setIsCreateEditOpen(true); } : undefined}
         />
+      )}
+      </>
       )}
 
       {/* Create / Edit Sprint Modal */}

@@ -128,9 +128,9 @@ const IssuesView = () => {
     return () => { active = false; };
   }, [location.pathname, location.search, location.state, navigate, showToast]);
 
-  const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id;
+  const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
   const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
-  const globalRole = normalize(currentUserProfile?.role || currentUserProfile?.user?.role);
+  const globalRole = normalize(currentUserProfile?.role || currentUserProfile?.user?.role || currentUserProfile?.globalRole || currentUserProfile?.userRole);
   const isGlobalAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
 
   // Load project members
@@ -181,12 +181,18 @@ const IssuesView = () => {
       (currentUserId && String(memberId(m)) === String(currentUserId)) ||
       (currentUserEmail && String(m.email || m.user?.email || '').toLowerCase() === currentUserEmail)
     );
-    return ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(memberRole(self));
+    const assignedAsProjectManager = String(p.projectManagerId || p.projectManager?.id || p.projectManager?._id || '') === String(currentUserId || '');
+    const assignedAsTeamLead = String(p.teamLeadId || p.teamLead?.id || p.teamLead?._id || '') === String(currentUserId || '');
+    const assignedAsProjectAdmin = String(p.adminId || '') === String(currentUserId || '');
+    return assignedAsProjectManager || assignedAsTeamLead || assignedAsProjectAdmin ||
+      ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(memberRole(self));
   }).map((p) => String(p.id || p._id || p.projectId))), [projects, projectMembers, currentUserId, currentUserEmail]);
 
   const canManageIssues = useCallback((id) => isGlobalAdmin || managedProjectIds.has(String(id)), [isGlobalAdmin, managedProjectIds]);
-  const hasManagementRole = isGlobalAdmin || managedProjectIds.size > 0;
-  const activeTab = userSelectedTab || (!hasManagementRole && globalRole === 'CONTRIBUTOR' ? 'assigned' : 'all');
+  const hasManagementRole = isGlobalAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(globalRole) || managedProjectIds.size > 0;
+  const activeTab = userSelectedTab === 'assigned' && hasManagementRole
+    ? 'all'
+    : userSelectedTab || (!hasManagementRole && globalRole === 'CONTRIBUTOR' ? 'assigned' : 'all');
   const setActiveTab = setUserSelectedTab;
 
   // Load issues
@@ -301,10 +307,8 @@ const IssuesView = () => {
   const filteredIssues = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const filtered = issues.filter((i) => {
-      // Role filtering
       const isAssignedToUser = currentUserId && assigneeIds(i).some((id) => String(id) === String(currentUserId));
       if (activeTab === 'assigned' && !isAssignedToUser) return false;
-      if (!canManageIssues(i.projectId) && activeTab === 'all' && !hasManagementRole && currentUserId && !isAssignedToUser) return false;
 
       if (projectFilter !== 'all' && String(i.projectId) !== projectFilter) return false;
       if (statusFilter !== 'all' && normalize(i.status) !== statusFilter) return false;
@@ -317,7 +321,7 @@ const IssuesView = () => {
       if (sortOrder === 'priority') return ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].indexOf(normalize(a.priority)) - ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].indexOf(normalize(b.priority));
       return new Date(a.dueDate || '9999-12-31') - new Date(b.dueDate || '9999-12-31');
     });
-  }, [issues, activeTab, projectFilter, statusFilter, priorityFilter, assigneeFilter, searchQuery, sortOrder, displayAssignee, canManageIssues, hasManagementRole, currentUserId]);
+  }, [issues, activeTab, projectFilter, statusFilter, priorityFilter, assigneeFilter, searchQuery, sortOrder, displayAssignee, currentUserId]);
 
   const refresh = () => { setIsLoadingIssues(true); setRefreshTrigger((c) => c + 1); };
   const changeProjectFilter = (v) => { setIsLoadingIssues(true); setPage(0); setProjectFilter(v); };
@@ -489,17 +493,19 @@ const IssuesView = () => {
         >
           <FiLayers size={14} /> Project Issues
         </button>
-        <button
-          type="button"
-          onClick={() => { setActiveTab('assigned'); setPage(0); }}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
-            activeTab === 'assigned'
-              ? 'bg-white text-slate-900 shadow-xs dark:bg-[#202020] dark:text-white'
-              : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
-          }`}
-        >
-          <FiUser size={14} /> Assigned to Me
-        </button>
+        {!hasManagementRole && (
+          <button
+            type="button"
+            onClick={() => { setActiveTab('assigned'); setPage(0); }}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
+              activeTab === 'assigned'
+                ? 'bg-white text-slate-900 shadow-xs dark:bg-[#202020] dark:text-white'
+                : 'text-slate-500 hover:text-slate-800 dark:text-[#888] dark:hover:text-white'
+            }`}
+          >
+            <FiUser size={14} /> Assigned to Me
+          </button>
+        )}
         {hasManagementRole && (
           <button
             type="button"
