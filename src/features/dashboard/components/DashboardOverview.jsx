@@ -31,6 +31,7 @@ import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import IssueDetailsView from '../../issues/components/IssueDetailsView';
 import { formatFigmaDate } from '../../issues/utils/issueUtils';
 import NoWorkspace from './NoWorkspace';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
 const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
@@ -567,12 +568,8 @@ const DashboardOverview = () => {
     };
   }, [issues]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[420px]">
-        <div className="w-9 h-9 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
-      </div>
-    );
+  if (isLoading && !workspace) {
+    return <LoadingScreen fullScreen label="Loading your dashboard" />;
   }
 
   if (error) {

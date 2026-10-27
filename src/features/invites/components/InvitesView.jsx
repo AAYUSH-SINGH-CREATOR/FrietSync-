@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { formatRoleLabel } from '../../../utils/formatRoleLabel';
 import { useOutletContext } from 'react-router-dom';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 import {
   FiCheck,
   FiX,
@@ -180,7 +181,7 @@ const InvitesView = ({ onInvitesUpdated: propOnInvitesUpdated }) => {
         </div>
 
         {isLoadingInvites && invites.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 dark:text-[#b3b3b3]"><span className="w-7 h-7 border-2 border-sky-600/30 dark:border-blue-500/30 border-t-sky-600 dark:border-t-blue-500 rounded-full animate-spin inline-block mb-3" /><p className="text-sm font-medium">Loading invitations...</p></div>
+          <LoadingScreen fullScreen label="Loading invitations" />
         ) : invites.length === 0 ? (
           <div className="py-14 text-center text-slate-400 dark:text-[#b3b3b3]"><div className="w-12 h-12 rounded-xl bg-sky-50 dark:bg-blue-950/40 text-sky-500 dark:text-blue-400 mx-auto flex items-center justify-center mb-3"><FiInbox size={23} /></div><p className="text-sm font-semibold text-slate-700 dark:text-[#F1F5F9]">No invitations found</p><p className="text-xs mt-1">Pending workspace invitations sent to your account will appear here.</p></div>
         ) : (

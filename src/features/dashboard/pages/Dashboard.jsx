@@ -5,6 +5,7 @@ import Sidebar from '../../../components/layout/Sidebar';
 import { getUnreadNotificationCount } from '../services/notificationApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 import { getProfile } from '../services/profileApi';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 
 const readUnreadCount = (value) => {
   const candidates = [value, value?.data, value?.result];
@@ -184,6 +185,9 @@ const Dashboard = () => {
           />
         </main>
       </div>
+      {!currentUserProfile && isLoadingUserProfile && (
+        <LoadingScreen fullScreen label="Loading your workspace" />
+      )}
     </div>
   );
 };

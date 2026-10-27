@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useOutletContext } from 'react-router-dom';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { FiRefreshCw, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import CalendarHeader from '../components/CalendarHeader';
 import MonthView from '../components/MonthView';
@@ -391,15 +392,7 @@ const CalendarView = () => {
 
       {/* Main Calendar Views */}
       {isLoading && rawEvents.length === 0 ? (
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] p-16 text-center shadow-xs flex flex-col items-center justify-center">
-          <FiRefreshCw size={24} className="animate-spin text-sky-600 mb-3" />
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-            Loading your schedule…
-          </p>
-          <p className="text-xs text-gray-400 dark:text-[#777] mt-1">
-            Aggregating meetings, sprints, milestones, and issues.
-          </p>
-        </div>
+        <LoadingScreen fullScreen label="Loading your schedule" />
       ) : errorMessage && rawEvents.length === 0 ? (
         <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] p-12 text-center shadow-xs">
           <p className="text-sm font-semibold text-rose-600 mb-2">{errorMessage}</p>

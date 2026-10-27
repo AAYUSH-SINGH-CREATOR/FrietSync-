@@ -23,6 +23,7 @@ import CreateEditSprintModal from '../../sprints/components/CreateEditSprintModa
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 import EmptyState from '../../../components/ui/EmptyState';
 import esmywork from '../../../assets/esmywork.png';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 
 const PAGE_SIZE = 10;
 const normalize = (value) => String(value || '').toUpperCase().replace(/[\s-]+/g, '_');
@@ -656,6 +657,10 @@ const MyWorkView = () => {
         {issueDetailsModal}
       </div>
     );
+  }
+
+  if (isLoading && projects.length === 0) {
+    return <LoadingScreen fullScreen label="Loading your work" />;
   }
 
   if (!isLoading && !error && projects.length === 0) {

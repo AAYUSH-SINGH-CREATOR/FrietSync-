@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { getMyWorkspace } from '../services/workspaceApi';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 
 const WorkspaceRoute = () => {
   const [workspace, setWorkspace] = useState(null);
@@ -39,7 +40,7 @@ const WorkspaceRoute = () => {
   }, []);
 
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-slate-500">Checking your workspace…</div>;
+    return <LoadingScreen fullScreen label="Checking your workspace" />;
   }
   if (status === 'error') {
     return (
