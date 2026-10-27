@@ -446,7 +446,7 @@ const CommentsThread = ({
                       onChange={(e) => setEditingContent(e.target.value)}
                       maxLength={MAX_CHARS + 50}
                       disabled={isSavingEdit}
-                      className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-2 text-xs text-slate-900 focus:border-sky-500 focus:bg-white focus:outline-none dark:border-[#35353a] dark:bg-[#19191c] dark:text-white"
+                      className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-2 text-xs text-slate-900 focus:border-sky-500 focus:bg-white focus:outline-none dark:border-[#35353a] dark:bg-[#202024] dark:text-white dark:focus:border-sky-500 dark:focus:bg-[#202024] dark:placeholder:text-[#777]"
                       onKeyDown={(e) => {
                         if (e.key === 'Escape') handleCancelEdit();
                         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
