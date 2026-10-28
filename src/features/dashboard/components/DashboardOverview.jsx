@@ -43,10 +43,10 @@ const asDate = (value) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
-const buildBurndownPoints = (sprint, sprintIssues) => {
-  const start = asDate(sprint?.startDate);
-  const end = asDate(sprint?.endDate);
-  if (!start || !end || end < start || sprintIssues.length === 0) return [];
+const buildSprintBurndownPoints = (sprints, projectStart, projectDeadline) => {
+  const start = asDate(projectStart);
+  const end = asDate(projectDeadline);
+  if (!start || !end || end < start || sprints.length === 0) return [];
 
   const durationDays = Math.max(1, Math.ceil((end - start) / 86400000));
   const useMonths = durationDays > 62;
@@ -57,32 +57,32 @@ const buildBurndownPoints = (sprint, sprintIssues) => {
     date.setDate(date.getDate() + offset);
     dates.push(date);
   }
-  if (dates[dates.length - 1].getTime() !== end.getTime()) dates.push(new Date(end));
 
-  const startTime = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-  const total = sprintIssues.length;
+  const total = sprints.length;
+  // The current sprint API has no completedAt field. updatedAt is the best
+  // available completion timestamp; use endDate when it is absent.
+  const completionDates = sprints.map((sprint) => {
+    if (normalize(sprint.status) !== 'COMPLETED') return null;
+    return asDate(sprint.completedAt || sprint.updatedAt || sprint.endDate);
+  }).filter(Boolean);
+  dates.push(new Date(end));
+  dates.push(...completionDates
+    .filter((date) => date >= start && date <= end)
+    .map((date) => new Date(date)));
+  const uniqueDates = [...new Map(dates.map((date) => [date.getTime(), date])).values()]
+    .sort((a, b) => a.getTime() - b.getTime());
 
-  return dates.map((date, index) => {
+  return uniqueDates.map((date) => {
     const timestamp = date.getTime();
-    const remaining = sprintIssues.filter((issue) => {
-      const createdAt = asDate(issue.createdAt);
-      const createdTime = createdAt?.getTime() ?? startTime;
-      const resolvedAt = asDate(issue.resolvedAt || issue.closedAt || issue.completedAt);
-      const resolvedTime = resolvedAt?.getTime();
-      const isDoneNow = isResolved(issue.status);
-      const completionTime = resolvedTime ?? (isDoneNow ? asDate(issue.updatedAt)?.getTime() : null);
-      return createdTime <= timestamp && !(completionTime !== null && completionTime <= timestamp);
-    }).length;
-
     const elapsed = Math.min(1, Math.max(0, (timestamp - start.getTime()) / Math.max(1, end.getTime() - start.getTime())));
-    const ideal = Math.max(0, Math.round(total * (1 - elapsed)));
+    const completedByDate = completionDates.filter((completedAt) => completedAt && completedAt.getTime() <= timestamp).length;
     return {
       date: timestamp,
       label: useMonths
         ? date.toLocaleDateString(undefined, { month: 'short' })
         : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-      remaining,
-      ideal,
+      remaining: total - completedByDate,
+      ideal: Math.max(0, total - Math.round(total * elapsed)),
     };
   });
 };
@@ -439,49 +439,43 @@ const DashboardOverview = () => {
     });
   }, [projects, issues]);
 
-  // Sprint Progress & Burndown Data
+  // Sprint Progress & Burndown Data, based on sprint status and project dates.
   const sprintData = useMemo(() => {
-    const activeSprint = sprints.find((s) => normalize(s.status) === 'ACTIVE') ||
+    const selectedSprint = sprints.find((s) => normalize(s.status) === 'ACTIVE') ||
       sprints.find((s) => normalize(s.status) === 'PLANNED') ||
       [...sprints].sort((a, b) => String(b.endDate || '').localeCompare(String(a.endDate || '')))[0] || null;
-    const activeSprintId = activeSprint?.id || activeSprint?._id || activeSprint?.sprintId;
-    const sprintIssueIds = new Set([
-      ...(Array.isArray(activeSprint?.issueIds) ? activeSprint.issueIds : []),
-      ...(Array.isArray(activeSprint?.issues) ? activeSprint.issues.map((issue) => issue?.id || issue?._id || issue) : []),
-    ].map((id) => String(id?.id || id?._id || id)));
-
-    const sprintIssuesList = activeSprint
-      ? issues.filter((issue) => {
-          const issueSprintId = issue.sprintId || issue.sprint?.id || issue.sprint?._id;
-          const belongsToSprint = String(issueSprintId || '') === String(activeSprintId || '') ||
-            sprintIssueIds.has(String(issue.id || issue._id || issue.issueId));
-          const belongsToProject = !issue.projectId || String(issue.projectId) === String(activeSprint.projectId);
-          const dueDate = asDate(issue.dueDate);
-          const sprintStart = asDate(activeSprint.startDate);
-          const sprintEnd = asDate(activeSprint.endDate);
-          // Current backend timeline grouping associates issues with a sprint by due date.
-          const matchesSprintWindow = dueDate && sprintStart && sprintEnd &&
-            dueDate >= new Date(sprintStart.getFullYear(), sprintStart.getMonth(), sprintStart.getDate()) &&
-            dueDate <= new Date(sprintEnd.getFullYear(), sprintEnd.getMonth(), sprintEnd.getDate(), 23, 59, 59, 999);
-          return (belongsToSprint || matchesSprintWindow) && belongsToProject;
-        })
+    const selectedProjectId = selectedSprint?.projectId || selectedSprint?.project?.id || selectedSprint?.project?._id;
+    const project = projects.find((item) => String(item.id || item._id || item.projectId) === String(selectedProjectId)) ||
+      projects.find((item) => sprints.some((sprint) => String(sprint.projectId || sprint.project?.id || sprint.project?._id) === String(item.id || item._id || item.projectId))) ||
+      null;
+    const projectId = project?.id || project?._id || project?.projectId;
+    const projectSprints = projectId
+      ? sprints.filter((sprint) => String(sprint.projectId || sprint.project?.id || sprint.project?._id) === String(projectId))
       : [];
 
-    const totalIssues = sprintIssuesList.length;
-    const completedIssues = sprintIssuesList.filter((i) => isResolved(i.status)).length;
-    const progressPct = totalIssues > 0 ? Math.round((completedIssues / totalIssues) * 100) : null;
-    const burndownPoints = buildBurndownPoints(activeSprint, sprintIssuesList);
+    const sprintStartDates = projectSprints.map((sprint) => asDate(sprint.startDate)).filter(Boolean);
+    const sprintEndDates = projectSprints.map((sprint) => asDate(sprint.endDate)).filter(Boolean);
+    const projectStart = project?.startDate || (sprintStartDates.length
+      ? new Date(Math.min(...sprintStartDates.map((date) => date.getTime())))
+      : null);
+    const projectDeadline = project?.deadline || (sprintEndDates.length
+      ? new Date(Math.max(...sprintEndDates.map((date) => date.getTime())))
+      : null);
+    const totalSprints = projectSprints.length;
+    const completedSprints = projectSprints.filter((sprint) => normalize(sprint.status) === 'COMPLETED').length;
+    const progressPct = totalSprints > 0 ? Math.round((completedSprints / totalSprints) * 100) : null;
+    const burndownPoints = buildSprintBurndownPoints(projectSprints, projectStart, projectDeadline);
 
     return {
-      activeSprint,
+      project,
       progressPct,
-      startDate: activeSprint?.startDate || null,
-      endDate: activeSprint?.endDate || null,
-      totalIssues,
-      completedIssues,
+      startDate: projectStart,
+      endDate: projectDeadline,
+      totalSprints,
+      completedSprints,
       burndownPoints,
     };
-  }, [sprints, issues]);
+  }, [sprints, projects]);
 
   // Recent Projects
   const recentProjects = useMemo(() => {
@@ -980,7 +974,7 @@ const DashboardOverview = () => {
                 <span className="text-xs text-slate-500 dark:text-slate-400">Sprint progress unavailable.</span>
               ) : (
                 <>
-                  <div className="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-[#27272a] overflow-hidden" role="progressbar" aria-label="Sprint issue completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={sprintData.progressPct}>
+                  <div className="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-[#27272a] overflow-hidden" role="progressbar" aria-label="Project sprint completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={sprintData.progressPct}>
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-[#0284c7] to-[#38bdf8] transition-all duration-500"
                       style={{ width: `${sprintData.progressPct}%` }}
@@ -995,7 +989,7 @@ const DashboardOverview = () => {
 
             {/* Burndown Chart label */}
             <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              Burndown Chart
+              Sprint Burndown
             </h3>
 
             {/* Burndown data and sprint dates */}
@@ -1003,7 +997,7 @@ const DashboardOverview = () => {
               <div className="dashboard-burndown-chart h-40 min-w-0 flex-1">
                 {sprintData.burndownPoints.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sprintData.burndownPoints} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+                    <LineChart data={sprintData.burndownPoints} margin={{ top: 8, right: 8, bottom: 0, left: -6 }}>
                       <CartesianGrid strokeDasharray="4 5" stroke="#71717a" vertical={false} />
                       <XAxis
                         dataKey="label"
@@ -1014,7 +1008,8 @@ const DashboardOverview = () => {
                       />
                       <YAxis
                         allowDecimals={false}
-                        domain={[0, Math.max(1, sprintData.totalIssues)]}
+                        domain={[0, Math.max(1, sprintData.totalSprints)]}
+                        ticks={Array.from({ length: sprintData.totalSprints + 1 }, (_, index) => sprintData.totalSprints - index)}
                         tick={{ fill: '#71717a', fontSize: 10 }}
                         axisLine={false}
                         tickLine={false}
@@ -1025,21 +1020,19 @@ const DashboardOverview = () => {
                           const timestamp = payload?.[0]?.payload?.date;
                           return timestamp ? new Date(timestamp).toLocaleDateString() : '';
                         }}
-                        formatter={(value, name) => [value, name === 'ideal' ? 'Ideal remaining' : 'Issues remaining']}
+                        formatter={(value, name) => [value, name === 'ideal' ? 'Ideal sprints remaining' : 'Sprints remaining']}
                         contentStyle={{ backgroundColor: '#171717', border: '1px solid #3f3f46', borderRadius: 10, color: '#f4f4f5', fontSize: 11 }}
                         labelStyle={{ color: '#d4d4d8' }}
                       />
-                      <Line type="monotone" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} />
-                      <Line type="monotone" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} />
+                      <Line type="linear" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} />
+                      <Line type="stepAfter" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full items-center justify-center px-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {!sprintData.activeSprint
-                      ? 'No sprint is available yet.'
-                      : sprintData.totalIssues === 0
-                        ? 'No issues are linked to this sprint yet.'
-                        : 'Add valid start and end dates to see the burndown.'}
+                    {sprintData.totalSprints === 0
+                      ? 'No sprints are available for this project yet.'
+                      : 'Add project start and deadline dates to see the burndown.'}
                   </div>
                 )}
               </div>

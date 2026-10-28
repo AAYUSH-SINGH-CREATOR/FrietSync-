@@ -107,12 +107,19 @@ export const getFriendlyErrorMessage = (error, context = '') => {
   }
 
   if (status === 409) {
+    if (context === 'sprint-assignment') {
+      return 'You may already have a pending assignment request for this sprint. Refresh the sprint and try again.';
+    }
     if (context === 'poll') {
       const backendMsg = error?.data?.message || error?.data?.error || error?.data?.msg || (typeof error?.data === 'string' ? error.data : null) || error?.message;
       if (backendMsg && !/account|email|sign.?up|log.?in|registered/i.test(backendMsg) && !isTechnicalError(backendMsg)) return backendMsg;
       return 'This vote could not be recorded. You may have already voted or the poll may be closed.';
     }
-    if (context === 'signup' || rawMessage.includes('exist') || rawMessage.includes('registered')) {
+    if (
+      context === 'signup' ||
+      ((rawMessage.includes('account') || rawMessage.includes('email')) &&
+        (rawMessage.includes('exist') || rawMessage.includes('registered')))
+    ) {
       return 'An account with this email already exists. Please log in.';
     }
     return 'Conflict occurred. This record already exists.';

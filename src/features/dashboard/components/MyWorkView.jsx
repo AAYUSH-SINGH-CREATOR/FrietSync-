@@ -395,7 +395,13 @@ const MyWorkView = () => {
       setAssignmentRequestFeedback({ type: 'success', message: 'Assignment request sent.' });
     } catch (requestError) {
       setAssignmentRequestStates((current) => ({ ...current, [requestKey]: 'idle' }));
-      setAssignmentRequestFeedback({ type: 'error', message: requestError?.message || 'Could not send the assignment request.' });
+      setAssignmentRequestFeedback({
+        type: 'error',
+        message: getFriendlyErrorMessage(
+          requestError,
+          type === 'sprint' ? 'sprint-assignment' : 'issue-assignment'
+        ),
+      });
     }
   };
 

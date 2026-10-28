@@ -245,7 +245,7 @@ const SprintDetailsView = ({
       await requestSprintAssignment(sprintId);
       showToast('success', 'Sprint assignment request submitted.');
     } catch (err) {
-      showToast('error', getFriendlyErrorMessage(err, 'sprint'));
+      showToast('error', getFriendlyErrorMessage(err, 'sprint-assignment'));
     } finally {
       setBusyAction('');
     }
