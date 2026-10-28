@@ -261,7 +261,7 @@ const SprintsView = () => {
         String(member.role || member.projectRole || member.user?.role || '').toUpperCase() === 'PROJECT_MANAGER';
     });
     const assignedToCurrentUser = (userId && String(contributorId) === String(userId)) ||
-      (currentUserEmail && String(sprint.contributorEmail || sprint.contributor?.email || '').toLowerCase() === currentUserEmail);
+      (currentUserEmail && String(sprint.contributorEmail || sprint.assignedContributorEmail || sprint.contributor?.email || '').toLowerCase() === currentUserEmail);
     if (!isProjectManager && !assignedToCurrentUser) {
       showToast('error', 'Only the project manager or assigned sprint contributor can change sprint status.');
       return;
@@ -440,7 +440,7 @@ const SprintsView = () => {
     }
     if (assigneeFilter !== 'all') {
       result = result.filter((s) => {
-        const assignee = s.contributorName || s.contributor?.name || '';
+        const assignee = s.contributorName || s.assignedContributorName || s.contributor?.name || '';
         return assignee.toLowerCase().includes(assigneeFilter.toLowerCase());
       });
     }
@@ -459,7 +459,7 @@ const SprintsView = () => {
     if (activeView !== 'assigned') return filteredSprints;
     return filteredSprints.filter((sprint) => {
       const contributorId = sprint.contributorId || sprint.assignedContributorId || sprint.contributor?.id || sprint.contributor?._id || sprint.contributor?.userId;
-      const contributorEmail = String(sprint.contributorEmail || sprint.contributor?.email || '').toLowerCase();
+      const contributorEmail = String(sprint.contributorEmail || sprint.assignedContributorEmail || sprint.contributor?.email || '').toLowerCase();
       return (currentUserId && String(contributorId || '') === String(currentUserId)) ||
         (currentUserEmail && contributorEmail === currentUserEmail);
     });

@@ -98,7 +98,7 @@ const SprintsBoard = ({
               const isPending = id && pendingSprintIds.has(String(id));
               const num = sprint.sprintNumber || sprint.number || (sprint.id ? String(sprint.id).slice(-2) : idx + 1);
               const sprintKey = sprint.key || `SPR-${num}`;
-              const assigneeName = sprint.contributorName || sprint.contributor?.name || sprint.assigneeName || 'Unassigned';
+              const assigneeName = sprint.contributorName || sprint.assignedContributorName || sprint.contributor?.name || sprint.assigneeName || 'Unassigned';
               const assigneeInitials = assigneeName === 'Unassigned' ? '—' : assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
               const avatarColor = avatarColors[(assigneeName.charCodeAt(0) || idx) % avatarColors.length];
               const rawProgress = sprint.progress;

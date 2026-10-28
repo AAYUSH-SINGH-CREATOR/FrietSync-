@@ -83,7 +83,7 @@ const SprintsTable = ({
                 const progressColor = progress >= 100 ? 'bg-emerald-500' : progress >= 80 ? 'bg-pink-500' : progress > 0 ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700';
 
                 // Assignee derivation
-                const assigneeName = sprint.contributorName || sprint.contributor?.name || sprint.assigneeName || sprint.assignedTo?.name || 'Unassigned';
+                const assigneeName = sprint.contributorName || sprint.assignedContributorName || sprint.contributor?.name || sprint.assigneeName || sprint.assignedTo?.name || 'Unassigned';
                 const assigneeInitials = assigneeName === 'Unassigned' ? '—' : assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
                 const avatarColor = avatarColors[(assigneeName.charCodeAt(0) || idx) % avatarColors.length];
                 const otherAssigneesCount = Array.isArray(sprint.assignees) ? Math.max(0, sprint.assignees.length - 1) : 0;

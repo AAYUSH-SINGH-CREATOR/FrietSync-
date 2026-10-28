@@ -161,11 +161,15 @@ const SprintDetailsView = ({
   const isPlanned = currentStatus === 'PLANNED';
   const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id || currentUserProfile?.user?._id;
   const sprintContributorId = sprint?.contributorId || sprint?.assignedContributorId || sprint?.contributor?.id || sprint?.contributor?._id || sprint?.contributor?.userId;
+  const sprintContributorName = sprint?.contributorName || sprint?.assignedContributorName || sprint?.contributor?.name;
+  const sprintContributorEmail = sprint?.contributorEmail || sprint?.assignedContributorEmail || sprint?.contributor?.email;
   const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
   const canTransitionSprint = currentProjectRoleName === 'PROJECT_MANAGER' ||
     String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase() === 'PROJECT_MANAGER' ||
     (currentUserId && String(sprintContributorId) === String(currentUserId)) ||
-    (currentUserEmail && String(sprint?.contributorEmail || sprint?.contributor?.email || '').toLowerCase() === currentUserEmail);
+    (currentUserEmail && String(sprintContributorEmail || '').toLowerCase() === currentUserEmail);
+  const hasAssignedContributor = Boolean(sprintContributorId || sprintContributorEmail || sprintContributorName);
+  const canRequestAssignment = !canManage && !isCompleted && !hasAssignedContributor;
 
   const statusBadge = getStatusBadge(currentStatus);
 
@@ -352,7 +356,7 @@ const SprintDetailsView = ({
             </>
           )}
 
-          {!canManage && !isCompleted && (
+          {canRequestAssignment && (
             <button
               type="button"
               onClick={handleRequestAssignment}
@@ -476,16 +480,16 @@ const SprintDetailsView = ({
             </h4>
             <div className="flex items-center gap-2 pt-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white">
-                {sprint?.contributorName || sprint?.contributor?.name
-                  ? (sprint.contributorName || sprint.contributor.name).slice(0, 2).toUpperCase()
+                {sprintContributorName
+                  ? sprintContributorName.slice(0, 2).toUpperCase()
                   : '—'}
               </div>
               <div className="truncate">
                 <p className="font-semibold text-slate-900 dark:text-white truncate">
-                  {sprint?.contributorName || sprint?.contributor?.name || 'Not assigned'}
+                  {sprintContributorName || 'Not assigned'}
                 </p>
-                {sprint?.contributorEmail && (
-                  <p className="text-[10px] text-slate-400 truncate">{sprint.contributorEmail}</p>
+                {sprintContributorEmail && (
+                  <p className="text-[10px] text-slate-400 truncate">{sprintContributorEmail}</p>
                 )}
               </div>
             </div>
