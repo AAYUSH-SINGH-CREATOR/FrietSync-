@@ -85,7 +85,6 @@ export const createIssue = async (projectId, issueData) => {
       title: issueData.title?.trim(),
       description: issueData.description?.trim() || '',
       priority: (issueData.priority || 'HIGH').toUpperCase(),
-      githubAction: issueData.githubAction || 'CREATE_NEW',
     };
 
     if (issueData.startDate) {
@@ -104,20 +103,12 @@ export const createIssue = async (projectId, issueData) => {
       payload.estimatedHours = Number(issueData.estimatedHours);
     }
 
-    if (
-      payload.githubAction === 'LINK_EXISTING' &&
-      issueData.githubIssueNumber !== undefined &&
-      issueData.githubIssueNumber !== ''
-    ) {
+    if (issueData.githubIssueNumber !== undefined && issueData.githubIssueNumber !== '') {
       payload.githubIssueNumber = Number(issueData.githubIssueNumber);
     }
 
-    if (issueData.assigneeId) {
-      payload.assigneeId = issueData.assigneeId;
-    }
-
     const response = await axios.post(
-      `${V2_BASE_URL}/projects/${projectId}/issues`,
+      `${BASE_URL}/projects/${projectId}/issues`,
       payload,
       getAuthHeaders()
     );

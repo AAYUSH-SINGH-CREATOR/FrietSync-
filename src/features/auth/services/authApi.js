@@ -4,7 +4,7 @@ import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 export { getFriendlyErrorMessage };
 
-const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 30_000;
+const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 14 * 60_000;
 const ACCESS_TOKEN_REFRESH_RETRY_MS = 30_000;
 let refreshRequestPromise = null;
 let scheduledRefreshTimeout = null;

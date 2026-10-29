@@ -29,6 +29,15 @@ const asList = (d) => {
   const v = b?.items || b?.content || b?.history || b?.labels || b?.links || b?.attachments || b?.requests || b?.dependencies || (Array.isArray(b?.data) ? b.data : null);
   return Array.isArray(v) ? v : [];
 };
+const getProjectIssueDetails = async (projectId, issueId) => {
+  const firstPage = await getProjectIssues(projectId, { page: 0, size: 100 });
+  const remainingPages = await Promise.all(Array.from(
+    { length: Math.max(0, firstPage.totalPages - 1) },
+    (_, index) => getProjectIssues(projectId, { page: index + 1, size: 100 })
+  ));
+  const items = [...firstPage.items, ...remainingPages.flatMap((page) => page.items)];
+  return items.find((item) => String(getId(item)) === String(issueId)) || null;
+};
 const formatBytes = (bytes) => {
   if (!bytes || Number.isNaN(bytes)) return '0 B';
   const k = 1024;
@@ -122,20 +131,26 @@ const IssueDetailsView = ({
   const reloadIssue = useCallback(async () => {
     if (!issueId) return;
     try {
-      const fresh = await getIssueDetails(issueId);
+      const fresh = pid
+        ? await getProjectIssueDetails(pid, issueId)
+        : await getIssueDetails(issueId);
       if (fresh) setIssue((prev) => ({ ...prev, ...fresh }));
       return fresh;
     } catch (err) { setError(getFriendlyErrorMessage(err, 'issue')); }
-  }, [issueId]);
+  }, [issueId, pid]);
 
   useEffect(() => {
     if (!issueId) return;
     let active = true;
-    getIssueDetails(issueId)
-      .then((fresh) => { if (active && fresh) setIssue((prev) => ({ ...prev, ...fresh })); })
+    (pid ? getProjectIssueDetails(pid, issueId) : getIssueDetails(issueId))
+      .then((fresh) => {
+        if (!active) return;
+        if (fresh) setIssue((prev) => ({ ...prev, ...fresh }));
+        else setError('This issue was not found in the project issues list.');
+      })
       .catch((err) => { if (active) setError(getFriendlyErrorMessage(err, 'issue')); });
     return () => { active = false; };
-  }, [issueId]);
+  }, [issueId, pid]);
 
   useEffect(() => {
     if (!pid) return;

@@ -106,6 +106,22 @@ export const deleteSprint = (sprintId) => {
   );
 };
 
+export const getSprintIssues = (sprintId) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.get(`${BASE_URL}/sprints/${sprintId}/issues`, getAuthHeaders()),
+    'Failed to load sprint issues.'
+  );
+};
+
+export const getSprintMilestones = (sprintId) => {
+  if (!sprintId) throw new Error('Sprint ID is required.');
+  return request(
+    () => axios.get(`${BASE_URL}/sprints/${sprintId}/milestones`, getAuthHeaders()),
+    'Failed to load sprint milestones.'
+  );
+};
+
 export const assignSprint = (sprintId, contributorId) => {
   if (!sprintId) throw new Error('Sprint ID is required.');
   return request(

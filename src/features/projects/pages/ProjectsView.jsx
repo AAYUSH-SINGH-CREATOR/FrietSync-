@@ -420,39 +420,53 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                     handleCardClick();
                   }
                 }}
-                className="flex h-[184px] w-full max-w-[300px] flex-col rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 shadow-xs transition-all duration-200 group cursor-pointer hover:border-sky-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:hover:border-sky-500/50"
+                className="flex h-[208px] w-full max-w-[320px] flex-col justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 shadow-xs transition-all duration-200 group cursor-pointer hover:border-sky-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:hover:border-sky-500/50"
               >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700 transition-transform group-hover:scale-105 dark:bg-purple-950/70 dark:text-purple-300">
-                    <FiFolder size={20} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-sans text-base font-semibold text-slate-900 dark:text-white" title={project.name}>
-                      {project.name || 'Unnamed project'}
-                    </h3>
-                    <p className="mt-1 font-sans text-xs font-light text-slate-500 dark:text-[#94A3B8] line-clamp-1" title={description}>
-                      {cardDescription}
-                    </p>
+                <div>
+                  <div className="flex items-start gap-3.5">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700 transition-transform group-hover:scale-105 dark:bg-purple-950/70 dark:text-purple-300 shadow-2xs">
+                      <FiFolder size={22} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-sans text-base font-bold text-slate-900 dark:text-white" title={project.name}>
+                        {project.name || 'Unnamed project'}
+                      </h3>
+                      <p className="mt-1 font-sans text-xs font-normal text-slate-500 dark:text-[#94A3B8] line-clamp-2 leading-relaxed" title={description}>
+                        {cardDescription}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center gap-2">
+                <div className="space-y-2 my-2">
                   {progress === null ? (
                     <span className="text-xs text-slate-500 dark:text-slate-400">Progress unavailable</span>
                   ) : (
-                    <>
-                      <div className="h-2.5 w-full flex-none overflow-hidden rounded-full bg-slate-200 dark:bg-[#343434]" role="progressbar" aria-label={`${project.name || 'Project'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-                        <div className="h-full rounded-full bg-gradient-to-r from-sky-600 to-sky-400 dark:from-sky-600 dark:to-sky-400" style={{ width: `${progress}%` }} />
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-semibold">
+                        <span className="text-slate-500 dark:text-[#94A3B8]">Progress</span>
+                        <span className="text-sky-600 dark:text-sky-400">{progress}%</span>
                       </div>
-                      <span className="shrink-0 text-xs font-semibold text-sky-600 dark:text-sky-400">{progress}%</span>
-                    </>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#323236]" role="progressbar" aria-label={`${project.name || 'Project'} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                        <div className="h-full rounded-full bg-gradient-to-r from-sky-600 to-sky-400 transition-all duration-300" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-2 text-xs font-medium text-slate-600 dark:text-[#CBD5E1]">
-                  <span className="inline-flex items-center gap-1.5" title="Project members"><FiUsers size={15} />{memberCount}</span>
-                  <span className="inline-flex items-center gap-1.5" title="Project issues"><FiCheckSquare size={15} />{issueCount}</span>
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap" title="Project deadline"><FiCalendar size={15} />{project.deadline ? formatDate(project.deadline) : '—'}</span>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#2a2a2e] text-xs font-medium text-slate-600 dark:text-[#CBD5E1]">
+                  <span className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#222226] px-2 py-1 rounded-lg" title="Project members">
+                    <FiUsers size={14} className="text-slate-400" />
+                    <span>{memberCount}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#222226] px-2 py-1 rounded-lg" title="Project issues">
+                    <FiCheckSquare size={14} className="text-slate-400" />
+                    <span>{issueCount}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#222226] px-2.5 py-1 rounded-lg whitespace-nowrap" title="Project deadline">
+                    <FiCalendar size={14} className="text-slate-400" />
+                    <span>{project.deadline ? formatDate(project.deadline) : '—'}</span>
+                  </span>
                 </div>
               </div>
             );

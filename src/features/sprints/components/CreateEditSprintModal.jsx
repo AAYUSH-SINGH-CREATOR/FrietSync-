@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FiX } from 'react-icons/fi';
 import { createSprint, updateSprint, getFriendlyErrorMessage } from '../services/sprintsApi';
-import { getProjectIssues, normalizeIssuePage, updateIssue } from '../../issues/services/issueApi';
+import { getProjectIssues, normalizeIssuePage } from '../../issues/services/issueApi';
 
 const getTodayDateValue = () => {
   const today = new Date();
@@ -88,6 +88,7 @@ const SprintModalForm = ({
       startDate,
       endDate,
     };
+    if (!isEditing && selectedIssueId) payload.issueId = selectedIssueId;
     const retainedMilestoneId = sprintToEdit?.milestoneId || sprintToEdit?.milestone?.id;
     if (isEditing && retainedMilestoneId) payload.milestoneId = retainedMilestoneId;
 
@@ -99,11 +100,6 @@ const SprintModalForm = ({
         saved = await updateSprint(id, payload);
       } else {
         saved = await createSprint(formProjectId, payload);
-        const createdSprint = saved?.sprint || saved?.data || saved;
-        const createdSprintId = createdSprint?.id || createdSprint?.sprintId || createdSprint?._id;
-        if (selectedIssueId && createdSprintId) {
-          await updateIssue(selectedIssueId, { sprintId: createdSprintId });
-        }
       }
       onSprintSaved?.(saved);
       onClose();
