@@ -13,6 +13,7 @@ import {
   requestIssueAssignment, getMyIssueAssignmentRequest, cancelIssueAssignmentRequest,
   getProjectIssueRequests, manageProjectIssueRequest, deleteProjectIssueRequest,
   getIssueComments, createIssueComment, updateIssueComment, deleteIssueComment,
+  getIssueSprints,
   getFriendlyErrorMessage,
 } from '../services/issueApi';
 import CommentsThread from '../../../components/ui/CommentsThread';
@@ -140,7 +141,6 @@ const IssueDetailsView = ({
     if (!pid) return;
     let active = true;
     getProjectMembers(pid).then((res) => { if (active) setMembers(Array.isArray(res) ? res : []); }).catch(() => {});
-    getProjectSprints(pid).then((res) => { if (active) setSprints(asList(res)); }).catch(() => {});
     getProjectIssues(pid, { page: 0, size: 100 }).then(async (firstPage) => {
       const pages = await Promise.all(Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, index) => getProjectIssues(pid, { page: index + 1, size: 100 })));
       if (active) setProjectIssues([...(firstPage.items || []), ...pages.flatMap((page) => page.items || [])]);
@@ -158,9 +158,10 @@ const IssueDetailsView = ({
       getIssueImpact(issueId),
       getIssueAttachments(issueId),
       getIssueHistory(issueId, { page: 0, size: 20 }),
+      getIssueSprints(issueId),
       getMyIssueAssignmentRequest(issueId),
       pid && isManager ? getProjectIssueRequests(pid) : Promise.resolve([]),
-    ]).then(([lbls, lnks, deps, imp, atts, hist, myReq, projReqs]) => {
+    ]).then(([lbls, lnks, deps, imp, atts, hist, sprts, myReq, projReqs]) => {
       if (!active) return;
       if (lbls.status === 'fulfilled') setLabels(asList(lbls.value));
       if (lnks.status === 'fulfilled') setLinks(asList(lnks.value));
@@ -173,6 +174,7 @@ const IssueDetailsView = ({
         const total = hist.value?.totalPages ?? (hItems.length >= 20 ? 2 : 1);
         setHistoryHasMore(total > 1);
       }
+      if (sprts.status === 'fulfilled') setSprints(asList(sprts.value));
       if (myReq.status === 'fulfilled') setMyRequest(myReq.value?.request || myReq.value?.data || myReq.value);
       if (projReqs.status === 'fulfilled') setProjectRequests(asList(projReqs.value));
     });
@@ -182,13 +184,14 @@ const IssueDetailsView = ({
   const refreshAuxData = useCallback(async () => {
     if (!issueId) return;
     try {
-      const [lbls, lnks, deps, imp, atts, hist, myReq, projReqs] = await Promise.allSettled([
+      const [lbls, lnks, deps, imp, atts, hist, sprts, myReq, projReqs] = await Promise.allSettled([
         getIssueLabels(issueId),
         getIssueLinks(issueId),
         getIssueDependencies(issueId),
         getIssueImpact(issueId),
         getIssueAttachments(issueId),
         getIssueHistory(issueId, { page: 0, size: 20 }),
+        getIssueSprints(issueId),
         getMyIssueAssignmentRequest(issueId),
         pid && isManager ? getProjectIssueRequests(pid) : Promise.resolve([]),
       ]);
@@ -203,6 +206,7 @@ const IssueDetailsView = ({
         const total = hist.value?.totalPages ?? (hItems.length >= 20 ? 2 : 1);
         setHistoryHasMore(total > 1);
       }
+      if (sprts.status === 'fulfilled') setSprints(asList(sprts.value));
       if (myReq.status === 'fulfilled') setMyRequest(myReq.value?.request || myReq.value?.data || myReq.value);
       if (projReqs.status === 'fulfilled') setProjectRequests(asList(projReqs.value));
     } catch (err) {
@@ -419,28 +423,45 @@ const IssueDetailsView = ({
           </Card>
 
           <Card>
-            <CardHeader title="Current Sprints" />
-            <div className="space-y-2">
+            <CardHeader title="Linked Sprints" />
+            <div className={sprints.length > 5 ? "max-h-[280px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent space-y-2" : "space-y-2"}>
               {sprints.length > 0 ? (
-                sprints.slice(0, 3).map((sprint, idx) => (
-                  <div key={getId(sprint) || idx} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
-                      <FiActivity size={15} />
+                sprints.map((sprint, idx) => {
+                  const sprintId = sprint.id || sprint._id || sprint.sprintId;
+                  const sprintName = sprint.name || sprint.title || `Sprint ${sprint.sprintNumber || idx + 1}`;
+                  const sprintGoal = sprint.goal;
+                  const sprintStatus = sprint.status || 'PLANNED';
+                  const sprintNumber = sprint.sprintNumber;
+
+                  return (
+                    <div key={sprintId || idx} className="flex flex-col gap-1 rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717]">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
+                            <FiActivity size={15} />
+                          </div>
+                          <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                            {sprintNumber !== undefined ? `#${sprintNumber} - ` : ''}{sprintName}
+                          </span>
+                        </div>
+                        <span className="rounded-full bg-slate-200/60 dark:bg-[#252529] px-2 py-0.5 text-[10px] text-slate-600 dark:text-slate-300 uppercase tracking-wider font-semibold shrink-0">
+                          {sprintStatus}
+                        </span>
+                      </div>
+                      {sprintGoal && (
+                        <p className="text-[11px] text-slate-500 dark:text-[#999] line-clamp-1 pl-9">
+                          Goal: {sprintGoal}
+                        </p>
+                      )}
                     </div>
-                    <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
-                      {sprint.name || sprint.title || `Sprint ${idx + 1}`}
-                    </span>
-                    <span className="ml-auto text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                      {sprint.status || 'Active'}
-                    </span>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
                     <FiActivity size={15} />
                   </div>
-                  <span className="text-xs text-slate-500 dark:text-[#888]">No active sprint assigned</span>
+                  <span className="text-xs text-slate-500 dark:text-[#888]">No linked sprints</span>
                 </div>
               )}
             </div>

@@ -609,9 +609,9 @@ const TeamView = () => {
               <p className="text-xs mt-0.5">Assign issues to team members to visualize task distribution.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-2 sm:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-2 sm:gap-3 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
               <div className="h-[170px] w-full flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={170}>
                   <PieChart>
                     <Pie
                       data={workloadDistributionData}
@@ -676,8 +676,8 @@ const TeamView = () => {
               <p className="text-xs mt-0.5">Members will appear here once tasks are assigned.</p>
             </div>
           ) : (
-            <div className="h-[170px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[170px] w-full [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
+              <ResponsiveContainer width="100%" height={170}>
                 <BarChart
                   data={workloadComparisonData}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

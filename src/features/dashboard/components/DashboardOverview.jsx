@@ -997,7 +997,7 @@ const DashboardOverview = () => {
             <div className="flex items-center gap-3">
               <div className="dashboard-burndown-chart h-40 min-w-0 flex-1 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                 {sprintData.burndownPoints.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={160}>
                     <LineChart data={sprintData.burndownPoints} margin={{ top: 8, right: 8, bottom: 0, left: -6 }}>
                       <CartesianGrid strokeDasharray="4 5" stroke="#71717a" vertical={false} />
                       <XAxis
@@ -1117,7 +1117,7 @@ const DashboardOverview = () => {
             {/* Donut chart + Legend */}
             <div className="flex items-center justify-between gap-2">
               <div className="w-24 h-24 relative flex items-center justify-center shrink-0 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={96}>
                   <PieChart>
                     <Pie
                       data={deadlinesData.donutData}

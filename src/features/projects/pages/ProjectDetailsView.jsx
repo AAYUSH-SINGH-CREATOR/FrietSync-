@@ -167,7 +167,6 @@ const ProjectDetailsView = () => {
   const [openPollId, setOpenPollId] = useState(null);
   const [isOpenPollLoading, setIsOpenPollLoading] = useState(false);
   const [detailPanel, setDetailPanel] = useState(null);
-  const [showAllMilestones, setShowAllMilestones] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [uploadingReleaseId, setUploadingReleaseId] = useState(null);
@@ -381,7 +380,7 @@ const ProjectDetailsView = () => {
           new Date(b.updatedAt || b.createdAt || 0).getTime() -
           new Date(a.updatedAt || a.createdAt || 0).getTime()
       )
-      .slice(0, 5);
+      .slice(0, 15);
 
     const historyPromises = recentIssues.map((iss) => {
       const issId = iss?.id || iss?._id;
@@ -417,40 +416,47 @@ const ProjectDetailsView = () => {
       }
     });
 
-    // Supplement with milestone/issue lifecycle if history is brief
-    if (gatheredActivities.length < 4) {
-      issuesData.slice(0, 6).forEach((iss) => {
-        const issueKey =
-          iss.key ||
-          iss.code ||
-          `#${iss.number || (iss.id ? String(iss.id).slice(0, 4) : '1')}`;
-        const assignee = iss.assignee?.name || iss.assignedTo?.name || 'Collaborator';
-        const isDone = ['RESOLVED', 'CLOSED'].includes(
-          String(iss.status || '').toUpperCase()
-        );
+    // Supplement with milestone/issue lifecycle events
+    issuesData.slice(0, 20).forEach((iss) => {
+      const issueKey =
+        iss.key ||
+        iss.code ||
+        `#${iss.number || (iss.id ? String(iss.id).slice(0, 4) : '1')}`;
+      const assignee = iss.assignee?.name || iss.assignedTo?.name || 'Collaborator';
+      const isDone = ['RESOLVED', 'CLOSED'].includes(
+        String(iss.status || '').toUpperCase()
+      );
 
-        if (isDone && iss.updatedAt) {
-          gatheredActivities.push({
-            id: `done-${iss.id}`,
-            actor: assignee,
-            action: `Completed task ${issueKey}`,
-            timestamp: iss.updatedAt,
-          });
-        } else if (iss.createdAt) {
-          gatheredActivities.push({
-            id: `created-${iss.id}`,
-            actor: iss.reporter?.name || iss.creator?.name || assignee,
-            action: `Created task ${issueKey}: ${iss.title || ''}`,
-            timestamp: iss.createdAt,
-          });
-        }
-      });
-    }
+      if (isDone && iss.updatedAt) {
+        gatheredActivities.push({
+          id: `done-${iss.id || iss._id}`,
+          actor: assignee,
+          action: `Completed task ${issueKey}`,
+          timestamp: iss.updatedAt,
+        });
+      } else if (iss.createdAt) {
+        gatheredActivities.push({
+          id: `created-${iss.id || iss._id}`,
+          actor: iss.reporter?.name || iss.creator?.name || assignee,
+          action: `Created task ${issueKey}: ${iss.title || ''}`,
+          timestamp: iss.createdAt,
+        });
+      }
+    });
 
-    const formattedActivities = gatheredActivities
+    // Deduplicate by actor, action and timestamp
+    const seenActivityKeys = new Set();
+    const uniqueGathered = gatheredActivities.filter((act) => {
+      const key = `${act.actor}_${act.action}_${act.timestamp}`;
+      if (seenActivityKeys.has(key)) return false;
+      seenActivityKeys.add(key);
+      return true;
+    });
+
+    const formattedActivities = uniqueGathered
       .filter((a) => a.timestamp)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 4)
+      .slice(0, 50)
       .map((act) => {
         const d = new Date(act.timestamp);
         const diffMin = Math.max(1, Math.floor((now - d.getTime()) / 60000));
@@ -1223,9 +1229,9 @@ const ProjectDetailsView = () => {
                   </div>
                 ) : (
                   <div>
-                    <div className="max-h-[260px] overflow-y-auto pr-1">
+                    <div className="max-h-[350px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
                       <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/60">
-                        {milestones.slice(0, showAllMilestones ? undefined : 4).map((m, idx) => {
+                        {milestones.map((m, idx) => {
                         const persistedMilestoneId = m.id || m._id || m.milestoneId || m.milestone?.id || m.milestone?._id;
                         const mId = persistedMilestoneId || idx;
                         const hasPersistedMilestoneId = Boolean(persistedMilestoneId);
@@ -1293,15 +1299,6 @@ const ProjectDetailsView = () => {
                         })}
                       </div>
                     </div>
-                    {milestones.length > 4 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAllMilestones((prev) => !prev)}
-                        className="mt-3 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition cursor-pointer"
-                      >
-                        {showAllMilestones ? 'Show fewer' : `View all (${milestones.length})`}
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
@@ -1325,33 +1322,35 @@ const ProjectDetailsView = () => {
                     <p className="text-xs mt-1">Activity logs will appear as team members work.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3.5">
-                    {activities.map((act) => (
-                      <div
-                        key={act.id}
-                        className="flex items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0 shadow-xs"
-                            style={{ backgroundColor: act.avatarColor }}
-                          >
-                            {act.initials}
+                  <div className="max-h-[350px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
+                    <div className="space-y-3.5">
+                      {activities.map((act) => (
+                        <div
+                          key={act.id}
+                          className="flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0 shadow-xs"
+                              style={{ backgroundColor: act.avatarColor }}
+                            >
+                              {act.initials}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-slate-900 dark:text-white font-bold truncate leading-tight">
+                                {act.actor}
+                              </p>
+                              <p className="text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[170px] sm:max-w-xs mt-0.5">
+                                {act.action}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-slate-900 dark:text-white font-bold truncate leading-tight">
-                              {act.actor}
-                            </p>
-                            <p className="text-slate-500 dark:text-slate-400 text-[11px] truncate max-w-[170px] sm:max-w-xs mt-0.5">
-                              {act.action}
-                            </p>
-                          </div>
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0">
+                            {act.time}
+                          </span>
                         </div>
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium shrink-0">
-                          {act.time}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1865,7 +1864,7 @@ const ProjectDetailsView = () => {
               </div>
             ) : (
               <div className="space-y-3.5">
-                {releases.map((release, idx) => {
+                {releases.slice(0, 5).map((release, idx) => {
                   const rId = release.id || release._id || release.releaseId || idx;
                   const releaseName = release.name || release.version || `Release ${idx + 1}`;
                   const rDate = release.releaseDate || release.date;

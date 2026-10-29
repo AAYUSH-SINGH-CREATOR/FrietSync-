@@ -85,8 +85,24 @@ export const createIssue = async (projectId, issueData) => {
       title: issueData.title?.trim(),
       description: issueData.description?.trim() || '',
       priority: (issueData.priority || 'HIGH').toUpperCase(),
-      githubAction: issueData.githubAction || 'LOCAL',
+      githubAction: issueData.githubAction || 'CREATE_NEW',
     };
+
+    if (issueData.startDate) {
+      payload.startDate = issueData.startDate;
+    }
+
+    if (issueData.dueDate) {
+      payload.dueDate = issueData.dueDate;
+    }
+
+    if (issueData.milestoneId) {
+      payload.milestoneId = issueData.milestoneId;
+    }
+
+    if (issueData.estimatedHours !== undefined && issueData.estimatedHours !== '') {
+      payload.estimatedHours = Number(issueData.estimatedHours);
+    }
 
     if (
       payload.githubAction === 'LINK_EXISTING' &&
@@ -94,14 +110,6 @@ export const createIssue = async (projectId, issueData) => {
       issueData.githubIssueNumber !== ''
     ) {
       payload.githubIssueNumber = Number(issueData.githubIssueNumber);
-    }
-
-    if (issueData.dueDate) {
-      payload.dueDate = issueData.dueDate;
-    }
-
-    if (issueData.estimatedHours !== undefined && issueData.estimatedHours !== '') {
-      payload.estimatedHours = Number(issueData.estimatedHours);
     }
 
     if (issueData.assigneeId) {
@@ -168,6 +176,7 @@ export const assignIssue = (id, userIds) => issueRequest('post', `/issues/${id}/
 export const resolveIssue = (id) => issueRequest('post', `/issues/${id}/resolve`, {}, {}, 'Failed to resolve issue.');
 export const reviewIssue = (id, decision, comment = '') => issueRequest('post', `/issues/${id}/review/${decision}`, comment.trim() ? { comment: comment.trim() } : {}, {}, `Failed to ${decision} issue review.`);
 export const getIssueHistory = (id, { page = 0, size = 20 } = {}) => issueRequest('get', `/issues/${id}/history`, undefined, { params: { page, size } }, 'Failed to load issue history.');
+export const getIssueSprints = (id) => issueRequest('get', `/issues/${id}/sprints`, undefined, {}, 'Failed to load issue sprints.');
 export const getIssueLabels = (id) => issueRequest('get', `/issues/${id}/labels`, undefined, {}, 'Failed to load issue labels.');
 export const attachIssueLabel = (id, name) => issueRequest('post', `/issues/${id}/labels`, { name }, {}, 'Failed to add label.');
 export const removeIssueLabel = (id, labelId) => issueRequest('delete', `/issues/${id}/labels/${labelId}`, undefined, {}, 'Failed to remove label.');
