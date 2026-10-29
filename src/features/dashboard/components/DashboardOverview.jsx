@@ -741,7 +741,7 @@ const DashboardOverview = () => {
             </div>
 
             {/* Gauge semi-circle chart */}
-            <div className="relative w-full h-40 flex flex-col items-center justify-center">
+            <div className="relative w-full h-40 flex flex-col items-center justify-center [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
               <ResponsiveContainer width="100%" height={150}>
                 <PieChart>
                   <Pie
@@ -755,6 +755,7 @@ const DashboardOverview = () => {
                     paddingAngle={2}
                     dataKey="value"
                     stroke="none"
+                    isAnimationActive={true}
                   >
                     {issueOverviewMetrics.chartData.map((entry, index) => (
                       <Cell key={`gauge-cell-${index}`} fill={entry.color} />
@@ -994,7 +995,7 @@ const DashboardOverview = () => {
 
             {/* Burndown data and sprint dates */}
             <div className="flex items-center gap-3">
-              <div className="dashboard-burndown-chart h-40 min-w-0 flex-1">
+              <div className="dashboard-burndown-chart h-40 min-w-0 flex-1 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                 {sprintData.burndownPoints.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={sprintData.burndownPoints} margin={{ top: 8, right: 8, bottom: 0, left: -6 }}>
@@ -1024,8 +1025,8 @@ const DashboardOverview = () => {
                         contentStyle={{ backgroundColor: '#171717', border: '1px solid #3f3f46', borderRadius: 10, color: '#f4f4f5', fontSize: 11 }}
                         labelStyle={{ color: '#d4d4d8' }}
                       />
-                      <Line type="linear" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} />
-                      <Line type="stepAfter" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} />
+                      <Line type="linear" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} isAnimationActive={false} />
+                      <Line type="stepAfter" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={true} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -1115,7 +1116,7 @@ const DashboardOverview = () => {
 
             {/* Donut chart + Legend */}
             <div className="flex items-center justify-between gap-2">
-              <div className="w-24 h-24 relative flex items-center justify-center shrink-0">
+              <div className="w-24 h-24 relative flex items-center justify-center shrink-0 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -1127,6 +1128,7 @@ const DashboardOverview = () => {
                       paddingAngle={2}
                       dataKey="value"
                       stroke="none"
+                      isAnimationActive={true}
                     >
                       {deadlinesData.donutData.map((entry, index) => (
                         <Cell key={`donut-${index}`} fill={entry.color} />

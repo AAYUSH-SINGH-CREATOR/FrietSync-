@@ -1370,7 +1370,7 @@ const ProjectDetailsView = () => {
                 <p className="text-xs text-slate-500 dark:text-slate-400">{sprintGaugeMetrics.total} project sprints</p>
 
                 {/* Semi-Circle Gauge */}
-                <div className="relative h-[155px] w-full flex items-center justify-center mt-2 outline-none focus:outline-none [&_svg]:outline-none [&_svg:focus]:outline-none [&_svg:focus-visible]:outline-none [&_*:focus-visible]:outline-none">
+                <div className="relative h-[155px] w-full flex items-center justify-center mt-2 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -1384,6 +1384,7 @@ const ProjectDetailsView = () => {
                         paddingAngle={2}
                         dataKey="value"
                         stroke="none"
+                        isAnimationActive={true}
                       >
                         {sprintGaugeMetrics.displayChartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1421,10 +1422,10 @@ const ProjectDetailsView = () => {
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Issue overview</h2>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{issueGaugeMetrics.total} project issues</p>
-                <div className="relative h-[155px] w-full flex items-center justify-center mt-2 outline-none focus:outline-none [&_svg]:outline-none [&_svg:focus]:outline-none [&_svg:focus-visible]:outline-none [&_*:focus-visible]:outline-none">
+                <div className="relative h-[155px] w-full flex items-center justify-center mt-2 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={issueGaugeMetrics.displayChartData} cx="50%" cy="80%" startAngle={180} endAngle={0} innerRadius={65} outerRadius={88} paddingAngle={2} dataKey="value" stroke="none">
+                      <Pie data={issueGaugeMetrics.displayChartData} cx="50%" cy="80%" startAngle={180} endAngle={0} innerRadius={65} outerRadius={88} paddingAngle={2} dataKey="value" stroke="none" isAnimationActive={true}>
                         {issueGaugeMetrics.displayChartData.map((entry, index) => <Cell key={`issue-cell-${index}`} fill={entry.color} />)}
                       </Pie>
                     </PieChart>
