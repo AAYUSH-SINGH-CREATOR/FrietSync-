@@ -32,7 +32,7 @@ import { getSharedStompClient } from '../../features/chat/services/stompClient';
 import { useTheme } from '../../context/ThemeContext';
 import NavbarSearch from './NavbarSearch';
 import InvitesBellModal from '../../features/invites/components/InvitesBellModal';
-import logo from '../../assets/logo.svg';
+import BrandLogo from '../ui/BrandLogo';
 
 const getNotificationIcon = (type) => {
   switch (type) {
@@ -324,18 +324,8 @@ const DashboardNavbar = ({
       {/* Desktop Header */}
       <header className="hidden md:flex bg-white dark:bg-[#1f1f1f] border-b border-gray-200 dark:border-[#303030] px-4 sm:px-8 py-3.5 items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="flex items-center gap-2 group">
-            <img
-              src={logo}
-              alt="FrietSync Logo"
-              className="w-7 h-7 sm:w-8 sm:h-8 object-contain transition-transform duration-200 group-hover:scale-105"
-            />
-            {/* <span className="text-2xl font-black fon text-black dark:text-white tracking-tight group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
-              FrietSync
-            </span> */}
-            <span className="text-[32px] leading-none font-semibold tracking-normal text-black dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition">
-              FrietSync
-            </span>
+          <Link to="/dashboard" aria-label="FrietSync home" className="group flex items-center">
+            <BrandLogo />
           </Link>
 
         </div>
@@ -614,9 +604,8 @@ const DashboardNavbar = ({
             <FiMenu size={24} className="stroke-[2.5]" />
           </button>
 
-          <Link to="/dashboard" className="flex items-center gap-2 select-none">
-            <img src={logo} alt="FrietSync Logo" className="w-7 h-7 object-contain" />
-            <span className="text-[22px] font-bold text-black tracking-tight font-sans">Frietsync</span>
+          <Link to="/dashboard" aria-label="FrietSync home" className="group flex items-center select-none">
+            <BrandLogo size="mobile" />
           </Link>
 
           <div className="relative" ref={mobileProfileMenuRef}>

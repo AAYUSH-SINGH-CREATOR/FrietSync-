@@ -80,6 +80,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+.brand-script {
+  font-family: "Satisfy", "Brush Script MT", cursive;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
 .dashboard-burndown-chart .recharts-wrapper:focus,
 .dashboard-burndown-chart .recharts-surface:focus {
   outline: none;
