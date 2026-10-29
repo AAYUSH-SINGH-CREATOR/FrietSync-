@@ -13,6 +13,7 @@ import {
   FiTrash2,
   FiPlus,
   FiCheckCircle,
+  FiCheck,
   FiAlertCircle,
   FiUsers,
   FiUserPlus,
@@ -51,10 +52,14 @@ import DeleteReleaseModal from '../components/DeleteReleaseModal';
 import AttachReleaseIssuesModal from '../components/AttachReleaseIssuesModal';
 import LinkRepositoryModal from '../components/LinkRepositoryModal';
 import ProjectContributionsSection from '../components/ProjectContributionsSection';
+import ProjectSummaryModal from '../components/ProjectSummaryModal';
+import ProjectMembersModal from '../components/ProjectMembersModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
+import CreateEditSprintModal from '../../sprints/components/CreateEditSprintModal';
 import { ProjectPollsSection } from '../../polls/components';
+import CreatePollModal from '../../polls/components/CreatePollModal';
 
 const AVATAR_COLORS = ['#86198f', '#0369a1', '#15803d', '#6b21a8', '#b45309', '#be123c'];
 
@@ -137,6 +142,7 @@ const ProjectDetailsView = () => {
   const [summary, setSummary] = useState(null);
   const [members, setMembers] = useState([]);
   const [issues, setIssues] = useState([]);
+  const [issueTotalCount, setIssueTotalCount] = useState(0);
   const [sprints, setSprints] = useState([]);
   const [milestones, setMilestones] = useState([]);
   const [milestoneLoadError, setMilestoneLoadError] = useState('');
@@ -147,6 +153,7 @@ const ProjectDetailsView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [viewingAllPolls, setViewingAllPolls] = useState(false);
+  const [detailPanel, setDetailPanel] = useState(null);
   const [showAllMilestones, setShowAllMilestones] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -154,6 +161,8 @@ const ProjectDetailsView = () => {
 
   // Modals
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false);
+  const [isCreatePollOpen, setIsCreatePollOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -269,6 +278,9 @@ const ProjectDetailsView = () => {
   const canManageMilestones = currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
+  const globalRole = String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase();
+  const canCreateSprint = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) ||
+    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(role));
   const canManageReleases = currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
@@ -302,14 +314,14 @@ const ProjectDetailsView = () => {
       membersRes.status === 'fulfilled' && Array.isArray(membersRes.value)
         ? membersRes.value
         : [];
-    const sprintsData =
-      sprintsRes.status === 'fulfilled' && Array.isArray(sprintsRes.value)
-        ? sprintsRes.value
-        : [];
-    const issuesData =
-      issuesRes.status === 'fulfilled'
-        ? normalizeIssuePage(issuesRes.value).items
-        : [];
+    const sprintCandidates = sprintsRes.status === 'fulfilled'
+      ? [sprintsRes.value, sprintsRes.value?.data, sprintsRes.value?.sprints, sprintsRes.value?.projectSprints, sprintsRes.value?.items, sprintsRes.value?.content, sprintsRes.value?.results, sprintsRes.value?.data?.sprints, sprintsRes.value?.data?.projectSprints, sprintsRes.value?.data?.items, sprintsRes.value?.data?.content, sprintsRes.value?.data?.results]
+      : [];
+    const sprintsData = sprintCandidates.find(Array.isArray) || [];
+    const issuesPage = issuesRes.status === 'fulfilled'
+      ? normalizeIssuePage(issuesRes.value, { page: 0, size: 50 })
+      : normalizeIssuePage(null);
+    const issuesData = issuesPage.items;
     const pollsData =
       pollsRes.status === 'fulfilled' && Array.isArray(pollsRes.value) ? pollsRes.value : [];
     const releasesData =
@@ -440,6 +452,7 @@ const ProjectDetailsView = () => {
       members: membersData,
       sprints: sprintsData,
       issues: issuesData,
+      issueTotalCount: summaryData?.totalIssues ?? issuesPage.totalElements,
       milestones: milestoneList,
       milestoneError,
       releases: releasesData,
@@ -460,6 +473,7 @@ const ProjectDetailsView = () => {
         setMembers(data.members);
         setSprints(data.sprints);
         setIssues(data.issues);
+        setIssueTotalCount(data.issueTotalCount);
         setMilestones(data.milestones);
         setMilestoneLoadError(data.milestoneError || '');
         setReleases(data.releases);
@@ -485,6 +499,7 @@ const ProjectDetailsView = () => {
         setMembers(data.members);
         setSprints(data.sprints);
         setIssues(data.issues);
+        setIssueTotalCount(data.issueTotalCount);
         setMilestones(data.milestones);
         setMilestoneLoadError(data.milestoneError || '');
         setReleases(data.releases);
@@ -673,37 +688,56 @@ const ProjectDetailsView = () => {
     }).length;
   }, [issues, currentUserId, currentUserEmail]);
 
-  // Sprint Overview Gauge Data
+  // Sprint Overview Gauge Data: completed, active, and planned sprints.
   const sprintGaugeMetrics = useMemo(() => {
-    let completed = summary?.resolvedIssues || 0;
-    let inProgress = summary?.inProgressIssues || 0;
-    let pending = summary?.openIssues || 0;
+    const completed = sprints.filter((sprint) => String(sprint.status || '').toUpperCase() === 'COMPLETED').length;
+    const active = sprints.filter((sprint) => ['ACTIVE', 'IN_PROGRESS'].includes(String(sprint.status || '').toUpperCase())).length;
+    const total = summary?.totalSprints ?? sprints.length;
+    const planned = summary?.plannedSprints ?? Math.max(0, total - completed - active);
+    const completedCount = summary?.completedSprints ?? completed;
+    const activeCount = summary?.activeSprints ?? active;
+    const actualTotal = completedCount + activeCount + planned;
+    const metrics = {
+      total: summary?.totalSprints ?? actualTotal,
+      progressRate: actualTotal ? Math.round((completedCount / actualTotal) * 100) : 0,
+      chartData: [
+        { name: 'Completed', value: completedCount, color: '#38bdf8' },
+        { name: 'Active', value: activeCount, color: '#0284c7' },
+        { name: 'Planned', value: planned, color: '#52525b' },
+      ].filter((item) => item.value > 0),
+    };
+    return {
+      ...metrics,
+      displayChartData: metrics.chartData.length ? metrics.chartData : [{ name: 'No sprints', value: 1, color: '#52525b' }],
+    };
+  }, [summary, sprints]);
 
-    if (!summary?.totalIssues && issues.length > 0) {
-      completed = issues.filter((i) =>
-        ['RESOLVED', 'CLOSED'].includes(String(i.status || '').toUpperCase())
-      ).length;
-      inProgress = issues.filter((i) =>
-        String(i.status || '').toUpperCase() === 'IN_PROGRESS'
-      ).length;
-      pending = Math.max(0, issues.length - completed - inProgress);
-    }
-
-    const total = completed + inProgress + pending;
-    const progressRate = total > 0 ? Math.round((completed / total) * 100) : null;
-    const chartData = total > 0
-      ? [
-          { name: 'Completed', value: completed, color: '#38bdf8' },
-          { name: 'In Progress', value: inProgress, color: '#0284c7' },
-          { name: 'Pending', value: pending, color: '#334155' },
-        ].filter((item) => item.value > 0)
-      : [];
-
-    const statusLabel =
-      total === 0 ? 'Issue data unavailable' : activeSprintsCount > 0 ? 'Active Sprint' : project?.status === 'COMPLETED' ? 'Project Ended' : 'In Progress';
-
-    return { progressRate, chartData, statusLabel };
-  }, [summary, issues, activeSprintsCount, project?.status]);
+  const issueGaugeMetrics = useMemo(() => {
+    const normalizeStatus = (issue) => String(issue.status || issue.issueStatus || '').toUpperCase().replace(/[\s-]+/g, '_');
+    const completedFromRows = issues.filter((issue) => ['RESOLVED', 'CLOSED'].includes(normalizeStatus(issue))).length;
+    const activeFromRows = issues.filter((issue) => normalizeStatus(issue) === 'IN_PROGRESS').length;
+    const pendingFromRows = issues.filter((issue) => ['TODO', 'OPEN', 'BACKLOG'].includes(normalizeStatus(issue))).length;
+    const hasSummaryCounts = summary && ['totalIssues', 'resolvedIssues', 'closedIssues', 'inProgressIssues', 'openIssues'].some((key) => Number.isFinite(Number(summary[key])));
+    const completed = hasSummaryCounts ? (summary.resolvedIssues || 0) + (summary.closedIssues || 0) : completedFromRows;
+    const inProgress = hasSummaryCounts ? (summary.inProgressIssues || 0) : activeFromRows;
+    const pending = hasSummaryCounts
+      ? Math.max(0, (summary.totalIssues || 0) - completed - inProgress)
+      : Math.max(pendingFromRows, issues.length - completed - inProgress);
+    const total = issueTotalCount || completed + inProgress + pending;
+    const metrics = {
+      rate: total ? Math.round((completed / total) * 100) : 0,
+      total,
+      chartData: [
+        { name: 'Completed', value: completed, color: '#38bdf8' },
+        { name: 'In Progress', value: inProgress, color: '#0284c7' },
+        { name: 'Pending / Backlog', value: pending, color: '#52525b' },
+      ].filter((item) => item.value > 0),
+    };
+    return {
+      ...metrics,
+      displayChartData: metrics.chartData.length ? metrics.chartData : [{ name: 'No issues', value: 1, color: '#52525b' }],
+    };
+  }, [summary, issues, issueTotalCount]);
 
   // Recent Poll (First poll in the list)
   const recentPoll = useMemo(() => {
@@ -715,11 +749,14 @@ const ProjectDetailsView = () => {
     if (!pollId || !optionId) return;
     try {
       const updated = await voteInPoll(pollId, optionId);
+      window.localStorage.setItem(`frietSync_poll_${pollId}_voted`, String(optionId));
       showToast('success', 'Your vote was recorded!');
       setPolls((prev) =>
         prev.map((p) => {
           const pid = p.id || p._id || p.pollId;
-          return pid === pollId ? { ...p, ...updated } : p;
+          return String(pid) === String(pollId)
+            ? { ...p, ...updated, userVotedOptionId: updated?.userVotedOptionId || updated?.votedOptionId || optionId }
+            : p;
         })
       );
     } catch (err) {
@@ -913,30 +950,31 @@ const ProjectDetailsView = () => {
           </div>
         </div>
 
-        {/* Hero Bottom Row: Schedule a meeting + Summary PDF + Project Manager + 4 Metric Cards */}
+        {/* Hero Bottom Row: Meeting actions, project manager, and project metrics */}
         <div className="pt-4 border-t border-slate-100 dark:border-[#2d2d34] flex flex-col xl:flex-row xl:items-center justify-between gap-5 flex-wrap">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => setIsMeetingModalOpen(true)}
-              className="rounded-full bg-[#42b4d6] hover:bg-[#38a0bf] text-slate-950 font-bold text-xs sm:text-sm px-5 py-2.5 shadow-sm transition shrink-0 cursor-pointer"
+              className="rounded-full bg-[#55c2f4] hover:bg-[#43b3e8] text-[#071522] font-semibold text-sm px-4 sm:px-5 py-3 shadow-sm transition shrink-0 cursor-pointer"
             >
-              Schedule a meeting
+              Schedule meeting
             </button>
 
             <button
               type="button"
-              onClick={handleDownloadSummaryPdf}
-              disabled={isDownloadingPdf}
-              title="Download project summary PDF report"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-[#383842] bg-slate-100 dark:bg-[#222228] hover:bg-slate-200 dark:hover:bg-[#2b2b32] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-semibold text-xs sm:text-sm px-4 py-2.5 shadow-xs transition shrink-0 cursor-pointer disabled:opacity-50"
+              onClick={() => setDetailPanel('summary')}
+              className="inline-flex items-center gap-2 rounded-full bg-[#55c2f4] hover:bg-[#43b3e8] text-[#071522] font-semibold text-sm px-4 sm:px-5 py-3 transition cursor-pointer"
             >
-              {isDownloadingPdf ? (
-                <span className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin inline-block" />
-              ) : (
-                <FiDownload size={14} className="text-sky-500 dark:text-sky-400" />
-              )}
-              <span>{isDownloadingPdf ? 'Exporting PDF...' : 'Summary PDF'}</span>
+              View summary
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDetailPanel('members')}
+              className="inline-flex items-center gap-2 rounded-full bg-[#55c2f4] hover:bg-[#43b3e8] text-[#071522] font-semibold text-sm px-4 sm:px-5 py-3 transition cursor-pointer"
+            >
+              View members
             </button>
 
             {/* Project Manager Avatar and Name */}
@@ -961,8 +999,8 @@ const ProjectDetailsView = () => {
             </div>
           </div>
 
-          {/* 4 Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 shrink-0">
+          {/* Project metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 shrink-0">
             {/* Active Sprints */}
             <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-purple-100 dark:bg-[#2f2249] text-purple-700 dark:text-purple-400 flex items-center justify-center shrink-0">
@@ -970,10 +1008,10 @@ const ProjectDetailsView = () => {
               </span>
               <div>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
-                  Active sprints
+                  Total sprints
                 </span>
                 <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                  {isLoading ? '—' : activeSprintsCount}
+                  {isLoading ? '—' : (summary?.totalSprints ?? sprints.length)}
                 </span>
               </div>
             </div>
@@ -985,43 +1023,29 @@ const ProjectDetailsView = () => {
               </span>
               <div>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
-                  Active issues
+                  Total issues
                 </span>
                 <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                  {isLoading ? '—' : activeIssuesCount}
+                  {isLoading ? '—' : (summary?.totalIssues ?? issues.length)}
                 </span>
               </div>
             </div>
 
-            {/* My Tasks */}
+            {/* Team Members */}
             <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-indigo-100 dark:bg-[#2f2249] text-indigo-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiFolder size={14} />
               </span>
               <div>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
-                  My tasks
+                  Team members
                 </span>
                 <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                  {isLoading ? '—' : myTasksCount}
+                  {isLoading ? '—' : members.length}
                 </span>
               </div>
             </div>
 
-            {/* Polls */}
-            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
-              <span className="h-7 w-7 rounded-lg bg-sky-100 dark:bg-[#2f2249] text-sky-700 dark:text-purple-400 flex items-center justify-center shrink-0">
-                <FiBarChart2 size={14} />
-              </span>
-              <div>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase tracking-wider font-semibold">
-                  Polls
-                </span>
-                <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                  {isLoading ? '—' : polls.length}
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -1050,115 +1074,10 @@ const ProjectDetailsView = () => {
       ) : (
         /* Standard Overview Dashboard */
         <div className="space-y-6">
-          {/* Top Row: Project Information + Upcoming Milestones (Recently Assigned Tasks Removed) */}
+          {/* Upcoming milestones and recent activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Project Information Card */}
-            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-5">
-                  Project Information
-                </h2>
-                <div className="space-y-3.5 text-xs sm:text-sm">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Project Name</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {project?.name || 'Unnamed project'}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Description</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {project?.description || 'No description provided.'}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Status</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right capitalize">
-                      {project?.status ? String(project.status).toLowerCase().replace(/_/g, ' ') : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Project manager</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {projectManagerName}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Team leader</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right truncate max-w-[220px]">
-                      {teamLeadName}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Start date</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right">
-                      {project?.startDate ? formatDate(project.startDate) : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Target end date</span>
-                    <span className="text-slate-900 dark:text-white font-semibold text-right">
-                      {project?.deadline ? formatDate(project.deadline) : '—'}
-                    </span>
-                  </div>
-                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-slate-100 dark:border-[#27272e]">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Schedule report</span>
-                    <button
-                      type="button"
-                      onClick={handleDownloadSummaryPdf}
-                      disabled={isDownloadingPdf}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition cursor-pointer disabled:opacity-50"
-                    >
-                      <FiDownload size={13} />
-                      <span>{isDownloadingPdf ? 'Downloading...' : 'Download PDF Summary'}</span>
-                    </button>
-                  </div>
-                  <div className="pt-2 flex items-center justify-between gap-4 border-t border-slate-100 dark:border-[#27272e]">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                      <FiGithub size={14} className="text-slate-600 dark:text-slate-300" />
-                      <span>GitHub Repository</span>
-                    </span>
-                    {linkedRepo ? (
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={`https://github.com/${linkedRepo.owner}/${linkedRepo.repository}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`${linkedRepo.owner}/${linkedRepo.repository}`}
-                          className="text-slate-900 dark:text-white font-semibold text-xs font-mono bg-slate-100 dark:bg-[#25252c] px-2 py-0.5 rounded-md border border-slate-200 dark:border-[#32323a] truncate max-w-[220px] hover:border-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors"
-                        >
-                          {linkedRepo.owner}/{linkedRepo.repository}
-                        </a>
-                        {canManageGithubRepository && (
-                          <button
-                            type="button"
-                            onClick={handleUnlinkRepository}
-                            disabled={isUnlinkingRepo}
-                            className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-500 dark:hover:text-rose-300 hover:underline cursor-pointer font-medium disabled:opacity-50"
-                          >
-                            {isUnlinkingRepo ? 'Unlinking…' : 'Unlink'}
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      canManageGithubRepository && (
-                        <button
-                          type="button"
-                          onClick={() => setIsLinkRepoModalOpen(true)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition cursor-pointer"
-                        >
-                          <FiPlus size={13} />
-                          <span>Link Repository</span>
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Upcoming Milestones Card */}
-            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+            <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -1308,72 +1227,8 @@ const ProjectDetailsView = () => {
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Middle Row: Sprint Overview + Recent Activity + Recent Poll */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* Sprint Overview Card */}
-            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Sprint overview</h2>
-                  <Link
-                    to="/dashboard/sprints"
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center gap-1"
-                  >
-                    View all <FiArrowRight size={13} />
-                  </Link>
-                </div>
-
-                {/* Semi-Circle Gauge */}
-                <div className="relative h-[155px] w-full flex items-center justify-center mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={sprintGaugeMetrics.chartData}
-                        cx="50%"
-                        cy="80%"
-                        startAngle={180}
-                        endAngle={0}
-                        innerRadius={65}
-                        outerRadius={88}
-                        paddingAngle={2}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {sprintGaugeMetrics.chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-1.5 pointer-events-none">
-                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
-                      {sprintGaugeMetrics.progressRate === null ? '—' : `${sprintGaugeMetrics.progressRate}%`}
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                      {sprintGaugeMetrics.statusLabel}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Legend */}
-                <div className="flex items-center justify-center gap-3.5 text-[11px] mt-4 pt-2 border-t border-slate-100 dark:border-[#2d2d34]">
-                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-[#38bdf8]" /> Completed
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-[#0284c7]" /> In Progress
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-[#334155]" /> Pending
-                  </span>
-                </div>
-              </div>
-            </div>
-
             {/* Recent Activity Card */}
-            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+            <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Activity</h2>
 
@@ -1423,18 +1278,100 @@ const ProjectDetailsView = () => {
               </div>
             </div>
 
-            {/* Recent Poll Card */}
-            <div className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+          </div>
+
+          {/* Project analytics and polls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Sprint Overview Card */}
+            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Recent Poll</h2>
-                  <button
-                    type="button"
-                    onClick={() => setViewingAllPolls(true)}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition flex items-center gap-1 cursor-pointer"
-                  >
-                    View all <FiArrowRight size={13} />
-                  </button>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Sprint overview</h2>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{sprintGaugeMetrics.total} project sprints</p>
+
+                {/* Semi-Circle Gauge */}
+                <div className="relative h-[155px] w-full flex items-center justify-center mt-2 outline-none focus:outline-none [&_svg]:outline-none [&_svg:focus]:outline-none [&_svg:focus-visible]:outline-none [&_*:focus-visible]:outline-none">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={sprintGaugeMetrics.displayChartData}
+                        cx="50%"
+                        cy="80%"
+                        startAngle={180}
+                        endAngle={0}
+                        innerRadius={65}
+                        outerRadius={88}
+                        paddingAngle={2}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {sprintGaugeMetrics.displayChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-1.5 pointer-events-none">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                      {sprintGaugeMetrics.progressRate === null ? '—' : `${sprintGaugeMetrics.progressRate}%`}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                      {sprintGaugeMetrics.total ? 'Sprints completed' : 'No Sprints'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-3.5 text-[11px] mt-4 pt-2 border-t border-slate-100 dark:border-[#2d2d34]">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-[#38bdf8]" /> Completed
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-[#0284c7]" /> Active
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-[#52525b]" /> Planned
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Issue Overview Card */}
+            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Issue overview</h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{issueGaugeMetrics.total} project issues</p>
+                <div className="relative h-[155px] w-full flex items-center justify-center mt-2 outline-none focus:outline-none [&_svg]:outline-none [&_svg:focus]:outline-none [&_svg:focus-visible]:outline-none [&_*:focus-visible]:outline-none">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={issueGaugeMetrics.displayChartData} cx="50%" cy="80%" startAngle={180} endAngle={0} innerRadius={65} outerRadius={88} paddingAngle={2} dataKey="value" stroke="none">
+                        {issueGaugeMetrics.displayChartData.map((entry, index) => <Cell key={`issue-cell-${index}`} fill={entry.color} />)}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-1.5 pointer-events-none">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">{issueGaugeMetrics.rate}%</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{issueGaugeMetrics.total ? 'Issues completed' : 'No Issues'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-3.5 text-[11px] mt-4 pt-2 border-t border-slate-100 dark:border-[#2d2d34]">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span className="h-2 w-2 rounded-full bg-[#38bdf8]" /> Completed</span>
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span className="h-2 w-2 rounded-full bg-[#0284c7]" /> In Progress</span>
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span className="h-2 w-2 rounded-full bg-[#52525b]" /> Pending</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Polls Card */}
+            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Polls</h2>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setIsCreatePollOpen(true)} className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"><FiPlus size={13} /> Create Poll</button>
+                    <button type="button" onClick={() => setViewingAllPolls(true)} className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">View all <FiArrowRight size={12} className="inline" /></button>
+                  </div>
                 </div>
 
                 {isLoading ? (
@@ -1456,7 +1393,6 @@ const ProjectDetailsView = () => {
 
                     <div className="space-y-2.5">
                       {(recentPoll.options || []).map((opt, idx) => {
-                        const letter = String.fromCharCode(65 + idx);
                         const votes = opt.voteCount ?? opt.votes ?? 0;
                         const totalVotes =
                           recentPoll.totalVotes ||
@@ -1464,40 +1400,52 @@ const ProjectDetailsView = () => {
                             (acc, o) => acc + (o.voteCount ?? o.votes ?? 0),
                             0
                           ) ||
-                          1;
-                        const barPct = Math.max(
-                          Math.round((votes / totalVotes) * 100),
-                          votes > 0 ? 8 : 2
-                        );
+                          0;
+                        const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
                         const isClosed =
                           recentPoll.status === 'CLOSED' || recentPoll.closed === true;
+                        const optionId = opt.id || opt._id || opt.optionId;
+                        const pollId = recentPoll.id || recentPoll._id || recentPoll.pollId;
+                        const storedVotedOptionId = typeof window !== 'undefined' && pollId
+                          ? window.localStorage.getItem(`frietSync_poll_${pollId}_voted`)
+                          : null;
+                        const votedOptionId = recentPoll.userVotedOptionId || recentPoll.votedOptionId || recentPoll.selectedOptionId || storedVotedOptionId;
+                        const isSelected = Boolean(
+                          opt.hasVoted ||
+                          (votedOptionId && String(votedOptionId) === String(optionId)) ||
+                          (Array.isArray(opt.voterIds) && currentUserId && opt.voterIds.map(String).includes(String(currentUserId)))
+                        );
 
                         return (
-                          <div
-                            key={opt.id || opt._id || idx}
-                            onClick={() =>
-                              !isClosed &&
-                              handleVoteInRecentPoll(recentPoll.id || recentPoll._id, opt.id || opt._id)
-                            }
-                            className={`flex items-center gap-2.5 group ${
-                              !isClosed ? 'cursor-pointer' : ''
+                          <button
+                            key={optionId || idx}
+                            type="button"
+                            disabled={isClosed || !optionId}
+                              onClick={() => handleVoteInRecentPoll(pollId, optionId)}
+                            className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-2.5 text-left transition-all disabled:cursor-default ${
+                              isSelected
+                                ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/50 dark:border-sky-400 dark:bg-sky-950/20'
+                                : 'border-slate-200/80 bg-slate-50/60 hover:border-sky-300 hover:bg-slate-100/60 dark:border-[#303030] dark:bg-[#252528] dark:hover:border-[#48484e]'
                             }`}
                           >
-                            <span className="text-xs font-bold text-slate-700 dark:text-white w-3 text-center shrink-0">
-                              {letter}
+                            <div
+                              aria-hidden="true"
+                              className={`absolute inset-y-0 left-0 transition-all duration-500 ${isSelected ? 'bg-sky-200/60 dark:bg-sky-800/40' : 'bg-slate-200/70 dark:bg-[#343438]'}`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                            <span className="relative flex min-w-0 items-center gap-2 text-xs font-medium">
+                              <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${isSelected ? 'border-sky-600 bg-sky-500 text-white dark:border-sky-400 dark:bg-sky-500' : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-[#2a2a2e]'}`}>
+                                {isSelected && <FiCheck size={10} className="stroke-[3]" />}
+                              </span>
+                              <span className={`truncate ${isSelected ? 'font-bold text-sky-900 dark:text-sky-200' : 'text-slate-800 dark:text-slate-200'}`}>
+                                {opt.text || opt.label || opt.title || opt.optionText || (typeof opt === 'string' ? opt : `Option ${idx + 1}`)}
+                              </span>
                             </span>
-                            <div className="flex-1 h-3.5 rounded-md bg-slate-100 dark:bg-[#2a2a32] overflow-hidden p-0.5 border border-slate-200/60 dark:border-transparent">
-                              <div
-                                className={`h-full rounded-sm transition-all duration-300 ${
-                                  idx % 2 === 0 ? 'bg-[#7dd3fc]' : 'bg-[#38bdf8]'
-                                } group-hover:brightness-110`}
-                                style={{ width: `${barPct}%` }}
-                              />
-                            </div>
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-300 w-4 text-right shrink-0">
-                              {votes}
+                            <span className="relative flex shrink-0 items-center gap-1.5 text-[11px] font-bold">
+                              <span className={isSelected ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-300'}>{percentage}%</span>
+                              <span className="text-[10px] font-normal text-slate-400 dark:text-[#888]">({votes})</span>
                             </span>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -1507,6 +1455,7 @@ const ProjectDetailsView = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-5">
           {/* Under Dashboard: Project Sprints (Top 5 + View all) */}
           <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
@@ -1518,7 +1467,7 @@ const ProjectDetailsView = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Sprints</h3>
                     <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {sprints.length}
+                      {summary?.totalSprints ?? sprints.length}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1527,13 +1476,24 @@ const ProjectDetailsView = () => {
                 </div>
               </div>
 
-              <Link
-                to="/dashboard/sprints"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
-              >
-                <span>View all</span>
-                <FiArrowRight size={13} />
-              </Link>
+              <div className="flex items-center gap-2">
+                {canCreateSprint && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateSprintOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-sky-700"
+                  >
+                    <FiPlus size={14} /> Create Sprint
+                  </button>
+                )}
+                <Link
+                  to="/dashboard/sprints"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:border-[#35353d] dark:bg-[#26262c] dark:text-slate-300 dark:hover:bg-[#32323a] dark:hover:text-white"
+                >
+                  <span>View all</span>
+                  <FiArrowRight size={13} />
+                </Link>
+              </div>
             </div>
 
             {isLoading ? (
@@ -1550,6 +1510,15 @@ const ProjectDetailsView = () => {
                 <p className="text-xs mt-1">
                   Create sprint iterations from the Sprints board to organize issues into cycles.
                 </p>
+                {canCreateSprint && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateSprintOpen(true)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-sky-700"
+                  >
+                    <FiPlus size={13} /> Create Sprint
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1614,7 +1583,7 @@ const ProjectDetailsView = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Issues</h3>
                     <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {issues.length}
+                      {issueTotalCount}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1721,8 +1690,11 @@ const ProjectDetailsView = () => {
             )}
           </section>
 
+          </div>
+
+          <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-4">
           {/* Under Dashboard: Project Releases */}
-          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+          <section className="min-w-0 rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4 lg:col-span-1">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400 flex items-center justify-center shrink-0">
@@ -1944,142 +1916,18 @@ const ProjectDetailsView = () => {
           </section>
 
           {/* GitHub Contributions & Code Activity */}
-          <ProjectContributionsSection
-            projectId={projectId}
-            linkedRepo={linkedRepo}
-            canManage={canManageGithubRepository}
-            onOpenLinkModal={() => setIsLinkRepoModalOpen(true)}
-            onUnlinkRepo={handleUnlinkRepository}
-            isUnlinkingRepo={isUnlinkingRepo}
-          />
+          <div className="min-w-0 lg:col-span-3 [&>section]:h-full">
+            <ProjectContributionsSection
+              projectId={projectId}
+              linkedRepo={linkedRepo}
+              canManage={canManageGithubRepository}
+              onOpenLinkModal={() => setIsLinkRepoModalOpen(true)}
+              onUnlinkRepo={handleUnlinkRepository}
+              isUnlinkingRepo={isUnlinkingRepo}
+            />
+          </div>
+          </div>
 
-          {/* Under Dashboard: Project Members (with Add Member) */}
-          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                  <FiUsers size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Members</h3>
-                    <span className="rounded-full bg-slate-100 dark:bg-[#27272e] px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-                      {members.length}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Collaborators assigned to work on this project.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsAddMemberModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-xs sm:text-sm font-semibold text-white shadow-md shadow-sky-600/20 dark:shadow-blue-900/30 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
-              >
-                <FiUserPlus size={15} />
-                <span>Add Member</span>
-              </button>
-            </div>
-
-            {isLoading ? (
-              <div className="space-y-2 py-2">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className="h-12 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
-                ))}
-              </div>
-            ) : members.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 dark:text-slate-400">
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  No members assigned yet
-                </p>
-                <p className="text-xs mt-1">
-                  Add collaborators to this project so they can receive task assignments and participate in sprints.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsAddMemberModalOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white text-xs font-semibold transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#171717]"
-                >
-                  <FiUserPlus size={14} /> Add First Member
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {members.map((member, idx) => {
-                  const memberUser = member.user || member;
-                  const memberUserId = member.userId || member.id || member._id || memberUser.id || memberUser._id;
-                  const name = member.name || memberUser.name || member.email?.split('@')[0] || memberUser.email?.split('@')[0] || 'Member';
-                  const email = member.email || memberUser.email || '';
-                  const memberAvatar = member.profilePictureUrl || member.avatarUrl || memberUser.profilePictureUrl || memberUser.avatarUrl || '';
-                  const role = member.role || member.projectRole || memberUser.role || 'CONTRIBUTOR';
-                  const roleLabel = formatProjectRoleLabel(role);
-                  const roleBadgeClass = getRoleBadge(role);
-                  const isRemoving = removingMemberId === memberUserId;
-
-                  return (
-                    <div
-                      key={memberUserId || email || idx}
-                      className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 dark:bg-[#171717] border border-slate-200/80 dark:border-[#2d2d34] hover:border-slate-300 dark:hover:border-[#3d3d46] transition gap-3"
-                    >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div
-                          className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-xs text-white shadow-xs"
-                          style={{ backgroundColor: getAvatarColor(name || email) }}
-                        >
-                          {getInitials(name || email)}
-                          {memberAvatar && (
-                            <img
-                              src={memberAvatar}
-                              alt={name}
-                              className="absolute inset-0 h-full w-full rounded-full object-cover"
-                              onError={(event) => event.currentTarget.remove()}
-                            />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                              {name}
-                            </p>
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${roleBadgeClass}`}
-                            >
-                              {roleLabel}
-                            </span>
-                          </div>
-                          {email && (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                              {email}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Member Actions */}
-                      <div className="shrink-0">
-                        <button
-                          type="button"
-                          disabled={isRemoving}
-                          onClick={() => handleRemoveMember(member)}
-                          title={`Remove ${name} from project`}
-                          aria-label={`Remove ${name} from project`}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer disabled:opacity-50"
-                        >
-                          {isRemoving ? (
-                            <span className="w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin inline-block" />
-                          ) : (
-                            <FiTrash2 size={15} />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
         </div>
       )}
 
@@ -2126,6 +1974,7 @@ const ProjectDetailsView = () => {
           onMemberAdded={(added) => {
             showToast('success', `${added?.name || added?.email || 'Member'} was added.`);
             reloadData();
+            setDetailPanel('members');
           }}
         />
       )}
@@ -2137,6 +1986,18 @@ const ProjectDetailsView = () => {
         defaultProjectId={projectId}
         onIssueCreated={(created) => {
           showToast('success', `“${created?.title || 'Issue'}” was created.`);
+          reloadData();
+        }}
+      />
+
+      <CreateEditSprintModal
+        isOpen={isCreateSprintOpen}
+        onClose={() => setIsCreateSprintOpen(false)}
+        projectId={projectId}
+        projectName={project?.name || 'Project'}
+        onSprintSaved={(saved) => {
+          setIsCreateSprintOpen(false);
+          showToast('success', `Sprint "${saved?.name || 'Sprint'}" created.`);
           reloadData();
         }}
       />
@@ -2228,6 +2089,52 @@ const ProjectDetailsView = () => {
           }}
         />
       )}
+
+      <CreatePollModal
+        isOpen={isCreatePollOpen}
+        onClose={() => setIsCreatePollOpen(false)}
+        projectId={projectId}
+        onPollCreated={(created) => {
+          if (created) setPolls((prev) => [created, ...prev]);
+          setIsCreatePollOpen(false);
+        }}
+      />
+
+      <ProjectSummaryModal
+        isOpen={detailPanel === 'summary'}
+        onClose={() => setDetailPanel(null)}
+        project={project}
+        summary={summary}
+        projectManagerName={projectManagerName}
+        teamLeadName={teamLeadName}
+        totalIssues={issueTotalCount}
+        totalSprints={summary?.totalSprints ?? sprints.length}
+        totalMembers={members.length}
+        overallProgress={overallProgress}
+        isDownloadingPdf={isDownloadingPdf}
+        onDownloadPdf={handleDownloadSummaryPdf}
+        linkedRepo={linkedRepo}
+        canManageGithubRepository={canManageGithubRepository}
+        isUnlinkingRepo={isUnlinkingRepo}
+        onUnlinkRepository={handleUnlinkRepository}
+        onLinkRepository={() => {
+          setDetailPanel(null);
+          setIsLinkRepoModalOpen(true);
+        }}
+      />
+
+      <ProjectMembersModal
+        isOpen={detailPanel === 'members'}
+        onClose={() => setDetailPanel(null)}
+        members={members}
+        isLoading={isLoading}
+        removingMemberId={removingMemberId}
+        onAddMember={() => {
+          setDetailPanel(null);
+          setIsAddMemberModalOpen(true);
+        }}
+        onRemoveMember={handleRemoveMember}
+      />
     </div>
   );
 };
