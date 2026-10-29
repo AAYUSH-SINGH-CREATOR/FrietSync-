@@ -317,6 +317,24 @@ const SprintsView = () => {
   const currentProjectRoleName = String(currentProjectRole?.role || currentProjectRole?.projectRole || currentProjectRole?.user?.role || '').toUpperCase();
   const selectedSprintProjectRole = selectedSprintProjectId ? findProjectRole(selectedSprintProjectId) : null;
   const selectedSprintProjectRoleName = String(selectedSprintProjectRole?.role || selectedSprintProjectRole?.projectRole || selectedSprintProjectRole?.user?.role || '').toUpperCase();
+  const canManageSprintProject = useCallback((targetProjectId) => {
+    if (isAdmin || ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(globalRole)) return true;
+    const targetProject = projects.find((project) => String(getProjectId(project)) === String(targetProjectId));
+    const role = findProjectRole(targetProjectId);
+    const roleName = String(role?.role || role?.projectRole || role?.user?.role || '').toUpperCase();
+    if (['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(roleName)) return true;
+    const currentUserIdString = String(currentUserId || '');
+    return Boolean(currentUserIdString && targetProject && [
+      targetProject.adminId,
+      targetProject.projectManagerId,
+      targetProject.projectManager?.id,
+      targetProject.projectManager?._id,
+      targetProject.teamLeadId,
+      targetProject.teamLead?.id,
+      targetProject.teamLead?._id,
+    ].some((id) => String(id || '') === currentUserIdString));
+  }, [isAdmin, globalRole, projects, findProjectRole, currentUserId]);
+  const manageableProjects = projects.filter((project) => canManageSprintProject(getProjectId(project)));
   const isProjectRequestManager = useCallback((targetProjectId) => {
     const targetProject = projects.find((project) => String(getProjectId(project)) === String(targetProjectId));
     return Boolean(currentUserId && targetProject && (
@@ -339,7 +357,9 @@ const SprintsView = () => {
   const activeView = selectedView === 'assigned' && hasManagementRole
     ? 'all'
     : selectedView || (!hasManagementRole && globalRole === 'CONTRIBUTOR' ? 'assigned' : 'all');
-  const canCreateSprint = isLoadingUserProfile === false && canManage;
+  const canCreateSprint = isLoadingUserProfile === false && (projectId
+    ? canManageSprintProject(projectId)
+    : manageableProjects.length > 0);
 
   const loadSprintRequests = useCallback(async () => {
     if (!canApproveSprintRequests) {
@@ -498,6 +518,7 @@ const SprintsView = () => {
           isOpen={isCreateEditOpen && (sprintToEdit ? canManageSelectedSprint : canCreateSprint && Boolean(projectId))}
           onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
           projectId={sprintToEdit ? selectedSprintProjectId : projectId}
+          projects={manageableProjects}
           projectName={sprintToEdit ? selectedSprintProject?.name || selectedSprint?.projectName : currentProject?.name}
           sprintToEdit={sprintToEdit}
           onSprintSaved={() => {
@@ -554,6 +575,7 @@ const SprintsView = () => {
           isOpen={isCreateEditOpen && !sprintToEdit && canCreateSprint && Boolean(projectId)}
           onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
           projectId={projectId}
+          projects={manageableProjects}
           projectName={currentProject?.name}
           sprintToEdit={sprintToEdit}
           onSprintSaved={() => {
@@ -587,14 +609,13 @@ const SprintsView = () => {
           >
             <FiRefreshCw size={15} className={projectsLoading || sprintsLoading ? 'animate-spin' : ''} />
           </button>
-          {canCreateSprint && Boolean(projectId) && (
+          {canCreateSprint && (
             <button
               type="button"
               onClick={() => { setSprintToEdit(null); setIsCreateEditOpen(true); }}
-              disabled={!projectId}
               className="inline-flex h-[38px] items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-sky-700 sm:text-sm cursor-pointer disabled:opacity-50"
             >
-              <FiPlus size={16} /> New sprint
+              <FiPlus size={16} /> Create Sprint
             </button>
           )}
         </div>
@@ -842,9 +863,10 @@ const SprintsView = () => {
 
       {/* Create / Edit Sprint Modal */}
       <CreateEditSprintModal
-        isOpen={isCreateEditOpen && (sprintToEdit ? canManageSelectedSprint : canCreateSprint && Boolean(projectId))}
+        isOpen={isCreateEditOpen && (sprintToEdit ? canManageSelectedSprint : canCreateSprint)}
         onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
         projectId={sprintToEdit ? selectedSprintProjectId : projectId}
+        projects={manageableProjects}
         projectName={sprintToEdit ? selectedSprintProject?.name || selectedSprint?.projectName : currentProject?.name}
         sprintToEdit={sprintToEdit}
         onSprintSaved={() => {

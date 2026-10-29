@@ -69,7 +69,6 @@ const IssueDetailsView = ({
   const [notice, setNotice] = useState('');
   const [busyAction, setBusyAction] = useState('');
 
-  // Auxiliary data
   const [members, setMembers] = useState([]);
   const [projectIssues, setProjectIssues] = useState([]);
   const [sprints, setSprints] = useState([]);
@@ -85,14 +84,14 @@ const IssueDetailsView = ({
   const [commentsCount, setCommentsCount] = useState(0);
   const [myRequest, setMyRequest] = useState(null);
   const [projectRequests, setProjectRequests] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Modals & sub-forms
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editValues, setEditValues] = useState({ title: '', description: '', priority: 'MEDIUM', dueDate: '', estimatedHours: '' });
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [isLinkOpen, setIsLinkOpen] = useState(false);
-  const [linkValues, setLinkValues] = useState({ targetIssueId: '', type: 'BLOCKS' });
+  const [linkValues, setLinkValues] = useState({ targetIssueId: '' });
   const [isLabelOpen, setIsLabelOpen] = useState(false);
   const [newLabelText, setNewLabelText] = useState('');
   const [requestNote, setRequestNote] = useState('');
@@ -128,7 +127,6 @@ const IssueDetailsView = ({
     } catch (err) { setError(getFriendlyErrorMessage(err, 'issue')); }
   }, [issueId]);
 
-  // Initial fetch of issue
   useEffect(() => {
     if (!issueId) return;
     let active = true;
@@ -138,7 +136,6 @@ const IssueDetailsView = ({
     return () => { active = false; };
   }, [issueId]);
 
-  // Load project members and sprints
   useEffect(() => {
     if (!pid) return;
     let active = true;
@@ -151,7 +148,6 @@ const IssueDetailsView = ({
     return () => { active = false; };
   }, [pid]);
 
-  // Load auxiliary data
   useEffect(() => {
     if (!issueId) return;
     let active = true;
@@ -214,7 +210,6 @@ const IssueDetailsView = ({
     }
   }, [issueId, pid, isManager]);
 
-  // Load more history
   const handleLoadMoreHistory = async () => {
     const next = historyPage + 1;
     try {
@@ -226,7 +221,6 @@ const IssueDetailsView = ({
     } catch (err) { showToast(getFriendlyErrorMessage(err, 'issue'), true); }
   };
 
-  // Perform quick actions
   const runAction = async (key, action, successMsg = 'Updated successfully.') => {
     setBusyAction(key); setError(''); setNotice('');
     try {
@@ -239,7 +233,6 @@ const IssueDetailsView = ({
     finally { setBusyAction(''); }
   };
 
-  // Handlers for attachments
   const handleUploadFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -263,7 +256,6 @@ const IssueDetailsView = ({
     } catch (err) { showToast(getFriendlyErrorMessage(err, 'issue'), true); }
   };
 
-  // Assignee label & initials
   const assigneeName = issue?.assigneeName || issue?.assignedTo?.name || issue?.assignee?.name || issue?.assigneeEmail || (members.find((m) => String(getId(m)) === String(assigneeIdsList[0]))?.name) || 'Unassigned';
   const assigneeInitials = assigneeName.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
   const issueNumber = issue?.issueNumber || (issueId ? String(issueId).slice(-6) : '001');
@@ -274,7 +266,6 @@ const IssueDetailsView = ({
 
   return (
     <div className="flex flex-col space-y-4 text-slate-900 dark:text-white animate-fadeIn pb-12">
-      {/* 1. Top Navigation & Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
@@ -341,7 +332,6 @@ const IssueDetailsView = ({
         </div>
       </div>
 
-      {/* Notices */}
       {error && (
         <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
           <span className="flex items-center gap-2"><FiAlertCircle className="shrink-0" />{error}</span>
@@ -355,7 +345,6 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* 2. Issue Title & Identity Banner (Matching Screenshot) */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-600/15 border border-purple-500/30 text-purple-400">
@@ -393,31 +382,17 @@ const IssueDetailsView = ({
         )}
       </div>
 
-      {/* 3. Main 2-Column Responsive Grid (Left / Right Cards) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* ================= LEFT COLUMN ================= */}
         <div className="space-y-4">
-          {/* A. Description Card */}
           <Card>
             <CardHeader title="Description" />
             <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-[#a5a5a9] whitespace-pre-wrap">
               {issue?.description || 'Refresh token fails after session expires, forcing users to log in again.'}
             </p>
-
-            {/* 4-Item Metadata Grid */}
-            <div className="mt-4 grid grid-cols-2 gap-y-3.5 gap-x-4 border-t border-slate-100 pt-3.5 dark:border-[#2d2d32] text-xs">
+            <div className="mt-4 grid grid-cols-3 gap-y-3.5 gap-x-4 border-t border-slate-100 pt-3.5 dark:border-[#2d2d32] text-xs">
               <div>
                 <span className="block text-[11px] font-medium text-slate-400 dark:text-[#7f7f85]">Project Name</span>
                 <span className="mt-0.5 block font-semibold text-slate-800 dark:text-slate-200">{displayProjectName}</span>
-              </div>
-              <div>
-                <span className="block text-[11px] font-medium text-slate-400 dark:text-[#7f7f85]">Assignee</span>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500 text-[10px] font-bold text-white shadow-xs">
-                    {assigneeInitials || '—'}
-                  </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{assigneeName}</span>
-                </div>
               </div>
               <div>
                 <span className="block text-[11px] font-medium text-slate-400 dark:text-[#7f7f85]">Issue ID</span>
@@ -431,7 +406,6 @@ const IssueDetailsView = ({
               </div>
             </div>
 
-            {/* Additional Date and Hour Details */}
             <div className="mt-3.5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-3 dark:border-[#2d2d32] text-[11px] text-slate-500 dark:text-[#888]">
               <span className="inline-flex items-center gap-1.5">
                 <FiCalendar size={13} className="text-slate-400" />
@@ -444,7 +418,6 @@ const IssueDetailsView = ({
             </div>
           </Card>
 
-          {/* B. Current Sprints Card */}
           <Card>
             <CardHeader title="Current Sprints" />
             <div className="space-y-2">
@@ -473,7 +446,6 @@ const IssueDetailsView = ({
             </div>
           </Card>
 
-          {/* C. Linked Issues Card */}
           <Card>
             <CardHeader
               title="Linked Issues"
@@ -492,23 +464,20 @@ const IssueDetailsView = ({
             {links.length > 0 ? (
               <div className="space-y-2">
                 {links.map((link, idx) => {
-                  const target = link.targetIssue || link.target || {};
                   const linkId = getId(link);
-                  const typeLabel = link.type || link.linkType || 'Relates to';
+                  const issueNumber = link.issueNumber;
+                  const issueTitle = link.issueTitle || link.title || 'Linked issue';
                   return (
                     <div key={linkId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="rounded bg-indigo-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                          {target.issueNumber ? `AUTH-${target.issueNumber}` : target.key || 'LINK'}
+                          {issueNumber ? `#${issueNumber}` : 'LINK'}
                         </span>
                         <span className="text-xs text-slate-800 dark:text-slate-200 truncate">
-                          {target.title || link.targetIssueId || 'Linked issue'}
+                          {issueTitle}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                          {typeLabel}
-                        </span>
                         {canEdit && (
                           <button
                             type="button"
@@ -529,7 +498,6 @@ const IssueDetailsView = ({
             )}
           </Card>
 
-          {/* D. Issue Doubts / Impact Card */}
           <Card>
             <CardHeader title="Issue Doubts / Impact" />
             <p className="text-xs sm:text-sm text-slate-600 dark:text-[#a0a0a0] leading-relaxed">
@@ -545,7 +513,6 @@ const IssueDetailsView = ({
             </div>
           </Card>
 
-          {/* E. Project Issue Dependency Graph Card */}
           <Card>
             <CardHeader title="Project Issue Dependency Graph" />
             {dependencyItems.length > 0 ? (
@@ -571,7 +538,6 @@ const IssueDetailsView = ({
             ) : <p className="py-4 text-center text-xs text-slate-400 dark:text-[#888]">No issue dependencies to display.</p>}
           </Card>
 
-          {/* F. Labels Card */}
           <Card>
             <CardHeader
               title="Labels"
@@ -617,13 +583,10 @@ const IssueDetailsView = ({
           </Card>
         </div>
 
-        {/* ================= RIGHT COLUMN ================= */}
         <div className="space-y-4">
-          {/* A. Activity Card */}
           <Card>
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-[#2d2d32]">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base">Activity</h3>
-              {/* Activity Sub-Tabs */}
               <div className="flex items-center gap-1">
                 {['all', 'comments', 'history'].map((tab) => (
                   <button
@@ -642,9 +605,7 @@ const IssueDetailsView = ({
               </div>
             </div>
 
-            {/* Comment composer / thread / timeline */}
             <div className="mt-3 space-y-3">
-              {/* Comments Thread */}
               {(activityTab === 'comments' || activityTab === 'all') && (
                 <div className="space-y-2">
                   {activityTab === 'all' && (
@@ -668,7 +629,6 @@ const IssueDetailsView = ({
                 </div>
               )}
 
-              {/* History Timeline */}
               {(activityTab === 'history' || activityTab === 'all') && (
                 <div className={activityTab === 'all' ? 'space-y-2 pt-3 border-t border-slate-100 dark:border-[#2d2d32]' : 'space-y-3'}>
                   {activityTab === 'all' && (
@@ -716,7 +676,6 @@ const IssueDetailsView = ({
             </div>
           </Card>
 
-          {/* B. Attachments Card */}
           <Card>
             <CardHeader
               title="Attachments"
@@ -774,10 +733,9 @@ const IssueDetailsView = ({
             )}
           </Card>
 
-          {/* D. Assignee & Watchers Card */}
           <Card>
             <CardHeader
-              title="Assignee & Watchers"
+              title="Assignees"
               action={
                 isManager && (
                   <button
@@ -785,43 +743,66 @@ const IssueDetailsView = ({
                     onClick={() => { setSelectedUserIds(assigneeIdsList.map(String)); setIsAssignOpen(true); }}
                     className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
                   >
-                    Change Assignee
+                    Manage
                   </button>
                 )
               }
             />
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-[#888]">Assignee</span>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-pink-500 text-[10px] font-bold text-white shadow-xs">
-                    {assigneeInitials || '—'}
-                  </span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{assigneeName}</span>
+            {(() => {
+              const assigneeList = Array.isArray(issue?.assignees) && issue.assignees.length > 0
+                ? issue.assignees
+                : assigneeIdsList.length > 0
+                  ? assigneeIdsList.map((id) => {
+                      const m = members.find((m) => String(getId(m)) === String(id));
+                      return m ? { userId: getId(m), name: m.name || m.userName || m.email, email: m.email } : { userId: id, name: null, email: null };
+                    })
+                  : [];
+
+              if (assigneeList.length === 0) {
+                return <p className="text-xs text-slate-400 dark:text-[#888]">No assignees yet.</p>;
+              }
+
+              return (
+                <div className="space-y-2">
+                  {assigneeList.map((a, idx) => {
+                    const uid = a.userId || a.id || a._id;
+                    const name = a.name || a.userName || a.fullName;
+                    const email = a.email;
+                    const member = members.find((m) => String(getId(m)) === String(uid));
+                    const profilePic = member?.profilePicture || member?.avatar || member?.picture;
+                    const displayName = name || member?.name || email || 'Member';
+                    const displayEmail = email || member?.email || '';
+                    const initials = displayName.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+                    const colors = ['bg-pink-500', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500', 'bg-teal-500'];
+                    const avatarColor = colors[idx % colors.length];
+
+                    return (
+                      <div
+                        key={uid || idx}
+                        className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#252529]"
+                      >
+                        {profilePic ? (
+                          <img src={profilePic} alt={displayName} className="h-8 w-8 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${avatarColor} text-[11px] font-bold text-white`}>
+                            {initials || 'U'}
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{displayName}</p>
+                          {displayEmail && <p className="text-[11px] text-slate-500 dark:text-[#888] truncate">{displayEmail}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-[#888]">Watchers ({members.length})</span>
-                <div className="flex -space-x-1.5 overflow-hidden">
-                  {members.slice(0, 4).map((m, idx) => (
-                    <div
-                      key={getId(m) || idx}
-                      title={m.name || m.email}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-300 dark:bg-[#34343a] text-[9px] font-bold text-slate-800 dark:text-white ring-2 ring-white dark:ring-[#1e1e22]"
-                    >
-                      {(m.name || 'M').slice(0, 2).toUpperCase()}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </Card>
 
-          {/* E. Assignment Requests Card (Real API Integration) */}
           <Card>
             <CardHeader title="Assignment Requests" />
             <div className="space-y-3">
-              {/* Contributor's Own Request */}
               {myRequest ? (
                 <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717] flex items-center justify-between gap-2 text-xs">
                   <div>
@@ -859,7 +840,6 @@ const IssueDetailsView = ({
                 </div>
               ) : null}
 
-              {/* Project Manager's Request Approvals */}
               {isManager && (
                 <div className="space-y-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#777]">Project Requests</span>
@@ -902,9 +882,7 @@ const IssueDetailsView = ({
         </div>
       </div>
 
-      {/* ================= MODALS & DIALOGS ================= */}
 
-      {/* Edit Issue Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsEditOpen(false)}>
           <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
@@ -956,30 +934,125 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* Assign Members Modal */}
       {isAssignOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsAssignOpen(false)}>
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Assign Project Members</h3>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Assign Project Members</h3>
+                <p className="text-[11px] text-slate-500 dark:text-[#888]">Select up to 10 contributors ({selectedUserIds.length}/10 selected)</p>
+              </div>
               <button type="button" onClick={() => setIsAssignOpen(false)}><FiX size={16} /></button>
             </div>
-            <div className="mt-3 max-h-60 overflow-y-auto space-y-1 text-xs">
-              {members.map((m) => {
-                const mid = String(getId(m));
-                const checked = selectedUserIds.includes(mid);
-                return (
-                  <label key={mid} className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-[#252529] cursor-pointer">
-                    <input type="checkbox" checked={checked} onChange={(e) => setSelectedUserIds((prev) => e.target.checked ? [...prev, mid] : prev.filter((id) => id !== mid))} className="rounded accent-sky-600" />
-                    <span className="font-semibold text-slate-800 dark:text-white">{m.name || m.email}</span>
-                    <span className="ml-auto text-[10px] text-slate-400">{m.email}</span>
-                  </label>
-                );
-              })}
+            <div className="mt-3 space-y-3 text-xs">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-sky-500 dark:border-[#38383e] dark:bg-[#252529] dark:text-white pl-9 pr-8"
+                />
+                <svg className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-[#38383e] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+                {members
+                  .filter((m) => {
+                    const role = String(m.role || m.projectRole || '').toUpperCase();
+                    return !role || role === 'CONTRIBUTOR';
+                  })
+                  .filter((m) => {
+                    if (!searchQuery.trim()) return true;
+                    const name = m.name || m.userName || m.fullName || m.email || '';
+                    const email = m.email || m.user?.email || '';
+                    const query = searchQuery.toLowerCase().trim();
+                    return name.toLowerCase().includes(query) || email.toLowerCase().includes(query);
+                  })
+                  .map((m) => {
+                    const mid = String(getId(m));
+                    const checked = selectedUserIds.includes(mid);
+                    const name = m.name || m.userName || m.fullName || m.email || 'Member';
+                    const email = m.email || m.user?.email || '';
+                    const profilePic = m.profilePicture || m.avatar || m.picture || m.user?.profilePicture;
+                    const initials = name.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+
+                    return (
+                      <label
+                        key={mid}
+                        className={`flex items-center gap-3 rounded-xl p-2.5 transition border ${
+                          checked
+                            ? 'border-sky-500/40 bg-sky-50/50 dark:bg-sky-950/20'
+                            : 'border-slate-100 hover:bg-slate-50 dark:border-[#2d2d32] dark:hover:bg-[#252529]'
+                        } cursor-pointer`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              if (selectedUserIds.length >= 10) {
+                                showToast('Maximum 10 people can be assigned to an issue.', true);
+                                return;
+                              }
+                              setSelectedUserIds((prev) => [...prev, mid]);
+                            } else {
+                              setSelectedUserIds((prev) => prev.filter((id) => id !== mid));
+                            }
+                          }}
+                          className="rounded accent-sky-600"
+                        />
+                        {profilePic ? (
+                          <img src={profilePic} alt={name} className="h-8 w-8 rounded-full object-cover shadow-xs shrink-0" />
+                        ) : (
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-500 text-[11px] font-bold text-white shadow-xs">
+                            {initials || 'U'}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 dark:text-white truncate">{name}</p>
+                          {email && <p className="text-[11px] text-slate-500 dark:text-[#888] truncate">{email}</p>}
+                        </div>
+                        <span className="rounded bg-slate-100 dark:bg-[#34343a] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                          Contributor
+                        </span>
+                      </label>
+                    );
+                  })}
+                {members.filter((m) => {
+                  const role = String(m.role || m.projectRole || '').toUpperCase();
+                  return !role || role === 'CONTRIBUTOR';
+                }).filter((m) => {
+                  if (!searchQuery.trim()) return true;
+                  const name = m.name || m.userName || m.fullName || m.email || '';
+                  const email = m.email || m.user?.email || '';
+                  return name.toLowerCase().includes(searchQuery.toLowerCase().trim());
+                }).length === 0 && (
+                  <p className="py-6 text-center text-xs text-slate-400 dark:text-[#888]">
+                    {searchQuery.trim() ? 'No members match your search.' : 'No contributors found in this project.'}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
               <button type="button" onClick={() => setIsAssignOpen(false)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#29292d]">Cancel</button>
               <button type="button" disabled={!!busyAction} onClick={async () => {
+                if (selectedUserIds.length > 10) {
+                  showToast('Maximum 10 people can be assigned to an issue.', true);
+                  return;
+                }
                 await runAction('assign', () => assignIssue(issueId, selectedUserIds), 'Assignees updated.');
                 setIsAssignOpen(false);
               }} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50">Save Assignment</button>
@@ -988,7 +1061,6 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* Link Issue Modal */}
       {isLinkOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLinkOpen(false)}>
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
@@ -999,7 +1071,7 @@ const IssueDetailsView = ({
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!linkValues.targetIssueId) return;
-              await runAction('link', () => createIssueLink(issueId, linkValues.targetIssueId, linkValues.type), 'Link created.');
+              await runAction('link', () => createIssueLink(issueId, linkValues.targetIssueId), 'Link created.');
               setIsLinkOpen(false);
             }} className="mt-3 space-y-3 text-xs">
               <label className="block space-y-1">
@@ -1012,15 +1084,6 @@ const IssueDetailsView = ({
                   })}
                 </select>
               </label>
-              <label className="block space-y-1">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Relationship Type</span>
-                <select value={linkValues.type} onChange={(e) => setLinkValues((v) => ({ ...v, type: e.target.value }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-[#38383e] dark:bg-[#252529] dark:text-white">
-                  <option value="BLOCKS">Blocks</option>
-                  <option value="BLOCKED_BY">Blocked By</option>
-                  <option value="RELATES_TO">Relates to</option>
-                  <option value="DUPLICATES">Duplicates</option>
-                </select>
-              </label>
               <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
                 <button type="button" onClick={() => setIsLinkOpen(false)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#29292d]">Cancel</button>
                 <button type="submit" disabled={!!busyAction || !linkValues.targetIssueId} className="rounded-lg bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50">Add Link</button>
@@ -1030,7 +1093,6 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* Add Label Modal */}
       {isLabelOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLabelOpen(false)}>
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
@@ -1058,7 +1120,6 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* Review Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsReviewOpen(false)}>
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
@@ -1086,7 +1147,6 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setConfirmDelete(false)}>
           <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl dark:border-rose-900 dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>

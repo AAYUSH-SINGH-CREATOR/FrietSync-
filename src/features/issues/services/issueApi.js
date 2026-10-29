@@ -172,7 +172,7 @@ export const getIssueLabels = (id) => issueRequest('get', `/issues/${id}/labels`
 export const attachIssueLabel = (id, name) => issueRequest('post', `/issues/${id}/labels`, { name }, {}, 'Failed to add label.');
 export const removeIssueLabel = (id, labelId) => issueRequest('delete', `/issues/${id}/labels/${labelId}`, undefined, {}, 'Failed to remove label.');
 export const getIssueLinks = (id) => issueRequest('get', `/issues/${id}/links`, undefined, {}, 'Failed to load issue links.');
-export const createIssueLink = (id, targetIssueId, type) => issueRequest('post', `/issues/${id}/links`, { targetIssueId, type }, {}, 'Failed to create issue link.');
+export const createIssueLink = (id, targetIssueId) => issueRequest('post', `/issues/${id}/links`, { targetIssueId }, {}, 'Failed to create issue link.');
 export const deleteIssueLink = (linkId) => issueRequest('delete', `/issue-links/${linkId}`, undefined, {}, 'Failed to remove issue link.');
 export const getIssueDependencies = (id) => issueRequest('get', `/issues/${id}/dependencies`, undefined, {}, 'Failed to load issue dependencies.');
 export const getIssueImpact = (id) => issueRequest('get', `/issues/${id}/impact`, undefined, {}, 'Failed to load issue impact.');

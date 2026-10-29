@@ -1996,7 +1996,7 @@ const ProjectDetailsView = () => {
         />
       )}
 
-      {isAddMemberModalOpen && (
+      {isAdmin && isAddMemberModalOpen && (
         <AddProjectMemberModal
           isOpen={isAddMemberModalOpen}
           onClose={() => setIsAddMemberModalOpen(false)}
@@ -2026,6 +2026,7 @@ const ProjectDetailsView = () => {
         isOpen={isCreateSprintOpen}
         onClose={() => setIsCreateSprintOpen(false)}
         projectId={projectId}
+        projects={project ? [project] : []}
         projectName={project?.name || 'Project'}
         onSprintSaved={(saved) => {
           setIsCreateSprintOpen(false);
@@ -2161,6 +2162,7 @@ const ProjectDetailsView = () => {
         members={members}
         isLoading={isLoading}
         removingMemberId={removingMemberId}
+        canAddMember={isAdmin}
         onAddMember={() => {
           setDetailPanel(null);
           setIsAddMemberModalOpen(true);

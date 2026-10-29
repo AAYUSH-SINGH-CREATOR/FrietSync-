@@ -6,7 +6,7 @@ const avatarColors = ['#86198f', '#0369a1', '#15803d', '#6b21a8', '#b45309', '#b
 const getInitials = (name = '') => name.trim().split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'U';
 const getAvatarColor = (name = '') => [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % avatarColors.length;
 
-const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removingMemberId, onAddMember, onRemoveMember }) => {
+const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removingMemberId, canAddMember = false, onAddMember, onRemoveMember }) => {
   useEffect(() => {
     if (!isOpen) return undefined;
     const oldBodyOverflow = document.body.style.overflow;
@@ -36,7 +36,7 @@ const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removin
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={onAddMember} className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-700 sm:text-sm"><FiUserPlus size={15} /><span className="hidden sm:inline">Add Member</span><span className="sm:hidden">Add</span></button>
+            {canAddMember && <button type="button" onClick={onAddMember} className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-700 sm:text-sm"><FiUserPlus size={15} /><span className="hidden sm:inline">Add Member</span><span className="sm:hidden">Add</span></button>}
             <button type="button" onClick={onClose} aria-label="Close members" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-[#292930]">×</button>
           </div>
         </header>
@@ -48,7 +48,7 @@ const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removin
             <div className="py-10 text-center text-slate-500 dark:text-slate-400">
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No members assigned yet</p>
               <p className="mt-1 text-xs">Add collaborators so they can receive task assignments and participate in sprints.</p>
-              <button type="button" onClick={onAddMember} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"><FiPlus size={13} /> Add First Member</button>
+              {canAddMember && <button type="button" onClick={onAddMember} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"><FiPlus size={13} /> Add First Member</button>}
             </div>
           ) : (
             <div className="space-y-2.5">
