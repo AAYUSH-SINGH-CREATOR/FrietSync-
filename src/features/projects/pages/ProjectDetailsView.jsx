@@ -8,6 +8,7 @@ import {
   FiAlertTriangle,
   FiBarChart2,
   FiArrowRight,
+  FiX,
   FiRefreshCw,
   FiEdit2,
   FiTrash2,
@@ -39,7 +40,13 @@ import {
 } from '../services/projectApi';
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import { getProjectIssues, normalizeIssuePage, getIssueHistory } from '../../issues/services/issueApi';
-import { getProjectPolls, voteInPoll } from '../../polls/services/pollApi';
+import {
+  getProjectPolls,
+  getPollDetails,
+  mergePollUpdateEvent,
+  subscribeToPollResults,
+  voteInPoll,
+} from '../../polls/services/pollApi';
 import { formatDate, formatProjectRoleLabel, getProjectProgress, isUserAdmin, getRoleBadge } from '../utils/projectUtils';
 import { getPriorityBadge, getStatusBadge as getIssueStatusBadge } from '../../issues/utils/issueUtils';
 import EditProjectModal from '../components/EditProjectModal';
@@ -148,11 +155,17 @@ const ProjectDetailsView = () => {
   const [milestoneLoadError, setMilestoneLoadError] = useState('');
   const [releases, setReleases] = useState([]);
   const [polls, setPolls] = useState([]);
+  const pollSubscriptionKey = useMemo(
+    () => polls.map((poll) => poll.id || poll._id || poll.pollId).filter(Boolean).map(String).sort().join(','),
+    [polls]
+  );
   const [activities, setActivities] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [viewingAllPolls, setViewingAllPolls] = useState(false);
+  const [openPollId, setOpenPollId] = useState(null);
+  const [isOpenPollLoading, setIsOpenPollLoading] = useState(false);
   const [detailPanel, setDetailPanel] = useState(null);
   const [showAllMilestones, setShowAllMilestones] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
@@ -278,9 +291,17 @@ const ProjectDetailsView = () => {
   const canManageMilestones = currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
-  const globalRole = String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase();
-  const canCreateSprint = isAdmin || ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(globalRole) ||
-    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD', 'ADMIN'].includes(role));
+  const globalRole = normalizeRole(currentUserProfile?.role || currentUserProfile?.user?.role);
+  const canCreateSprint =
+    isAdmin ||
+    globalRole === 'ADMIN' ||
+    currentUserIds.some((id) => projectAdminIds.includes(id)) ||
+    currentUserIds.some((id) => projectManagerIds.includes(id) || teamLeadIds.includes(id)) ||
+    ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(globalRole) ||
+    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role));
+  const canCreateIssue = canCreateSprint ||
+    globalRole === 'REPORTER' ||
+    currentProjectRoleNames.includes('REPORTER');
   const canManageReleases = currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
@@ -739,12 +760,6 @@ const ProjectDetailsView = () => {
     };
   }, [summary, issues, issueTotalCount]);
 
-  // Recent Poll (First poll in the list)
-  const recentPoll = useMemo(() => {
-    if (!polls || polls.length === 0) return null;
-    return polls[0];
-  }, [polls]);
-
   const handleVoteInRecentPoll = async (pollId, optionId) => {
     if (!pollId || !optionId) return;
     try {
@@ -763,6 +778,70 @@ const ProjectDetailsView = () => {
       showToast('error', getFriendlyErrorMessage(err, 'poll'));
     }
   };
+
+  useEffect(() => {
+    const pollIds = pollSubscriptionKey ? pollSubscriptionKey.split(',') : [];
+    if (pollIds.length === 0) return undefined;
+
+    const unsubscribeFns = pollIds.map((pollId) =>
+      subscribeToPollResults(pollId, (event) => {
+        if (!event) return;
+        setPolls((currentPolls) => currentPolls.map((poll) => {
+          const currentPollId = poll.id || poll._id || poll.pollId;
+          if (String(currentPollId) !== String(pollId)) return poll;
+
+          const eventData = event?.poll || event?.data?.poll || event?.data || event;
+          const normalizedEvent = eventData && typeof eventData === 'object'
+            ? { ...eventData, id: eventData.id || eventData.pollId || eventData._id || pollId }
+            : event;
+          return mergePollUpdateEvent(poll, normalizedEvent);
+        }));
+      })
+    );
+
+    return () => unsubscribeFns.forEach((unsubscribe) => unsubscribe());
+  }, [pollSubscriptionKey]);
+
+  const openPoll = (pollId) => setOpenPollId(pollId);
+  const activePoll = useMemo(
+    () => polls.find((poll) => String(poll.id || poll._id || poll.pollId) === String(openPollId)) || null,
+    [polls, openPollId]
+  );
+
+  useEffect(() => {
+    if (!openPollId || activePoll?.options?.length) return undefined;
+
+    let isMounted = true;
+    setIsOpenPollLoading(true);
+    getPollDetails(openPollId)
+      .then((details) => {
+        if (!isMounted || !details) return;
+        setPolls((currentPolls) => currentPolls.map((poll) => {
+          const pollId = poll.id || poll._id || poll.pollId;
+          return String(pollId) === String(openPollId) ? { ...poll, ...details } : poll;
+        }));
+      })
+      .catch((error) => showToast('error', getFriendlyErrorMessage(error, 'poll')))
+      .finally(() => {
+        if (isMounted) setIsOpenPollLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [openPollId, activePoll?.options?.length, showToast]);
+
+  useEffect(() => {
+    if (!openPollId) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setOpenPollId(null);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openPollId]);
 
   const handleRemoveMember = async (member) => {
     const memberUserId = member.userId || member.id || member._id;
@@ -1380,80 +1459,134 @@ const ProjectDetailsView = () => {
                       <div key={n} className="h-8 rounded-xl bg-slate-100 dark:bg-[#27272e] animate-pulse" />
                     ))}
                   </div>
-                ) : !recentPoll ? (
+                ) : polls.length === 0 ? (
                   <div className="py-10 text-center text-slate-500 dark:text-slate-400">
                     <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">No active polls</p>
                     <p className="text-xs mt-1">Create a poll to collect team votes on decisions.</p>
                   </div>
                 ) : (
-                  <div>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white mb-3 leading-snug">
-                      Q. {recentPoll.question || 'Which approach should we finalize?'}
-                    </p>
+                  <div className="space-y-2">
+                    {polls.map((poll, pollIndex) => {
+                      const pollId = poll.id || poll._id || poll.pollId || `poll-${pollIndex}`;
 
-                    <div className="space-y-2.5">
-                      {(recentPoll.options || []).map((opt, idx) => {
-                        const votes = opt.voteCount ?? opt.votes ?? 0;
-                        const totalVotes =
-                          recentPoll.totalVotes ||
-                          (recentPoll.options || []).reduce(
-                            (acc, o) => acc + (o.voteCount ?? o.votes ?? 0),
-                            0
-                          ) ||
-                          0;
-                        const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
-                        const isClosed =
-                          recentPoll.status === 'CLOSED' || recentPoll.closed === true;
-                        const optionId = opt.id || opt._id || opt.optionId;
-                        const pollId = recentPoll.id || recentPoll._id || recentPoll.pollId;
-                        const storedVotedOptionId = typeof window !== 'undefined' && pollId
-                          ? window.localStorage.getItem(`frietSync_poll_${pollId}_voted`)
-                          : null;
-                        const votedOptionId = recentPoll.userVotedOptionId || recentPoll.votedOptionId || recentPoll.selectedOptionId || storedVotedOptionId;
-                        const isSelected = Boolean(
-                          opt.hasVoted ||
-                          (votedOptionId && String(votedOptionId) === String(optionId)) ||
-                          (Array.isArray(opt.voterIds) && currentUserId && opt.voterIds.map(String).includes(String(currentUserId)))
-                        );
-
-                        return (
-                          <button
-                            key={optionId || idx}
-                            type="button"
-                            disabled={isClosed || !optionId}
-                              onClick={() => handleVoteInRecentPoll(pollId, optionId)}
-                            className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-2.5 text-left transition-all disabled:cursor-default ${
-                              isSelected
-                                ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/50 dark:border-sky-400 dark:bg-sky-950/20'
-                                : 'border-slate-200/80 bg-slate-50/60 hover:border-sky-300 hover:bg-slate-100/60 dark:border-[#303030] dark:bg-[#252528] dark:hover:border-[#48484e]'
-                            }`}
-                          >
-                            <div
-                              aria-hidden="true"
-                              className={`absolute inset-y-0 left-0 transition-all duration-500 ${isSelected ? 'bg-sky-200/60 dark:bg-sky-800/40' : 'bg-slate-200/70 dark:bg-[#343438]'}`}
-                              style={{ width: `${percentage}%` }}
-                            />
-                            <span className="relative flex min-w-0 items-center gap-2 text-xs font-medium">
-                              <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${isSelected ? 'border-sky-600 bg-sky-500 text-white dark:border-sky-400 dark:bg-sky-500' : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-[#2a2a2e]'}`}>
-                                {isSelected && <FiCheck size={10} className="stroke-[3]" />}
-                              </span>
-                              <span className={`truncate ${isSelected ? 'font-bold text-sky-900 dark:text-sky-200' : 'text-slate-800 dark:text-slate-200'}`}>
-                                {opt.text || opt.label || opt.title || opt.optionText || (typeof opt === 'string' ? opt : `Option ${idx + 1}`)}
-                              </span>
-                            </span>
-                            <span className="relative flex shrink-0 items-center gap-1.5 text-[11px] font-bold">
-                              <span className={isSelected ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-300'}>{percentage}%</span>
-                              <span className="text-[10px] font-normal text-slate-400 dark:text-[#888]">({votes})</span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={pollId} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 px-3 py-2.5 dark:border-[#303030]">
+                            <p className="min-w-0 flex-1 text-xs font-semibold text-slate-900 dark:text-white leading-snug">
+                              {poll.question || 'Untitled poll'}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => openPoll(pollId)}
+                              className="shrink-0 rounded-lg border border-sky-600 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-500 dark:text-sky-300 dark:hover:bg-sky-950/40"
+                            >
+                              Vote
+                            </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
             </div>
           </div>
+
+          {openPollId && (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setOpenPollId(null);
+              }}
+            >
+              <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="project-poll-dialog-title"
+                className="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-[#35353d] dark:bg-[#1b1b1f]"
+              >
+                <header className="flex items-start justify-between gap-4 border-b border-slate-200 p-5 dark:border-[#303036]">
+                  <div className="min-w-0">
+                    <h2 id="project-poll-dialog-title" className="text-base font-bold text-slate-900 dark:text-white">
+                      {activePoll?.question || 'Project poll'}
+                    </h2>
+                    {activePoll?.description && (
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{activePoll.description}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenPollId(null)}
+                    aria-label="Close poll"
+                    className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#2b2b31] dark:hover:text-white"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </header>
+                <div className="overflow-y-auto overscroll-contain p-5">
+                  {isOpenPollLoading ? (
+                    <div className="space-y-2">
+                      {[0, 1, 2].map((item) => <div key={item} className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-[#29292e]" />)}
+                    </div>
+                  ) : activePoll?.options?.length ? (
+                    <div className="space-y-2.5">
+                      {(() => {
+                        const pollId = activePoll.id || activePoll._id || activePoll.pollId;
+                        const totalVotes = activePoll.totalVotes || activePoll.options.reduce((sum, option) => sum + (option.voteCount ?? option.votes ?? 0), 0);
+                        const isClosed = activePoll.status === 'CLOSED' || activePoll.closed === true;
+                        const storedVote = typeof window !== 'undefined' ? window.localStorage.getItem(`frietSync_poll_${pollId}_voted`) : null;
+                        const votedOptionId = activePoll.userVotedOptionId || activePoll.votedOptionId || activePoll.selectedOptionId || storedVote;
+
+                        return activePoll.options.map((option, index) => {
+                          const optionId = option.id || option._id || option.optionId;
+                          const votes = option.voteCount ?? option.votes ?? 0;
+                          const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
+                          const isSelected = Boolean(
+                            option.hasVoted ||
+                            (votedOptionId && String(votedOptionId) === String(optionId)) ||
+                            (Array.isArray(option.voterIds) && currentUserId && option.voterIds.map(String).includes(String(currentUserId)))
+                          );
+
+                          return (
+                            <button
+                              key={optionId || index}
+                              type="button"
+                              disabled={isClosed || !optionId}
+                              onClick={() => handleVoteInRecentPoll(pollId, optionId)}
+                              className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-3 text-left transition-all disabled:cursor-default ${
+                                isSelected
+                                  ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/50 dark:border-sky-400 dark:bg-sky-950/20'
+                                  : 'border-slate-200/80 bg-slate-50/60 hover:border-sky-300 hover:bg-slate-100/60 dark:border-[#303030] dark:bg-[#252528] dark:hover:border-[#48484e]'
+                              }`}
+                            >
+                              <span aria-hidden="true" className={`absolute inset-y-0 left-0 transition-all duration-500 ${isSelected ? 'bg-sky-200/60 dark:bg-sky-800/40' : 'bg-slate-200/70 dark:bg-[#343438]'}`} style={{ width: `${percentage}%` }} />
+                              <span className="relative flex min-w-0 items-center gap-2 text-sm font-medium">
+                                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${isSelected ? 'border-sky-600 bg-sky-500 text-white dark:border-sky-400 dark:bg-sky-500' : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-[#2a2a2e]'}`}>
+                                  {isSelected && <FiCheck size={10} className="stroke-[3]" />}
+                                </span>
+                                <span className={`truncate ${isSelected ? 'font-bold text-sky-900 dark:text-sky-200' : 'text-slate-800 dark:text-slate-200'}`}>
+                                  {option.text || option.label || option.title || option.optionText || (typeof option === 'string' ? option : `Option ${index + 1}`)}
+                                </span>
+                              </span>
+                              <span className="relative flex shrink-0 items-center gap-1.5 text-xs font-bold">
+                                <span className={isSelected ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-300'}>{percentage}%</span>
+                                <span className="font-normal text-slate-400">({votes})</span>
+                              </span>
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+                  ) : (
+                    <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Poll options are unavailable.</p>
+                  )}
+                </div>
+                <footer className="border-t border-slate-200 p-4 text-right dark:border-[#303036]">
+                  <button type="button" onClick={() => setOpenPollId(null)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#3a3a42] dark:text-slate-300 dark:hover:bg-[#27272d]">
+                    Close
+                  </button>
+                </footer>
+              </section>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-5">
           {/* Under Dashboard: Project Sprints (Top 5 + View all) */}
@@ -1510,15 +1643,6 @@ const ProjectDetailsView = () => {
                 <p className="text-xs mt-1">
                   Create sprint iterations from the Sprints board to organize issues into cycles.
                 </p>
-                {canCreateSprint && (
-                  <button
-                    type="button"
-                    onClick={() => setIsCreateSprintOpen(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-sky-700"
-                  >
-                    <FiPlus size={13} /> Create Sprint
-                  </button>
-                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1593,14 +1717,16 @@ const ProjectDetailsView = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateIssueOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-xs font-semibold text-white transition cursor-pointer shadow-xs"
-                >
-                  <FiPlus size={14} />
-                  <span>Create Issue</span>
-                </button>
+                {canCreateIssue && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateIssueOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-xs font-semibold text-white transition cursor-pointer shadow-xs"
+                  >
+                    <FiPlus size={14} />
+                    <span>Create Issue</span>
+                  </button>
+                )}
                 <Link
                   to={`/dashboard/issues?projectId=${projectId}`}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
@@ -1623,13 +1749,6 @@ const ProjectDetailsView = () => {
                   No issues in this project yet
                 </p>
                 <p className="text-xs mt-1">Create issues to track tasks, bugs, and deliverables.</p>
-                <button
-                  type="button"
-                  onClick={() => setIsCreateIssueOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition cursor-pointer shadow-xs"
-                >
-                  <FiPlus size={13} /> Create Issue
-                </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1742,18 +1861,6 @@ const ProjectDetailsView = () => {
                 <p className="text-xs mt-1">
                   Create releases to group completed issues, publish release notes, and distribute signed build artifacts.
                 </p>
-                {canManageReleases && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingRelease(null);
-                      setIsReleaseModalOpen(true);
-                    }}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold transition cursor-pointer"
-                  >
-                    <FiPlus size={14} /> Create First Release
-                  </button>
-                )}
               </div>
             ) : (
               <div className="space-y-3.5">
@@ -1765,7 +1872,6 @@ const ProjectDetailsView = () => {
                   const issueCount = Array.isArray(attachedIssues) ? attachedIssues.length : 0;
                   const fileUrl = release.releaseFileUrl || release.fileUrl || release.artifactUrl || release.downloadUrl;
                   const fileName = release.fileName || release.filename || (fileUrl ? 'artifact-file' : null);
-                  const isUploadingThis = String(uploadingReleaseId) === String(rId);
 
                   return (
                     <div
@@ -1797,32 +1903,6 @@ const ProjectDetailsView = () => {
                           )}
                         </div>
 
-                        {canManageReleases && (
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingRelease(release);
-                                setIsReleaseModalOpen(true);
-                              }}
-                              title="Edit Release"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-[#27272e] transition cursor-pointer"
-                            >
-                              <FiEdit2 size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDeletingRelease(release);
-                                setIsDeleteReleaseOpen(true);
-                              }}
-                              title="Delete Release"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
-                            >
-                              <FiTrash2 size={14} />
-                            </button>
-                          </div>
-                        )}
                       </div>
 
                       {/* Release Description */}
@@ -1840,18 +1920,6 @@ const ProjectDetailsView = () => {
                           <span className="font-semibold text-slate-900 dark:text-white px-2 py-0.5 rounded-md bg-white dark:bg-[#25252c] border border-slate-200 dark:border-[#32323a]">
                             {issueCount} {issueCount === 1 ? 'issue' : 'issues'}
                           </span>
-                          {canAttachIssues && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAttachingRelease(release);
-                                setIsAttachIssuesOpen(true);
-                              }}
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 hover:underline cursor-pointer ml-1"
-                            >
-                              <FiPlus size={12} /> Attach / Manage Issues
-                            </button>
-                          )}
                         </div>
 
                         {/* File Artifact info & upload */}
@@ -1868,44 +1936,8 @@ const ProjectDetailsView = () => {
                                 <FiDownload size={13} />
                                 <span className="truncate max-w-[150px]">{fileName || 'Download Artifact'}</span>
                               </a>
-                              {canManageReleases && (
-                                <label className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer underline ml-1">
-                                  <span>{isUploadingThis ? 'Uploading...' : 'Replace file'}</span>
-                                  <input
-                                    type="file"
-                                    className="hidden"
-                                    disabled={isUploadingThis}
-                                    onChange={(e) => {
-                                      const f = e.target.files?.[0];
-                                      if (f) handleUploadReleaseArtifact(rId, f);
-                                      e.target.value = '';
-                                    }}
-                                  />
-                                </label>
-                              )}
                             </div>
-                          ) : (
-                            canManageReleases && (
-                              <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-slate-200 dark:border-[#3a3a44] bg-white dark:bg-[#24242b] hover:bg-slate-100 dark:hover:bg-[#2e2e36] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-semibold text-xs transition cursor-pointer shadow-xs">
-                                {isUploadingThis ? (
-                                  <span className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin inline-block" />
-                                ) : (
-                                  <FiUploadCloud size={14} className="text-cyan-600 dark:text-cyan-400" />
-                                )}
-                                <span>{isUploadingThis ? 'Uploading (max 100MB)...' : 'Upload Artifact (S3)'}</span>
-                                <input
-                                  type="file"
-                                  className="hidden"
-                                  disabled={isUploadingThis}
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f) handleUploadReleaseArtifact(rId, f);
-                                    e.target.value = '';
-                                  }}
-                                />
-                              </label>
-                            )
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -1980,7 +2012,7 @@ const ProjectDetailsView = () => {
       )}
 
       <CreateIssueModal
-        isOpen={isCreateIssueOpen}
+        isOpen={canCreateIssue && isCreateIssueOpen}
         onClose={() => setIsCreateIssueOpen(false)}
         projects={project ? [project] : []}
         defaultProjectId={projectId}
