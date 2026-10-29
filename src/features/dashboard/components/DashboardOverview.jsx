@@ -1025,8 +1025,8 @@ const DashboardOverview = () => {
                         contentStyle={{ backgroundColor: '#171717', border: '1px solid #3f3f46', borderRadius: 10, color: '#f4f4f5', fontSize: 11 }}
                         labelStyle={{ color: '#d4d4d8' }}
                       />
-                      <Line type="linear" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} isAnimationActive={false} />
-                      <Line type="stepAfter" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={true} />
+                      <Line type="monotone" dataKey="ideal" stroke="#71717a" strokeDasharray="5 5" strokeWidth={1.5} dot={false} activeDot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="remaining" name="remaining" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 2.5, fill: '#38bdf8', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={true} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (

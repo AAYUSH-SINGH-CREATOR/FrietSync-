@@ -29,7 +29,7 @@ export const getProjectProgress = (project) => {
   if (rawProgress === null || rawProgress === undefined || rawProgress === '') return null;
 
   const progress = Number(rawProgress);
-  return Number.isFinite(progress) && progress >= 0 && progress <= 100 ? progress : null;
+  return Number.isFinite(progress) ? Math.round(Math.min(100, Math.max(0, progress))) : null;
 };
 
 export const formatProjectRoleLabel = formatRoleLabel;

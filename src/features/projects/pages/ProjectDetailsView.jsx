@@ -1588,9 +1588,9 @@ const ProjectDetailsView = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-5">
+          <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
           {/* Under Dashboard: Project Sprints (Top 5 + View all) */}
-          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+          <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 flex items-center justify-center shrink-0">
@@ -1664,7 +1664,10 @@ const ProjectDetailsView = () => {
                         className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#27272e] transition"
                       >
                         <td className="py-3 px-3">
-                          <p className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">
+                          <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                            Sprint {sprint.sprintNumber || idx + 1}
+                          </span>
+                          <p className="mt-0.5 font-semibold text-slate-900 dark:text-white truncate max-w-xs">
                             {sprint.name || `Sprint ${idx + 1}`}
                           </p>
                         </td>
@@ -1697,7 +1700,7 @@ const ProjectDetailsView = () => {
           </section>
 
           {/* Under Dashboard: Project Issues (Top 5 + View all + Create Issue) */}
-          <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+          <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 flex items-center justify-center shrink-0">

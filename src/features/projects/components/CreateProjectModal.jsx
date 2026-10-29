@@ -227,7 +227,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                 htmlFor="start-date"
                 className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2"
               >
-                Start Date {formData.status === 'ACTIVE' && <span className="text-emerald-600 dark:text-[#34D399] font-normal text-xs sm:text-sm lowercase">(starts today)</span>}
+                Start Date
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-[#858585]">

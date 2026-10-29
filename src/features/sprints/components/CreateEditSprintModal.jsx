@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiX } from 'react-icons/fi';
+import { FiChevronDown, FiX } from 'react-icons/fi';
 import { createSprint, updateSprint, getFriendlyErrorMessage } from '../services/sprintsApi';
 import { getProjectIssues, normalizeIssuePage } from '../../issues/services/issueApi';
 
@@ -143,22 +143,25 @@ const SprintModalForm = ({
               <label className="mb-1.5 mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Project
               </label>
-              <select
-                value={formProjectId}
-                onChange={(event) => {
-                  setFormProjectId(event.target.value);
-                  setSelectedIssueId('');
-                  setFormError('');
-                }}
-                required
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-[#35353a] dark:bg-[#1b1b1f] dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
-              >
-                <option value="" className="bg-white text-slate-900 dark:bg-[#222226] dark:text-white">Select a project</option>
-                {projects.map((project) => {
-                  const id = project.id || project.projectId || project._id;
-                  return id ? <option key={id} value={id} className="bg-white text-slate-900 dark:bg-[#222226] dark:text-white">{project.name || 'Untitled project'}</option> : null;
-                })}
-              </select>
+              <div className="relative">
+                <select
+                  value={formProjectId}
+                  onChange={(event) => {
+                    setFormProjectId(event.target.value);
+                    setSelectedIssueId('');
+                    setFormError('');
+                  }}
+                  required
+                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-3 pl-3.5 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-[#35353a] dark:bg-[#1b1b1f] dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
+                >
+                  <option value="" className="bg-white text-slate-900 dark:bg-[#222226] dark:text-white">Select a project</option>
+                  {projects.map((project) => {
+                    const id = project.id || project.projectId || project._id;
+                    return id ? <option key={id} value={id} className="bg-white text-slate-900 dark:bg-[#222226] dark:text-white">{project.name || 'Untitled project'}</option> : null;
+                  })}
+                </select>
+                <FiChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+              </div>
             </div>
           )}
 

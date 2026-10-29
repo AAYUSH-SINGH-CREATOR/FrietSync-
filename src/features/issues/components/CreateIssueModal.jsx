@@ -3,6 +3,7 @@ import {
   FiX,
   FiPlus,
   FiFolder,
+  FiChevronDown,
   FiCalendar,
   FiClock,
   FiAlertCircle,
@@ -306,7 +307,7 @@ const CreateIssueModal = ({
                         fieldErrors.projectId
                           ? 'border-rose-500 dark:border-rose-500'
                           : 'border-slate-200 dark:border-[#35353a]'
-                      } bg-white dark:bg-[#1b1b1f] text-slate-900 dark:text-white text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition cursor-pointer`}
+                      } appearance-none bg-white dark:bg-[#1b1b1f] text-slate-900 dark:text-white text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition cursor-pointer`}
                     >
                       {availableProjects.length === 0 ? (
                         <option value="">
@@ -323,6 +324,7 @@ const CreateIssueModal = ({
                         })
                       )}
                     </select>
+                    <FiChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                   </div>
                   {fieldErrors.projectId && (
                     <p className="text-[11px] text-rose-500 mt-1">{fieldErrors.projectId}</p>
