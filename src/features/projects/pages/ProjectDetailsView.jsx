@@ -656,7 +656,7 @@ const ProjectDetailsView = () => {
       if (exists) {
         return prev.map((m) => (String(m.id || m._id || m.milestoneId) === String(sId) ? { ...m, ...saved } : m));
       }
-      return [saved, ...prev];
+      return [...prev, saved];
     });
     showToast('success', `Milestone "${saved?.name || 'Milestone'}" saved.`);
   };
@@ -1480,7 +1480,7 @@ const ProjectDetailsView = () => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {polls.map((poll, pollIndex) => {
+                    {polls.slice(0, 5).map((poll, pollIndex) => {
                       const pollId = poll.id || poll._id || poll.pollId || `poll-${pollIndex}`;
 
                       return (

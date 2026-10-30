@@ -3,10 +3,7 @@ import { getAccessToken } from '../../auth/services/authApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-const V2_BASE_URL =
-  BASE_URL && BASE_URL.includes('/api/v1')
-    ? BASE_URL.replace(/\/api\/v1\/?$/, '/api/v2')
-    : 'https://frietsync.live/api/v2';
+const V2_BASE_URL = 'https://frietsync.live/api/v2';
 
 const getAuthHeaders = (params = {}) => {
   const token = getAccessToken();
@@ -85,6 +82,8 @@ export const createIssue = async (projectId, issueData) => {
       title: issueData.title?.trim(),
       description: issueData.description?.trim() || '',
       priority: (issueData.priority || 'HIGH').toUpperCase(),
+      githubAction: issueData.githubAction || 'LOCAL',
+      githubIssueNumber: null,
     };
 
     if (issueData.startDate) {
@@ -103,12 +102,12 @@ export const createIssue = async (projectId, issueData) => {
       payload.estimatedHours = Number(issueData.estimatedHours);
     }
 
-    if (issueData.githubIssueNumber !== undefined && issueData.githubIssueNumber !== '') {
+    if (payload.githubAction === 'LINK_EXISTING' && issueData.githubIssueNumber !== undefined && issueData.githubIssueNumber !== '') {
       payload.githubIssueNumber = Number(issueData.githubIssueNumber);
     }
 
     const response = await axios.post(
-      `${BASE_URL}/projects/${projectId}/issues`,
+      `${V2_BASE_URL}/projects/${projectId}/issues`,
       payload,
       getAuthHeaders()
     );
@@ -161,6 +160,8 @@ const issueRequest = async (method, path, payload, config = {}, fallback = 'Issu
 };
 
 export const updateIssue = (id, fields) => issueRequest('patch', `/issues/${id}`, fields, {}, 'Failed to update issue.');
+export const linkGithubIssue = (id, issueNumber) => issueRequest('put', `/issues/${id}/github-issue`, { issueNumber: Number(issueNumber) }, {}, 'Failed to link GitHub issue.');
+export const unlinkGithubIssue = (id) => issueRequest('delete', `/issues/${id}/github-issue`, undefined, {}, 'Failed to unlink GitHub issue.');
 export const updateIssueStatus = (id, status) => issueRequest('patch', `/issues/${id}/status`, { status }, {}, 'Failed to update issue status.');
 export const deleteIssue = (id) => issueRequest('delete', `/issues/${id}`, undefined, {}, 'Failed to delete issue.');
 export const assignIssue = (id, userIds) => issueRequest('post', `/issues/${id}/assign`, { userIds }, {}, 'Failed to assign issue.');

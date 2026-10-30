@@ -3,6 +3,7 @@ import {
   FiArrowLeft, FiEdit2, FiTrash2, FiCheckCircle, FiCheck, FiUserPlus,
   FiPaperclip, FiDownload, FiX, FiActivity, FiRefreshCw,
   FiAlertCircle, FiClock, FiCalendar, FiSend, FiMaximize2,
+  FiGithub, FiLink,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
 import {
@@ -14,6 +15,7 @@ import {
   getProjectIssueRequests, manageProjectIssueRequest, deleteProjectIssueRequest,
   getIssueComments, createIssueComment, updateIssueComment, deleteIssueComment,
   getIssueSprints,
+  linkGithubIssue, unlinkGithubIssue,
   getFriendlyErrorMessage,
 } from '../services/issueApi';
 import CommentsThread from '../../../components/ui/CommentsThread';
@@ -110,6 +112,7 @@ const IssueDetailsView = ({
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isFullscreenGraphOpen, setIsFullscreenGraphOpen] = useState(false);
+  const [githubIssueNumberInput, setGithubIssueNumberInput] = useState('');
 
   const pid = issue?.projectId || issue?.project?.id || issue?.project?._id || initialIssue?.projectId;
   const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id;
@@ -284,6 +287,17 @@ const IssueDetailsView = ({
   const displayProjectName = projectName || issue?.projectName || issue?.project?.name || 'Project';
   const dependencyItems = asList(dependencies);
   const linkableIssues = projectIssues.filter((item) => getId(item) && String(getId(item)) !== String(issueId));
+  const linkedGithubIssueNumber = issue?.githubIssueNumber || issue?.githubIssue?.number || issue?.githubIssue?.issueNumber || issue?.externalIssueNumber;
+
+  const handleLinkGithubIssue = () => {
+    const number = Number(githubIssueNumberInput);
+    if (!Number.isInteger(number) || number <= 0) {
+      showToast('Enter a valid positive GitHub issue number.', true);
+      return;
+    }
+    runAction('github-link', () => linkGithubIssue(issueId, number), 'GitHub issue linked successfully.')
+      .then(() => setGithubIssueNumberInput(''));
+  };
 
   return (
     <div className="flex flex-col space-y-4 text-slate-900 dark:text-white animate-fadeIn pb-12">
@@ -437,6 +451,26 @@ const IssueDetailsView = ({
                 <span>Estimate: {formatEstimatedHours(issue?.estimatedHours)}</span>
               </span>
             </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="GitHub Issue" />
+            {linkedGithubIssueNumber ? (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717]">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  <FiGithub size={15} /> Linked issue #{linkedGithubIssueNumber}
+                </span>
+                {canEdit && <button type="button" disabled={!!busyAction} onClick={() => runAction('github-unlink', () => unlinkGithubIssue(issueId), 'GitHub issue unlinked successfully.')} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-400 dark:hover:bg-rose-950/30"><FiX size={13} /> Unlink</button>}
+              </div>
+            ) : canEdit ? (
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="min-w-[180px] flex-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  GitHub issue number
+                  <input type="number" min="1" step="1" value={githubIssueNumberInput} onChange={(event) => setGithubIssueNumberInput(event.target.value)} placeholder="e.g. 42" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-sky-500 dark:border-[#35353a] dark:bg-[#222226] dark:text-white" />
+                </label>
+                <button type="button" disabled={!!busyAction || !githubIssueNumberInput} onClick={handleLinkGithubIssue} className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50"><FiLink size={13} /> Link</button>
+              </div>
+            ) : <p className="text-xs text-slate-500 dark:text-slate-400">No GitHub issue linked.</p>}
           </Card>
 
           <Card>
