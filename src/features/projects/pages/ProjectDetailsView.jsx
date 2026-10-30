@@ -61,6 +61,7 @@ import LinkRepositoryModal from '../components/LinkRepositoryModal';
 import ProjectContributionsSection from '../components/ProjectContributionsSection';
 import ProjectSummaryModal from '../components/ProjectSummaryModal';
 import ProjectMembersModal from '../components/ProjectMembersModal';
+import ProjectTimelineModal from '../components/ProjectTimelineModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
@@ -180,6 +181,7 @@ const ProjectDetailsView = () => {
   const [openPollId, setOpenPollId] = useState(null);
   const [isOpenPollLoading, setIsOpenPollLoading] = useState(false);
   const [detailPanel, setDetailPanel] = useState(null);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [uploadingReleaseId, setUploadingReleaseId] = useState(null);
@@ -2098,6 +2100,14 @@ const ProjectDetailsView = () => {
         }}
       />
 
+      <ProjectTimelineModal
+        isOpen={isTimelineOpen}
+        onClose={() => setIsTimelineOpen(false)}
+        projectId={projectId}
+        project={project}
+        onOpenIssue={(issue) => setSelectedIssue(issue)}
+      />
+
       {}
       <MilestoneModal
         key={`milestone-${editingMilestone?.id || editingMilestone?._id || 'new'}-${isMilestoneModalOpen}`}
@@ -2202,6 +2212,10 @@ const ProjectDetailsView = () => {
         onLinkRepository={() => {
           setDetailPanel(null);
           setIsLinkRepoModalOpen(true);
+        }}
+        onOpenTimeline={() => {
+          setDetailPanel(null);
+          setIsTimelineOpen(true);
         }}
       />
 

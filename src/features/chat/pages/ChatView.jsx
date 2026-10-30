@@ -16,8 +16,9 @@ import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
 
-const ChatsView = () => {
-  const { currentUserProfile } = useOutletContext() || {};
+const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => {
+  const outletContext = useOutletContext() || {};
+  const currentUserProfile = profileProp || outletContext.currentUserProfile;
   const [searchParams, setSearchParams] = useSearchParams();
   const urlProjectId = searchParams.get('projectId');
 
@@ -701,7 +702,8 @@ const ChatsView = () => {
   };
 
   return (
-    <div className="h-full min-h-0 min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-hidden">
+    <>
+    <div className={isPageActive ? 'h-full min-h-0 min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-hidden' : 'hidden'}>
       {toastNotice && (
         <div
           className={`mb-3 p-3 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn shrink-0 ${
@@ -785,6 +787,8 @@ const ChatsView = () => {
         </div>
       </div>
 
+    </div>
+
       {showCallPanel && activeChat && (
         <VoiceCallPanel
           isOpen={showCallPanel}
@@ -812,7 +816,7 @@ const ChatsView = () => {
           onClose={handleCloseCallPanel}
         />
       )}
-    </div>
+    </>
   );
 };
 

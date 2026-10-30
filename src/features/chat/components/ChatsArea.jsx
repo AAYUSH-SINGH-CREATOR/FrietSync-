@@ -406,7 +406,9 @@ const ChatArea = ({
     );
   }
 
-  const isProject = !!activeChat.isProject;
+  // Every conversation in ChatView is backed by a project room; project list
+  // responses do not consistently include an `isProject` flag.
+  const isProject = Boolean(activeChat?.id);
   const memberCount = Array.isArray(activeChat.members) && activeChat.members.length > 0
     ? activeChat.members.length
     : (activeChat.memberCount ?? activeChat.raw?.memberCount ?? 0);
@@ -443,22 +445,22 @@ const ChatArea = ({
 
           <div className="min-w-0 text-left">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">{activeChat.name}</h2>
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               <span>{memberCount} {memberCount === 1 ? 'Member' : 'Members'}</span>
               <span>•</span>
               {isProject && (
                 connectionStatus === 'connected' ? (
-                  <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span role="status" aria-live="polite" className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Live
+                    Connected
                   </span>
                 ) : connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? (
-                  <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
+                  <span role="status" aria-live="polite" className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
                     Connecting...
                   </span>
                 ) : (
-                  <span className="text-slate-400">Offline</span>
+                  <span role="status" aria-live="polite" className="text-slate-400 dark:text-slate-500">Disconnected</span>
                 )
               )}
             </div>
@@ -584,12 +586,12 @@ const ChatArea = ({
 
                   {}
                   {isOutgoing && !isDeleted && !isEditingThis && (
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mr-1 order-first">
+                      <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1 mr-1 order-first">
                       <div className="relative" ref={messageMenuOpen === msg.id ? messageMenuRef : null}>
                         <button
                           type="button"
                           onClick={() => setMessageMenuOpen((prev) => prev === msg.id ? null : msg.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-white/80 dark:hover:bg-white/10 transition cursor-pointer"
+                          className="p-2 sm:p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-white/80 dark:hover:bg-white/10 transition cursor-pointer"
                           title="Message options"
                         >
                           <FiMoreVertical size={14} />

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { FiDownload, FiGithub, FiX } from 'react-icons/fi';
+import { FiDownload, FiGithub, FiX, FiCalendar } from 'react-icons/fi';
 import { formatDate } from '../utils/projectUtils';
 
 const ProjectSummaryModal = ({
@@ -20,6 +20,7 @@ const ProjectSummaryModal = ({
   isUnlinkingRepo,
   onUnlinkRepository,
   onLinkRepository,
+  onOpenTimeline,
 }) => {
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -38,7 +39,6 @@ const ProjectSummaryModal = ({
 
   if (!isOpen) return null;
 
-  const status = String(project?.status || '—').toLowerCase().replace(/[_-]/g, ' ');
   const metrics = [
     ['Total issues', summary?.totalIssues ?? totalIssues],
     ['Open issues', summary?.openIssues ?? '—'],
@@ -76,7 +76,6 @@ const ProjectSummaryModal = ({
               {[
                 ['Project Name', project?.name || 'Unnamed project'],
                 ['Description', project?.description || 'No description provided.'],
-                ['Status', status],
                 ['Project manager', projectManagerName || 'Not assigned'],
                 ['Team leader', teamLeadName || 'Not assigned'],
                 ['Start date', project?.startDate ? formatDate(project.startDate) : '—'],
@@ -103,7 +102,7 @@ const ProjectSummaryModal = ({
             </div>
           </section>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-[#303038]">
+          <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 dark:border-[#303038]">
             <div className="flex min-w-0 items-center gap-2 text-xs">
               <FiGithub size={15} className="shrink-0 text-slate-500 dark:text-slate-400" />
               {linkedRepo ? (
@@ -117,9 +116,20 @@ const ProjectSummaryModal = ({
                 <button type="button" onClick={onLinkRepository} className="font-semibold text-sky-600 hover:underline dark:text-sky-400">Link GitHub Repository</button>
               ) : <span className="text-slate-500 dark:text-slate-400">No GitHub repository linked</span>}
             </div>
-            <button type="button" onClick={onDownloadPdf} disabled={isDownloadingPdf} className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
-              <FiDownload size={13} /> {isDownloadingPdf ? 'Downloading…' : 'Download PDF Summary'}
-            </button>
+
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={onOpenTimeline}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-sky-700 transition"
+                title="View project timeline, Gantt chart, and task dependencies"
+              >
+                <FiCalendar size={13} /> View Timeline
+              </button>
+              <button type="button" onClick={onDownloadPdf} disabled={isDownloadingPdf} className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50 transition">
+                <FiDownload size={13} /> {isDownloadingPdf ? 'Downloading…' : 'Download PDF Summary'}
+              </button>
+            </div>
           </div>
         </div>
       </section>

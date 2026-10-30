@@ -6,6 +6,7 @@ import { getUnreadNotificationCount } from '../services/notificationApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 import { getProfile } from '../services/profileApi';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
+import ChatsView from '../../chat/pages/ChatView';
 
 const readUnreadCount = (value) => {
   const candidates = [value, value?.data, value?.result];
@@ -43,6 +44,11 @@ const Dashboard = () => {
   const [userProfileError, setUserProfileError] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(location.pathname);
+  const [hasOpenedChat, setHasOpenedChat] = useState(isChat);
+
+  useEffect(() => {
+    if (isChat && !hasOpenedChat) setHasOpenedChat(true);
+  }, [isChat, hasOpenedChat]);
 
   if (prevPathname !== location.pathname) {
     setPrevPathname(location.pathname);
@@ -166,8 +172,11 @@ const Dashboard = () => {
               : 'max-w-[1500px] w-full mx-auto'
           }
         >
-          <Outlet
-            context={{
+          {hasOpenedChat && (
+            <ChatsView currentUserProfile={currentUserProfile} isPageActive={isChat} />
+          )}
+          <div className={isChat ? 'hidden' : 'contents'}>
+            <Outlet context={{
               projectFilter,
               setProjectFilter,
               pendingInviteCount,
@@ -181,8 +190,8 @@ const Dashboard = () => {
               refreshCurrentUserProfile,
               isLoadingUserProfile,
               userProfileError,
-            }}
-          />
+            }} />
+          </div>
         </main>
       </div>
       {!currentUserProfile && isLoadingUserProfile && (

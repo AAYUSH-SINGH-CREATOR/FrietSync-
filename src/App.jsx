@@ -15,7 +15,6 @@ import IssuesView from './features/dashboard/components/IssuesView';
 import SprintsView from './features/dashboard/components/SprintsView';
 import MyWorkView from './features/dashboard/components/MyWorkView';
 import CalendarView from './features/calendar/pages/CalendarView';
-import ChatsView from './features/chat/pages/ChatView';
 import TeamView from './features/dashboard/components/TeamView';
 import DependencyGraphView from './features/issues/components/DependencyGraphView';
 import SettingsView from './features/dashboard/components/SettingsView';
@@ -53,7 +52,7 @@ function App() {
           <Route path="sprints" element={<SprintsView />} />
           <Route path="my-work" element={<MyWorkView />} />
           <Route path="calendar" element={<CalendarView />} />
-          <Route path="chats" element={<ChatsView />} />
+          <Route path="chats" element={<></>} />
           <Route path="invites" element={<InvitesView />} />
           <Route path="team" element={<TeamView />} />
           <Route path="settings" element={<SettingsView />} />
