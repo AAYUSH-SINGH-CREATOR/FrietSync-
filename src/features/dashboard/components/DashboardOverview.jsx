@@ -624,7 +624,7 @@ const DashboardOverview = () => {
         {}
         <div
           onClick={() => navigate('/dashboard/projects')}
-          className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
+          className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
           <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-[#2A2346] dark:text-[#A78BFA] flex items-center justify-center shrink-0 shadow-2xs">
             <FiFolder size={22} />
@@ -649,7 +649,7 @@ const DashboardOverview = () => {
         {}
         <div
           onClick={() => navigate('/dashboard/issues')}
-          className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
+          className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
           <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 dark:bg-[#432328] dark:text-[#F87171] flex items-center justify-center shrink-0 shadow-2xs">
             <FiAlertCircle size={22} />
@@ -672,7 +672,7 @@ const DashboardOverview = () => {
         {}
         <div
           onClick={() => navigate('/dashboard/sprints')}
-          className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
+          className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
           <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 dark:bg-[#2A2346] dark:text-[#A78BFA] flex items-center justify-center shrink-0 shadow-2xs">
             <FiRefreshCw size={20} />
@@ -695,7 +695,7 @@ const DashboardOverview = () => {
         {}
         <div
           onClick={() => navigate('/dashboard/team')}
-          className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
+          className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
         >
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-[#1C3A2A] dark:text-[#4ADE80] flex items-center justify-center shrink-0 shadow-2xs">
             <FiUsers size={22} />
@@ -723,7 +723,7 @@ const DashboardOverview = () => {
         {}
         <div className="lg:col-span-4 flex flex-col gap-5">
           {}
-          <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 Issue overview
@@ -789,7 +789,7 @@ const DashboardOverview = () => {
           </div>
 
           {}
-          <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 My tasks
@@ -891,7 +891,7 @@ const DashboardOverview = () => {
         {}
         <div className="lg:col-span-5 flex flex-col gap-5">
           {}
-          <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 Project Progress
@@ -950,7 +950,7 @@ const DashboardOverview = () => {
           </div>
 
           {}
-          <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 Sprint Progress
@@ -1065,7 +1065,7 @@ const DashboardOverview = () => {
         {}
         <div className="lg:col-span-3 flex flex-col gap-5">
           {}
-          <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-3">
               Recent
             </h2>
@@ -1093,7 +1093,7 @@ const DashboardOverview = () => {
           </div>
 
           {}
-          <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-slate-200/90 dark:border-[#303030] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 Deadlines

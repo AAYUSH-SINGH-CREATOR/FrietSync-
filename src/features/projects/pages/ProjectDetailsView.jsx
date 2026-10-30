@@ -1010,7 +1010,7 @@ const ProjectDetailsView = () => {
       )}
 
       {}
-      <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 sm:p-8 space-y-6 shadow-xs">
+      <section className="rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           {}
           <div className="flex items-start gap-4 sm:gap-5 min-w-0">
@@ -1100,7 +1100,7 @@ const ProjectDetailsView = () => {
           {}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 shrink-0">
             {}
-            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-slate-50 dark:bg-[#242428] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-purple-100 dark:bg-[#2f2249] text-purple-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiRepeat size={14} />
               </span>
@@ -1115,7 +1115,7 @@ const ProjectDetailsView = () => {
             </div>
 
             {}
-            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-slate-50 dark:bg-[#242428] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-rose-100 dark:bg-[#432328] text-rose-700 dark:text-[#F87171] flex items-center justify-center shrink-0">
                 <FiAlertTriangle size={14} />
               </span>
@@ -1130,7 +1130,7 @@ const ProjectDetailsView = () => {
             </div>
 
             {}
-            <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
+            <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-slate-50 dark:bg-[#242428] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-indigo-100 dark:bg-[#2f2249] text-indigo-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiFolder size={14} />
               </span>
@@ -1175,7 +1175,7 @@ const ProjectDetailsView = () => {
           {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {}
-            <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+            <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -1318,7 +1318,7 @@ const ProjectDetailsView = () => {
               </div>
             </div>
             {}
-            <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+            <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Activity</h2>
 
@@ -1375,7 +1375,7 @@ const ProjectDetailsView = () => {
           {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {}
-            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Sprint overview</h2>
@@ -1431,7 +1431,7 @@ const ProjectDetailsView = () => {
             </div>
 
             {}
-            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
+            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Issue overview</h2>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{issueGaugeMetrics.total} project issues</p>
@@ -1457,7 +1457,7 @@ const ProjectDetailsView = () => {
             </div>
 
             {}
-            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col">
+            <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs flex flex-col">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Polls</h2>
@@ -1604,7 +1604,7 @@ const ProjectDetailsView = () => {
 
           <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
           {}
-          <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+          <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 flex items-center justify-center shrink-0">
@@ -1714,7 +1714,7 @@ const ProjectDetailsView = () => {
           </section>
 
           {}
-          <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
+          <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 flex items-center justify-center shrink-0">
@@ -1830,7 +1830,7 @@ const ProjectDetailsView = () => {
 
           <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-4">
           {}
-          <section className="min-w-0 rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4 lg:col-span-1">
+          <section className="min-w-0 rounded-3xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-6 shadow-xs space-y-4 lg:col-span-1">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400 flex items-center justify-center shrink-0">
@@ -1894,7 +1894,7 @@ const ProjectDetailsView = () => {
                   return (
                     <div
                       key={rId}
-                      className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 dark:bg-[#1b1b1f] border border-slate-200/80 dark:border-[#2d2d34] hover:border-slate-300 dark:hover:border-[#3b3b44] transition space-y-3"
+                      className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 dark:bg-[#242428] border border-slate-200/80 dark:border-[#303030] hover:border-slate-300 dark:hover:border-[#3b3b44] transition space-y-3"
                     >
                       {}
                       <div className="flex flex-wrap items-start justify-between gap-3">
