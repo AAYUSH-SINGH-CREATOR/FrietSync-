@@ -94,9 +94,22 @@ const formatMilestoneDate = (dateStr) => {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const getMilestoneStatusInfo = (status) => {
+const isMilestoneCompleted = (milestone) => {
+  const status = String(milestone?.status || '').toUpperCase().replace(/[\s-]+/g, '_');
+  return milestone?.completed === true || String(milestone?.completed).toLowerCase() === 'true' ||
+    ['COMPLETED', 'RESOLVED'].includes(status);
+};
+
+const getMilestoneStatusInfo = (status, completed) => {
+  if (isMilestoneCompleted({ status, completed })) {
+    return {
+      label: 'Completed',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30',
+      dotClass: 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/60',
+    };
+  }
   const norm = String(status || '').toUpperCase().replace(/[\s-]+/g, '_');
-  if (['COMPLETED', 'ON_TRACK', 'RESOLVED'].includes(norm)) {
+  if (['ON_TRACK'].includes(norm)) {
     return {
       label: 'On track',
       badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30',
@@ -1235,7 +1248,8 @@ const ProjectDetailsView = () => {
                         const persistedMilestoneId = m.id || m._id || m.milestoneId || m.milestone?.id || m.milestone?._id;
                         const mId = persistedMilestoneId || idx;
                         const hasPersistedMilestoneId = Boolean(persistedMilestoneId);
-                        const statusInfo = getMilestoneStatusInfo(m.status);
+                        const isCompleted = isMilestoneCompleted(m);
+                        const statusInfo = getMilestoneStatusInfo(m.status, m.completed);
                         return (
                           <div
                             key={mId}
@@ -1263,7 +1277,7 @@ const ProjectDetailsView = () => {
                               >
                                 {statusInfo.label}
                               </span>
-                              {canManageMilestones && hasPersistedMilestoneId && (
+                              {canManageMilestones && hasPersistedMilestoneId && !isCompleted ? (
                                 <div className="flex items-center gap-0.5">
                                   <button
                                     type="button"
@@ -1292,7 +1306,7 @@ const ProjectDetailsView = () => {
                                     <span className="hidden sm:inline">Delete</span>
                                   </button>
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         );
