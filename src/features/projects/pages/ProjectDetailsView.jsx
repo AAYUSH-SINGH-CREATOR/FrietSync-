@@ -62,6 +62,7 @@ import ProjectContributionsSection from '../components/ProjectContributionsSecti
 import ProjectSummaryModal from '../components/ProjectSummaryModal';
 import ProjectMembersModal from '../components/ProjectMembersModal';
 import ProjectTimelineModal from '../components/ProjectTimelineModal';
+import ProjectItemsModal from '../components/ProjectItemsModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import MeetingModal from '../../calendar/components/MeetingModal';
@@ -178,6 +179,8 @@ const ProjectDetailsView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [viewingAllPolls, setViewingAllPolls] = useState(false);
+  const [isAllSprintsOpen, setIsAllSprintsOpen] = useState(false);
+  const [isAllIssuesOpen, setIsAllIssuesOpen] = useState(false);
   const [openPollId, setOpenPollId] = useState(null);
   const [isOpenPollLoading, setIsOpenPollLoading] = useState(false);
   const [detailPanel, setDetailPanel] = useState(null);
@@ -316,6 +319,7 @@ const ProjectDetailsView = () => {
   const canCreateIssue = canCreateSprint ||
     globalRole === 'REPORTER' ||
     currentProjectRoleNames.includes('REPORTER');
+  const canRequestAssignment = globalRole === 'CONTRIBUTOR' || currentProjectRoleNames.includes('CONTRIBUTOR');
   const canManageReleases = isAdmin || ['ADMIN', 'PROJECT_MANAGER'].includes(globalRole) ||
     currentUserIds.some((id) => projectAdminIds.includes(id) || projectManagerIds.includes(id)) ||
     currentProjectRoleNames.includes('PROJECT_MANAGER');
@@ -356,7 +360,13 @@ const ProjectDetailsView = () => {
     const issuesPage = issuesRes.status === 'fulfilled'
       ? normalizeIssuePage(issuesRes.value, { page: 0, size: 50 })
       : normalizeIssuePage(null);
-    const issuesData = issuesPage.items;
+    const remainingIssuePages = issuesPage.totalPages > 1
+      ? await Promise.all(Array.from({ length: issuesPage.totalPages - 1 }, (_, index) =>
+          getProjectIssues(pId, { page: index + 1, size: issuesPage.size || 50 })
+            .catch(() => normalizeIssuePage(null, { page: index + 1, size: issuesPage.size || 50 }))
+        ))
+      : [];
+    const issuesData = [issuesPage, ...remainingIssuePages].flatMap((page) => page.items);
     const pollsData =
       pollsRes.status === 'fulfilled' && Array.isArray(pollsRes.value) ? pollsRes.value : [];
     const releasesData =
@@ -1635,13 +1645,24 @@ const ProjectDetailsView = () => {
                     <FiPlus size={14} /> Create Sprint
                   </button>
                 )}
-                <Link
-                  to="/dashboard/sprints"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:border-[#35353d] dark:bg-[#26262c] dark:text-slate-300 dark:hover:bg-[#32323a] dark:hover:text-white"
-                >
-                  <span>View all</span>
-                  <FiArrowRight size={13} />
-                </Link>
+                {canCreateSprint ? (
+                  <Link
+                    to="/dashboard/sprints"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:border-[#35353d] dark:bg-[#26262c] dark:text-slate-300 dark:hover:bg-[#32323a] dark:hover:text-white"
+                  >
+                    <span>View all</span>
+                    <FiArrowRight size={13} />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAllSprintsOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:border-[#35353d] dark:bg-[#26262c] dark:text-slate-300 dark:hover:bg-[#32323a] dark:hover:text-white"
+                  >
+                    <span>View all</span>
+                    <FiArrowRight size={13} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1746,13 +1767,24 @@ const ProjectDetailsView = () => {
                     <span>Create Issue</span>
                   </button>
                 )}
-                <Link
-                  to={`/dashboard/issues?projectId=${projectId}`}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
-                >
-                  <span>View all</span>
-                  <FiArrowRight size={13} />
-                </Link>
+                {canCreateSprint ? (
+                  <Link
+                    to={`/dashboard/issues?projectId=${projectId}`}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+                  >
+                    <span>View all</span>
+                    <FiArrowRight size={13} />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAllIssuesOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+                  >
+                    <span>View all</span>
+                    <FiArrowRight size={13} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2097,6 +2129,28 @@ const ProjectDetailsView = () => {
         onIssueDeleted={() => {
           setSelectedIssue(null);
           reloadData();
+        }}
+      />
+
+      <ProjectItemsModal
+        isOpen={isAllSprintsOpen && !canCreateSprint}
+        kind="sprints"
+        projectName={project?.name}
+        items={sprints}
+        canRequestAssignment={canRequestAssignment}
+        onClose={() => setIsAllSprintsOpen(false)}
+      />
+
+      <ProjectItemsModal
+        isOpen={isAllIssuesOpen && !canCreateSprint}
+        kind="issues"
+        projectName={project?.name}
+        items={issues}
+        canRequestAssignment={canRequestAssignment}
+        onClose={() => setIsAllIssuesOpen(false)}
+        onSelect={(issue) => {
+          setIsAllIssuesOpen(false);
+          setSelectedIssue(issue);
         }}
       />
 
