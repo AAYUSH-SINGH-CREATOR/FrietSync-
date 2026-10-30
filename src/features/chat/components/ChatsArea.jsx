@@ -15,6 +15,7 @@ import {
   FiEdit2,
   FiTrash2,
   FiCheck,
+  FiPhone,
 } from 'react-icons/fi';
 import {
   getInitials,
@@ -55,6 +56,7 @@ const ChatArea = ({
   currentUser: currentUserProp,
   onMessageUpdate,
   onMessageDelete,
+  voiceCall,
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedAttachments, setSelectedAttachments] = useState([]);
@@ -480,6 +482,19 @@ const ChatArea = ({
           >
             <FiSearch size={18} />
           </button>
+          {voiceCall && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={voiceCall.onTogglePanel}
+                title={voiceCall.isJoined ? 'Voice call controls' : voiceCall.isCallActive ? 'Join voice call' : 'Start voice call'}
+                aria-label={voiceCall.isJoined ? 'Voice call controls' : voiceCall.isCallActive ? 'Join voice call' : 'Start voice call'}
+                className={`p-2 rounded-xl transition cursor-pointer ${voiceCall.isCallActive || voiceCall.isJoined ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+              >
+                <FiPhone size={18} />
+              </button>
+            </div>
+          )}
           <button
             type="button"
             onClick={onOpenGroupDetails}

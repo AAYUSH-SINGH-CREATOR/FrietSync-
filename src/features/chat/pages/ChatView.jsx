@@ -8,6 +8,9 @@ import {
 } from '../services/chatApi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { StompChatClient } from '../services/stompClient';
+import { useVoiceCall } from '../hooks/useVoiceCall';
+import { endCall, findActiveCall, joinCall, leaveCall, startCall } from '../services/voiceCallApi';
+import { VoiceCallPanel } from '../components/VoiceCallPanel';
 
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
@@ -32,11 +35,68 @@ const ChatsView = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [toastNotice, setToastNotice] = useState(null);
 
+  // Voice call states
+  const [activeCallId, setActiveCallId] = useState(null);
+  const [activeCallDetails, setActiveCallDetails] = useState(null);
+  const [activeCallProjectId, setActiveCallProjectId] = useState(null);
+  const [isCallActive, setIsCallActive] = useState(false);
+  const [isJoined, setIsJoined] = useState(false);
+  const [showCallPanel, setShowCallPanel] = useState(false);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [isJoiningCall, setIsJoiningCall] = useState(false);
+
+  const unwrapCallResponse = (response) => {
+    let value = response;
+    // APIs may wrap their payload in `data` and/or `call` envelopes.
+    for (let depth = 0; depth < 3; depth += 1) {
+      const next = value?.call || value?.data;
+      if (!next || next === value) break;
+      value = next;
+    }
+    return value;
+  };
+
   const stompClientRef = useRef(null);
   const unsubscribeRef = useRef(null);
+  const callUnsubscribeRef = useRef(null);
   const olderRequestsRef = useRef(new Set());
+  const joiningCallRef = useRef(false);
+  const joinedCallRef = useRef(null);
 
   const currentUser = useMemo(() => ({ ...getCurrentChatUser(), profilePictureUrl: currentUserProfile?.profilePictureUrl || '' }), [currentUserProfile]);
+
+  const activeChat = useMemo(() => {
+    if (!activeConversationId) return projects[0] || null;
+    return projects.find((p) => p.id === String(activeConversationId)) || projects[0] || null;
+  }, [activeConversationId, projects]);
+
+  const activeProjectId = activeChat?.id || null;
+  const visibleCall = activeCallProjectId === activeProjectId ? activeCallDetails : null;
+  const visibleCallId = visibleCall?.id || visibleCall?.callId || (activeCallProjectId === activeProjectId ? activeCallId : null);
+  const currentUserId = String(currentUser.userId || currentUser.id || '');
+  const currentProjectMember = activeChat?.members?.find((member) => {
+    const memberId = member?.userId || member?.memberId || member?.id || member?._id || member?.user?.id || member?.user?._id;
+    return currentUserId && String(memberId || '') === currentUserId;
+  });
+  const projectRole = String(currentProjectMember?.role || currentProjectMember?.projectRole || '').toUpperCase();
+  const canEndActiveCall = Boolean(visibleCall && visibleCallId && (
+    String(visibleCall.initiatedBy || visibleCall.startedById || '') === currentUserId
+    || ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD'].includes(projectRole)
+  ));
+
+  const {
+    state: voiceCallState,
+    muted: voiceCallMuted,
+    volume: voiceCallVolume,
+    isConfigured: isVoiceCallConfigured,
+    configurationError: voiceCallConfigurationError,
+    isAutoplayBlocked,
+    join: joinVoiceCall,
+    leave: leaveVoiceCall,
+    toggleMute: toggleVoiceCallMute,
+    setVolume: setVoiceCallVolume,
+    resumePlayback,
+  } = useVoiceCall();
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -44,6 +104,173 @@ const ChatsView = () => {
       setToastNotice(null);
     }, 4000);
   }, []);
+
+  // Load the current call once; STOMP call events keep this state current.
+  useEffect(() => {
+    if (!activeProjectId) return undefined;
+
+    let isMounted = true;
+    const refreshActiveCall = async () => {
+      try {
+        const res = await findActiveCall(activeProjectId);
+        if (!isMounted) return;
+        const call = unwrapCallResponse(res);
+        const callId = call?.id || call?.callId || call?.call_id;
+        if (callId) {
+          setActiveCallId(callId);
+          setActiveCallDetails(call);
+          setActiveCallProjectId(activeProjectId);
+          setIsCallActive(true);
+        } else {
+          setIsCallActive(false);
+          setActiveCallId(null);
+          setActiveCallDetails(null);
+          setActiveCallProjectId(activeProjectId);
+        }
+      } catch {
+        if (isMounted) {
+          setIsCallActive(false);
+          setActiveCallId(null);
+          setActiveCallDetails(null);
+          setActiveCallProjectId(activeProjectId);
+        }
+      }
+    };
+
+    refreshActiveCall();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeProjectId]);
+
+  const handleStartOrJoinCall = async () => {
+    if (!activeProjectId || joiningCallRef.current || joinedCallRef.current) return;
+    if (!isVoiceCallConfigured) {
+      showToast('error', voiceCallConfigurationError || 'Voice calling is not configured.');
+      return;
+    }
+    joiningCallRef.current = true;
+    setIsJoiningCall(true);
+    let callId = activeCallId;
+    let backendJoinSucceeded = false;
+    try {
+      if (!isCallActive || !callId) {
+        let call;
+        try {
+          const startRes = await startCall(activeProjectId);
+          call = unwrapCallResponse(startRes);
+        } catch (startError) {
+          // Another member may have started the call between the last refresh
+          // and this click. Reuse it instead of making the user try again.
+          const activeRes = await findActiveCall(activeProjectId);
+          call = unwrapCallResponse(activeRes);
+          if (!call?.id && !call?.callId && !call?.call_id) throw startError;
+        }
+        callId = call?.id || call?.callId || call?.call_id;
+        if (!callId) throw new Error('Failed to create call.');
+        setActiveCallId(callId);
+        setActiveCallDetails(call);
+        setActiveCallProjectId(activeProjectId);
+        setIsCallActive(true);
+      }
+
+      const joinRes = await joinCall(activeProjectId, callId);
+      backendJoinSucceeded = true;
+      const joinDetails = unwrapCallResponse(joinRes);
+      const roomId = joinDetails?.roomId ?? joinDetails?.janusRoomId ?? joinDetails?.room_id;
+      if (roomId === undefined || roomId === null || roomId === '') {
+        throw new Error('The call service did not return a Janus room ID.');
+      }
+      await joinVoiceCall({
+        roomId,
+        pin: joinDetails?.roomPin ?? joinDetails?.janusRoomPin ?? joinDetails?.room_pin ?? joinDetails?.pin ?? '',
+        display: currentUser.name || 'User',
+      });
+      setActiveCallDetails(joinDetails);
+      setActiveCallProjectId(activeProjectId);
+      joinedCallRef.current = { projectId: activeProjectId, callId };
+      setIsJoined(true);
+      setShowCallPanel(true);
+      showToast('success', 'Joined voice call successfully.');
+    } catch (error) {
+      if (backendJoinSucceeded && callId) leaveCall(activeProjectId, callId).catch(() => {});
+      leaveVoiceCall();
+      showToast('error', error.message || 'Failed to join voice call.');
+    } finally {
+      joiningCallRef.current = false;
+      setIsJoiningCall(false);
+    }
+  };
+
+  const handleLeaveCall = async () => {
+    const joinedCall = joinedCallRef.current;
+    leaveVoiceCall();
+    joinedCallRef.current = null;
+    setIsJoined(false);
+    setShowCallPanel(false);
+    try {
+      if (joinedCall) await leaveCall(joinedCall.projectId, joinedCall.callId);
+      showToast('success', 'Left voice call.');
+    } catch (error) {
+      showToast('error', error.message || 'Failed to leave voice call.');
+    }
+  };
+
+  const handleEndCall = async () => {
+    if (!canEndActiveCall) return;
+    const targetCall = joinedCallRef.current || (activeProjectId && visibleCallId
+      ? { projectId: activeProjectId, callId: visibleCallId }
+      : null);
+    if (!targetCall) return;
+    leaveVoiceCall();
+    joinedCallRef.current = null;
+    setIsJoined(false);
+    try {
+      await endCall(targetCall.projectId, targetCall.callId);
+      setIsCallActive(false);
+      setActiveCallId(null);
+      setActiveCallDetails(null);
+      setActiveCallProjectId(activeProjectId);
+      setShowCallPanel(false);
+      showToast('success', 'Ended voice call for all participants.');
+    } catch (error) {
+      showToast('error', error.message || 'Failed to end voice call.');
+    }
+  };
+
+  const handleToggleCallPanel = () => {
+    if (!showCallPanel) {
+      setShowCallPanel(true);
+      setIsCallMinimized(false);
+    } else if (isCallMinimized) {
+      setIsCallMinimized(false);
+    } else {
+      setShowCallPanel(false);
+    }
+  };
+
+  const handleCloseCallPanel = () => {
+    setShowCallPanel(false);
+    setIsCallMinimized(false);
+  };
+
+  useEffect(() => {
+    if (voiceCallState === 'disconnected' && joinedCallRef.current) {
+      joinedCallRef.current = null;
+      setIsJoined(false);
+      setShowCallPanel(false);
+    }
+  }, [voiceCallState]);
+
+  useEffect(() => {
+    const handlePageHide = () => {
+      const joinedCall = joinedCallRef.current;
+      leaveVoiceCall();
+      if (joinedCall) leaveCall(joinedCall.projectId, joinedCall.callId).catch(() => {});
+    };
+    window.addEventListener('pagehide', handlePageHide);
+    return () => window.removeEventListener('pagehide', handlePageHide);
+  }, [leaveVoiceCall]);
 
   const isOutgoingMessage = useCallback((msg) => {
     if (!msg) return false;
@@ -78,25 +305,16 @@ const ChatsView = () => {
     let isMounted = true;
 
     getMyProjects()
-      .then(async (data) => {
+      .then((projectsData) => {
         if (!isMounted) return;
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.projects)
-          ? data.projects
-          : Array.isArray(data?.data)
-          ? data.data
-          : [];
-
+        const list = Array.isArray(projectsData) ? projectsData : [];
         const normalized = list.map((p) => {
-          const id = String(p.id || p.projectId || p._id || '');
+          const id = p.projectId || p.id || p._id;
+          const name = p.projectName || p.name || 'Project';
           return {
-            id,
-            name: p.name || 'Untitled Project',
-            description: p.description || '',
-            status: p.status || 'ACTIVE',
-            isProject: true,
-            isGroup: true,
+            ...p,
+            id: String(id),
+            name,
             members: Array.isArray(p.members) ? p.members : [],
             memberCount: p.memberCount ?? p.membersCount ?? p.totalMembers,
             lastMessage: '',
@@ -105,9 +323,7 @@ const ChatsView = () => {
           };
         });
 
-        // /projects/me may omit the expanded members array. Load it from the
-        // project members endpoint so the chat header can show the real count.
-        const projectsWithMembers = await Promise.all(normalized.map(async (project) => {
+        const projectsWithMembers = Promise.all(normalized.map(async (project) => {
           try {
             const members = await getProjectMembers(project.id);
             return { ...project, members: Array.isArray(members) ? members : project.members };
@@ -117,17 +333,18 @@ const ChatsView = () => {
           }
         }));
 
-        if (!isMounted) return;
-        setProjects(projectsWithMembers);
-
-        setActiveConversationId((prev) => {
-          if (urlProjectId && projectsWithMembers.some((p) => p.id === urlProjectId)) {
-            return urlProjectId;
-          }
-          if (prev && projectsWithMembers.some((p) => p.id === prev)) {
-            return prev;
-          }
-          return projectsWithMembers.length > 0 ? projectsWithMembers[0].id : null;
+        projectsWithMembers.then((resolvedProjects) => {
+          if (!isMounted) return;
+          setProjects(resolvedProjects);
+          setActiveConversationId((prev) => {
+            if (urlProjectId && resolvedProjects.some((p) => p.id === urlProjectId)) {
+              return urlProjectId;
+            }
+            if (prev && resolvedProjects.some((p) => p.id === prev)) {
+              return prev;
+            }
+            return resolvedProjects.length > 0 ? resolvedProjects[0].id : null;
+          });
         });
       })
       .catch((err) => {
@@ -147,13 +364,6 @@ const ChatsView = () => {
       isMounted = false;
     };
   }, [urlProjectId, showToast]);
-
-  const activeChat = useMemo(() => {
-    if (!activeConversationId) return projects[0] || null;
-    return projects.find((p) => p.id === String(activeConversationId)) || projects[0] || null;
-  }, [activeConversationId, projects]);
-
-  const activeProjectId = activeChat?.id || null;
 
   const activeMessages = useMemo(() => {
     if (!activeChat) return [];
@@ -237,6 +447,10 @@ const ChatsView = () => {
       unsubscribeRef.current();
       unsubscribeRef.current = null;
     }
+    if (callUnsubscribeRef.current) {
+      callUnsubscribeRef.current();
+      callUnsubscribeRef.current = null;
+    }
     if (stompClientRef.current) {
       stompClientRef.current.disconnect();
       stompClientRef.current = null;
@@ -299,12 +513,52 @@ const ChatsView = () => {
     });
 
     unsubscribeRef.current = unsub;
+    callUnsubscribeRef.current = client.subscribe(`/topic/projects/${projectId}/calls`, (event) => {
+      if (!isMounted || !event) return;
+
+      const eventType = String(event.type || '').toUpperCase();
+      const call = event.call || event.callDetails || event.details || event;
+      const callId = call.id || call.callId || event.callId;
+      if (!callId) return;
+
+      if (eventType === 'ENDED') {
+        setIsCallActive(false);
+        setActiveCallId(null);
+        setActiveCallDetails(null);
+        setActiveCallProjectId(projectId);
+
+        if (String(joinedCallRef.current?.callId || '') === String(callId)) {
+          // The backend destroys the Janus room. Don't start a new Janus
+          // operation from this event callback; the transport reports cleanup.
+          joinedCallRef.current = null;
+          setIsJoined(false);
+          setShowCallPanel(false);
+        }
+        return;
+      }
+
+      if (eventType === 'STARTED' || eventType === 'JOINED' || eventType === 'LEFT') {
+        const normalizedCall = {
+          ...call,
+          id: call.id || call.callId || callId,
+          initiatedBy: call.initiatedBy || call.startedById,
+        };
+        setActiveCallId(normalizedCall.id);
+        setActiveCallDetails(normalizedCall);
+        setActiveCallProjectId(projectId);
+        setIsCallActive(true);
+      }
+    });
 
     return () => {
       isMounted = false;
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
         unsubscribeRef.current = null;
+      }
+      if (callUnsubscribeRef.current) {
+        callUnsubscribeRef.current();
+        callUnsubscribeRef.current = null;
       }
       if (stompClientRef.current) {
         stompClientRef.current.disconnect();
@@ -508,9 +762,56 @@ const ChatsView = () => {
             currentUser={currentUser}
             onMessageUpdate={handleMessageUpdate}
             onMessageDelete={handleMessageDelete}
+            voiceCall={activeProjectId ? {
+              isCallActive: Boolean(visibleCall) || (activeCallProjectId === activeProjectId && isCallActive),
+              isJoined,
+              isJoining: isJoiningCall,
+              state: voiceCallState,
+              muted: voiceCallMuted,
+              volume: voiceCallVolume,
+              isConfigured: isVoiceCallConfigured,
+              isAutoplayBlocked,
+              showPanel: showCallPanel,
+              onTogglePanel: handleToggleCallPanel,
+              onJoin: handleStartOrJoinCall,
+              onLeave: handleLeaveCall,
+              onEnd: handleEndCall,
+              canEndCall: canEndActiveCall,
+              onToggleMute: toggleVoiceCallMute,
+              onVolumeChange: setVoiceCallVolume,
+              onResumePlayback: resumePlayback,
+            } : null}
           />
         </div>
       </div>
+
+      {showCallPanel && activeChat && (
+        <VoiceCallPanel
+          isOpen={showCallPanel}
+          isMinimized={isCallMinimized}
+          projectName={activeChat.name}
+          teamSize={activeChat.memberCount || activeChat.members?.length || 0}
+          isConfigured={isVoiceCallConfigured}
+          configurationError={voiceCallConfigurationError}
+          isCallActive={Boolean(visibleCall) || (activeCallProjectId === activeProjectId && isCallActive)}
+          isJoined={isJoined}
+          isJoining={isJoiningCall}
+          voiceCallState={voiceCallState}
+          voiceCallMuted={voiceCallMuted}
+          voiceCallVolume={voiceCallVolume}
+          onJoin={handleStartOrJoinCall}
+          onLeave={handleLeaveCall}
+          onEnd={handleEndCall}
+          onToggleMute={toggleVoiceCallMute}
+          onVolumeChange={setVoiceCallVolume}
+          onResumePlayback={resumePlayback}
+          isAutoplayBlocked={isAutoplayBlocked}
+          canEndCall={canEndActiveCall}
+          onMinimize={() => setIsCallMinimized(true)}
+          onRestore={() => setIsCallMinimized(false)}
+          onClose={handleCloseCallPanel}
+        />
+      )}
     </div>
   );
 };
