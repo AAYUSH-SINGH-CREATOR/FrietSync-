@@ -314,10 +314,10 @@ const ProjectDetailsView = () => {
   const canCreateIssue = canCreateSprint ||
     globalRole === 'REPORTER' ||
     currentProjectRoleNames.includes('REPORTER');
-  const canManageReleases = currentUserIds.some((id) =>
-    projectAdminIds.includes(id) || projectManagerIds.includes(id)
-  );
-  const canAttachIssues = canManageReleases || currentUserIds.some((id) => teamLeadIds.includes(id));
+  const canManageReleases = isAdmin || ['ADMIN', 'PROJECT_MANAGER'].includes(globalRole) ||
+    currentUserIds.some((id) => projectAdminIds.includes(id) || projectManagerIds.includes(id)) ||
+    currentProjectRoleNames.includes('PROJECT_MANAGER');
+  const canAttachIssues = canManageReleases;
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -1882,13 +1882,14 @@ const ProjectDetailsView = () => {
             ) : (
               <div className="space-y-3.5">
                 {releases.slice(0, 5).map((release, idx) => {
-                  const rId = release.id || release._id || release.releaseId || idx;
+                  const persistedReleaseId = release.id || release._id || release.releaseId;
+                  const rId = persistedReleaseId || idx;
                   const releaseName = release.name || release.version || `Release ${idx + 1}`;
                   const rDate = release.releaseDate || release.date;
                   const attachedIssues = release.issues || release.issueIds || release.releaseIssues || [];
                   const issueCount = Array.isArray(attachedIssues) ? attachedIssues.length : 0;
-                  const fileUrl = release.releaseFileUrl || release.fileUrl || release.artifactUrl || release.downloadUrl;
-                  const fileName = release.fileName || release.filename || (fileUrl ? 'artifact-file' : null);
+                  const fileUrl = release.releaseFileUrl;
+                  const fileName = release.fileName || release.filename || `${releaseName}-artifact`;
 
                   return (
                     <div
@@ -1941,13 +1942,44 @@ const ProjectDetailsView = () => {
 
                         {}
                         <div className="flex items-center gap-2 flex-wrap">
+                          {canAttachIssues && persistedReleaseId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAttachingRelease(release);
+                                setIsAttachIssuesOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-[#38383e] dark:bg-[#242428] dark:text-slate-200 dark:hover:bg-[#303036]"
+                            >
+                              <FiPlus size={13} /> Attach issues
+                            </button>
+                          )}
+                          {canManageReleases && persistedReleaseId && (
+                            <>
+                              <input
+                                id={`release-file-${rId}`}
+                                type="file"
+                                className="sr-only"
+                                disabled={uploadingReleaseId === rId}
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (file) handleUploadReleaseArtifact(rId, file);
+                                  event.target.value = '';
+                                }}
+                              />
+                              <label
+                                htmlFor={`release-file-${rId}`}
+                                className={`inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition dark:border-[#38383e] dark:bg-[#242428] dark:text-slate-200 ${uploadingReleaseId === rId ? 'cursor-wait opacity-60' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-[#303036]'}`}
+                              >
+                                <FiUploadCloud size={13} /> {uploadingReleaseId === rId ? 'Uploading…' : fileUrl ? 'Replace file' : 'Upload file'}
+                              </label>
+                            </>
+                          )}
                           {fileUrl ? (
                             <div className="flex items-center gap-2">
                               <a
                                 href={fileUrl}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                download={fileName}
                                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 font-semibold text-xs transition"
                               >
                                 <FiDownload size={13} />

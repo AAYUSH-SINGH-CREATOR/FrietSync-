@@ -522,7 +522,7 @@ const TeamView = () => {
       {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Total Tasks</span>
             <span className="h-9 w-9 rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 flex items-center justify-center shrink-0">
@@ -538,7 +538,7 @@ const TeamView = () => {
         </div>
 
         {}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Active Tasks</span>
             <span className="h-9 w-9 rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 flex items-center justify-center shrink-0">
@@ -554,7 +554,7 @@ const TeamView = () => {
         </div>
 
         {}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Overdue Tasks</span>
             <span className="h-9 w-9 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 flex items-center justify-center shrink-0">
@@ -572,7 +572,7 @@ const TeamView = () => {
         </div>
 
         {}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Completed Tasks</span>
             <span className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-center shrink-0">
@@ -593,7 +593,7 @@ const TeamView = () => {
       {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-3 sm:p-4 shadow-xs flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-3 sm:p-4 shadow-xs flex flex-col justify-between">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Team workload chart</h2>
           </div>
@@ -655,7 +655,7 @@ const TeamView = () => {
         </div>
 
         {}
-        <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-3 sm:p-4 shadow-xs flex flex-col justify-between">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-3 sm:p-4 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Team workload</h2>
@@ -699,7 +699,12 @@ const TeamView = () => {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip content={<BarTooltip />} />
+                  <Tooltip
+                    content={<BarTooltip />}
+                    cursor={{ fill: '#34343a', fillOpacity: 0.55 }}
+                    isAnimationActive
+                    animationDuration={180}
+                  />
                   <Legend
                     verticalAlign="top"
                     align="right"
@@ -731,7 +736,7 @@ const TeamView = () => {
       {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {}
-        <section className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-6 shadow-xs flex flex-col space-y-4">
+        <section className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-4 sm:p-6 shadow-xs flex flex-col space-y-4">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
@@ -878,7 +883,7 @@ const TeamView = () => {
         </section>
 
         {}
-        <section className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-6 shadow-xs flex flex-col space-y-4">
+        <section className="rounded-2xl border border-slate-200/90 dark:border-[#303030] bg-white dark:bg-[#1f1f1f] p-4 sm:p-6 shadow-xs flex flex-col space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Team activity</h2>
