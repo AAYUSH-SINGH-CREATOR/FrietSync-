@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FiArrowLeft, FiEdit2, FiTrash2, FiCheckCircle, FiCheck, FiUserPlus,
   FiPaperclip, FiDownload, FiX, FiActivity, FiRefreshCw,
-  FiAlertCircle, FiClock, FiCalendar, FiSend,
+  FiAlertCircle, FiClock, FiCalendar, FiSend, FiMaximize2,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
 import {
@@ -20,6 +20,7 @@ import CommentsThread from '../../../components/ui/CommentsThread';
 import { getProjectMembers } from '../../projects/services/projectApi';
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
 import { getPriorityBadge, getStatusBadge, formatIssueDate, formatEstimatedHours, PRIORITY_OPTIONS } from '../utils/issueUtils';
+import DependencyGraph from './DependencyGraph';
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
 const getId = (v) => v?.id || v?._id || v?.requestId || v?.labelId || v?.linkId || v?.attachmentId || v?.userId;
@@ -108,6 +109,7 @@ const IssueDetailsView = ({
   const [reviewNote, setReviewNote] = useState('');
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isFullscreenGraphOpen, setIsFullscreenGraphOpen] = useState(false);
 
   const pid = issue?.projectId || issue?.project?.id || issue?.project?._id || initialIssue?.projectId;
   const currentUserId = currentUserProfile?.id || currentUserProfile?._id || currentUserProfile?.userId || currentUserProfile?.user?.id;
@@ -550,28 +552,28 @@ const IssueDetailsView = ({
           </Card>
 
           <Card>
-            <CardHeader title="Project Issue Dependency Graph" />
-            {dependencyItems.length > 0 ? (
-              <div className="my-2 overflow-x-auto rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-[#171717]">
-                <svg viewBox={`0 0 480 ${Math.max(100, dependencyItems.length * 48 + 24)}`} className="mx-auto h-auto w-full min-w-[360px] max-w-[460px] select-none">
-                  {dependencyItems.map((dependency, index) => {
-                    const y = 12 + index * 48;
-                    const title = dependency.title || dependency.issue?.title || dependency.description || dependency.name || 'Untitled issue';
-                    const number = dependency.issueNumber || dependency.issue?.issueNumber || String(getId(dependency) || '').slice(-6);
-                    return (
-                      <g key={getId(dependency) || index}>
-                        <path d={`M 176 ${y + 16} L 200 ${y + 16}`} stroke="#818cf8" strokeWidth="1.5" />
-                        <rect x="8" y={y} width="168" height="32" rx="6" fill="#2d2d34" stroke="#4b5563" />
-                        <text x="18" y={y + 13} fill="#a5b4fc" fontSize="9" fontWeight="bold">{number ? `#${number}` : 'ISSUE'}</text>
-                        <text x="18" y={y + 25} fill="#e5e7eb" fontSize="9">{title.slice(0, 26)}</text>
-                        <rect x="200" y={y} width="128" height="32" rx="7" fill="#1e1e24" stroke="#60a5fa" strokeWidth="2" />
-                        <text x="264" y={y + 20} fill="#93c5fd" fontSize="11" fontWeight="bold" textAnchor="middle">{issueKey}</text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-            ) : <p className="py-4 text-center text-xs text-slate-400 dark:text-[#888]">No issue dependencies to display.</p>}
+            <CardHeader
+              title="Project Issue Dependency Graph"
+              action={
+                pid && (
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreenGraphOpen(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                  >
+                    <FiMaximize2 size={12} />
+                    View Full Screen
+                  </button>
+                )
+              }
+            />
+            <div className="h-[420px] w-full rounded-xl overflow-hidden">
+              {pid ? (
+                <DependencyGraph projectId={pid} onBack={() => {}} />
+              ) : (
+                <p className="py-8 text-center text-xs text-slate-400 dark:text-[#888]">Project ID is required to display dependency graph.</p>
+              )}
+            </div>
           </Card>
 
           <Card>
@@ -1200,6 +1202,33 @@ const IssueDetailsView = ({
                 finally { setBusyAction(''); }
               }} className="rounded-lg bg-rose-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-rose-700">Confirm Delete</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Dependency Graph View */}
+      {isFullscreenGraphOpen && pid && (
+        <div className="fixed inset-0 z-40 flex flex-col bg-[#f4f5f7] dark:bg-[#141416] animate-fadeIn">
+          <div className="flex items-center gap-3 px-4 sm:px-6 py-4 bg-white dark:bg-[#171717] border-b border-slate-200 dark:border-slate-800 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsFullscreenGraphOpen(false)}
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <FiArrowLeft size={14} />
+              Back to Issue
+            </button>
+            <div className="flex-1">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                Project Dependency Graph
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {displayProjectName}
+              </p>
+            </div>
+          </div>
+          <div className="flex-1 min-h-0 p-4 sm:p-6">
+            <DependencyGraph projectId={pid} onBack={() => setIsFullscreenGraphOpen(false)} className="h-full" />
           </div>
         </div>
       )}

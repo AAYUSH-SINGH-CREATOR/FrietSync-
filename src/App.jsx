@@ -17,6 +17,7 @@ import MyWorkView from './features/dashboard/components/MyWorkView';
 import CalendarView from './features/calendar/pages/CalendarView';
 import ChatsView from './features/chat/pages/ChatView';
 import TeamView from './features/dashboard/components/TeamView';
+import DependencyGraphView from './features/issues/components/DependencyGraphView';
 import SettingsView from './features/dashboard/components/SettingsView';
 import ProfileView from './features/dashboard/components/ProfileView';
 import NoWorkspace from './features/dashboard/components/NoWorkspace';
@@ -48,6 +49,7 @@ function App() {
           <Route path="projects" element={<ProjectsView />} />
           <Route path="projects/:projectId" element={<ProjectDetailsView />} />
           <Route path="issues" element={<IssuesView />} />
+          <Route path="issues/dependency-graph/:projectId" element={<DependencyGraphView />} />
           <Route path="sprints" element={<SprintsView />} />
           <Route path="my-work" element={<MyWorkView />} />
           <Route path="calendar" element={<CalendarView />} />
