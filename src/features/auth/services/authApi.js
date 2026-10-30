@@ -4,6 +4,44 @@ import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 export { getFriendlyErrorMessage };
 
+const cleanupLegacyLocalStorage = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    let storedUser = {};
+    try {
+      const parsedUser = JSON.parse(localStorage.getItem('frietSyncUser') || '{}');
+      if (parsedUser && typeof parsedUser === 'object' && !Array.isArray(parsedUser)) storedUser = parsedUser;
+    } catch {
+      // Rebuild the consolidated user record from legacy scalar keys below.
+    }
+    const legacyFields = {
+      name: localStorage.getItem('frietSyncName'),
+      role: localStorage.getItem('frietSyncRole'),
+      email: localStorage.getItem('frietSyncEmail'),
+      userId: localStorage.getItem('frietSyncUserId'),
+    };
+    const migratedUser = { ...storedUser };
+    Object.entries(legacyFields).forEach(([field, value]) => {
+      if (!migratedUser[field] && value) migratedUser[field] = value;
+    });
+    if (Object.keys(migratedUser).length) localStorage.setItem('frietSyncUser', JSON.stringify(migratedUser));
+
+    if (!localStorage.getItem('frietSyncToken')) {
+      const legacyToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      if (legacyToken) localStorage.setItem('frietSyncToken', legacyToken.replace(/^Bearer\s+/i, '').trim());
+    }
+
+    [
+      'accessToken', 'token', 'frietSyncName', 'frietSyncRole', 'frietSyncEmail', 'frietSyncUserId',
+      'frietSync_issues_view', 'frietSync_sprints_view', 'frietsync_chat_state_v1', 'frietsync_user_profile',
+    ].forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // Keep existing browser data intact if storage is unavailable or malformed.
+  }
+};
+
+cleanupLegacyLocalStorage();
+
 const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 14 * 60_000;
 const ACCESS_TOKEN_REFRESH_RETRY_MS = 30_000;
 let refreshRequestPromise = null;
@@ -27,10 +65,7 @@ const handleAxiosError = (error, defaultMessage) => {
 };
 
 export const getAccessToken = () => {
-  const rawToken =
-    localStorage.getItem('frietSyncToken') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('token') || '';
+  const rawToken = localStorage.getItem('frietSyncToken') || '';
   return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
 };
 
@@ -144,7 +179,8 @@ export const initializeAccessTokenRefresh = () => {
 const saveAccessToken = (token) => {
   const normalizedToken = String(token).replace(/^Bearer\s+/i, '').trim();
   localStorage.setItem('frietSyncToken', normalizedToken);
-  localStorage.setItem('accessToken', normalizedToken);
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('token');
   localStorage.setItem('frietSyncTokenIssuedAt', String(Date.now()));
   expirationHandled = false;
   scheduleAccessTokenRefresh(normalizedToken);
@@ -169,31 +205,25 @@ export const saveUserData = (data, fallbackData = {}) => {
     data?.data?.user?.role ||
     '';
 
-  if (name) {
-    localStorage.setItem('frietSyncName', name);
+  const responseUser = data?.user || data?.data?.user || data?.data || data || {};
+  const userId = responseUser.id || responseUser._id || responseUser.userId || fallbackData?.id || fallbackData?.userId;
+  const email = responseUser.email || fallbackData?.email;
+  let existing = {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem('frietSyncUser') || '{}');
+    if (parsed && typeof parsed === 'object') existing = parsed;
+  } catch {
+    // Replace malformed persisted profile data with fields from the current response.
   }
-  if (role) {
-    localStorage.setItem('frietSyncRole', role);
-  }
-  if (name || role) {
-    let existing = {};
-    try {
-      const parsed = JSON.parse(localStorage.getItem('frietSyncUser') || '{}');
-      if (parsed && typeof parsed === 'object') {
-        existing = parsed;
-      }
-    } catch {
-      
-    }
-    localStorage.setItem(
-      'frietSyncUser',
-      JSON.stringify({
-        ...existing,
-        name: name || existing.name || '',
-        role: role || existing.role || '',
-      })
-    );
-  }
+  const nextUser = {
+    ...existing,
+    ...(name ? { name } : {}),
+    ...(role ? { role } : {}),
+    ...(userId ? { userId } : {}),
+    ...(email ? { email } : {}),
+  };
+  if (Object.keys(nextUser).length) localStorage.setItem('frietSyncUser', JSON.stringify(nextUser));
+  ['frietSyncName', 'frietSyncRole', 'frietSyncEmail', 'frietSyncUserId'].forEach((key) => localStorage.removeItem(key));
 };
 
 export const registerUser = async (userData) => {
@@ -364,17 +394,12 @@ export const getUserProfile = () => {
     const raw = localStorage.getItem('frietSyncUser');
     if (raw) {
       const parsed = JSON.parse(raw);
-      const name = parsed.name || localStorage.getItem('frietSyncName') || '';
-      const role = parsed.role || localStorage.getItem('frietSyncRole') || '';
-      return { name, role };
+      return parsed && typeof parsed === 'object' ? parsed : {};
     }
   } catch {
     
   }
-  return {
-    name: localStorage.getItem('frietSyncName') || '',
-    role: localStorage.getItem('frietSyncRole') || '',
-  };
+  return {};
 };
 
 export const clearAuthStorage = () => {
@@ -387,4 +412,7 @@ export const clearAuthStorage = () => {
   localStorage.removeItem('frietSyncUser');
   localStorage.removeItem('frietSyncName');
   localStorage.removeItem('frietSyncRole');
+  localStorage.removeItem('frietSyncEmail');
+  localStorage.removeItem('frietSyncUserId');
+  localStorage.removeItem('frietsync_user_profile');
 };

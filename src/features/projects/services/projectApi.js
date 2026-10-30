@@ -4,11 +4,7 @@ import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const getAuthHeaders = () => {
-  const rawToken =
-    localStorage.getItem('frietSyncToken') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('token') ||
-    '';
+  const rawToken = localStorage.getItem('frietSyncToken') || '';
   const token = rawToken.replace(/^Bearer\s+/i, '').trim();
 
   return {
@@ -230,11 +226,7 @@ export const uploadReleaseFile = async (releaseId, file) => {
   const form = new FormData();
   form.append('file', file);
   try {
-    const rawToken =
-      localStorage.getItem('frietSyncToken') ||
-      localStorage.getItem('accessToken') ||
-      localStorage.getItem('token') ||
-      '';
+    const rawToken = localStorage.getItem('frietSyncToken') || '';
     const token = rawToken.startsWith('Bearer ') ? rawToken : (rawToken ? `Bearer ${rawToken}` : '');
     const response = await axios.post(`${BASE_URL}/releases/${releaseId}/file`, form, {
       headers: token ? { Authorization: token } : {},

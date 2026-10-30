@@ -133,16 +133,12 @@ export const getCurrentChatUser = () => {
     decoded.userId ||
     decoded.id ||
     decoded.sub ||
-    localStorage.getItem('frietSyncUserId') ||
     '';
 
   const email =
     storedUser.email ||
     decoded.email ||
-    (typeof decoded.sub === 'string' && decoded.sub.includes('@') ? decoded.sub : '') ||
-    localStorage.getItem('frietSyncEmail') ||
-    localStorage.getItem('email') ||
-    '';
+    (typeof decoded.sub === 'string' && decoded.sub.includes('@') ? decoded.sub : '') || '';
 
   const name =
     profile.name ||
@@ -154,9 +150,7 @@ export const getCurrentChatUser = () => {
   const role =
     profile.role ||
     storedUser.role ||
-    decoded.role ||
-    localStorage.getItem('frietSyncRole') ||
-    '';
+    decoded.role || '';
 
   return { userId, email, name, role };
 };

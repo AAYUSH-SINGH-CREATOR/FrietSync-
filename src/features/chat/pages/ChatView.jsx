@@ -64,7 +64,10 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const joiningCallRef = useRef(false);
   const joinedCallRef = useRef(null);
 
-  const currentUser = useMemo(() => ({ ...getCurrentChatUser(), profilePictureUrl: currentUserProfile?.profilePictureUrl || '' }), [currentUserProfile]);
+  const currentUser = useMemo(() => ({
+    ...getCurrentChatUser(),
+    profilePictureUrl: currentUserProfile?.profilePictureUrl || currentUserProfile?.user?.profilePictureUrl || currentUserProfile?.profileUrl || currentUserProfile?.avatarUrl || '',
+  }), [currentUserProfile]);
 
   const activeChat = useMemo(() => {
     if (!activeConversationId) return projects[0] || null;

@@ -17,11 +17,7 @@ export const getWebSocketUrl = () => {
 };
 
 const getToken = () => {
-  const rawToken =
-    localStorage.getItem('frietSyncToken') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('token') ||
-    '';
+  const rawToken = localStorage.getItem('frietSyncToken') || '';
   return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : getAccessToken() || '';
 };
 

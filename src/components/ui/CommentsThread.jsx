@@ -3,6 +3,7 @@ import {
   FiMessageSquare, FiSend, FiEdit2, FiTrash2, FiCheck, FiX,
   FiClock, FiAlertCircle, FiRefreshCw,
 } from 'react-icons/fi';
+import { getUserProfile } from '../../features/auth/services/authApi';
 
 const MAX_CHARS = 2000;
 
@@ -56,9 +57,10 @@ const getAuthorInfo = (c) => {
 
 const isOwnComment = (comment, profile) => {
   if (!comment) return false;
-  const currentUserId = profile?.id || profile?._id || profile?.userId || profile?.user?.id || profile?.user?._id || localStorage.getItem('frietSyncUserId') || '';
-  const currentUserEmail = String(profile?.email || profile?.user?.email || localStorage.getItem('frietSyncEmail') || '').toLowerCase().trim();
-  const currentUserName = String(profile?.name || profile?.user?.name || localStorage.getItem('frietSyncName') || '').toLowerCase().trim();
+  const storedUser = getUserProfile();
+  const currentUserId = profile?.id || profile?._id || profile?.userId || profile?.user?.id || profile?.user?._id || storedUser.userId || storedUser.id || '';
+  const currentUserEmail = String(profile?.email || profile?.user?.email || storedUser.email || '').toLowerCase().trim();
+  const currentUserName = String(profile?.name || profile?.user?.name || storedUser.name || '').toLowerCase().trim();
 
   const author = getAuthorInfo(comment);
   if (currentUserId && author.id && String(currentUserId) === String(author.id)) return true;

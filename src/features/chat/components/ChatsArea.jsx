@@ -16,6 +16,7 @@ import {
   FiTrash2,
   FiCheck,
   FiPhone,
+  FiUsers,
 } from 'react-icons/fi';
 import {
   getInitials,
@@ -34,6 +35,11 @@ import {
 import { ChatPollModal } from '../../polls/components';
 
 const FAMOUS_EMOJIS = ['👍', '❤️', '😂', '🔥', '😮', '😢', '😡', '🎉'];
+const getProfileImageUrl = (person) => person?.profilePictureUrl || person?.user?.profilePictureUrl || person?.profileUrl || person?.user?.profileUrl || person?.avatarUrl || person?.user?.avatarUrl || person?.profileImageUrl || person?.imageUrl || person?.pictureUrl || person?.photoUrl || '';
+const getMemberName = (member) => typeof member === 'string'
+  ? member
+  : member?.name || member?.user?.name || member?.fullName || member?.email || member?.user?.email || 'Project member';
+
 const ChatAvatar = ({ src, name, className, color }) => {
   const [failed, setFailed] = useState(false);
   const initials = getInitials(name);
@@ -67,6 +73,7 @@ const ChatArea = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInChat, setSearchInChat] = useState('');
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [isProjectDetailsOpen, setIsProjectDetailsOpen] = useState(false);
   const [pollToOpenId, setPollToOpenId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingText, setEditingText] = useState('');
@@ -412,8 +419,23 @@ const ChatArea = ({
   const memberCount = Array.isArray(activeChat.members) && activeChat.members.length > 0
     ? activeChat.members.length
     : (activeChat.memberCount ?? activeChat.raw?.memberCount ?? 0);
-  const projectInitials = getInitials(activeChat.name);
   const projectColor = getAvatarColor(activeChat.name);
+  const projectInfo = activeChat.raw || activeChat;
+  const projectDescription = projectInfo.description || projectInfo.projectDescription || '';
+  const projectOwner = projectInfo.projectManager?.name || projectInfo.projectManagerName || projectInfo.owner?.name || '';
+  const findMemberAvatar = (message) => {
+    const senderId = String(message.senderId || message.userId || '');
+    const senderEmail = String(message.senderEmail || message.email || '').toLowerCase();
+    const senderName = String(message.senderName || message.sender || '').toLowerCase();
+    const member = (activeChat.members || []).find((candidate) => {
+      if (!candidate || typeof candidate === 'string') return false;
+      const id = String(candidate.userId || candidate.memberId || candidate.id || candidate._id || candidate.user?.id || candidate.user?._id || '');
+      const email = String(candidate.email || candidate.user?.email || '').toLowerCase();
+      const name = String(candidate.name || candidate.user?.name || '').toLowerCase();
+      return (senderId && id === senderId) || (senderEmail && email === senderEmail) || (senderName && name === senderName);
+    });
+    return getProfileImageUrl(member);
+  };
 
   return (
     <div className="w-full flex-1 min-w-0 bg-gradient-to-br from-[#D9EAFD] via-[#EAF2FF] to-[#D5E7FC] dark:from-[#060D1A] dark:via-[#091527] dark:to-[#040A14] border-2 sm:border-4 border-[#CCE5FE] dark:border-[#1B3654] rounded-3xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden relative transition-colors">
@@ -434,13 +456,7 @@ const ChatArea = ({
 
           {}
           <div className="relative shrink-0">
-            {activeChat.avatar ? (
-              <img src={activeChat.avatar} alt={activeChat.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
-            ) : (
-              <div className={`w-10 h-10 rounded-full ${projectColor} text-white font-bold text-xs flex items-center justify-center shadow-xs select-none`}>
-                {projectInitials}
-              </div>
-            )}
+            <ChatAvatar src={activeChat.avatar || projectInfo.projectImageUrl || projectInfo.imageUrl || projectInfo.logoUrl} name={activeChat.name} color={projectColor} className="w-10 h-10 border border-slate-200 dark:border-slate-700 text-xs shadow-xs" />
           </div>
 
           <div className="min-w-0 text-left">
@@ -499,7 +515,7 @@ const ChatArea = ({
           )}
           <button
             type="button"
-            onClick={onOpenGroupDetails}
+            onClick={() => { onOpenGroupDetails?.(); setIsProjectDetailsOpen(true); }}
             title="Conversation details"
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
@@ -581,7 +597,7 @@ const ChatArea = ({
                 {}
                 <div className="flex items-center gap-2 min-w-0 max-w-full sm:max-w-[85%] relative">
                   {!isOutgoing && (
-                    <ChatAvatar src={msg.senderAvatar} name={senderName} color={avatarColor} className="w-7 h-7 text-[10px] shadow-xs" />
+                    <ChatAvatar src={msg.senderAvatar || findMemberAvatar(msg)} name={senderName} color={avatarColor} className="w-7 h-7 text-[10px] shadow-xs" />
                   )}
 
                   {}
@@ -732,7 +748,7 @@ const ChatArea = ({
                   )}
 
                   {isOutgoing && (
-                    <ChatAvatar src={currentUser?.profilePictureUrl} name={currentUser?.name || 'You'} color="bg-[#D95295]" className="w-7 h-7 text-[10px] shadow-xs" />
+                    <ChatAvatar src={getProfileImageUrl(currentUser)} name={currentUser?.name || 'You'} color="bg-[#D95295]" className="w-7 h-7 text-[10px] shadow-xs" />
                   )}
                 </div>
               </div>
@@ -910,6 +926,70 @@ const ChatArea = ({
           onSendMessage(shareText);
         }}
       />
+
+      {isProjectDetailsOpen && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-5"
+          role="presentation"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setIsProjectDetailsOpen(false); }}
+          onKeyDown={(event) => { if (event.key === 'Escape') setIsProjectDetailsOpen(false); }}
+        >
+          <section role="dialog" aria-modal="true" aria-labelledby="chat-overview-title" className="flex max-h-[88dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-[#303030] dark:bg-[#1f1f1f]">
+            <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-[#303030]">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><FiUsers size={18} /></span>
+                <div className="min-w-0">
+                  <h2 id="chat-overview-title" className="truncate text-base font-bold text-slate-900 dark:text-white">Chat overview</h2>
+                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{activeChat.name}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsProjectDetailsOpen(false)} aria-label="Close project overview" className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#2b2b30]"><FiX size={18} /></button>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#303030] dark:bg-[#252529]">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{activeChat.name}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{projectDescription || 'No project description has been added.'}</p>
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
+                  {projectOwner && <span>Project manager: {projectOwner}</span>}
+                  {(projectInfo.status || projectInfo.projectStatus) && <span>Status: {projectInfo.status || projectInfo.projectStatus}</span>}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Project members</h3>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">{activeChat.members?.length || 0}</span>
+                </div>
+                {activeChat.members?.length ? (
+                  <ul className="divide-y divide-slate-100 dark:divide-[#303030]">
+                    {activeChat.members.map((member, index) => {
+                      const name = getMemberName(member);
+                      const email = typeof member === 'string' ? '' : member?.email || member?.user?.email || '';
+                      const role = typeof member === 'string' ? '' : member?.role || member?.projectRole || member?.user?.role || '';
+                      const profileUrl = getProfileImageUrl(member);
+                      const memberId = typeof member === 'string' ? member : member?.userId || member?.id || member?._id || member?.user?.id || email || index;
+                      return (
+                        <li key={memberId} className="flex items-center gap-3 py-3">
+                          <ChatAvatar src={profileUrl} name={name} color={getAvatarColor(name)} className="h-10 w-10 text-xs" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{name}</p>
+                            {email && <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{email}</p>}
+                          </div>
+                          {role && <span className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-[10px] font-medium text-slate-600 dark:border-[#3b3b42] dark:text-slate-300">{String(role).replace(/[_-]/g, ' ')}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-slate-200 px-4 py-7 text-center text-xs text-slate-500 dark:border-[#35353d] dark:text-slate-400">Project member details are unavailable.</p>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

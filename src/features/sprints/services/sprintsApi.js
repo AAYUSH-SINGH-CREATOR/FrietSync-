@@ -4,11 +4,7 @@ import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const getAuthHeaders = () => {
-  const rawToken =
-    localStorage.getItem('frietSyncToken') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('token') ||
-    '';
+  const rawToken = localStorage.getItem('frietSyncToken') || '';
   const token = rawToken.replace(/^Bearer\s+/i, '').trim();
 
   return {

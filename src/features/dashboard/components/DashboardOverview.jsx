@@ -32,6 +32,7 @@ import IssueDetailsView from '../../issues/components/IssueDetailsView';
 import { formatFigmaDate } from '../../issues/utils/issueUtils';
 import NoWorkspace from './NoWorkspace';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
+import { getUserProfile } from '../../auth/services/authApi';
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
 const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
@@ -110,7 +111,7 @@ const DashboardOverview = () => {
 
   const userName =
     currentUserProfile?.name?.trim() ||
-    localStorage.getItem('frietSyncName') ||
+    getUserProfile().name ||
     '';
   const firstName = userName ? userName.split(' ')[0] : 'there';
 

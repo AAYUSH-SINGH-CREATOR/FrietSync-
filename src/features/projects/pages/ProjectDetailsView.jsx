@@ -251,6 +251,17 @@ const ProjectDetailsView = () => {
     }
   }, [project]);
 
+  // ESC key to go back to dashboard
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        navigate('/dashboard/projects');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
   const isAdmin = isUserAdmin();
 
   const currentProjectRole = useMemo(() => {

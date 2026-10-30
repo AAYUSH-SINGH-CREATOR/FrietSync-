@@ -4,6 +4,7 @@ import workspaceHero from '../../../assets/workspace-hero.png';
 import workspaceFolderIcon from '../../../assets/workspace-icon-folder.png';
 import workspaceCollaborateIcon from '../../../assets/workspace-icon-collaborate.png';
 import workspaceIssuesIcon from '../../../assets/workspace-icon-issues.png';
+import { getUserProfile } from '../../auth/services/authApi';
 
 const NoWorkspace = ({
   userName: propUserName,
@@ -16,7 +17,7 @@ const NoWorkspace = ({
   const userName =
     propUserName ||
     outletContext?.currentUserProfile?.name ||
-    localStorage.getItem('frietSyncName') ||
+    getUserProfile().name ||
     '';
 
   const firstName = useMemo(() => {
