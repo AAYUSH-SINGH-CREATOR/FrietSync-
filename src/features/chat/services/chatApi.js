@@ -210,6 +210,36 @@ export const getProjectChatMessages = async (projectId, page = 0, size = 50) => 
   }
 };
 
+export const deleteMessage = async (projectId, messageId) => {
+  if (!projectId || !messageId) throw new Error('Project ID and Message ID are required.');
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/projects/${projectId}/chat/messages/${messageId}`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to delete message.');
+  }
+};
+
+export const editMessage = async (projectId, messageId, content, mentionedUserIds = []) => {
+  if (!projectId || !messageId) throw new Error('Project ID and Message ID are required.');
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/projects/${projectId}/chat/messages/${messageId}`,
+      {
+        content: String(content || '').trim(),
+        mentionedUserIds: Array.isArray(mentionedUserIds) ? mentionedUserIds : [],
+      },
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to edit message.');
+  }
+};
+
 export const formatFileSize = (bytes) => {
   if (!bytes || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];

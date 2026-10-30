@@ -12,6 +12,9 @@ import {
   FiFileText,
   FiImage,
   FiDownload,
+  FiEdit2,
+  FiTrash2,
+  FiCheck,
 } from 'react-icons/fi';
 import {
   getInitials,
@@ -24,6 +27,8 @@ import {
   stripPollMetadata,
   uploadChatAttachment,
   downloadChatAttachment,
+  deleteMessage,
+  editMessage,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
 
@@ -48,6 +53,8 @@ const ChatArea = ({
   isLoadingOlder = false,
   onLoadOlder,
   currentUser: currentUserProp,
+  onMessageUpdate,
+  onMessageDelete,
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedAttachments, setSelectedAttachments] = useState([]);
@@ -59,6 +66,11 @@ const ChatArea = ({
   const [searchInChat, setSearchInChat] = useState('');
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [pollToOpenId, setPollToOpenId] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+  const [messageMenuOpen, setMessageMenuOpen] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -69,6 +81,7 @@ const ChatArea = ({
   const attachmentProjectIdRef = useRef(activeChat?.id);
   const uploadIdRef = useRef(0);
   const previewObjectUrlRef = useRef(null);
+  const messageMenuRef = useRef(null);
 
   const currentUser = currentUserProp || getCurrentChatUser();
 
@@ -149,11 +162,26 @@ const ChatArea = ({
       if (e.key === 'Escape') {
         setIsEmojiPickerOpen(false);
         closeImagePreview();
+        setEditingMessageId(null);
+        setEditingText('');
+        setMessageMenuOpen(null);
       }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [closeImagePreview]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (messageMenuRef.current && !messageMenuRef.current.contains(e.target)) {
+        setMessageMenuOpen(null);
+      }
+    };
+    if (messageMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [messageMenuOpen]);
 
   const handleSelectEmoji = (emoji) => {
     setInputText((prev) => (prev ? `${prev} ${emoji}` : emoji));
@@ -294,6 +322,55 @@ const ChatArea = ({
       setPreviewImage({ ...attachment, name: attachment.fileName || attachment.name, url });
     } catch (error) {
       setAttachmentError(error.message || 'Image preview failed to load.');
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!activeChat?.id || !messageId || isDeleting) return;
+    setIsDeleting(true);
+    setMessageMenuOpen(null);
+    try {
+      const updatedMessage = await deleteMessage(activeChat.id, messageId);
+      if (onMessageDelete) {
+        onMessageDelete(messageId, updatedMessage);
+      }
+    } catch (error) {
+      setAttachmentError(error.message || 'Failed to delete message.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleStartEdit = (message) => {
+    setEditingMessageId(message.id);
+    setEditingText(message.text || '');
+    setMessageMenuOpen(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingText('');
+  };
+
+  const handleSaveEdit = async (messageId) => {
+    if (!activeChat?.id || !messageId || isEditing) return;
+    const trimmedText = editingText.trim();
+    if (!trimmedText) {
+      setAttachmentError('Message cannot be empty.');
+      return;
+    }
+    setIsEditing(true);
+    try {
+      const updatedMessage = await editMessage(activeChat.id, messageId, trimmedText);
+      if (onMessageUpdate) {
+        onMessageUpdate(messageId, updatedMessage);
+      }
+      setEditingMessageId(null);
+      setEditingText('');
+    } catch (error) {
+      setAttachmentError(error.message || 'Failed to edit message.');
+    } finally {
+      setIsEditing(false);
     }
   };
 
@@ -459,86 +536,183 @@ const ChatArea = ({
         ) : (
           displayedMessages.map((msg) => {
             const isOutgoing = msg.isOutgoing;
+            const isDeleted = msg.deleted || msg.status === 'DELETED';
             const senderName = isOutgoing ? 'You' : msg.sender || 'Member';
             const avatarColor = isOutgoing ? 'bg-[#D95295]' : getAvatarColor(senderName);
             const { cleanText, attachment: parsedAtt } = parseAttachmentFromText(msg.text || '');
-            const messageAttachments = Array.isArray(msg.attachments) && msg.attachments.length
+            const messageAttachments = isDeleted ? [] : (Array.isArray(msg.attachments) && msg.attachments.length
               ? msg.attachments
-              : (msg.attachment ? [msg.attachment] : parsedAtt ? [parsedAtt] : []);
-            const displayText = stripPollMetadata(cleanText).replace('📊 Poll:', '🗳️ Poll:');
-            const pollId = getMessagePollId(msg);
-            const isLegacyPollMessage = msg.text?.includes('📊') && /\bpoll\b/i.test(msg.text);
+              : (msg.attachment ? [msg.attachment] : parsedAtt ? [parsedAtt] : []));
+            const displayText = isDeleted
+              ? ''
+              : stripPollMetadata(cleanText).replace('📊 Poll:', '🗳️ Poll:');
+            const pollId = isDeleted ? null : getMessagePollId(msg);
+            const isLegacyPollMessage = !isDeleted && msg.text?.includes('📊') && /\bpoll\b/i.test(msg.text);
+            const isEditingThis = editingMessageId === msg.id;
 
             return (
-              <div key={msg.id} className={`flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
+              <div key={msg.id} className={`group flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
                 {/* Sender Name & Timestamp above bubble */}
                 <div className={`text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 flex items-center gap-1.5 ${isOutgoing ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
                   <span>{senderName}</span>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500">{msg.timestamp}</span>
+                  {msg.editedAt && !isDeleted && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">(edited)</span>
+                  )}
                 </div>
 
                 {/* Bubble & Avatar row */}
-                <div className="flex items-center gap-2 min-w-0 max-w-full sm:max-w-[85%]">
+                <div className="flex items-center gap-2 min-w-0 max-w-full sm:max-w-[85%] relative">
                   {!isOutgoing && (
                     <ChatAvatar src={msg.senderAvatar} name={senderName} color={avatarColor} className="w-7 h-7 text-[10px] shadow-xs" />
                   )}
 
-                  <div
-                    className={`min-w-0 max-w-full rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere] shadow-xs ${
-                      isOutgoing
-                        ? 'bg-[#8AD4FF] dark:bg-[#1C1C1C] text-slate-900 dark:text-white rounded-tr-xs dark:border dark:border-white/10'
-                        : 'bg-white dark:bg-[#171717] text-slate-900 dark:text-white rounded-tl-xs border border-slate-100 dark:border-white/5'
-                    }`}
-                  >
-                    {displayText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{displayText}</p>}
-
-                    {messageAttachments.map((rawAttachment, attachmentIndex) => {
-                      const attachment = {
-                        ...rawAttachment,
-                        name: rawAttachment.fileName || rawAttachment.name || 'Attachment',
-                        size: rawAttachment.sizeBytes ?? rawAttachment.size ?? 0,
-                        type: rawAttachment.contentType || rawAttachment.type || '',
-                        downloadUrl: rawAttachment.downloadUrl || rawAttachment.url,
-                      };
-                      const isImage = rawAttachment.isImage || attachment.type.startsWith('image/');
-                      return (
-                        <div key={rawAttachment.id || attachmentIndex} className={`mt-2 flex min-w-0 items-center gap-2.5 rounded-xl border p-2.5 ${
-                          isOutgoing
-                            ? 'bg-white/60 dark:bg-white/5 border-sky-300 dark:border-white/10 text-slate-900 dark:text-white'
-                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
-                        }`}>
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-400">
-                            {isImage ? <FiImage size={18} /> : <FiFileText size={18} />}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            {isImage ? (
-                              <button type="button" onClick={() => handlePreviewAttachment(attachment)} className="block max-w-full truncate text-left text-xs font-semibold hover:text-sky-600 dark:hover:text-sky-400">
-                                {attachment.name}
+                  {/* Message actions (shown on hover for own messages) */}
+                  {isOutgoing && !isDeleted && !isEditingThis && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mr-1 order-first">
+                      <div className="relative" ref={messageMenuOpen === msg.id ? messageMenuRef : null}>
+                        <button
+                          type="button"
+                          onClick={() => setMessageMenuOpen((prev) => prev === msg.id ? null : msg.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-white/80 dark:hover:bg-white/10 transition cursor-pointer"
+                          title="Message options"
+                        >
+                          <FiMoreVertical size={14} />
+                        </button>
+                        {messageMenuOpen === msg.id && (
+                          <div className="absolute bottom-full right-0 mb-1 w-32 bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg py-1 z-30 animate-fadeIn">
+                            {!pollId && !isLegacyPollMessage && (
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(msg)}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition cursor-pointer"
+                              >
+                                <FiEdit2 size={12} />
+                                Edit
                               </button>
-                            ) : (
-                              <p className="truncate text-xs font-semibold">{attachment.name}</p>
                             )}
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                              {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
-                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMessage(msg.id)}
+                              disabled={isDeleting}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition cursor-pointer disabled:opacity-50"
+                            >
+                              <FiTrash2 size={12} />
+                              Delete
+                            </button>
                           </div>
-                          <button type="button" onClick={() => handleDownloadAttachment(attachment)} className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-white/80 hover:text-sky-600 dark:hover:bg-white/10 dark:hover:text-sky-400" title="Download attachment">
-                            <FiDownload size={16} />
-                          </button>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-                    {(pollId || isLegacyPollMessage) && (
-                      <button
-                        type="button"
-                        onClick={() => { setPollToOpenId(pollId); setIsPollModalOpen(true); }}
-                        className="mt-2 inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-sky-700 transition cursor-pointer"
-                      >
-                       View Poll
-                      </button>
-                    )}
-                  </div>
+                  {/* Edit mode inline */}
+                  {isEditingThis ? (
+                    <div className="min-w-0 flex-1 max-w-full rounded-2xl px-3 py-2 bg-white dark:bg-[#1C1C1C] border-2 border-sky-400 dark:border-sky-600 shadow-xs">
+                      <textarea
+                        autoFocus
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(msg.id); }
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        maxLength={2000}
+                        rows={Math.min(4, Math.ceil(editingText.length / 60) + 1)}
+                        className="w-full bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white outline-none resize-none [overflow-wrap:anywhere]"
+                      />
+                      <div className="flex items-center justify-end gap-2 mt-1.5 pt-1.5 border-t border-slate-100 dark:border-white/10">
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="text-[11px] px-2.5 py-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEdit(msg.id)}
+                          disabled={isEditing || !editingText.trim()}
+                          className="text-[11px] px-2.5 py-1 rounded-lg bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition cursor-pointer flex items-center gap-1"
+                        >
+                          {isEditing ? (
+                            <span className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <FiCheck size={11} />
+                          )}
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`min-w-0 max-w-full rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed break-words whitespace-pre-wrap [overflow-wrap:anywhere] shadow-xs ${
+                        isDeleted
+                          ? 'bg-slate-100 dark:bg-[#1a1a1a] text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-white/5 italic'
+                          : isOutgoing
+                          ? 'bg-[#8AD4FF] dark:bg-[#1C1C1C] text-slate-900 dark:text-white rounded-tr-xs dark:border dark:border-white/10'
+                          : 'bg-white dark:bg-[#171717] text-slate-900 dark:text-white rounded-tl-xs border border-slate-100 dark:border-white/5'
+                      }`}
+                    >
+                      {isDeleted ? (
+                        <p className="min-w-0 max-w-full [overflow-wrap:anywhere] flex items-center gap-1.5">
+                          <FiTrash2 size={12} className="shrink-0" />
+                          This message was deleted
+                        </p>
+                      ) : (
+                        <>
+                          {displayText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{displayText}</p>}
+
+                          {messageAttachments.map((rawAttachment, attachmentIndex) => {
+                            const attachment = {
+                              ...rawAttachment,
+                              name: rawAttachment.fileName || rawAttachment.name || 'Attachment',
+                              size: rawAttachment.sizeBytes ?? rawAttachment.size ?? 0,
+                              type: rawAttachment.contentType || rawAttachment.type || '',
+                              downloadUrl: rawAttachment.downloadUrl || rawAttachment.url,
+                            };
+                            const isImage = rawAttachment.isImage || attachment.type.startsWith('image/');
+                            return (
+                              <div key={rawAttachment.id || attachmentIndex} className={`mt-2 flex min-w-0 items-center gap-2.5 rounded-xl border p-2.5 ${
+                                isOutgoing
+                                  ? 'bg-white/60 dark:bg-white/5 border-sky-300 dark:border-white/10 text-slate-900 dark:text-white'
+                                  : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
+                              }`}>
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-400">
+                                  {isImage ? <FiImage size={18} /> : <FiFileText size={18} />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  {isImage ? (
+                                    <button type="button" onClick={() => handlePreviewAttachment(attachment)} className="block max-w-full truncate text-left text-xs font-semibold hover:text-sky-600 dark:hover:text-sky-400">
+                                      {attachment.name}
+                                    </button>
+                                  ) : (
+                                    <p className="truncate text-xs font-semibold">{attachment.name}</p>
+                                  )}
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                    {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
+                                  </p>
+                                </div>
+                                <button type="button" onClick={() => handleDownloadAttachment(attachment)} className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-white/80 hover:text-sky-600 dark:hover:bg-white/10 dark:hover:text-sky-400" title="Download attachment">
+                                  <FiDownload size={16} />
+                                </button>
+                              </div>
+                            );
+                          })}
+
+                          {(pollId || isLegacyPollMessage) && (
+                            <button
+                              type="button"
+                              onClick={() => { setPollToOpenId(pollId); setIsPollModalOpen(true); }}
+                              className="mt-2 inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-sky-700 transition cursor-pointer"
+                            >
+                              View Poll
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   {isOutgoing && (
                     <ChatAvatar src={currentUser?.profilePictureUrl} name={currentUser?.name || 'You'} color="bg-[#D95295]" className="w-7 h-7 text-[10px] shadow-xs" />

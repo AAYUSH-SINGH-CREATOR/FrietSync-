@@ -398,6 +398,54 @@ const ChatsView = () => {
     }
   };
 
+  const handleMessageUpdate = (messageId, updatedMessage) => {
+    if (!activeChat?.id || !messageId) return;
+    setMessagesMap((prev) => {
+      const currentList = prev[activeChat.id] || [];
+      const updatedList = currentList.map((msg) => {
+        if (String(msg.id) === String(messageId)) {
+          return {
+            ...msg,
+            text: updatedMessage.content || updatedMessage.message || msg.text,
+            timestamp: formatMessageTime(updatedMessage.createdAt || updatedMessage.updatedAt || msg.timestamp),
+            editedAt: updatedMessage.updatedAt,
+            metadata: updatedMessage.metadata || msg.metadata,
+          };
+        }
+        return msg;
+      });
+      return {
+        ...prev,
+        [activeChat.id]: updatedList,
+      };
+    });
+  };
+
+  const handleMessageDelete = (messageId, deletedMessage) => {
+    if (!activeChat?.id || !messageId) return;
+    setMessagesMap((prev) => {
+      const currentList = prev[activeChat.id] || [];
+      const updatedList = currentList.map((msg) => {
+        if (String(msg.id) === String(messageId)) {
+          return {
+            ...msg,
+            text: '',
+            deleted: true,
+            attachments: [],
+            timestamp: formatMessageTime(deletedMessage.createdAt || msg.timestamp),
+            editedAt: deletedMessage.updatedAt,
+            metadata: deletedMessage.metadata || msg.metadata,
+          };
+        }
+        return msg;
+      });
+      return {
+        ...prev,
+        [activeChat.id]: updatedList,
+      };
+    });
+  };
+
   return (
     <div className="h-full min-h-0 min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-hidden">
       {toastNotice && (
@@ -458,6 +506,8 @@ const ChatsView = () => {
             isLoadingOlder={isLoadingOlder}
             onLoadOlder={loadOlderMessages}
             currentUser={currentUser}
+            onMessageUpdate={handleMessageUpdate}
+            onMessageDelete={handleMessageDelete}
           />
         </div>
       </div>
