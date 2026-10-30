@@ -91,7 +91,7 @@ const DashboardNavbar = ({
   const profileMenuRef = useRef(null);
   const mobileProfileMenuRef = useRef(null);
 
-  // Notifications state
+  
   const [localUnreadCount, setLocalUnreadCount] = useState(null);
   const unreadCount = localUnreadCount !== null ? localUnreadCount : (typeof initialUnreadCount === 'number' ? initialUnreadCount : 0);
   const initialUnreadCountRef = useRef(initialUnreadCount);
@@ -321,7 +321,7 @@ const DashboardNavbar = ({
 
   return (
     <>
-      {/* Desktop Header */}
+      {}
       <header className="hidden md:flex bg-white dark:bg-[#1f1f1f] border-b border-gray-200 dark:border-[#303030] px-4 sm:px-8 py-3.5 items-center justify-between shadow-xs sticky top-0 z-30 transition-colors duration-200">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" aria-label="FrietSync home" className="group flex items-center">
@@ -376,7 +376,7 @@ const DashboardNavbar = ({
                 aria-label="Notifications popover"
                 className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-gray-200 dark:border-[#333333] bg-white dark:bg-[#1f1f1f] shadow-2xl z-50 overflow-hidden flex flex-col"
               >
-                {/* Popover Header */}
+                {}
                 <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2f2f2f] flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white">Notifications</h3>
@@ -416,7 +416,7 @@ const DashboardNavbar = ({
                   </button>
                 )}
 
-                {/* Popover List */}
+                {}
                 <div className="max-h-[380px] sm:max-h-[420px] overflow-y-auto divide-y divide-gray-100 dark:divide-[#272727]">
                   {isLoadingNotifications && notifications.length === 0 ? (
                     <div className="p-4 space-y-3">
@@ -503,7 +503,7 @@ const DashboardNavbar = ({
                   )}
                 </div>
 
-                {/* Popover Footer */}
+                {}
                 {hasMore && (
                   <button
                     type="button"
@@ -592,7 +592,7 @@ const DashboardNavbar = ({
         </div>
       </header>
 
-      {/* Mobile Navbar Header */}
+      {}
       <header className="flex md:hidden flex-col gap-2 bg-[#81ebfe] px-4 py-2 sticky top-0 z-40 w-full shadow-xs select-none">
         <div className="flex h-[38px] w-full items-center justify-between">
           <button

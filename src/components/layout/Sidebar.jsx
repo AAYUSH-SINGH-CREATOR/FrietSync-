@@ -360,7 +360,7 @@ const Sidebar = ({
         </div>
       </aside>
 
-      {/* Mobile Sidebar Overlay + Drawer */}
+      {}
       {isMobileOpen && (
         <>
           <div
@@ -373,7 +373,7 @@ const Sidebar = ({
             className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#181818] border-r border-slate-200 dark:border-[#303030] shadow-2xl flex flex-col justify-between p-4 sm:p-5 md:hidden text-left select-none overflow-y-auto"
           >
             <div>
-              {/* Header with Logo and Close */}
+              {}
               <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-[#2e2e2e]">
                 <div className="flex items-center gap-2.5">
                   <img src={logo} alt="FrietSync Logo" className="w-7 h-7 object-contain" />
@@ -391,7 +391,7 @@ const Sidebar = ({
                 </button>
               </div>
 
-              {/* Main Nav Items */}
+              {}
               <nav className="mt-4 space-y-1">
                 {mainNavItems.map((item) => {
                   const Icon = item.icon;
@@ -434,7 +434,7 @@ const Sidebar = ({
                         </div>
                       </NavLink>
 
-                      {/* Submenu for Projects */}
+                      {}
                       {item.hasSubmenu && isProjectsExpanded && (
                         <div className="pl-9 pr-2 py-1 space-y-1">
                           {item.subItems.map((sub) => (
@@ -462,10 +462,10 @@ const Sidebar = ({
                 })}
               </nav>
 
-              {/* Divider */}
+              {}
               <div className="my-3.5 border-t border-slate-100 dark:border-[#2e2e2e]" />
 
-              {/* Bottom Nav Items */}
+              {}
               <div className="space-y-1">
                 {bottomNavItems.map((item) => {
                   const Icon = item.icon;
@@ -493,7 +493,7 @@ const Sidebar = ({
               </div>
             </div>
 
-            {/* Bottom Actions: Theme Toggle & Logout */}
+            {}
             <div className="pt-3.5 border-t border-slate-100 dark:border-[#2e2e2e] space-y-1.5">
               {toggleTheme && (
                 <button

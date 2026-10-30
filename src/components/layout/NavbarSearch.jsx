@@ -38,7 +38,7 @@ const loadSearchCatalog = async () => {
   const projects = getProjectList(await getMyProjects()).filter((project) => getProjectId(project));
   const issues = [];
 
-  // Keep the initial search fan-out limited while still searching across all projects.
+  
   for (let index = 0; index < projects.length; index += 3) {
     const batch = projects.slice(index, index + 3);
     const responses = await Promise.allSettled(

@@ -185,7 +185,7 @@ const PollCard = ({
         ? 'border-slate-200 dark:border-[#303030] opacity-95'
         : 'border-slate-200/90 dark:border-[#333] hover:border-sky-300 dark:hover:border-sky-700'
     }`}>
-      {/* Top badges row */}
+      {}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
@@ -225,7 +225,7 @@ const PollCard = ({
         </div>
       </div>
 
-      {/* Question & Description */}
+      {}
       <div className="mt-2.5">
         <h4 className="text-sm font-bold text-slate-900 dark:text-white sm:text-base leading-snug">
           {pollData?.question || 'Untitled Poll'}
@@ -243,7 +243,7 @@ const PollCard = ({
         </div>
       )}
 
-      {/* Options List with Progress Bars */}
+      {}
       <div className="mt-3.5 space-y-2">
         {(pollData?.options || []).map((opt, idx) => {
           const optId = opt.id || opt._id || opt.optionId || String(idx);
@@ -264,7 +264,7 @@ const PollCard = ({
                   : 'border-slate-200/80 bg-slate-50/60 hover:border-sky-300 hover:bg-slate-100/60 dark:border-[#303030] dark:bg-[#252528] dark:hover:border-[#48484e]'
               } ${isClosed ? 'cursor-default' : ''}`}
             >
-              {/* Animated Progress Fill */}
+              {}
               <div
                 style={{ width: `${percentage}%` }}
                 className={`absolute inset-y-0 left-0 transition-all duration-500 ${
@@ -274,7 +274,7 @@ const PollCard = ({
                 }`}
               />
 
-              {/* Foreground Content */}
+              {}
               <div className="relative flex items-center justify-between gap-3 text-xs font-medium">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition ${
@@ -303,7 +303,7 @@ const PollCard = ({
         })}
       </div>
 
-      {/* Footer Info */}
+      {}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-400 dark:border-[#2d2d32] dark:text-[#777]">
         <div className="flex items-center gap-1.5">
           <FiBarChart2 size={12} />

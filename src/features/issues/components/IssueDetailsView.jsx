@@ -56,7 +56,7 @@ const formatDateTime = (dateStr) => {
 };
 
 const Card = ({ children, className = '' }) => (
-  <div className={`rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-[#2d2d32] dark:bg-[#171717] sm:p-5 ${className}`}>
+  <div className={`rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-5 ${className}`}>
     {children}
   </div>
 );
@@ -112,6 +112,7 @@ const IssueDetailsView = ({
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isFullscreenGraphOpen, setIsFullscreenGraphOpen] = useState(false);
+  const [isGithubIssueModalOpen, setIsGithubIssueModalOpen] = useState(false);
   const [githubIssueNumberInput, setGithubIssueNumberInput] = useState('');
 
   const pid = issue?.projectId || issue?.project?.id || issue?.project?._id || initialIssue?.projectId;
@@ -330,6 +331,7 @@ const IssueDetailsView = ({
             </button>
           )}
           {canEdit && (
+            <>
             <button
               type="button"
               onClick={() => {
@@ -346,6 +348,17 @@ const IssueDetailsView = ({
             >
               <FiEdit2 size={14} /> Edit
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGithubIssueNumberInput('');
+                setIsGithubIssueModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-[#38383e] dark:bg-[#222226] dark:text-slate-200 dark:hover:bg-[#2b2b30] shadow-xs transition cursor-pointer"
+            >
+              <FiGithub size={14} /> {linkedGithubIssueNumber ? 'GitHub linked' : 'Link GitHub issue'}
+            </button>
+            </>
           )}
           {isManager && (
             <button
@@ -454,26 +467,6 @@ const IssueDetailsView = ({
           </Card>
 
           <Card>
-            <CardHeader title="GitHub Issue" />
-            {linkedGithubIssueNumber ? (
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717]">
-                <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  <FiGithub size={15} /> Linked issue #{linkedGithubIssueNumber}
-                </span>
-                {canEdit && <button type="button" disabled={!!busyAction} onClick={() => runAction('github-unlink', () => unlinkGithubIssue(issueId), 'GitHub issue unlinked successfully.')} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-400 dark:hover:bg-rose-950/30"><FiX size={13} /> Unlink</button>}
-              </div>
-            ) : canEdit ? (
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="min-w-[180px] flex-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  GitHub issue number
-                  <input type="number" min="1" step="1" value={githubIssueNumberInput} onChange={(event) => setGithubIssueNumberInput(event.target.value)} placeholder="e.g. 42" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-sky-500 dark:border-[#35353a] dark:bg-[#222226] dark:text-white" />
-                </label>
-                <button type="button" disabled={!!busyAction || !githubIssueNumberInput} onClick={handleLinkGithubIssue} className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50"><FiLink size={13} /> Link</button>
-              </div>
-            ) : <p className="text-xs text-slate-500 dark:text-slate-400">No GitHub issue linked.</p>}
-          </Card>
-
-          <Card>
             <CardHeader title="Linked Sprints" />
             <div className={sprints.length > 5 ? "max-h-[280px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent space-y-2" : "space-y-2"}>
               {sprints.length > 0 ? (
@@ -485,7 +478,7 @@ const IssueDetailsView = ({
                   const sprintNumber = sprint.sprintNumber;
 
                   return (
-                    <div key={sprintId || idx} className="flex flex-col gap-1 rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717]">
+                    <div key={sprintId || idx} className="flex flex-col gap-1 rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#303030] dark:bg-[#242428]">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
@@ -508,7 +501,7 @@ const IssueDetailsView = ({
                   );
                 })
               ) : (
-                <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
+                <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#303030] dark:bg-[#242428]">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-400">
                     <FiActivity size={15} />
                   </div>
@@ -540,7 +533,7 @@ const IssueDetailsView = ({
                   const issueNumber = link.issueNumber;
                   const issueTitle = link.issueTitle || link.title || 'Linked issue';
                   return (
-                    <div key={linkId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
+                    <div key={linkId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#303030] dark:bg-[#242428]">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="rounded bg-indigo-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
                           {issueNumber ? `#${issueNumber}` : 'LINK'}
@@ -766,7 +759,7 @@ const IssueDetailsView = ({
                   const size = formatBytes(att.fileSize || att.size);
                   const time = formatDateTime(att.createdAt || att.timestamp);
                   return (
-                    <div key={attId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717]">
+                    <div key={attId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#303030] dark:bg-[#242428]">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
                           <FiPaperclip size={15} />
@@ -876,7 +869,7 @@ const IssueDetailsView = ({
             <CardHeader title="Assignment Requests" />
             <div className="space-y-3">
               {myRequest ? (
-                <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#2d2d32] dark:bg-[#171717] flex items-center justify-between gap-2 text-xs">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 dark:border-[#303030] dark:bg-[#242428] flex items-center justify-between gap-2 text-xs">
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-white">Your Request Status</p>
                     <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium capitalize">{myRequest.status || 'Pending'}</span>
@@ -920,7 +913,7 @@ const IssueDetailsView = ({
                       const reqId = getId(req);
                       const reqName = req.user?.name || req.requesterName || req.email || 'Member';
                       return (
-                        <div key={reqId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#2d2d32] dark:bg-[#171717] text-xs">
+                        <div key={reqId || idx} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-[#303030] dark:bg-[#242428] text-xs">
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900 dark:text-white truncate">{reqName}</p>
                             <p className="text-[11px] text-slate-500 dark:text-[#888] truncate">{req.message || 'Requested assignment'}</p>
@@ -957,7 +950,7 @@ const IssueDetailsView = ({
 
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsEditOpen(false)}>
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#303030] dark:bg-[#1d1d1d]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Edit Issue</h3>
               <button type="button" onClick={() => setIsEditOpen(false)}><FiX size={16} /></button>
@@ -1008,7 +1001,7 @@ const IssueDetailsView = ({
 
       {isAssignOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsAssignOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#303030] dark:bg-[#1d1d1d]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">Assign Project Members</h3>
@@ -1135,7 +1128,7 @@ const IssueDetailsView = ({
 
       {isLinkOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLinkOpen(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#303030] dark:bg-[#1d1d1d]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Create Issue Link</h3>
               <button type="button" onClick={() => setIsLinkOpen(false)}><FiX size={16} /></button>
@@ -1167,7 +1160,7 @@ const IssueDetailsView = ({
 
       {isLabelOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsLabelOpen(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#303030] dark:bg-[#1d1d1d]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Label</h3>
               <button type="button" onClick={() => setIsLabelOpen(false)}><FiX size={16} /></button>
@@ -1192,9 +1185,37 @@ const IssueDetailsView = ({
         </div>
       )}
 
+      {isGithubIssueModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsGithubIssueModalOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#303030] dark:bg-[#1d1d1d]" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#2d2d32]">
+              <h3 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white"><FiGithub size={17} /> GitHub Issue</h3>
+              <button type="button" aria-label="Close" onClick={() => setIsGithubIssueModalOpen(false)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-[#29292d]"><FiX size={16} /></button>
+            </div>
+            {linkedGithubIssueNumber ? (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-[#2d2d32] dark:bg-[#202024]">
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Linked GitHub issue #{linkedGithubIssueNumber}</span>
+                <button type="button" disabled={!!busyAction} onClick={() => runAction('github-unlink', () => unlinkGithubIssue(issueId), 'GitHub issue unlinked successfully.')} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-400 dark:hover:bg-rose-950/30"><FiX size={13} /> Unlink</button>
+              </div>
+            ) : (
+              <form className="mt-4 space-y-3" onSubmit={(event) => { event.preventDefault(); handleLinkGithubIssue(); }}>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+                  GitHub issue number
+                  <input autoFocus required type="number" min="1" step="1" value={githubIssueNumberInput} onChange={(event) => setGithubIssueNumberInput(event.target.value)} placeholder="e.g. 42" className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-[#35353a] dark:bg-[#222226] dark:text-white" />
+                </label>
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-[#2d2d32]">
+                  <button type="button" onClick={() => setIsGithubIssueModalOpen(false)} className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-[#29292d]">Cancel</button>
+                  <button type="submit" disabled={!!busyAction || !githubIssueNumberInput} className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50"><FiLink size={13} /> Link issue</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsReviewOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#303030] dark:bg-[#1d1d1d]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2d2d32]">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Review Decision</h3>
               <button type="button" onClick={() => setIsReviewOpen(false)}><FiX size={16} /></button>
@@ -1221,7 +1242,7 @@ const IssueDetailsView = ({
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setConfirmDelete(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl dark:border-rose-900 dark:bg-[#171717]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl dark:border-rose-900 dark:bg-[#1d1d1d]" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-bold text-rose-700 dark:text-rose-400">Delete this issue?</h3>
             <p className="mt-2 text-xs text-slate-600 dark:text-[#a0a0a0]">This action permanently removes the issue from the project and cannot be undone.</p>
             <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#2d2d32]">
@@ -1240,10 +1261,10 @@ const IssueDetailsView = ({
         </div>
       )}
 
-      {/* Fullscreen Dependency Graph View */}
+      {}
       {isFullscreenGraphOpen && pid && (
-        <div className="fixed inset-0 z-40 flex flex-col bg-[#f4f5f7] dark:bg-[#141416] animate-fadeIn">
-          <div className="flex items-center gap-3 px-4 sm:px-6 py-4 bg-white dark:bg-[#171717] border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="fixed inset-0 z-40 flex flex-col bg-[#f4f5f7] dark:bg-[#292929] animate-fadeIn">
+          <div className="flex items-center gap-3 px-4 sm:px-6 py-4 bg-white dark:bg-[#1d1d1d] border-b border-slate-200 dark:border-[#303030] shrink-0">
             <button
               type="button"
               onClick={() => setIsFullscreenGraphOpen(false)}

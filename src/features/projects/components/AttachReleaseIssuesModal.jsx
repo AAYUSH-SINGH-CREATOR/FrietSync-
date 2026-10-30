@@ -112,7 +112,7 @@ const AttachReleaseIssuesModal = ({
         className="relative w-full max-w-xl bg-white dark:bg-[#1d1d1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-gray-100 dark:border-[#303030] p-6 sm:p-8 transition-all text-left flex flex-col max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {}
         <div className="flex items-start justify-between pb-4 border-b border-gray-100 dark:border-[#303030] shrink-0">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-[#818CF8] flex items-center justify-center shadow-2xs shrink-0">
@@ -144,7 +144,7 @@ const AttachReleaseIssuesModal = ({
           </div>
         )}
 
-        {/* Search & Actions Bar */}
+        {}
         <div className="mt-4 flex items-center justify-between gap-3 shrink-0">
           <div className="relative flex-1">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -176,12 +176,12 @@ const AttachReleaseIssuesModal = ({
           </div>
         </div>
 
-        {/* Selected count pill */}
+        {}
         <div className="mt-2 text-xs text-slate-400 shrink-0">
           <span className="font-bold text-white">{selectedIds.size}</span> of {projectIssues.length} issues selected
         </div>
 
-        {/* Issues List */}
+        {}
         <div className="mt-3 flex-1 overflow-y-auto min-h-[220px] max-h-[360px] divide-y divide-slate-100 dark:divide-[#2d2d34] border border-slate-200 dark:border-[#32323a] rounded-2xl p-1 bg-slate-50/50 dark:bg-[#18181b]">
           {projectIssues.length === 0 ? (
             <div className="py-12 text-center text-slate-400 text-xs">
@@ -235,7 +235,7 @@ const AttachReleaseIssuesModal = ({
           )}
         </div>
 
-        {/* Footer Actions */}
+        {}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-[#303030] mt-4 shrink-0">
           <button
             type="button"

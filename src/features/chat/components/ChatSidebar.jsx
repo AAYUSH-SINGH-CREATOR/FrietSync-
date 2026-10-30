@@ -31,12 +31,12 @@ const ChatSidebar = ({
 
   return (
     <div className="bg-[#F3F4F6] dark:bg-[#252525] rounded-2xl p-3 sm:p-4 flex flex-col h-full min-h-0 min-w-0 w-full overflow-hidden border border-slate-200/60 dark:border-white/5">
-      {/* 1. Header */}
+      {}
       <div className="flex items-center justify-between shrink-0">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Chats</h2>
       </div>
 
-      {/* 2. Capsule Search Input */}
+      {}
       <div className="relative flex items-center mt-3 shrink-0">
         <FiSearch className="absolute left-3 text-slate-400" size={15} />
         <input
@@ -53,7 +53,7 @@ const ChatSidebar = ({
         )}
       </div>
 
-      {/* 3. Filter Pills (All, Unread, Groups) */}
+      {}
       <div className="flex items-center gap-1.5 mt-3 shrink-0">
         {['All', 'Unread', 'Groups'].map((tab) => (
           <button
@@ -71,7 +71,7 @@ const ChatSidebar = ({
         ))}
       </div>
 
-      {/* 4. Scrollable Conversations List */}
+      {}
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 mt-3 pr-0.5 min-h-0">
         {isLoadingProjects ? (
           <div className="space-y-2 animate-pulse">
@@ -109,7 +109,7 @@ const ChatSidebar = ({
                     : 'bg-white dark:bg-[#171717] border border-slate-200/70 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 shadow-2xs'
                 }`}
               >
-                {/* Avatar */}
+                {}
                 <div className="relative shrink-0">
                   {item.avatar ? (
                     <img src={item.avatar} alt={item.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
@@ -123,7 +123,7 @@ const ChatSidebar = ({
                   )}
                 </div>
 
-                {/* Name & Latest Message */}
+                {}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
                     <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">{item.name}</p>

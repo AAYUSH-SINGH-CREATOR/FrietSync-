@@ -29,14 +29,14 @@ const MonthView = ({
 }) => {
   const [selectedDayPopover, setSelectedDayPopover] = useState(null);
 
-  // Generate the 35 to 42 calendar grid cells
+  
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
 
-  // 0 is Sunday, so for Monday start:
+  
   const firstDayIndex = (firstDayOfMonth.getDay() + 6) % 7;
   const daysInMonth = lastDayOfMonth.getDate();
 
@@ -44,19 +44,19 @@ const MonthView = ({
 
   const calendarDays = [];
 
-  // Previous month trailing days
+  
   for (let i = firstDayIndex - 1; i >= 0; i--) {
     const d = new Date(year, month - 1, prevMonthLastDay - i);
     calendarDays.push({ date: d, isCurrentMonth: false });
   }
 
-  // Current month days
+  
   for (let i = 1; i <= daysInMonth; i++) {
     const d = new Date(year, month, i);
     calendarDays.push({ date: d, isCurrentMonth: true });
   }
 
-  // Next month leading days to complete full weeks
+  
   const totalCells = Math.ceil(calendarDays.length / 7) * 7;
   const remainingDays = totalCells - calendarDays.length;
   for (let i = 1; i <= remainingDays; i++) {
@@ -68,7 +68,7 @@ const MonthView = ({
 
   return (
     <div className="relative bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] shadow-xs overflow-hidden select-none">
-      {/* Weekday Columns Header */}
+      {}
       <div className="grid grid-cols-7 border-b border-gray-200 dark:border-[#2e2e2e] bg-gray-50/70 dark:bg-[#222222]/60">
         {WEEKDAYS.map((day) => (
           <div
@@ -80,7 +80,7 @@ const MonthView = ({
         ))}
       </div>
 
-      {/* Days Grid */}
+      {}
       <div className="grid grid-cols-7 divide-x divide-y divide-gray-200/80 dark:divide-[#2b2b2b]">
         {calendarDays.map(({ date, isCurrentMonth }, idx) => {
           const isToday = isSameDay(date, today);
@@ -98,7 +98,7 @@ const MonthView = ({
                   : 'bg-gray-50/50 dark:bg-[#161616] text-gray-400 dark:text-[#555]'
               }`}
             >
-              {/* Day Header */}
+              {}
               <div className="flex items-center justify-between mb-1">
                 <span
                   className={`inline-flex items-center justify-center text-xs font-semibold rounded-full ${
@@ -112,7 +112,7 @@ const MonthView = ({
                   {date.getDate()}
                 </span>
 
-                {/* Quick Add Button on Cell Hover */}
+                {}
                 <button
                   type="button"
                   onClick={() => onSelectDate(date)}
@@ -123,7 +123,7 @@ const MonthView = ({
                 </button>
               </div>
 
-              {/* Event Chips */}
+              {}
               <div className="flex-1 space-y-1 overflow-hidden">
                 {visibleEvents.map((event) => (
                   <button
@@ -147,7 +147,7 @@ const MonthView = ({
                   </button>
                 ))}
 
-                {/* "+N more" badge */}
+                {}
                 {remainingCount > 0 && (
                   <button
                     type="button"
@@ -166,7 +166,7 @@ const MonthView = ({
         })}
       </div>
 
-      {/* Day Events Popover (when "+N more" is clicked) */}
+      {}
       {selectedDayPopover && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4"

@@ -37,12 +37,12 @@ const compactDate = (d) => {
 const avatarColors = ['bg-pink-500', 'bg-blue-500', 'bg-orange-500', 'bg-violet-500', 'bg-emerald-500', 'bg-sky-500'];
 
 const SummaryCard = ({ icon: Icon, label, value, hint, tone }) => (
-  <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 dark:border-[#343434] dark:bg-[#171717] sm:px-4 shadow-xs">
+  <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 dark:border-[#2b2b30] dark:bg-[#1f1f1f] sm:px-4 shadow-xs">
     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}><Icon size={19} /></div>
     <div className="min-w-0">
-      <p className="truncate text-xs text-slate-500 dark:text-[#b6b6b6]">{label}</p>
+      <p className="truncate text-xs text-slate-500 dark:text-[#888]">{label}</p>
       <p className="text-lg font-semibold leading-5 text-slate-900 dark:text-white">{value}</p>
-      <p className="truncate text-xs text-slate-400 dark:text-[#888]">{hint}</p>
+      <p className="truncate text-xs text-slate-400 dark:text-[#999]">{hint}</p>
     </div>
   </div>
 );
@@ -88,7 +88,7 @@ const IssuesView = () => {
   const pendingStatusIssueIdsRef = useRef(new Set());
   const globalSearchIssueRequestRef = useRef({ id: null, promise: null });
 
-  // Tab mode: 'all' (project issues), 'assigned' (assigned to me), 'requests' (assignment requests)
+  
   const [userSelectedTab, setUserSelectedTab] = useState(null);
   const [projectRequestsList, setProjectRequestsList] = useState([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
@@ -133,7 +133,7 @@ const IssuesView = () => {
   const globalRole = normalize(currentUserProfile?.role || currentUserProfile?.user?.role || currentUserProfile?.globalRole || currentUserProfile?.userRole);
   const isGlobalAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
 
-  // Load project members
+  
   useEffect(() => {
     if (isLoadingProjects) return undefined;
     let active = true;
@@ -163,7 +163,7 @@ const IssuesView = () => {
     return () => { active = false; };
   }, [projects, isLoadingProjects]);
 
-  // Load initial projects
+  
   useEffect(() => {
     let active = true;
     getMyProjects()
@@ -195,7 +195,7 @@ const IssuesView = () => {
     : userSelectedTab || (!hasManagementRole && globalRole === 'CONTRIBUTOR' ? 'assigned' : 'all');
   const setActiveTab = setUserSelectedTab;
 
-  // Load issues
+  
   useEffect(() => {
     if (isLoadingProjects) return undefined;
     let active = true;
@@ -229,7 +229,7 @@ const IssuesView = () => {
     return () => { active = false; };
   }, [projects, isLoadingProjects, refreshTrigger, projectFilter, page]);
 
-  // Load assignment requests for management roles
+  
   const loadProjectRequests = useCallback(async () => {
     if (!projects.length) return;
     setIsLoadingRequests(true);
@@ -376,7 +376,7 @@ const IssuesView = () => {
     }
   }, [issues, showToast, globalRole, isGlobalAdmin, projectMembers, currentUserId, currentUserEmail]);
 
-  // Handle assignment request decisions in tab
+  
   const handleApproveRequest = async (req) => {
     try {
       await manageProjectIssueRequest(req.issueId || req.issue?.id, req.id || req.requestId, true);
@@ -396,7 +396,7 @@ const IssuesView = () => {
 
   if (selectedIssueForDetails) {
     return (
-      <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#141416] dark:text-white sm:p-6 lg:p-7">
+      <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7">
         <IssueDetailsView
           issueId={issueId(selectedIssueForDetails)}
           initialIssue={selectedIssueForDetails}
@@ -410,8 +410,8 @@ const IssuesView = () => {
     );
   }
 
-  // Keep the feature layout available when a selected project has no issues,
-  // so project managers can create the first one from the table's inline action.
+  
+  
   if (!isLoadingIssues && !error && filteredIssues.length === 0 && (issues.length > 0 || projects.length === 0)) {
     return (
       <>
@@ -468,7 +468,7 @@ const IssuesView = () => {
 
   return (
     <section className="min-h-[calc(100vh-7.5rem)] space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7 animate-fadeIn">
-      {/* 1. Header with Tabs */}
+      {}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[26px] font-bold leading-tight tracking-tight">Issues</h1>
@@ -480,7 +480,7 @@ const IssuesView = () => {
         </div>
       </div>
 
-      {/* Role-Based View Switcher Tabs */}
+      {}
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-[#38383e] pb-1 overflow-x-auto">
         <button
           type="button"
@@ -526,12 +526,12 @@ const IssuesView = () => {
         )}
       </div>
 
-      {/* Notices */}
+      {}
       {toastNotice && <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"><span className="flex items-center gap-2"><FiCheckCircle />{toastNotice.message}</span><button type="button" onClick={() => setToastNotice(null)} aria-label="Dismiss"><FiX /></button></div>}
       {error && <div className="flex items-center justify-between rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"><span className="flex items-center gap-2"><FiAlertCircle />{error}</span><button type="button" onClick={refresh} className="font-semibold underline cursor-pointer">Retry</button></div>}
       {membersError && <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">Some project members could not be loaded: {membersError}</p>}
 
-      {/* Summary Cards */}
+      {}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <SummaryCard icon={FiFolder} label="Total issues" value={totalIssueCount} hint="Across selected projects" tone="bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300" />
         <SummaryCard icon={FiActivity} label="In progress" value={counts.progress} hint="Current page results" tone="bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300" />
@@ -539,10 +539,10 @@ const IssuesView = () => {
         <SummaryCard icon={FiCheckSquare} label="Resolved on this page" value={counts.resolved} hint="Current page results" tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" />
       </div>
 
-      {/* 2. Main View Content based on Active Tab */}
+      {}
       {activeTab === 'requests' ? (
-        /* ================= ASSIGNMENT REQUESTS VIEW ================= */
-        <div className="rounded-xl border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#171717] p-4 sm:p-5">
+        
+        <div className="rounded-xl border border-slate-200 bg-white dark:border-[#303030] dark:bg-[#1f1f1f] p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-900 dark:text-white">Project Assignment Requests</h2>
             <button type="button" onClick={loadProjectRequests} className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">Refresh requests</button>
@@ -590,9 +590,9 @@ const IssuesView = () => {
           )}
         </div>
       ) : (
-        /* ================= ISSUES BOARD / TABLE VIEW ================= */
+        
         <>
-          {/* Controls: View Switcher (Board/List), Search & Filters */}
+          {}
           <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 dark:border-[#343434] dark:bg-[#1e1e1e]">
@@ -653,7 +653,7 @@ const IssuesView = () => {
                 displayAssignee={displayAssignee}
               />
               {totalPages > 1 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:bg-[#171717] dark:text-[#bbb] sm:px-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600 dark:border-[#303030] dark:bg-[#1f1f1f] dark:text-[#bbb] sm:px-4">
                   <span>{projectFilter === 'all' ? `Showing ${filteredIssues.length} issues on page ${page + 1}` : `Showing ${start}–${end} of ${totalIssueCount} issues`}</span>
                   <div className="flex items-center gap-1">
                     <button type="button" aria-label="Previous page" disabled={page <= 0} onClick={() => { setIsLoadingIssues(true); setPage((c) => Math.max(0, c - 1)); }} className="flex h-6 w-6 items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:text-[#ddd] dark:hover:bg-[#383838] cursor-pointer"><FiChevronLeft size={14} /></button>
@@ -666,8 +666,8 @@ const IssuesView = () => {
               )}
             </div>
           ) : (
-            /* Table Container */
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#363636] dark:bg-[#171717]">
+            
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#303030] dark:bg-[#1f1f1f]">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px] border-collapse text-left">
                   <thead>
@@ -675,7 +675,7 @@ const IssuesView = () => {
                       <th className="p-4">Issue</th><th className="p-5">ID</th><th className="p-5">Project</th><th className="p-5">Status</th><th className="px-3">Priority</th><th className="px-3">Assignee</th><th className="px-3">Due date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-[#343434]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#303030]">
                     {isLoadingIssues ? Array.from({ length: 5 }, (_, idx) => (
                       <tr key={idx} className="h-[43px] animate-pulse"><td colSpan="7" className="px-4"><div className="h-4 rounded bg-slate-100 dark:bg-[#333]" /></td></tr>
                     )) : filteredIssues.map((issueItem, idx) => {
@@ -689,7 +689,7 @@ const IssuesView = () => {
                           onClick={() => setSelectedIssueForDetails(issueItem)}
                           onKeyDown={(e) => { if (e.key === 'Enter') setSelectedIssueForDetails(issueItem); }}
                           tabIndex={0}
-                          className="h-[43px] cursor-pointer text-xs transition hover:bg-slate-50 dark:hover:bg-[#2e2e2e]"
+                          className="h-[43px] cursor-pointer text-xs transition hover:bg-slate-50/80 dark:hover:bg-[#27272c]"
                         >
                           <td className="max-w-[250px] px-2"><span className="inline-block max-w-full truncate rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-900 dark:bg-[#303030] dark:text-white" title={issueItem.title}>{issueItem.title || 'Untitled issue'}</span></td>
                           <td className="px-3"><span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-700 dark:bg-[#303030] dark:text-[#ddd]">{String(number).startsWith('#') ? number : `#${number}`}</span></td>
@@ -731,7 +731,7 @@ const IssuesView = () => {
                 </table>
               </div>
 
-              {/* Pagination Controls */}
+              {}
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-3 py-2.5 text-xs text-slate-600 dark:border-[#363636] dark:text-[#bbb] sm:px-4">
                 <span className="text-xs">{projectFilter === 'all' ? `Showing ${filteredIssues.length} issues on page ${page + 1}` : `Showing ${start}–${end} of ${totalIssueCount} issues`}</span>
                 <div className="flex items-center gap-1">
@@ -747,7 +747,7 @@ const IssuesView = () => {
         </>
       )}
 
-      {/* Create Issue Modal */}
+      {}
       <CreateIssueModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

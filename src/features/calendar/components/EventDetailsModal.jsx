@@ -86,7 +86,7 @@ const EventDetailsModal = ({
         className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1f1f1f] border border-gray-200 dark:border-[#383838] shadow-2xl overflow-hidden animate-scaleUp select-none"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Type & Close */}
+        {}
         <div className="px-5 py-4 border-b border-gray-100 dark:border-[#2f2f2f] flex items-center justify-between">
           <span
             className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${getSourceBadgeStyle(
@@ -105,7 +105,7 @@ const EventDetailsModal = ({
           </button>
         </div>
 
-        {/* Content */}
+        {}
         <div className="p-5 space-y-4">
           {errorMsg && (
             <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
@@ -113,7 +113,7 @@ const EventDetailsModal = ({
             </div>
           )}
 
-          {/* Title */}
+          {}
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
               {event.title}
@@ -126,7 +126,7 @@ const EventDetailsModal = ({
             )}
           </div>
 
-          {/* Timing details */}
+          {}
           <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#181818] border border-gray-100 dark:border-[#282828] space-y-2 text-xs">
             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
               <FiCalendar size={14} className="text-sky-600 shrink-0" />
@@ -159,7 +159,7 @@ const EventDetailsModal = ({
             )}
           </div>
 
-          {/* Description or Agenda */}
+          {}
           {event.description ? (
             <div>
               <h4 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
@@ -171,7 +171,7 @@ const EventDetailsModal = ({
             </div>
           ) : null}
 
-          {/* Attendees (for meetings) */}
+          {}
           {event.sourceType === 'meeting' && event.attendees && event.attendees.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
@@ -197,7 +197,7 @@ const EventDetailsModal = ({
             </div>
           )}
 
-          {/* Delete Confirmation Box */}
+          {}
           {showConfirmDelete && (
             <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 space-y-2">
               <p className="text-xs font-bold text-rose-800 dark:text-rose-200 flex items-center gap-1.5">
@@ -228,7 +228,7 @@ const EventDetailsModal = ({
           )}
         </div>
 
-        {/* Footer Actions */}
+        {}
         <div className="px-5 py-3.5 border-t border-gray-100 dark:border-[#2f2f2f] bg-gray-50/50 dark:bg-[#181818] flex items-center justify-between">
           {event.sourceType === 'meeting' ? (
             <>

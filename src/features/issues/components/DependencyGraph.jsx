@@ -5,7 +5,7 @@ import { FiInfo, FiAlertCircle, FiRefreshCw, FiChevronLeft } from 'react-icons/f
 import { getProjectDependencyGraph, getFriendlyErrorMessage } from '../services/issueApi';
 import { getPriorityBadge, getStatusBadge, formatIssueDate } from '../utils/issueUtils';
 
-// ─── Node ────────────────────────────────────────────────────────────────────
+
 
 const GraphNode = ({ data }) => {
   const issue = data.issue;
@@ -56,7 +56,7 @@ const GraphNode = ({ data }) => {
   );
 };
 
-// ─── Custom Controls (must live inside ReactFlowProvider) ─────────────────────
+
 
 const FlowControls = ({ panZoomEnabled, setPanZoomEnabled }) => {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -66,7 +66,7 @@ const FlowControls = ({ panZoomEnabled, setPanZoomEnabled }) => {
 
   return (
     <>
-      {/* Zoom controls */}
+      {}
       <Panel position="bottom-left" style={{ margin: '12px' }}>
         <div className="flex flex-col bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#2d2d2d] rounded-lg shadow-md overflow-hidden">
           <button type="button" onClick={() => zoomIn({ duration: 200 })} title="Zoom in" className={btnCls}>
@@ -89,7 +89,7 @@ const FlowControls = ({ panZoomEnabled, setPanZoomEnabled }) => {
         </div>
       </Panel>
 
-      {/* Pan/Zoom toggle */}
+      {}
       <Panel position="top-right" style={{ margin: '12px' }}>
         <div className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#2d2d2d] rounded-lg px-2.5 py-1.5 shadow-md">
           <label className="flex items-center gap-1.5 cursor-pointer select-none">
@@ -107,12 +107,12 @@ const FlowControls = ({ panZoomEnabled, setPanZoomEnabled }) => {
   );
 };
 
-// ─── Node / Edge type maps (stable references outside component) ──────────────
+
 
 const NODE_TYPES = { issueNode: GraphNode };
 const EDGE_TYPES = {};
 
-// ─── Inner graph (needs ReactFlowProvider context) ────────────────────────────
+
 
 const GraphInner = ({
   nodes, edges,
@@ -149,7 +149,7 @@ const GraphInner = ({
 
       <FlowControls panZoomEnabled={panZoomEnabled} setPanZoomEnabled={setPanZoomEnabled} />
 
-      {/* Details sidebar */}
+      {}
       {(selectedEdge || selectedNode) && (
         <Panel position="top-left" style={{ margin: '12px', maxWidth: '280px', maxHeight: '80%', overflowY: 'auto' }}>
           <div className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#2d2d2d] rounded-xl shadow-xl p-3.5">
@@ -232,7 +232,7 @@ const GraphInner = ({
         </Panel>
       )}
 
-      {/* Stats badge */}
+      {}
       <Panel position="bottom-right" style={{ margin: '12px' }}>
         <div className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#2d2d2d] rounded-lg px-2.5 py-1 shadow-md pointer-events-none">
           <div className="text-[10px] font-medium text-slate-600 dark:text-slate-400 flex items-center gap-3">
@@ -251,7 +251,7 @@ const GraphInner = ({
   );
 };
 
-// ─── Public component ─────────────────────────────────────────────────────────
+
 
 const DependencyGraph = ({ projectId, onBack, className = '' }) => {
   const [nodes, setNodes] = useState([]);
@@ -339,7 +339,7 @@ const DependencyGraph = ({ projectId, onBack, className = '' }) => {
     }
   }, []);
 
-  // ── States ──────────────────────────────────────────────────────────────────
+  
 
   if (isLoading) {
     return (
@@ -397,7 +397,7 @@ const DependencyGraph = ({ projectId, onBack, className = '' }) => {
     );
   }
 
-  // ── Graph ───────────────────────────────────────────────────────────────────
+  
 
   return (
     <div

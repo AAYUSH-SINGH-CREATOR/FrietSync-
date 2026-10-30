@@ -415,10 +415,10 @@ const ChatArea = ({
 
   return (
     <div className="w-full flex-1 min-w-0 bg-gradient-to-br from-[#D9EAFD] via-[#EAF2FF] to-[#D5E7FC] dark:from-[#060D1A] dark:via-[#091527] dark:to-[#040A14] border-2 sm:border-4 border-[#CCE5FE] dark:border-[#1B3654] rounded-3xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden relative transition-colors">
-      {/* 1. Inset Floating Header (Frame 397) */}
+      {}
       <div className="bg-white dark:bg-[#171717] rounded-2xl mx-2.5 sm:mx-3 mt-2.5 sm:mt-3 px-3.5 sm:px-5 py-2.5 sm:py-3 shadow-xs border border-sky-100 dark:border-white/5 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-3 min-w-0">
-          {/* Mobile Back to List Button */}
+          {}
           {onBackToList && (
             <button
               type="button"
@@ -430,7 +430,7 @@ const ChatArea = ({
             </button>
           )}
 
-          {/* Project Avatar */}
+          {}
           <div className="relative shrink-0">
             {activeChat.avatar ? (
               <img src={activeChat.avatar} alt={activeChat.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
@@ -567,7 +567,7 @@ const ChatArea = ({
 
             return (
               <div key={msg.id} className={`group flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
-                {/* Sender Name & Timestamp above bubble */}
+                {}
                 <div className={`text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 flex items-center gap-1.5 ${isOutgoing ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
                   <span>{senderName}</span>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500">{msg.timestamp}</span>
@@ -576,13 +576,13 @@ const ChatArea = ({
                   )}
                 </div>
 
-                {/* Bubble & Avatar row */}
+                {}
                 <div className="flex items-center gap-2 min-w-0 max-w-full sm:max-w-[85%] relative">
                   {!isOutgoing && (
                     <ChatAvatar src={msg.senderAvatar} name={senderName} color={avatarColor} className="w-7 h-7 text-[10px] shadow-xs" />
                   )}
 
-                  {/* Message actions (shown on hover for own messages) */}
+                  {}
                   {isOutgoing && !isDeleted && !isEditingThis && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mr-1 order-first">
                       <div className="relative" ref={messageMenuOpen === msg.id ? messageMenuRef : null}>
@@ -621,7 +621,7 @@ const ChatArea = ({
                     </div>
                   )}
 
-                  {/* Edit mode inline */}
+                  {}
                   {isEditingThis ? (
                     <div className="min-w-0 flex-1 max-w-full rounded-2xl px-3 py-2 bg-white dark:bg-[#1C1C1C] border-2 border-sky-400 dark:border-sky-600 shadow-xs">
                       <textarea
@@ -770,7 +770,7 @@ const ChatArea = ({
         </div>
       )}
 
-      {/* 3. Inset Floating Bottom Composer */}
+      {}
       <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10 relative">
         <input
           ref={fileInputRef}
@@ -780,7 +780,7 @@ const ChatArea = ({
           onChange={handleFileSelect}
           className="hidden"
         />
-        {/* Paperclip attachment icon */}
+        {}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -791,7 +791,7 @@ const ChatArea = ({
           <FiPaperclip size={18} />
         </button>
 
-        {/* Poll button */}
+        {}
         <button
           type="button"
           onClick={() => { setPollToOpenId(null); setIsPollModalOpen(true); }}
@@ -801,7 +801,7 @@ const ChatArea = ({
           <FiBarChart2 size={18} />
         </button>
 
-        {/* Input Pill Capsule */}
+        {}
         <div className="flex-1 flex items-center bg-[#F1F3F5] dark:bg-[#252525] rounded-full px-3.5 sm:px-4 py-1.5 border border-transparent dark:border-white/5 focus-within:border-sky-400 transition relative">
           <input
             ref={inputRef}
@@ -823,7 +823,7 @@ const ChatArea = ({
           </button>
         </div>
 
-        {/* Emoji Picker Popup with exactly 8 famous emojis */}
+        {}
         {isEmojiPickerOpen && (
           <div
             ref={emojiPickerRef}
@@ -843,7 +843,7 @@ const ChatArea = ({
           </div>
         )}
 
-        {/* Send Action Button */}
+        {}
         <button
           type="submit"
           disabled={isUploadingAttachments || selectedAttachments.some((attachment) => attachment.status === 'failed') || (!inputText.trim() && !selectedAttachments.some((attachment) => attachment.status === 'uploaded'))}
@@ -854,7 +854,7 @@ const ChatArea = ({
         </button>
       </form>
 
-      {/* Image Lightbox Modal */}
+      {}
       {previewImage && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center p-4"

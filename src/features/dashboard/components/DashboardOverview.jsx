@@ -59,8 +59,8 @@ const buildSprintBurndownPoints = (sprints, projectStart, projectDeadline) => {
   }
 
   const total = sprints.length;
-  // The current sprint API has no completedAt field. updatedAt is the best
-  // available completion timestamp; use endDate when it is absent.
+  
+  
   const completionDates = sprints.map((sprint) => {
     if (normalize(sprint.status) !== 'COMPLETED') return null;
     return asDate(sprint.completedAt || sprint.updatedAt || sprint.endDate);
@@ -102,10 +102,10 @@ const DashboardOverview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Task filter state
-  const [taskFilter, setTaskFilter] = useState('assigned'); // 'assigned' | 'due_soon' | 'overdue'
+  
+  const [taskFilter, setTaskFilter] = useState('assigned'); 
 
-  // Selected issue for details modal / slide-over
+  
   const [selectedIssueForDetails, setSelectedIssueForDetails] = useState(null);
 
   const userName =
@@ -138,7 +138,7 @@ const DashboardOverview = () => {
 
     const wsId = validWs.id || validWs._id || validWs.workspaceId;
 
-    // Parallel fetch workspace members and projects
+    
     const [membersRes, projectsRes] = await Promise.allSettled([
       getWorkspaceMembers(wsId),
       getMyProjects(),
@@ -151,7 +151,7 @@ const DashboardOverview = () => {
     let aggregatedSprints = [];
     let totalCount = 0;
 
-    // Fetch issues and sprints for loaded projects (top 10 to keep it fast)
+    
     if (loadedProjects.length > 0) {
       const targetProjects = loadedProjects.slice(0, 10);
       const [issuesSettled, sprintsSettled] = await Promise.allSettled([
@@ -259,35 +259,35 @@ const DashboardOverview = () => {
     };
   }, [fetchDashboardDataCore]);
 
-  // Derived metrics for Summary Cards
+  
   const summaryMetrics = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
 
-    // Total Projects
+    
     const totalProjects = projects.length;
     const newProjectsThisMonth = projects.filter((p) => {
       const d = p.createdAt || p.startDate;
       return d && !isNaN(new Date(d).getTime()) && new Date(d) >= startOfMonth;
     }).length;
 
-    // Total Issues
+    
     const totalIssues = totalReportedIssues > 0 ? totalReportedIssues : issues.length;
     const newIssuesThisWeek = issues.filter((i) => {
       const d = i.createdAt;
       return d && !isNaN(new Date(d).getTime()) && new Date(d) >= startOfWeek;
     }).length;
 
-    // Total Sprints
+    
     const totalSprints = sprints.length;
     const activeSprintsCount = sprints.filter((s) => {
       const norm = normalize(s.status);
       return norm === 'ACTIVE';
     }).length;
 
-    // Team Members
+    
     const totalMembers = members.length;
     const newMembersThisMonth = members.filter((m) => {
       const d = m.joinedAt || m.createdAt;
@@ -306,7 +306,7 @@ const DashboardOverview = () => {
     };
   }, [projects, issues, sprints, members, totalReportedIssues]);
 
-  // Issue Overview gauge metrics
+  
   const issueOverviewMetrics = useMemo(() => {
     const total = issues.length;
     let completed = 0;
@@ -321,7 +321,7 @@ const DashboardOverview = () => {
 
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Chart data for semi-circle
+    
     const chartData = [
       { name: 'Completed', value: completed || (total === 0 ? 0 : 0.001), color: '#38bdf8' },
       { name: 'In Progress', value: inProgress || (total === 0 ? 0 : 0.001), color: '#0284c7' },
@@ -338,7 +338,7 @@ const DashboardOverview = () => {
     };
   }, [issues]);
 
-  // Current user's tasks
+  
   const myFilteredTasks = useMemo(() => {
     const now = new Date();
     const currentUserId = String(
@@ -354,7 +354,7 @@ const DashboardOverview = () => {
       ''
     ).toLowerCase();
 
-    // Check if issue is assigned to current user
+    
     const isAssignedToMe = (i) => {
       const userIds = [
         ...(Array.isArray(i.assigneeIds) ? i.assigneeIds : []),
@@ -384,7 +384,7 @@ const DashboardOverview = () => {
     };
 
     const userTasks = issues.filter(isAssignedToMe);
-    // If user has specifically assigned tasks, use them; otherwise use workspace issues
+    
     const taskPool = userTasks.length > 0 ? userTasks : issues;
 
     if (taskFilter === 'overdue') {
@@ -409,13 +409,13 @@ const DashboardOverview = () => {
         .slice(0, 8);
     }
 
-    // Default: 'assigned'
+    
     return taskPool
       .filter((i) => !isResolved(i.status))
       .slice(0, 8);
   }, [issues, currentUserProfile, taskFilter]);
 
-  // Project Progress list
+  
   const projectProgressList = useMemo(() => {
     const now = new Date();
     return projects.slice(0, 4).map((p) => {
@@ -439,7 +439,7 @@ const DashboardOverview = () => {
     });
   }, [projects, issues]);
 
-  // Sprint Progress & Burndown Data, based on sprint status and project dates.
+  
   const sprintData = useMemo(() => {
     const selectedSprint = sprints.find((s) => normalize(s.status) === 'ACTIVE') ||
       sprints.find((s) => normalize(s.status) === 'PLANNED') ||
@@ -477,12 +477,12 @@ const DashboardOverview = () => {
     };
   }, [sprints, projects]);
 
-  // Recent Projects
+  
   const recentProjects = useMemo(() => {
     return projects.slice(0, 3);
   }, [projects]);
 
-  // Deadlines Donut & Cards
+  
   const deadlinesData = useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -553,7 +553,7 @@ const DashboardOverview = () => {
       { name: 'Later', value: laterCount || (totalDeadlines === 0 ? 1 : 0.001), color: '#fde047' },
     ];
 
-    // Pick top 2 deadline tasks matching screenshot layout
+    
     const displayTasks = deadlineTasks.slice(0, 2);
 
     return {
@@ -585,7 +585,7 @@ const DashboardOverview = () => {
     return <NoWorkspace userName={userName} />;
   }
 
-  // If user clicked an issue, show IssueDetailsView
+  
   if (selectedIssueForDetails) {
     const pid = selectedIssueForDetails.projectId || selectedIssueForDetails.project?.id;
     const projectObj = projects.find((p) => String(p.id || p._id) === String(pid));
@@ -609,7 +609,7 @@ const DashboardOverview = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-10 px-3 sm:px-6 lg:px-8 text-slate-900 dark:text-white">
-      {/* Page Header */}
+      {}
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           {timeGreeting} {firstName}!
@@ -619,9 +619,9 @@ const DashboardOverview = () => {
         </p>
       </div>
 
-      {/* Top 4 Summary Cards */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Projects */}
+        {}
         <div
           onClick={() => navigate('/dashboard/projects')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
@@ -646,7 +646,7 @@ const DashboardOverview = () => {
           </div>
         </div>
 
-        {/* Card 2: Total issues */}
+        {}
         <div
           onClick={() => navigate('/dashboard/issues')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
@@ -669,7 +669,7 @@ const DashboardOverview = () => {
           </div>
         </div>
 
-        {/* Card 3: Total Sprints */}
+        {}
         <div
           onClick={() => navigate('/dashboard/sprints')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
@@ -692,7 +692,7 @@ const DashboardOverview = () => {
           </div>
         </div>
 
-        {/* Card 4: Team members */}
+        {}
         <div
           onClick={() => navigate('/dashboard/team')}
           className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-sky-500/50 transition cursor-pointer flex items-center gap-4"
@@ -718,13 +718,11 @@ const DashboardOverview = () => {
         </div>
       </div>
 
-      {/* Body 3-Column Layout matching screenshot */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* ========================================================
-            COLUMN 1 (lg:col-span-4): Issue overview + My tasks
-           ======================================================== */}
+        {}
         <div className="lg:col-span-4 flex flex-col gap-5">
-          {/* Card 1A: Issue overview */}
+          {}
           <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -740,7 +738,7 @@ const DashboardOverview = () => {
               </button>
             </div>
 
-            {/* Gauge semi-circle chart */}
+            {}
             <div className="relative w-full h-40 flex flex-col items-center justify-center [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
               <ResponsiveContainer width="100%" height={150}>
                 <PieChart>
@@ -773,7 +771,7 @@ const DashboardOverview = () => {
               </div>
             </div>
 
-            {/* Legend below gauge */}
+            {}
             <div className="flex items-center justify-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#38bdf8]" />
@@ -790,7 +788,7 @@ const DashboardOverview = () => {
             </div>
           </div>
 
-          {/* Card 1B: My tasks */}
+          {}
           <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -806,7 +804,7 @@ const DashboardOverview = () => {
               </button>
             </div>
 
-            {/* Filter pills matching screenshot */}
+            {}
             <div className="flex items-center gap-2 mb-3">
               <button
                 type="button"
@@ -843,7 +841,7 @@ const DashboardOverview = () => {
               </button>
             </div>
 
-            {/* Task rows */}
+            {}
             <div className="space-y-1">
               {myFilteredTasks.length === 0 ? (
                 <div className="py-6 text-center text-xs text-slate-400 dark:text-[#888]">
@@ -890,11 +888,9 @@ const DashboardOverview = () => {
           </div>
         </div>
 
-        {/* ========================================================
-            COLUMN 2 (lg:col-span-5): Project Progress + Sprint Progress
-           ======================================================== */}
+        {}
         <div className="lg:col-span-5 flex flex-col gap-5">
-          {/* Card 2A: Project Progress */}
+          {}
           <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -953,7 +949,7 @@ const DashboardOverview = () => {
             </div>
           </div>
 
-          {/* Card 2B: Sprint Progress with Burndown Chart */}
+          {}
           <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -969,7 +965,7 @@ const DashboardOverview = () => {
               </button>
             </div>
 
-            {/* Top overall sprint progress bar */}
+            {}
             <div className="flex items-center gap-3 mt-3 mb-3">
               {sprintData.progressPct === null ? (
                 <span className="text-xs text-slate-500 dark:text-slate-400">Sprint progress unavailable.</span>
@@ -988,12 +984,12 @@ const DashboardOverview = () => {
               )}
             </div>
 
-            {/* Burndown Chart label */}
+            {}
             <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
               Sprint Burndown
             </h3>
 
-            {/* Burndown data and sprint dates */}
+            {}
             <div className="flex items-center gap-3">
               <div className="dashboard-burndown-chart h-40 min-w-0 flex-1 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                 {sprintData.burndownPoints.length > 0 ? (
@@ -1038,7 +1034,7 @@ const DashboardOverview = () => {
                 )}
               </div>
 
-              {/* Start & End Date boxes with down arrow */}
+              {}
               <div className="flex flex-col items-center justify-center gap-1.5 shrink-0 px-1">
                 <div className="w-full">
                   <span className="text-[11px] text-slate-500 dark:text-[#a1a1aa] font-medium block mb-1">
@@ -1066,11 +1062,9 @@ const DashboardOverview = () => {
           </div>
         </div>
 
-        {/* ========================================================
-            COLUMN 3 (lg:col-span-3): Recent + Deadlines
-           ======================================================== */}
+        {}
         <div className="lg:col-span-3 flex flex-col gap-5">
-          {/* Card 3A: Recent */}
+          {}
           <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-3">
               Recent
@@ -1098,7 +1092,7 @@ const DashboardOverview = () => {
             </div>
           </div>
 
-          {/* Card 3B: Deadlines */}
+          {}
           <div className="bg-white dark:bg-[#171717] border border-slate-200/90 dark:border-[#2b2b36] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
@@ -1114,7 +1108,7 @@ const DashboardOverview = () => {
               </button>
             </div>
 
-            {/* Donut chart + Legend */}
+            {}
             <div className="flex items-center justify-between gap-2">
               <div className="w-24 h-24 relative flex items-center justify-center shrink-0 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                 <ResponsiveContainer width="100%" height={96}>
@@ -1158,7 +1152,7 @@ const DashboardOverview = () => {
               </div>
             </div>
 
-            {/* Deadline task cards */}
+            {}
             <div className="space-y-2 mt-4">
               {deadlinesData.displayTasks.length === 0 ? (
                 <div className="py-2 text-center text-xs text-slate-400 dark:text-[#888]">

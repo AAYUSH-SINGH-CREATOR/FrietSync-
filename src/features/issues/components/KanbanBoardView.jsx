@@ -53,7 +53,7 @@ const KanbanBoardView = ({
   const [dragOverColumn, setDragOverColumn] = useState(null);
   const [openMenuIssueId, setOpenMenuIssueId] = useState(null);
 
-  // Group issues into the 5 columns
+  
   const columnIssues = COLUMNS.map((col) => ({
     ...col,
     items: issues.filter((i) => col.match.includes(normalize(i.status))),
@@ -85,7 +85,7 @@ const KanbanBoardView = ({
             dragOverColumn === col.id ? 'ring-2 ring-sky-400/70 bg-sky-50/20 dark:bg-sky-950/20' : ''
           }`}
         >
-          {/* Column Header matching screenshot */}
+          {}
           <div className={`flex items-center justify-between rounded-xl px-3 py-2 ${col.bg} ${col.text} ${col.darkBg} ${col.darkText} shadow-2xs`}>
             <div className="flex items-center gap-2">
               <FiSquare size={13} className="shrink-0 stroke-[2.5]" />
@@ -104,7 +104,7 @@ const KanbanBoardView = ({
             </div>
           </div>
 
-          {/* Column Issues Stack */}
+          {}
           <div className="mt-2.5 flex flex-1 flex-col gap-2.5">
             {isLoading ? (
               <>
@@ -135,7 +135,7 @@ const KanbanBoardView = ({
                       onClick={() => onIssueClick?.(issue)}
                       className={`group relative rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-300 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#171717] ${pendingStatusIssueIds.has(String(id)) ? 'cursor-wait opacity-70' : 'cursor-grab active:cursor-grabbing'}`}
                     >
-                  {/* Top row: Issue Key + Assignee Avatar */}
+                  {}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm bg-sky-500 text-white text-[9px] font-bold">
@@ -152,25 +152,25 @@ const KanbanBoardView = ({
                     )}
                   </div>
 
-                  {/* Title */}
+                  {}
                   <h4 className="mt-2 line-clamp-2 text-xs font-semibold leading-snug text-slate-900 dark:text-slate-100 sm:text-sm group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                     {issue.title || 'Untitled Issue'}
                   </h4>
 
-                  {/* Badges row: Tag/Label + Priority Badge */}
+                  {}
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                     {tagLabel && <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tagColor}`}>{tagLabel}</span>}
                     <PriorityBadge priority={issue.priority} />
                   </div>
 
-                  {/* Bottom row: Due Date + Context Menu */}
+                  {}
                   <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] text-slate-500 dark:border-[#2d2d32] dark:text-[#888]">
                     <span className="inline-flex items-center gap-1">
                       <FiCalendar size={12} className="text-slate-400" />
                       <span>{formatKanbanDate(issue.dueDate)}</span>
                     </span>
 
-                    {/* Accessible Menu */}
+                    {}
                     <div className="relative">
                       <button
                         type="button"

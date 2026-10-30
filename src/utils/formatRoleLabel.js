@@ -1,4 +1,4 @@
-/** Convert backend role codes to readable labels for display only. */
+
 const ROLE_LABELS = {
   ADMIN: 'Admin',
   CONTRIBUTOR: 'Contributor',

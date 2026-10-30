@@ -56,7 +56,7 @@ const MeetingForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Load project members when projectId changes
+  
   useEffect(() => {
     if (!projectId) return undefined;
     let isMounted = true;
@@ -154,7 +154,7 @@ const MeetingForm = ({
 
   return (
     <>
-      {/* Header */}
+      {}
       <div className="px-5 py-4 border-b border-gray-100 dark:border-[#2f2f2f] flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
@@ -179,7 +179,7 @@ const MeetingForm = ({
         </button>
       </div>
 
-      {/* Form */}
+      {}
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         {errorMsg && (
           <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs font-medium text-rose-700 dark:text-rose-300">
@@ -187,7 +187,7 @@ const MeetingForm = ({
           </div>
         )}
 
-        {/* Title */}
+        {}
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
             Title <span className="text-rose-500">*</span>
@@ -202,7 +202,7 @@ const MeetingForm = ({
           />
         </div>
 
-        {/* Project Selector */}
+        {}
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
             <FiTag size={13} />
@@ -225,7 +225,7 @@ const MeetingForm = ({
           </select>
         </div>
 
-        {/* Date & Time Range */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
@@ -256,7 +256,7 @@ const MeetingForm = ({
           </div>
         </div>
 
-        {/* Agenda */}
+        {}
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
             <FiFileText size={13} />
@@ -271,7 +271,7 @@ const MeetingForm = ({
           />
         </div>
 
-        {/* Attendees Selection */}
+        {}
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
@@ -317,7 +317,7 @@ const MeetingForm = ({
           </div>
         </div>
 
-        {/* Form Actions */}
+        {}
         <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-[#2f2f2f]">
           <button
             type="button"

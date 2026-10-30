@@ -23,9 +23,9 @@ const AgendaView = ({
   events = [],
   onSelectEvent,
 }) => {
-  // Sort events chronologically and group by date
+  
   const groupedEvents = useMemo(() => {
-    // Filter events starting around currentDate month or upcoming
+    
     const sorted = [...events].sort((a, b) => a.start.getTime() - b.start.getTime());
 
     const groups = [];
@@ -82,7 +82,7 @@ const AgendaView = ({
             key={group.date.toISOString()}
             className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] overflow-hidden shadow-xs"
           >
-            {/* Date Header */}
+            {}
             <div
               className={`px-4 py-2.5 border-b border-gray-200 dark:border-[#2e2e2e] flex items-center justify-between ${
                 isTodayDate
@@ -109,7 +109,7 @@ const AgendaView = ({
               </span>
             </div>
 
-            {/* Event List */}
+            {}
             <div className="divide-y divide-gray-100 dark:divide-[#262626]">
               {group.items.map((ev) => (
                 <div

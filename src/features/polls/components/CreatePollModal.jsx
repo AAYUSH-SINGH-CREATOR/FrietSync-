@@ -94,7 +94,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
         )}
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
-          {/* Question */}
+          {}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
               Poll Question <span className="text-rose-500">*</span>
@@ -110,7 +110,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
             />
           </div>
 
-          {/* Description */}
+          {}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">
               Description <span className="font-normal text-slate-400">(optional)</span>
@@ -125,7 +125,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
             />
           </div>
 
-          {/* Options */}
+          {}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
               Options (min 2, max 8)
@@ -168,7 +168,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
             )}
           </div>
 
-          {/* Duration */}
+          {}
           <div className="pt-1">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-200 mb-1">Duration</label>
@@ -191,7 +191,7 @@ const CreatePollModal = ({ isOpen, onClose, projectId, onPollCreated }) => {
             </div>
           </div>
 
-          {/* Action buttons */}
+          {}
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#2a2a2e]">
             <button
               type="button"

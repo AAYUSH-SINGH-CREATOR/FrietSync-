@@ -76,7 +76,7 @@ const isIssueAssignedToMember = (issue, member) => {
   return false;
 };
 
-// Accessible dark tooltip for Recharts Doughnut
+
 const PieTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const item = payload[0];
@@ -98,7 +98,7 @@ const PieTooltip = ({ active, payload }) => {
   return null;
 };
 
-// Accessible dark tooltip for Recharts BarChart
+
 const BarTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -157,7 +157,7 @@ const TeamView = () => {
     const ws = await getMyWorkspace();
     const wsId = ws?.id || ws?._id || ws?.workspaceId;
 
-    // 1. Fetch members and projects concurrently
+    
     const [memberList, projectList] = await Promise.all([
       wsId ? getWorkspaceMembers(wsId).catch(() => []) : Promise.resolve([]),
       getMyProjects().catch(() => []),
@@ -166,7 +166,7 @@ const TeamView = () => {
     const safeMembers = Array.isArray(memberList) ? memberList : [];
     const safeProjects = Array.isArray(projectList) ? projectList : [];
 
-    // 2. Fetch issues across user projects
+    
     const issuesPromises = safeProjects.map((p) => {
       const pid = p?.id || p?._id || p?.projectId;
       return pid
@@ -197,7 +197,7 @@ const TeamView = () => {
       }
     });
 
-    // 3. Gather recent team activity from issue history and updates
+    
     const recentIssues = [...allIssues]
       .sort(
         (a, b) =>
@@ -244,7 +244,7 @@ const TeamView = () => {
       }
     });
 
-    // If history entries are sparse, supplement with real issue creation/completion milestones
+    
     if (gatheredActivities.length < 5) {
       allIssues.forEach((iss) => {
         const issueKey = iss.key || iss.code || `${iss.projectKey || 'TASK'}-${iss.number || (iss.id ? String(iss.id).slice(0, 4) : '1')}`;
@@ -259,7 +259,7 @@ const TeamView = () => {
       });
     }
 
-    // Sort activities descending by timestamp and take recent 8
+    
     const sortedActivities = gatheredActivities
       .filter((a) => a.timestamp)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -315,7 +315,7 @@ const TeamView = () => {
     };
   }, [fetchTeamDataCore]);
 
-  // Summary Cards Metrics
+  
   const summaryMetrics = useMemo(() => {
     const total = issues.length;
     let active = 0;
@@ -338,7 +338,7 @@ const TeamView = () => {
     return { total, active, overdue, completed };
   }, [issues]);
 
-  // Per-member workload and progress metrics
+  
   const memberMetrics = useMemo(() => {
     return members.map((member, index) => {
       const assignedIssues = issues.filter((iss) => isIssueAssignedToMember(iss, member));
@@ -392,7 +392,7 @@ const TeamView = () => {
     });
   }, [members, issues]);
 
-  // Doughnut Chart Data (distribution of assigned tasks)
+  
   const workloadDistributionData = useMemo(() => {
     const activeWithTasks = memberMetrics.filter((m) => m.assigned > 0);
     const totalAssigned = activeWithTasks.reduce((acc, m) => acc + m.assigned, 0);
@@ -407,7 +407,7 @@ const TeamView = () => {
     }));
   }, [memberMetrics]);
 
-  // Grouped Bar Chart Data (assigned vs completed)
+  
   const workloadComparisonData = useMemo(() => {
     return memberMetrics.map((m) => ({
       name: m.name,
@@ -418,7 +418,7 @@ const TeamView = () => {
     }));
   }, [memberMetrics]);
 
-  // Filtered members list for bottom table
+  
   const filteredMembers = useMemo(() => {
     return memberMetrics.filter((m) => {
       const matchesSearch =
@@ -439,7 +439,7 @@ const TeamView = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
-      {/* Toast Notice */}
+      {}
       {toastNotice && (
         <div
           className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all ${
@@ -457,7 +457,7 @@ const TeamView = () => {
         </div>
       )}
 
-      {/* Page Header matching reference */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -502,7 +502,7 @@ const TeamView = () => {
         </div>
       </div>
 
-      {/* Error Alert */}
+      {}
       {error && (
         <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300 text-xs sm:text-sm flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -519,9 +519,9 @@ const TeamView = () => {
         </div>
       )}
 
-      {/* Four Summary Cards */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* Total Tasks */}
+        {}
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Total Tasks</span>
@@ -537,7 +537,7 @@ const TeamView = () => {
           </div>
         </div>
 
-        {/* Active Tasks */}
+        {}
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Active Tasks</span>
@@ -553,7 +553,7 @@ const TeamView = () => {
           </div>
         </div>
 
-        {/* Overdue Tasks */}
+        {}
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Overdue Tasks</span>
@@ -571,7 +571,7 @@ const TeamView = () => {
           </div>
         </div>
 
-        {/* Completed Tasks */}
+        {}
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-5 shadow-xs transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-[#94a3b8] uppercase tracking-wider">Completed Tasks</span>
@@ -590,9 +590,9 @@ const TeamView = () => {
         </div>
       </div>
 
-      {/* Two Workload Charts */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-        {/* Left: Team Workload Distribution (Doughnut Chart) */}
+        {}
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-3 sm:p-4 shadow-xs flex flex-col justify-between">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Team workload chart</h2>
@@ -633,7 +633,7 @@ const TeamView = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Legend List */}
+              {}
               <div className="space-y-1.5 max-h-[170px] overflow-y-auto pr-1">
                 <div className="grid grid-cols-[minmax(0,1fr)_40px_36px] gap-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-[#888]"><span /><span className="text-center">Tasks</span><span className="text-center">%</span></div>
                 {workloadDistributionData.map((item, idx) => (
@@ -654,7 +654,7 @@ const TeamView = () => {
           )}
         </div>
 
-        {/* Right: Team Workload Comparison (Grouped Bar Chart) */}
+        {}
         <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-3 sm:p-4 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -728,9 +728,9 @@ const TeamView = () => {
         </div>
       </div>
 
-      {/* Bottom Grid: Team Members Table (Left) + Activity Feed (Right) */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-        {/* Left: Team Members Table */}
+        {}
         <section className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-6 shadow-xs flex flex-col space-y-4">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
@@ -739,7 +739,7 @@ const TeamView = () => {
                 <p className="text-xs text-slate-500 dark:text-[#94a3b8]">{memberMetrics.length} total collaborators in workspace</p>
               </div>
 
-              {/* Search input */}
+              {}
               <div className="relative w-full sm:w-48">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                 <input
@@ -752,7 +752,7 @@ const TeamView = () => {
               </div>
             </div>
 
-            {/* Role Filter Tabs */}
+            {}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
               {['ALL', 'MANAGER', 'LEADER', 'CONTRIBUTOR'].map((tab) => (
                 <button
@@ -777,7 +777,7 @@ const TeamView = () => {
             </div>
           </div>
 
-          {/* Members Table */}
+          {}
           {isLoading ? (
             <div className="space-y-3 py-3">
               {[0, 1, 2, 3].map((n) => (
@@ -877,7 +877,7 @@ const TeamView = () => {
           )}
         </section>
 
-        {/* Right: Team Activity Feed */}
+        {}
         <section className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d32] bg-white dark:bg-[#171717] p-4 sm:p-6 shadow-xs flex flex-col space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -967,7 +967,7 @@ const TeamView = () => {
         </section>
       </div>
 
-      {/* Invite Modal */}
+      {}
       <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}

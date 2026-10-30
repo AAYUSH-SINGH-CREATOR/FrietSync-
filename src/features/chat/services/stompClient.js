@@ -227,7 +227,7 @@ export class StompChatClient {
         try {
           parsedBody = JSON.parse(body);
         } catch {
-          // Keep raw string body if JSON parsing fails
+          
         }
 
         for (const [id, sub] of this.subscriptions.entries()) {
@@ -298,7 +298,7 @@ export class StompChatClient {
         try {
           this.ws.send(unsubFrame);
         } catch {
-          // Socket might already be closed
+          
         }
       }
       this.subscriptions.delete(subId);
@@ -340,7 +340,7 @@ export class StompChatClient {
         }
         this.ws.close();
       } catch {
-        // Socket might already be closed
+        
       }
       this.ws = null;
     }

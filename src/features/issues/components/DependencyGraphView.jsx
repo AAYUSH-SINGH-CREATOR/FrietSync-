@@ -13,7 +13,7 @@ const DependencyGraphView = () => {
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Load project name for display
+  
   useEffect(() => {
     const loadProjectName = async () => {
       if (!projectId) return;
@@ -60,7 +60,7 @@ const DependencyGraphView = () => {
 
   return (
     <section className="min-h-[calc(100vh-7.5rem)] rounded-xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#141416] dark:text-white sm:p-6 lg:p-7">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <button
@@ -89,14 +89,14 @@ const DependencyGraphView = () => {
         </button>
       </div>
 
-      {/* Error message */}
+      {}
       {error && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
           {error}
         </div>
       )}
 
-      {/* Dependency Graph */}
+      {}
       <DependencyGraph 
         key={refreshTrigger}
         projectId={projectId} 

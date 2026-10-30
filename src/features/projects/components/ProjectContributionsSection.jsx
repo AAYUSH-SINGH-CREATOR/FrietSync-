@@ -5,10 +5,14 @@ import {
   FiExternalLink,
   FiGithub,
   FiGitCommit,
+  FiGitPullRequest,
   FiPlus,
   FiRefreshCw,
   FiTrash2,
   FiUsers,
+  FiX,
+  FiCalendar,
+  FiCheck,
 } from 'react-icons/fi';
 import { getFriendlyErrorMessage, getProjectContributions } from '../services/projectApi';
 
@@ -57,23 +61,25 @@ const parseContribution = (item, index) => {
     : 0;
   const commits = Number(item.total ?? item.commits ?? item.commitCount ?? item.totalCommits ?? weeklyCommits);
 
-  let additions = Number(item.additions ?? item.linesAdded ?? item.added ?? 0);
-  let deletions = Number(item.deletions ?? item.linesDeleted ?? item.deleted ?? 0);
-  if (Array.isArray(item.weeks) && additions === 0 && deletions === 0) {
-    item.weeks.forEach((week) => {
-      additions += Number(week.a || 0);
-      deletions += Number(week.d || 0);
-    });
-  }
+  const pullRequests = Number(item.pullRequests ?? 0);
+  const mergedPullRequests = Number(item.mergedPullRequests ?? 0);
+  const githubLogin = item.githubLogin || item.username || username;
+  const name = item.name || username;
+  const userId = item.userId || item.id;
+  const activity = item.activity || [];
 
   return {
     id: item.id || username || index,
+    userId,
     username,
+    name,
+    githubLogin,
     avatarUrl,
     htmlUrl,
     commits,
-    additions,
-    deletions,
+    pullRequests,
+    mergedPullRequests,
+    activity,
   };
 };
 
@@ -89,12 +95,116 @@ const SummaryMetric = ({ icon: Icon, label, value, tone, symbol }) => (
   </div>
 );
 
-const ContributorRow = ({ contributor, index, totalCommits }) => {
+const ContributorDetailsModal = ({ contributor, onClose }) => {
+  if (!contributor) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-[#2d2d34] dark:bg-[#171717]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-[#2d2d34]">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Contributor Details</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-[#25252c] dark:hover:text-white"
+          >
+            <FiX size={20} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="flex items-center gap-4 mb-6">
+            {contributor.avatarUrl ? (
+              <img
+                src={contributor.avatarUrl}
+                alt={contributor.username}
+                className="h-16 w-16 rounded-full border-2 border-slate-200 object-cover shadow-md dark:border-slate-700"
+              />
+            ) : (
+              <span className={`flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold text-white shadow-md ${getAvatarColor(contributor.username, 0)}`}>
+                {getInitials(contributor.username)}
+              </span>
+            )}
+            <div>
+              <p className="text-xl font-bold text-slate-900 dark:text-white">{contributor.name || contributor.username}</p>
+              {contributor.githubLogin && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">@{contributor.githubLogin}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="flex flex-col items-center rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#2d2d34] dark:bg-[#1b1b1f]">
+              <FiGitCommit size={20} className="mb-2 text-sky-500" />
+              <span className="text-2xl font-bold text-slate-900 dark:text-white">{contributor.commits}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Commits</span>
+            </div>
+            <div className="flex flex-col items-center rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#2d2d34] dark:bg-[#1b1b1f]">
+              <FiGitPullRequest size={20} className="mb-2 text-purple-500" />
+              <span className="text-2xl font-bold text-slate-900 dark:text-white">{contributor.pullRequests}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Pull Requests</span>
+            </div>
+            <div className="flex flex-col items-center rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#2d2d34] dark:bg-[#1b1b1f]">
+              <FiCheck size={20} className="mb-2 text-emerald-500" />
+              <span className="text-2xl font-bold text-slate-900 dark:text-white">{contributor.mergedPullRequests}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Merged PRs</span>
+            </div>
+          </div>
+
+          {contributor.activity && contributor.activity.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FiCalendar size={16} className="text-slate-500" />
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Recent Activity</h4>
+              </div>
+              <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-[#2d2d34] dark:bg-[#1b1b1f]">
+                {contributor.activity.slice(0, 10).map((item, index) => (
+                  <div key={index} className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-[#2d2d34]">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {item.date ? new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown date'}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {item.commits} {item.commits === 1 ? 'commit' : 'commits'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {contributor.githubLogin && (
+            <a
+              href={`https://github.com/${contributor.githubLogin}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#2d2d34] dark:bg-[#25252c] dark:text-slate-300 dark:hover:bg-[#2b2b32]"
+            >
+              <FiGithub size={16} />
+              View GitHub Profile
+              <FiExternalLink size={14} />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ContributorRow = ({ contributor, index, totalCommits, onOpenDetails }) => {
   const percentage = totalCommits > 0 ? Math.round((contributor.commits / totalCommits) * 100) : 0;
   const avatarColor = getAvatarColor(contributor.username, index);
 
   return (
-    <article className="flex flex-col justify-between gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 transition hover:border-slate-300 dark:border-[#2d2d34] dark:bg-[#1b1b1f] dark:hover:border-[#3b3b44] sm:flex-row sm:items-center sm:p-4">
+    <article
+      onClick={() => onOpenDetails?.(contributor)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDetails?.(contributor); } }}
+      role="button"
+      tabIndex={0}
+      className="flex cursor-pointer flex-col justify-between gap-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 transition hover:border-sky-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-[#2d2d34] dark:bg-[#1b1b1f] dark:hover:border-sky-700 dark:hover:bg-[#1f1f24] sm:flex-row sm:items-center sm:p-4"
+    >
       <div className="flex min-w-0 items-center gap-3">
         <span className="w-5 shrink-0 text-center font-mono text-xs font-bold text-slate-400 dark:text-slate-500">#{index + 1}</span>
         {contributor.avatarUrl ? (
@@ -103,13 +213,9 @@ const ContributorRow = ({ contributor, index, totalCommits }) => {
           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-2xs ${avatarColor}`}>{getInitials(contributor.username)}</span>
         )}
         <div className="min-w-0">
-          {contributor.htmlUrl ? (
-            <a href={contributor.htmlUrl} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-[220px] items-center gap-1.5 truncate text-xs font-bold text-slate-900 transition hover:text-sky-600 dark:text-white dark:hover:text-sky-400 sm:text-sm">
-              <span className="truncate">{contributor.username}</span><FiExternalLink size={12} className="shrink-0 text-slate-400" />
-            </a>
-          ) : (
-            <span className="block truncate text-xs font-bold text-slate-900 dark:text-white sm:text-sm">{contributor.username}</span>
-          )}
+          <span className="inline-flex max-w-[220px] items-center gap-1.5 truncate text-xs font-bold text-slate-900 transition hover:text-sky-600 dark:text-white dark:hover:text-sky-400 sm:text-sm">
+            <span className="truncate">{contributor.username}</span>
+          </span>
           <span className="mt-0.5 block text-[11px] font-medium text-slate-500 dark:text-slate-400">
             {contributor.commits} {contributor.commits === 1 ? 'commit' : 'commits'}
           </span>
@@ -124,8 +230,12 @@ const ContributorRow = ({ contributor, index, totalCommits }) => {
           <span className="w-9 text-right font-mono text-xs font-bold text-slate-600 dark:text-slate-300">{percentage}%</span>
         </div>
         <div className="flex items-center gap-1.5 font-mono text-[11px] font-semibold">
-          <span className="rounded-md border border-emerald-200/60 bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-400">+{formatNumber(contributor.additions)}</span>
-          <span className="rounded-md border border-rose-200/60 bg-rose-50 px-2 py-0.5 text-rose-700 dark:border-rose-800/40 dark:bg-rose-950/40 dark:text-rose-400">-{formatNumber(contributor.deletions)}</span>
+          <span className="inline-flex items-center gap-1 rounded-md border border-purple-200/60 bg-purple-50 px-2 py-0.5 text-purple-700 dark:border-purple-800/40 dark:bg-purple-950/40 dark:text-purple-400" title="Pull requests">
+            <FiGitPullRequest size={10} />{formatNumber(contributor.pullRequests)}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200/60 bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-400" title="Merged pull requests">
+            <FiCheck size={10} />{formatNumber(contributor.mergedPullRequests)}
+          </span>
         </div>
       </div>
     </article>
@@ -144,6 +254,7 @@ const ProjectContributionsSection = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedContributor, setSelectedContributor] = useState(null);
 
   const owner = linkedRepo?.owner || '';
   const repository = linkedRepo?.repository || linkedRepo?.repo || '';
@@ -178,9 +289,9 @@ const ProjectContributionsSection = ({
 
   const totals = useMemo(() => contributions.reduce((summary, contributor) => ({
     commits: summary.commits + contributor.commits,
-    additions: summary.additions + contributor.additions,
-    deletions: summary.deletions + contributor.deletions,
-  }), { commits: 0, additions: 0, deletions: 0 }), [contributions]);
+    pullRequests: summary.pullRequests + contributor.pullRequests,
+    mergedPullRequests: summary.mergedPullRequests + contributor.mergedPullRequests,
+  }), { commits: 0, pullRequests: 0, mergedPullRequests: 0 }), [contributions]);
 
   const refresh = () => setRefreshKey((key) => key + 1);
 
@@ -244,9 +355,9 @@ const ProjectContributionsSection = ({
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <SummaryMetric icon={FiGitCommit} label="Total Commits" value={isLoading ? '—' : formatNumber(totals.commits)} tone="border-sky-100 bg-sky-50 text-sky-600 dark:border-sky-900/40 dark:bg-sky-950/50 dark:text-sky-400" />
-            <SummaryMetric symbol="++" label="Additions" value={isLoading ? '—' : `+${formatNumber(totals.additions)}`} tone="border-emerald-100 bg-emerald-50 font-bold text-emerald-600 dark:border-emerald-900/40 dark:bg-emerald-950/50 dark:text-emerald-400" />
-            <SummaryMetric symbol="--" label="Deletions" value={isLoading ? '—' : `-${formatNumber(totals.deletions)}`} tone="border-rose-100 bg-rose-50 font-bold text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/50 dark:text-rose-400" />
-            <SummaryMetric icon={FiUsers} label="Contributors" value={isLoading ? '—' : contributions.length} tone="border-purple-100 bg-purple-50 text-purple-600 dark:border-purple-900/40 dark:bg-purple-950/50 dark:text-purple-400" />
+            <SummaryMetric icon={FiGitPullRequest} label="Pull Requests" value={isLoading ? '—' : formatNumber(totals.pullRequests)} tone="border-purple-100 bg-purple-50 text-purple-600 dark:border-purple-900/40 dark:bg-purple-950/50 dark:text-purple-400" />
+            <SummaryMetric icon={FiCheck} label="Merged PRs" value={isLoading ? '—' : formatNumber(totals.mergedPullRequests)} tone="border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/40 dark:bg-emerald-950/50 dark:text-emerald-400" />
+            <SummaryMetric icon={FiUsers} label="Contributors" value={isLoading ? '—' : contributions.length} tone="border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-900/40 dark:bg-indigo-950/50 dark:text-indigo-400" />
           </div>
 
           <div className="space-y-3">
@@ -257,11 +368,23 @@ const ProjectContributionsSection = ({
               <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">No commit activity recorded yet in this repository.</div>
             ) : (
               contributions.map((contributor, index) => (
-                <ContributorRow key={contributor.id} contributor={contributor} index={index} totalCommits={totals.commits} />
+                <ContributorRow
+                  key={contributor.id}
+                  contributor={contributor}
+                  index={index}
+                  totalCommits={totals.commits}
+                  onOpenDetails={setSelectedContributor}
+                />
               ))
             )}
           </div>
         </div>
+      )}
+      {selectedContributor && (
+        <ContributorDetailsModal
+          contributor={selectedContributor}
+          onClose={() => setSelectedContributor(null)}
+        />
       )}
     </section>
   );

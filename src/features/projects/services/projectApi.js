@@ -207,8 +207,8 @@ export const removeProjectMember = async (projectId, memberUserId) => {
   }
 };
 
-// Project extension endpoints use caller-supplied contract payloads. The API
-// guide lists their routes but does not define all DTO fields here.
+
+
 const projectResourceRequest = async (method, path, payload, config = {}, defaultMessage = 'Project request failed.') => {
   try {
     const response = await axios({ method, url: `${BASE_URL}${path}`, data: payload, ...getAuthHeaders(), ...config });
@@ -271,7 +271,7 @@ export const getProjectSummaryPdf = async (projectId) => {
 export const downloadProjectSummaryPdf = getProjectSummaryPdf;
 export const getProjectTimeline = (projectId) => projectResourceRequest('get', `/projects/${projectId}/timeline`, undefined, {}, 'Failed to load project timeline.');
 
-// GitHub Integration Endpoints
+
 export const getGithubConnectUrl = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/integrations/github/connect`, getAuthHeaders());

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { isSameDay, formatTime } from '../services/calendarApi';
 import { FiClock, FiPlus } from 'react-icons/fi';
 
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); 
 
 const getSourceBadgeStyle = (sourceType) => {
   switch (sourceType) {
@@ -29,7 +29,7 @@ const WeekView = ({
 }) => {
   const weekDays = useMemo(() => {
     const startOfWeek = new Date(currentDate);
-    const dayIndex = (startOfWeek.getDay() + 6) % 7; // Monday start
+    const dayIndex = (startOfWeek.getDay() + 6) % 7; 
     startOfWeek.setDate(startOfWeek.getDate() - dayIndex);
 
     return Array.from({ length: 7 }, (_, i) => {
@@ -41,7 +41,7 @@ const WeekView = ({
 
   const today = new Date();
 
-  // Separate all-day events from timed events
+  
   const { allDayEvents, timedEvents } = useMemo(() => {
     const allDay = [];
     const timed = [];
@@ -59,7 +59,7 @@ const WeekView = ({
 
   return (
     <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] shadow-xs overflow-hidden select-none flex flex-col">
-      {/* Week Header (Day names & numbers) */}
+      {}
       <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 dark:border-[#2e2e2e] bg-gray-50/80 dark:bg-[#202020]">
         <div className="py-3 text-center text-xs font-semibold text-gray-400 dark:text-[#666] border-r border-gray-200/80 dark:border-[#2a2a2a]">
           GMT
@@ -90,7 +90,7 @@ const WeekView = ({
         })}
       </div>
 
-      {/* All-Day Events Section (Sprints, Milestones, All-day Issues) */}
+      {}
       {allDayEvents.length > 0 && (
         <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 dark:border-[#2e2e2e] bg-slate-50/40 dark:bg-[#181818]">
           <div className="py-2 text-center text-[10px] font-bold text-gray-400 dark:text-[#666] uppercase tracking-wider border-r border-gray-200/80 dark:border-[#2a2a2a] self-center">
@@ -127,7 +127,7 @@ const WeekView = ({
         </div>
       )}
 
-      {/* Hourly Time Grid */}
+      {}
       <div className="max-h-[560px] overflow-y-auto divide-y divide-gray-100 dark:divide-[#252525]">
         {HOURS.map((hour) => {
           const hourLabel = `${hour > 12 ? hour - 12 : hour} ${hour >= 12 ? 'PM' : 'AM'}`;
@@ -137,16 +137,16 @@ const WeekView = ({
               key={hour}
               className="grid grid-cols-[60px_repeat(7,1fr)] min-h-[52px]"
             >
-              {/* Hour Label */}
+              {}
               <div className="text-[10px] font-semibold text-gray-400 dark:text-[#666] text-right pr-2 pt-1 border-r border-gray-100 dark:border-[#252525] select-none">
                 {hourLabel}
               </div>
 
-              {/* Day Slot Cells */}
+              {}
               {weekDays.map((day) => {
                 const isToday = isSameDay(day, today);
 
-                // Find timed events that start in this hour on this day
+                
                 const slotEvents = timedEvents.filter((ev) => {
                   if (!isSameDay(ev.start, day)) return false;
                   return ev.start.getHours() === hour;

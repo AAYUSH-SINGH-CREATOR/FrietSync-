@@ -68,7 +68,7 @@ const ProjectPollsSection = ({
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7">
-      {/* Header */}
+      {}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-[#303030]">
         <div className="flex items-center gap-2.5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
@@ -100,7 +100,7 @@ const ProjectPollsSection = ({
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {}
       {polls.length > 0 && (
         <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs dark:border-[#303030] dark:bg-[#232326]">
           {['all', 'active', 'closed'].map((key) => (
@@ -120,7 +120,7 @@ const ProjectPollsSection = ({
         </div>
       )}
 
-      {/* Error notice */}
+      {}
       {error && (
         <div className="flex items-center justify-between rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
           <div className="flex items-center gap-2"><FiAlertCircle size={15} /><span>{error}</span></div>
@@ -128,7 +128,7 @@ const ProjectPollsSection = ({
         </div>
       )}
 
-      {/* Poll list */}
+      {}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {[0, 1].map((n) => <div key={n} className="h-44 rounded-2xl bg-slate-100 dark:bg-[#252528] animate-pulse" />)}

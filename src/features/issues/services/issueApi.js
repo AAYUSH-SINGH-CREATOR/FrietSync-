@@ -58,9 +58,7 @@ export const normalizeIssuePage = (data, fallback = {}) => {
   return { items, page, size, totalElements, totalPages, first: body?.first ?? page === 0, last: body?.last ?? page + 1 >= totalPages };
 };
 
-/**
- * Safely extracts an issue detail object from various API response shapes.
- */
+
 export const normalizeIssueDetails = (data) => {
   if (!data) return null;
   if (data.item && typeof data.item === 'object') return data.item;

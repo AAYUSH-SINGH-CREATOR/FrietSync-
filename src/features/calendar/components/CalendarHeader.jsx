@@ -51,7 +51,7 @@ const CalendarHeader = ({
     }
     if (view === 'week') {
       const startOfWeek = new Date(currentDate);
-      const dayIndex = (startOfWeek.getDay() + 6) % 7; // Monday start
+      const dayIndex = (startOfWeek.getDay() + 6) % 7; 
       startOfWeek.setDate(startOfWeek.getDate() - dayIndex);
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -79,9 +79,9 @@ const CalendarHeader = ({
 
   return (
     <div className="space-y-3.5 mb-5 select-none">
-      {/* Top Bar: Title, Date Navigator, View Switcher & Primary Action */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-[#1a1a1a] p-3 sm:p-4 rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] shadow-2xs">
-        {/* Left: Title, Today & Date Navigation */}
+        {}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2 mr-1">
             <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
@@ -126,9 +126,9 @@ const CalendarHeader = ({
           </span>
         </div>
 
-        {/* Right: View Switcher, Google status, and Schedule Button */}
+        {}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Notion-style Segmented View Switcher */}
+          {}
           <div className="flex items-center p-0.5 rounded-xl bg-gray-100 dark:bg-[#252525] border border-gray-200/60 dark:border-[#333]">
             {VIEWS.map((v) => {
               const isActive = view === v.id;
@@ -149,7 +149,7 @@ const CalendarHeader = ({
             })}
           </div>
 
-          {/* Schedule Meeting Primary Action */}
+          {}
           <button
             type="button"
             onClick={onOpenCreateMeeting}
@@ -161,9 +161,9 @@ const CalendarHeader = ({
         </div>
       </div>
 
-      {/* Filter Row: Project selector & Category Toggle Pills */}
+      {}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white/70 dark:bg-[#1a1a1a]/70 backdrop-blur-xs p-2.5 sm:px-3.5 rounded-xl border border-gray-200/80 dark:border-[#2e2e2e]">
-        {/* Left: Categories */}
+        {}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span className="text-xs font-semibold text-gray-400 dark:text-[#777] flex items-center gap-1 mr-1">
             <FiFilter size={13} />
@@ -195,9 +195,9 @@ const CalendarHeader = ({
           })}
         </div>
 
-        {/* Right: Project Selector & Google Calendar Connect Action */}
+        {}
         <div className="flex items-center gap-2 ml-auto">
-          {/* Project Dropdown */}
+          {}
           <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             <FiLayers size={13} />
             <select
@@ -218,7 +218,7 @@ const CalendarHeader = ({
             </select>
           </div>
 
-          {/* Google Calendar status / button */}
+          {}
           {isGoogleConnected ? (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

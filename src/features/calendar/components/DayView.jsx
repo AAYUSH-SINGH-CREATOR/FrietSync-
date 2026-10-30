@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { isSameDay, formatTime } from '../services/calendarApi';
 import { FiClock, FiPlus, FiUsers, FiTag } from 'react-icons/fi';
 
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); 
 
 const getSourceBadgeStyle = (sourceType) => {
   switch (sourceType) {
@@ -53,7 +53,7 @@ const DayView = ({
 
   return (
     <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200/90 dark:border-[#2e2e2e] shadow-xs overflow-hidden select-none">
-      {/* Day Header Banner */}
+      {}
       <div className="p-4 border-b border-gray-200 dark:border-[#2e2e2e] bg-gray-50/70 dark:bg-[#202020] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span
@@ -85,7 +85,7 @@ const DayView = ({
         </button>
       </div>
 
-      {/* All-Day Items Section */}
+      {}
       {allDayEvents.length > 0 && (
         <div className="p-3 border-b border-gray-200 dark:border-[#2e2e2e] bg-slate-50/40 dark:bg-[#181818] space-y-2">
           <span className="text-[10px] font-bold text-gray-400 dark:text-[#666] uppercase tracking-wider">
@@ -118,7 +118,7 @@ const DayView = ({
         </div>
       )}
 
-      {/* Hourly Schedule View */}
+      {}
       <div className="max-h-[580px] overflow-y-auto divide-y divide-gray-100 dark:divide-[#252525]">
         {HOURS.map((hour) => {
           const hourLabel = `${hour > 12 ? hour - 12 : hour} ${hour >= 12 ? 'PM' : 'AM'}`;
@@ -129,12 +129,12 @@ const DayView = ({
               key={hour}
               className="grid grid-cols-[70px_1fr] min-h-[64px] hover:bg-slate-50/50 dark:hover:bg-[#1c1c1c] transition group"
             >
-              {/* Hour Label */}
+              {}
               <div className="text-xs font-semibold text-gray-400 dark:text-[#666] text-right pr-3 pt-2 border-r border-gray-100 dark:border-[#252525]">
                 {hourLabel}
               </div>
 
-              {/* Slot Area */}
+              {}
               <div
                 onClick={() => {
                   const slotDate = new Date(currentDate);

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { expireAuthSession, getAccessToken, refreshAccessToken } from './authApi';
 
-// Ensure credentials (cookies) are included on requests so refresh cookies work reliably
+
 axios.defaults.withCredentials = true;
 
 const isAuthEndpoint = (url = '') =>
@@ -57,7 +57,7 @@ axios.interceptors.response.use(
       (typeof request.headers?.get === 'function' ? request.headers.get('Authorization') : '');
     const sentToken = readBearerToken(sentAuth);
 
-    // Another request may already have refreshed the token while this 401 was in flight.
+    
     if (currentToken && sentToken && currentToken !== sentToken) {
       request.__authRefreshRetried = true;
       if (typeof request.headers?.set === 'function') {

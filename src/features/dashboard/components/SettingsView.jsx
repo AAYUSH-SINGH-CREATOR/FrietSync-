@@ -78,7 +78,7 @@ const SettingsView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUserProfile, refreshCurrentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
 
-  // Expanded categories state
+  
   const [expandedSection, setExpandedSection] = useState(() => {
     const hasConnectParam =
       new URLSearchParams(window.location.search).has('github') ||
@@ -92,11 +92,11 @@ const SettingsView = () => {
     };
   });
 
-  // Notification Preferences State
+  
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
 
-  // Workspace Management State
+  
   const [workspace, setWorkspace] = useState(null);
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true);
   const [renameInput, setRenameInput] = useState('');
@@ -116,7 +116,7 @@ const SettingsView = () => {
     String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase()
   );
 
-  // Account State
+  
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
@@ -125,7 +125,7 @@ const SettingsView = () => {
     : { type: '', text: '' });
   const [isRequestingPasswordReset, setIsRequestingPasswordReset] = useState(false);
 
-  // Google Calendar Integration State
+  
   const [isGoogleConnected, setIsGoogleConnected] = useState(() => {
     if (typeof currentUserProfile?.googleConnected === 'boolean') {
       return currentUserProfile.googleConnected;
@@ -138,7 +138,7 @@ const SettingsView = () => {
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState(false);
 
-  // GitHub Integration State
+  
   const [isGithubConnected, setIsGithubConnected] = useState(() => {
     if (typeof currentUserProfile?.githubConnected === 'boolean') {
       return currentUserProfile.githubConnected;
@@ -151,7 +151,7 @@ const SettingsView = () => {
   const [isConnectingGithub, setIsConnectingGithub] = useState(false);
   const [isDisconnectingGithub, setIsDisconnectingGithub] = useState(false);
 
-  // Synchronize Google and GitHub connected flags from currentUserProfile
+  
   useEffect(() => {
     if (currentUserProfile) {
       Promise.resolve().then(() => {
@@ -179,7 +179,7 @@ const SettingsView = () => {
     }
   }, [currentUserProfile]);
 
-  // Handle URL query parameters for GitHub and Google OAuth callbacks
+  
   useEffect(() => {
     const githubParam = searchParams.get('github');
     const googleParam = searchParams.get('google');
@@ -328,7 +328,7 @@ const SettingsView = () => {
     }
   };
 
-  // Load Notification Preferences
+  
   const loadPreferences = useCallback(async () => {
     setIsLoadingPreferences(true);
     try {
@@ -403,7 +403,7 @@ const SettingsView = () => {
     };
   }, []);
 
-  // Rename Workspace
+  
   const handleUpdateWorkspaceName = async (e) => {
     e.preventDefault();
     if (!renameInput.trim()) {
@@ -440,7 +440,7 @@ const SettingsView = () => {
     }
   };
 
-  // Leave Workspace
+  
   const handleLeaveWorkspace = async () => {
     setIsLeavingWorkspace(true);
     setStatusMessage({ type: '', text: '' });
@@ -466,7 +466,7 @@ const SettingsView = () => {
     }
   };
 
-  // Restore Workspace
+  
   const handleRestoreWorkspace = async () => {
     setIsRestoringWorkspace(true);
     setStatusMessage({ type: '', text: '' });
@@ -492,7 +492,7 @@ const SettingsView = () => {
     }
   };
 
-  // Soft Delete Workspace
+  
   const handleDeleteWorkspace = async () => {
     setIsDeletingWorkspace(true);
     setStatusMessage({ type: '', text: '' });
@@ -522,7 +522,7 @@ const SettingsView = () => {
     }
   };
 
-  // Transfer Workspace Ownership
+  
   const handleTransferOwnership = async (e) => {
     if (e) e.preventDefault();
     const email = transferEmail.trim();
@@ -568,7 +568,7 @@ const SettingsView = () => {
     }
   };
 
-  // Handle Logout
+  
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -602,7 +602,7 @@ const SettingsView = () => {
 
   return (
     <div className="w-full min-w-0 space-y-0 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
-      {/* Branded Header Banner */}
+      {}
       <div
         className="min-h-[126px] sm:min-h-[128px] rounded-t-xl sm:rounded-t-2xl px-4 sm:px-5 py-5 sm:py-6 flex items-center relative overflow-hidden bg-cover bg-center"
         style={{ backgroundImage: `url(${profileBanner})` }}
@@ -615,7 +615,7 @@ const SettingsView = () => {
         </div>
       </div>
 
-      {/* Status Notice */}
+      {}
       {statusMessage.text && (
         <div
           className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn ${
@@ -642,9 +642,9 @@ const SettingsView = () => {
         </div>
       )}
 
-      {/* Main Settings Category List */}
+      {}
       <div className="space-y-3 bg-slate-100 dark:bg-[#1d1d1d] p-2 sm:p-2.5 rounded-b-xl sm:rounded-b-2xl">
-        {/* Category 1: Account (Navigates to Profile) */}
+        {}
         <button
           type="button"
           onClick={() => navigate('/dashboard/settings/profile')}
@@ -665,7 +665,7 @@ const SettingsView = () => {
           </div>
         </button>
 
-        {/* Category 2: Notifications (Expandable) */}
+        {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
@@ -729,7 +729,7 @@ const SettingsView = () => {
           )}
         </div>
 
-        {/* Category 3: Privacy & Security (Expandable) */}
+        {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
@@ -761,9 +761,7 @@ const SettingsView = () => {
                   <div className='flex gap-3'>
                    <CiLock size={18} />
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Password</h4>
-                    {/* <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
-                      Reset your password using a verification code sent to your account email.
-                    </p> */}
+                    {}
                   </div>
                   <button
                     type="button"
@@ -790,19 +788,12 @@ const SettingsView = () => {
                 </Link>
               </div>
 
-              {/* <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Two-Factor Authentication (2FA)
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-1 leading-relaxed">
-                  Multi-Factor Authentication and session revocation features are scheduled for the next workspace security update.
-                </p>
-              </div> */}
+              {}
             </div>
           )}
         </div>
 
-        {/* Category 4: Connected Accounts (Expandable) */}
+        {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
@@ -873,7 +864,7 @@ const SettingsView = () => {
                 </div>
               </div>
 
-              {/* GitHub */}
+              {}
               <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white flex items-center justify-center shrink-0">
@@ -925,7 +916,7 @@ const SettingsView = () => {
           )}
         </div>
 
-        {/* Category 5: Danger Zone (Expandable - LOGOUT ONLY, no fake deactivation/deletion) */}
+        {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
@@ -1017,7 +1008,7 @@ const SettingsView = () => {
           )}
         </div>
 
-        {/* Category 6: Workspace Settings (Preserves Workspace Features) */}
+        {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
             type="button"
@@ -1055,7 +1046,7 @@ const SettingsView = () => {
                 </div>
               ) : (
                 <>
-                  {/* Pending Soft Deletion Warning Banner */}
+                  {}
                   {Boolean(workspace?.deletionRequestedAt || workspace?.permanentlyDeleteAt) && (
                     <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 space-y-2.5 animate-fadeIn">
                       <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-sm">
@@ -1091,7 +1082,7 @@ const SettingsView = () => {
                     </div>
                   )}
 
-                  {/* Workspace Info & Team Preview */}
+                  {}
                   <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -1110,7 +1101,7 @@ const SettingsView = () => {
                     </Link>
                   </div>
 
-                  {/* Rename Workspace Form */}
+                  {}
                   <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] space-y-3">
                     <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-sm">
                       <FiEdit2 size={16} />
@@ -1135,7 +1126,7 @@ const SettingsView = () => {
                     </form>
                   </div>
 
-                  {/* Transfer Workspace Ownership (Admins Only) */}
+                  {}
                   {isWorkspaceAdmin && (
                     <div className="p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833] space-y-3">
                       <div className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-sm">
@@ -1225,9 +1216,9 @@ const SettingsView = () => {
                     </div>
                   )}
 
-                  {/* Workspace Actions / Danger Zone */}
+                  {}
                   <div className="space-y-3 pt-1">
-                    {/* Leave Workspace */}
+                    {}
                     <div className="p-4 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <h4 className="text-sm font-semibold text-rose-800 dark:text-[#F87171]">
@@ -1267,7 +1258,7 @@ const SettingsView = () => {
                       )}
                     </div>
 
-                    {/* Soft Delete Workspace (Admins Only) */}
+                    {}
                     {isWorkspaceAdmin &&
                       !(workspace?.deletionRequestedAt || workspace?.permanentlyDeleteAt) && (
                         <div className="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 border border-rose-300/70 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1290,7 +1281,7 @@ const SettingsView = () => {
                       )}
                   </div>
 
-                  {/* Soft Delete Confirmation Modal */}
+                  {}
                   {showDeleteConfirm && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
                       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#1a1a1d] p-6 shadow-2xl border border-slate-200 dark:border-[#303030] space-y-4 text-left">

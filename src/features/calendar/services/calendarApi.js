@@ -39,9 +39,9 @@ const handleCalendarError = (error, defaultMessage) => {
   throw error;
 };
 
-// ==========================================
-// 1. MEETINGS API
-// ==========================================
+
+
+
 
 export const getMyMeetings = async () => {
   try {
@@ -110,9 +110,9 @@ export const deleteMeeting = async (meetingId) => {
   }
 };
 
-// ==========================================
-// 2. PROJECT CALENDAR & TIMELINE API
-// ==========================================
+
+
+
 
 export const getProjectCalendar = async (projectId) => {
   if (!projectId) return [];
@@ -125,7 +125,7 @@ export const getProjectCalendar = async (projectId) => {
     if (Array.isArray(data?.data)) return data.data;
     return [];
   } catch {
-    // Project calendar endpoint might be empty or unavailable on some projects
+    
     return [];
   }
 };
@@ -145,9 +145,9 @@ export const getProjectTimeline = async (projectId) => {
   }
 };
 
-// ==========================================
-// 3. GOOGLE CALENDAR INTEGRATION
-// ==========================================
+
+
+
 
 export const getGoogleConnectUrl = async () => {
   try {
@@ -169,9 +169,9 @@ export const disconnectGoogleCalendar = async () => {
   }
 };
 
-// ==========================================
-// 4. DATE AND NORMALIZATION UTILITIES
-// ==========================================
+
+
+
 
 export const parseLocalDate = (dateInput) => {
   if (!dateInput) return null;

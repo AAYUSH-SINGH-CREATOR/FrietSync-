@@ -44,7 +44,7 @@ const EmptyState = ({
 
   return (
     <div className={`space-y-6 sm:space-y-8 animate-fadeIn pb-12 w-full max-w-[1100px] mx-auto ${className}`}>
-      {/* 1. Page Heading */}
+      {}
       {showHeading && title && (
         <div className="pt-2">
           <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900 dark:text-white tracking-tight">
@@ -58,7 +58,7 @@ const EmptyState = ({
         </div>
       )}
 
-      {/* 2. Central Empty State Illustration */}
+      {}
       <div className="flex flex-col items-center justify-center text-center py-2 sm:py-4">
         {illustration && (
           <div className="relative w-full flex items-center justify-center">
@@ -70,13 +70,13 @@ const EmptyState = ({
           </div>
         )}
 
-        {/* Optional Action Button below illustration */}
+        {}
         {actionButton && <div className="mt-6">{actionButton}</div>}
       </div>
 
-      {/* 3. Three Action / Feature Cards (Frame 378, 379, 380 from Figma) */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 max-w-[940px] mx-auto w-full px-2">
-        {/* Card 1: Create a project */}
+        {}
         <div
           onClick={handleCreateProjectClick}
           role="button"
@@ -103,7 +103,7 @@ const EmptyState = ({
           </div>
         </div>
 
-        {/* Card 2: Collaborate */}
+        {}
         <div
           onClick={handleCollaborateClick}
           role="button"
@@ -130,7 +130,7 @@ const EmptyState = ({
           </div>
         </div>
 
-        {/* Card 3: Manage issues */}
+        {}
         <div
           onClick={handleManageIssuesClick}
           role="button"

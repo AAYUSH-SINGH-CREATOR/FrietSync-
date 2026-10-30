@@ -35,7 +35,7 @@ const ChatsView = () => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [toastNotice, setToastNotice] = useState(null);
 
-  // Voice call states
+  
   const [activeCallId, setActiveCallId] = useState(null);
   const [activeCallDetails, setActiveCallDetails] = useState(null);
   const [activeCallProjectId, setActiveCallProjectId] = useState(null);
@@ -47,7 +47,7 @@ const ChatsView = () => {
 
   const unwrapCallResponse = (response) => {
     let value = response;
-    // APIs may wrap their payload in `data` and/or `call` envelopes.
+    
     for (let depth = 0; depth < 3; depth += 1) {
       const next = value?.call || value?.data;
       if (!next || next === value) break;
@@ -105,7 +105,7 @@ const ChatsView = () => {
     }, 4000);
   }, []);
 
-  // Load the current call once; STOMP call events keep this state current.
+  
   useEffect(() => {
     if (!activeProjectId) return undefined;
 
@@ -160,8 +160,8 @@ const ChatsView = () => {
           const startRes = await startCall(activeProjectId);
           call = unwrapCallResponse(startRes);
         } catch (startError) {
-          // Another member may have started the call between the last refresh
-          // and this click. Reuse it instead of making the user try again.
+          
+          
           const activeRes = await findActiveCall(activeProjectId);
           call = unwrapCallResponse(activeRes);
           if (!call?.id && !call?.callId && !call?.call_id) throw startError;
@@ -528,8 +528,8 @@ const ChatsView = () => {
         setActiveCallProjectId(projectId);
 
         if (String(joinedCallRef.current?.callId || '') === String(callId)) {
-          // The backend destroys the Janus room. Don't start a new Janus
-          // operation from this event callback; the transport reports cleanup.
+          
+          
           joinedCallRef.current = null;
           setIsJoined(false);
           setShowCallPanel(false);
@@ -565,7 +565,7 @@ const ChatsView = () => {
         stompClientRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [activeProjectId]);
 
   const handleSelectConversation = (id) => {

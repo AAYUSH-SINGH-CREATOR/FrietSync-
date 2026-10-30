@@ -206,7 +206,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
-      {/* Top Header */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-[#F1F5F9] tracking-tight">
@@ -217,7 +217,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
           </p>
         </div>
 
-        {/* Action button */}
+        {}
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
@@ -257,7 +257,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         ))}
       </div>
 
-      {/* Success Notification */}
+      {}
       {successNotice && (
         <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-[#34D399] text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn">
           <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
       )}
 
-      {/* Error Alert */}
+      {}
       {error && (
         <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800/60 text-red-700 dark:text-[#F87171] text-xs sm:text-sm flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -291,9 +291,9 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
       )}
 
-      {/* Controls Bar: Sub-filter tabs + Search */}
+      {}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/70 dark:bg-[#1d1d1d]/90 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 dark:border-[#303030] backdrop-blur-xs">
-        {/* Sub-filter tabs */}
+        {}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#242424]/80 rounded-xl">
           {filterTabs.map((tab) => (
             <button
@@ -320,7 +320,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
           ))}
         </div>
 
-        {/* Search Input */}
+        {}
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
         <div className="relative min-w-[220px] sm:w-64">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-[#64748B]">
@@ -352,7 +352,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
       </div>
 
-      {/* Loading Skeleton */}
+      {}
       {isLoading && (
         <div
           className="grid gap-5 sm:gap-6"
@@ -387,7 +387,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
       )}
 
-      {/* Projects Grid */}
+      {}
       {!isLoading && filteredProjects.length > 0 && (
         <div
           className="grid gap-5 sm:gap-6"
@@ -474,7 +474,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
         </div>
       )}
 
-      {/* Create Project Modal */}
+      {}
       <CreateProjectModal
         isOpen={canCreateProjectButton && isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

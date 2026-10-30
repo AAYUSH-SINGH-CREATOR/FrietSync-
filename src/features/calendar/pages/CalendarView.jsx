@@ -52,13 +52,13 @@ const CalendarView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Modals state
+  
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [meetingToEdit, setMeetingToEdit] = useState(null);
   const [selectedDateForMeeting, setSelectedDateForMeeting] = useState(null);
   const [selectedEventDetails, setSelectedEventDetails] = useState(null);
 
-  // Issue details modal state
+  
   const [selectedIssueModal, setSelectedIssueModal] = useState({
     isOpen: false,
     issueId: null,
@@ -68,7 +68,7 @@ const CalendarView = () => {
 
   const { currentUserProfile, refreshCurrentUserProfile } = useOutletContext() || {};
 
-  // Google Calendar OAuth status
+  
   const [isGoogleConnected, setIsGoogleConnected] = useState(() => {
     if (typeof currentUserProfile?.googleConnected === 'boolean') {
       return currentUserProfile.googleConnected;
@@ -81,7 +81,7 @@ const CalendarView = () => {
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [googleNotice, setGoogleNotice] = useState(null);
 
-  // Synchronize Google connected status from profile
+  
   useEffect(() => {
     if (currentUserProfile && typeof currentUserProfile.googleConnected === 'boolean') {
       Promise.resolve().then(() => {
@@ -95,7 +95,7 @@ const CalendarView = () => {
     }
   }, [currentUserProfile]);
 
-  // Check URL query parameters for Google OAuth callback results
+  
   useEffect(() => {
     const googleParam = searchParams.get('google');
     if (googleParam) {
@@ -121,7 +121,7 @@ const CalendarView = () => {
     }
   }, [searchParams, setSearchParams, refreshCurrentUserProfile]);
 
-  // Load Projects
+  
   useEffect(() => {
     let isMounted = true;
     loadCalendarProjects()
@@ -143,22 +143,22 @@ const CalendarView = () => {
     };
   }, []);
 
-  // Fetch all calendar data across accessible projects
+  
   const fetchCalendarData = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      // 1. Fetch user's direct meetings
+      
       const myMeetingsPromise = getMyMeetings().catch(() => []);
 
-      // Filter projects to query based on selectedProject
+      
       const targetProjects =
         selectedProject === 'all'
           ? projects
           : projects.filter((p) => String(p.id || p._id) === String(selectedProject));
 
-      // 3. For each target project, fetch its calendar resources in parallel
+      
       const projectDataPromises = targetProjects.map(async (project) => {
         const pid = project.id || project._id;
         const pName = project.name || 'Project';
@@ -173,7 +173,7 @@ const CalendarView = () => {
 
         const projectEvents = [];
 
-        // Project Meetings
+        
         if (Array.isArray(pMeetings)) {
           pMeetings.forEach((m) => {
             const ev = normalizeMeetingEvent(m, pName);
@@ -181,7 +181,7 @@ const CalendarView = () => {
           });
         }
 
-        // Project Calendar Events
+        
         if (Array.isArray(pCal)) {
           pCal.forEach((c) => {
             const ev = normalizeGenericCalendarEvent(c, pName);
@@ -189,7 +189,7 @@ const CalendarView = () => {
           });
         }
 
-        // Issues with due dates
+        
         const issueItems = pIssues?.items || (Array.isArray(pIssues) ? pIssues : []);
         issueItems.forEach((issue) => {
           if (issue.dueDate || issue.deadline) {
@@ -198,7 +198,7 @@ const CalendarView = () => {
           }
         });
 
-        // Sprints
+        
         if (Array.isArray(pSprints)) {
           pSprints.forEach((sprint) => {
             const ev = normalizeSprintEvent(sprint, pName);
@@ -206,7 +206,7 @@ const CalendarView = () => {
           });
         }
 
-        // Milestones
+        
         if (Array.isArray(pMilestones)) {
           pMilestones.forEach((ms) => {
             const ev = normalizeMilestoneEvent(ms, pName);
@@ -222,10 +222,10 @@ const CalendarView = () => {
         ...projectDataPromises,
       ]);
 
-      // Deduplicate all events by a stable composite key: `${sourceType}-${rawId}`
+      
       const deduplicatedMap = new Map();
 
-      // Insert personal meetings
+      
       if (Array.isArray(myMeetings)) {
         myMeetings.forEach((m) => {
           const ev = normalizeMeetingEvent(m);
@@ -235,7 +235,7 @@ const CalendarView = () => {
         });
       }
 
-      // Insert all project events
+      
       projectResults.flat().forEach((ev) => {
         if (ev && !deduplicatedMap.has(ev.id)) {
           deduplicatedMap.set(ev.id, ev);
@@ -263,12 +263,12 @@ const CalendarView = () => {
     };
   }, [fetchCalendarData, projectsLoaded]);
 
-  // Filter events based on active category checkboxes
+  
   const filteredEvents = useMemo(() => {
     return rawEvents.filter((ev) => activeCategories.includes(ev.sourceType));
   }, [rawEvents, activeCategories]);
 
-  // Calendar Navigation
+  
   const handleNavigate = (direction) => {
     setCurrentDate((prev) => {
       const next = new Date(prev);
@@ -293,7 +293,7 @@ const CalendarView = () => {
     );
   };
 
-  // Google Calendar Handlers
+  
   const handleConnectGoogle = async () => {
     setIsConnectingGoogle(true);
     setGoogleNotice(null);
@@ -328,7 +328,7 @@ const CalendarView = () => {
     }
   };
 
-  // Open Issue details modal
+  
   const handleOpenIssueModal = (issueId, projectName, initialIssue) => {
     setSelectedIssueModal({
       isOpen: true,
@@ -340,7 +340,7 @@ const CalendarView = () => {
 
   return (
     <div className="w-full min-w-0 space-y-4 animate-fadeIn pb-12">
-      {/* Google Notice Banner */}
+      {}
       {googleNotice && (
         <div
           className={`p-3.5 rounded-2xl text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn ${
@@ -367,7 +367,7 @@ const CalendarView = () => {
         </div>
       )}
 
-      {/* Calendar Header Controls */}
+      {}
       <CalendarHeader
         currentDate={currentDate}
         view={view}
@@ -390,7 +390,7 @@ const CalendarView = () => {
         isConnectingGoogle={isConnectingGoogle}
       />
 
-      {/* Main Calendar Views */}
+      {}
       {isLoading && rawEvents.length === 0 ? (
         <LoadingScreen fullScreen label="Loading your schedule" />
       ) : errorMessage && rawEvents.length === 0 ? (
@@ -455,7 +455,7 @@ const CalendarView = () => {
         </>
       )}
 
-      {/* Schedule / Edit Meeting Modal */}
+      {}
       <MeetingModal
         isOpen={isMeetingModalOpen}
         onClose={() => setIsMeetingModalOpen(false)}
@@ -465,7 +465,7 @@ const CalendarView = () => {
         onMeetingSaved={fetchCalendarData}
       />
 
-      {/* Inspect Event Details Modal */}
+      {}
       <EventDetailsModal
         isOpen={Boolean(selectedEventDetails)}
         onClose={() => setSelectedEventDetails(null)}
@@ -479,7 +479,7 @@ const CalendarView = () => {
         onOpenIssueModal={handleOpenIssueModal}
       />
 
-      {/* Reused Issue Details Modal */}
+      {}
       <IssueDetailsModal
         isOpen={selectedIssueModal.isOpen}
         onClose={() =>

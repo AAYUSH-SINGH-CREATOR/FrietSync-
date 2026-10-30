@@ -63,7 +63,7 @@ const SprintsBoard = ({
           }}
           className={`flex min-w-0 flex-col rounded-2xl transition ${dragOverColumn === col.id ? 'ring-2 ring-sky-400/70 bg-sky-50/30 dark:bg-sky-950/20' : ''}`}
         >
-          {/* Column Header */}
+          {}
           <div className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 ${col.bg} ${col.text} ${col.darkBg} ${col.darkText} shadow-2xs`}>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold sm:text-sm">{col.label}</span>
@@ -83,7 +83,7 @@ const SprintsBoard = ({
             </div>
           </div>
 
-          {/* Cards Stack */}
+          {}
           <div className="mt-2.5 flex flex-1 flex-col gap-2.5">
             {isLoading ? (
               <>
@@ -128,7 +128,7 @@ const SprintsBoard = ({
                   }}
                   className={`group rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-sky-400 hover:shadow-md dark:border-[#2e2e34] dark:bg-[#1a1a1d] ${id && !isPending ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isPending ? 'opacity-60' : ''}`}
                 >
-                  {/* Top: Key & Assignee */}
+                  {}
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-xs font-bold text-sky-600 dark:text-sky-400">
                       {sprintKey}
@@ -138,7 +138,7 @@ const SprintsBoard = ({
                     </span>
                   </div>
 
-                  {/* Title & Goal */}
+                  {}
                   <h4 className="mt-1.5 text-xs font-bold text-slate-900 group-hover:text-sky-600 dark:text-slate-100 dark:group-hover:text-sky-400 line-clamp-1 transition-colors">
                     {sprint.name || 'Untitled Sprint'}
                   </h4>
@@ -153,7 +153,7 @@ const SprintsBoard = ({
                     </p>
                   )}
 
-                  {/* Progress bar */}
+                  {}
                   <div className="mt-2.5 flex items-center gap-2">
                     {progress === null ? (
                       <span className="text-[10px] text-slate-500 dark:text-slate-400">Progress unavailable</span>
@@ -172,7 +172,7 @@ const SprintsBoard = ({
                     )}
                   </div>
 
-                  {/* Footer Dates */}
+                  {}
                   <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400 dark:border-[#252528] dark:text-[#777]">
                     <span className="inline-flex items-center gap-1">
                       <FiCalendar size={11} />

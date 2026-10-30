@@ -82,13 +82,13 @@ const SprintsTable = ({
 
                 const progressColor = progress >= 100 ? 'bg-emerald-500' : progress >= 80 ? 'bg-pink-500' : progress > 0 ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700';
 
-                // Assignee derivation
+                
                 const assigneeName = sprint.contributorName || sprint.assignedContributorName || sprint.contributor?.name || sprint.assigneeName || sprint.assignedTo?.name || 'Unassigned';
                 const assigneeInitials = assigneeName === 'Unassigned' ? '—' : assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
                 const avatarColor = avatarColors[(assigneeName.charCodeAt(0) || idx) % avatarColors.length];
                 const otherAssigneesCount = Array.isArray(sprint.assignees) ? Math.max(0, sprint.assignees.length - 1) : 0;
 
-                // Velocity derivation
+                
                 const velocity = sprint.velocity ?? sprint.storyPoints ?? sprint.estimatedPoints ?? sprint.issuesCount ?? '—';
 
                 return (
@@ -157,7 +157,7 @@ const SprintsTable = ({
         </table>
       </div>
 
-      {/* Pagination Footer matching screenshot */}
+      {}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-500 dark:border-[#2b2b30] dark:text-[#999]">
         <span>
           Showing {sprints.length === 0 ? 0 : page * pageSize + 1}–{Math.min((page + 1) * pageSize, sprints.length)} of {sprints.length} sprints

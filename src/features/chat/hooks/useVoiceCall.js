@@ -24,7 +24,7 @@ export const useVoiceCall = () => {
       await voiceCall.join({ roomId, pin, display, muted: false });
       setMuted(voiceCall.muted);
     } catch (error) {
-      // VoiceCall.join rejects when a join fails or gets cancelled; keep it handled.
+      
       voiceCall.leave();
       throw error;
     }

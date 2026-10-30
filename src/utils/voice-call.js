@@ -28,9 +28,9 @@ export class VoiceCall {
     this.audioContainer = audioContainer;
     this.onState = onState;
     this.onError = onError;
-    this.onMessage = onMessage; // raw AudioBridge events, e.g. for a participant list
+    this.onMessage = onMessage; 
 
-    this._s = null; // current session, null when not in a call
+    this._s = null; 
     this._muted = false;
     this._volume = 1;
   }
@@ -43,17 +43,13 @@ export class VoiceCall {
     return this._s !== null;
   }
 
-  /**
-   * Joins an AudioBridge room. Resolves once the microphone offer is sent.
-   * Rejects if the join fails or if leave() or another join() cancels it.
-   * Calling join() while already in a call replaces the old session.
-   */
+  
   async join({ roomId, pin, display = 'Guest', muted = false }) {
     if (!this.server) {
       throw new Error('Janus server URL is missing.');
     }
 
-    // Always tear down the old session first so only one ever exists.
+    
     this.leave();
 
     const s = {
@@ -138,7 +134,7 @@ export class VoiceCall {
     return this._muted;
   }
 
-  /** volume from 0 to 1 */
+  
   setVolume(volume) {
     this._volume = Math.min(1, Math.max(0, Number(volume)));
     if (this._s) {
@@ -148,7 +144,7 @@ export class VoiceCall {
     }
   }
 
-  /** Call from a click if the state became 'autoplay-blocked'. */
+  
   async resumePlayback() {
     const audios = this._s ? [...this._s.audios.values()] : [];
     const results = await Promise.allSettled(audios.map((a) => a.play()));
@@ -165,13 +161,13 @@ export class VoiceCall {
     try {
       if (s.handle) s.handle.send({ message: { request: 'leave' } });
     } catch (_) {
-      // connection may already be gone
+      
     }
 
     try {
       if (s.janus) s.janus.destroy();
     } catch (_) {
-      // connection may already be gone
+      
     }
 
     s.audios.forEach((audio) => {
@@ -189,7 +185,7 @@ export class VoiceCall {
     this.onState('disconnected');
   }
 
-  // Internals
+  
 
   _fail(s, error) {
     if (this._s !== s) return;
@@ -209,8 +205,8 @@ export class VoiceCall {
     const event = msg && msg.audiobridge;
 
     if (event === 'joined') {
-      // Create exactly one offer per session. A second offer from the
-      // first joiner breaks the mix, so duplicates are ignored.
+      
+      
       if (!s.offered) {
         s.offered = true;
 

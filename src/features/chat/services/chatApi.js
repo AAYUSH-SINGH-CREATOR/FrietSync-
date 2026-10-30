@@ -261,7 +261,7 @@ export const parseAttachmentFromText = (text = '') => {
       const cleanText = String(text).replace(match[0], '').trim();
       return { cleanText, attachment: parsed };
     } catch {
-      // ignore
+      
     }
   }
   return { cleanText: text, attachment: null };

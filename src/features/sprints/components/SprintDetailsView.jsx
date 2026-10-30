@@ -90,21 +90,21 @@ const SprintDetailsView = ({
   const [requestsTrigger, setRequestsTrigger] = useState(0);
   const [sprintCommentsCount, setSprintCommentsCount] = useState(0);
 
-  // Sprint Issues from dedicated endpoint
+  
   const [sprintIssues, setSprintIssues] = useState([]);
   const [isLoadingIssues, setIsLoadingIssues] = useState(true);
 
-  // Sprint Milestones
+  
   const [sprintMilestones, setSprintMilestones] = useState([]);
   const [isLoadingMilestones, setIsLoadingMilestones] = useState(true);
 
-  // Project Members for assignment
+  
   const [members, setMembers] = useState([]);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
 
-  // Assignment Requests
+  
   const [requests, setRequests] = useState([]);
 
   const showToast = useCallback((type, message) => {
@@ -136,7 +136,7 @@ const SprintDetailsView = ({
     return () => { isMounted = false; };
   }, [sprintId, detailsTrigger]);
 
-  // Load sprint issues from dedicated endpoint
+  
   useEffect(() => {
     if (!sprintId) return undefined;
     let isMounted = true;
@@ -158,7 +158,7 @@ const SprintDetailsView = ({
     return () => { isMounted = false; };
   }, [sprintId, detailsTrigger]);
 
-  // Load sprint milestones
+  
   useEffect(() => {
     if (!sprintId) return undefined;
     let isMounted = true;
@@ -180,7 +180,7 @@ const SprintDetailsView = ({
     return () => { isMounted = false; };
   }, [sprintId, detailsTrigger]);
 
-  // Load members if manager
+  
   useEffect(() => {
     const pid = projectId || sprint?.projectId || sprint?.project?.id;
     if (!pid || !canManage) return undefined;
@@ -195,7 +195,7 @@ const SprintDetailsView = ({
     return () => { isMounted = false; };
   }, [projectId, sprint?.projectId, sprint?.project?.id, canManage]);
 
-  // Load sprint assignment requests if manager
+  
   const loadRequests = useCallback(() => {
     setRequestsTrigger((c) => c + 1);
   }, []);
@@ -254,7 +254,7 @@ const SprintDetailsView = ({
     }];
   }, [sprint, sprintIssues]);
 
-  // Calculate sprint metrics
+  
   const sprintMetrics = useMemo(() => {
     const totalIssues = linkedSprintIssues.length;
     const resolvedIssues = linkedSprintIssues.filter((i) => {
@@ -379,7 +379,7 @@ const SprintDetailsView = ({
 
   return (
     <div className="space-y-6 pb-12 animate-fadeIn">
-      {/* Top Header & Breadcrumb Row */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -406,7 +406,7 @@ const SprintDetailsView = ({
           </div>
         </div>
 
-        {/* Action Controls */}
+        {}
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -483,7 +483,7 @@ const SprintDetailsView = ({
         </div>
       </div>
 
-      {/* Notices */}
+      {}
       {toastNotice && (
         <div className={`p-3.5 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn ${
           toastNotice.type === 'success'
@@ -508,7 +508,7 @@ const SprintDetailsView = ({
         </div>
       )}
 
-      {/* Sprint Metrics Cards */}
+      {}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-[#303030] dark:bg-[#1d1d1d]">
           <div className="flex items-center gap-2 mb-2">
@@ -551,7 +551,7 @@ const SprintDetailsView = ({
         </div>
       </div>
 
-      {/* Overview Card */}
+      {}
       <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-8 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -574,7 +574,7 @@ const SprintDetailsView = ({
           </div>
         </div>
 
-        {/* Goal */}
+        {}
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#888] mb-2 flex items-center gap-1.5">
             <FiTarget size={13} /> Sprint Goal
@@ -584,9 +584,9 @@ const SprintDetailsView = ({
           </p>
         </div>
 
-        {/* Schedule & Metadata Grid */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          {/* Schedule */}
+          {}
           <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-[#303030] dark:bg-[#242428]/60 space-y-3">
             <h4 className="font-bold uppercase tracking-wider text-slate-400 dark:text-[#888] flex items-center gap-1.5">
               <FiClock size={13} /> Schedule
@@ -609,7 +609,7 @@ const SprintDetailsView = ({
             </div>
           </div>
 
-          {/* Project & Milestone */}
+          {}
           <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-[#303030] dark:bg-[#242428]/60 space-y-3">
             <h4 className="font-bold uppercase tracking-wider text-slate-400 dark:text-[#888] flex items-center gap-1.5">
               <FiLayers size={13} /> Project & Scope
@@ -632,7 +632,7 @@ const SprintDetailsView = ({
             </div>
           </div>
 
-          {/* Contributor */}
+          {}
           <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-[#303030] dark:bg-[#242428]/60 space-y-3">
             <h4 className="font-bold uppercase tracking-wider text-slate-400 dark:text-[#888] flex items-center gap-1.5">
               <FiUser size={13} /> Contributor
@@ -656,7 +656,7 @@ const SprintDetailsView = ({
         </div>
       </div>
 
-      {/* Assignment Requests Section (for sprint managers) */}
+      {}
       {canViewSprintRequests && sprintRequests.length > 0 && (
         <section className="rounded-3xl border border-slate-200/80 bg-white p-5 dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
@@ -687,7 +687,7 @@ const SprintDetailsView = ({
         </section>
       )}
 
-      {/* Sprint Milestones Section */}
+      {}
       {sprintMilestones.length > 0 && (
         <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
@@ -742,7 +742,7 @@ const SprintDetailsView = ({
         </section>
       )}
 
-      {/* Associated Issues Section */}
+      {}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
           <div>
@@ -824,7 +824,7 @@ const SprintDetailsView = ({
         )}
       </section>
 
-      {/* Sprint Discussion & Comments Section */}
+      {}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1d1d1d] sm:p-7 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#303030]">
           <div>
@@ -848,7 +848,7 @@ const SprintDetailsView = ({
         />
       </section>
 
-      {/* Assign Contributor Modal */}
+      {}
       {isAssignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn" onClick={() => setIsAssignModalOpen(false)}>
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-[#38383e] dark:bg-[#171717]" onClick={(event) => event.stopPropagation()}>

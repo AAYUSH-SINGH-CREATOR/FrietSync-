@@ -184,7 +184,7 @@ const ProjectDetailsView = () => {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [uploadingReleaseId, setUploadingReleaseId] = useState(null);
 
-  // Modals
+  
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false);
   const [isCreatePollOpen, setIsCreatePollOpen] = useState(false);
@@ -195,13 +195,13 @@ const ProjectDetailsView = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [toastNotice, setToastNotice] = useState(null);
 
-  // Milestone Modals
+  
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [isDeleteMilestoneOpen, setIsDeleteMilestoneOpen] = useState(false);
   const [deletingMilestone, setDeletingMilestone] = useState(null);
 
-  // Release Modals
+  
   const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
   const [editingRelease, setEditingRelease] = useState(null);
   const [isDeleteReleaseOpen, setIsDeleteReleaseOpen] = useState(false);
@@ -209,7 +209,7 @@ const ProjectDetailsView = () => {
   const [isAttachIssuesOpen, setIsAttachIssuesOpen] = useState(false);
   const [attachingRelease, setAttachingRelease] = useState(null);
 
-  // GitHub Repository Linking
+  
   const [isLinkRepoModalOpen, setIsLinkRepoModalOpen] = useState(false);
   const [isUnlinkingRepo, setIsUnlinkingRepo] = useState(false);
   const [linkedRepo, setLinkedRepo] = useState(() => {
@@ -224,7 +224,7 @@ const ProjectDetailsView = () => {
     return null;
   });
 
-  // Synchronize linked repo from project payload if provided by backend
+  
   useEffect(() => {
     if (project) {
       const owner = project.githubRepositoryOwner || project.githubOwner || project.repositoryOwner || project.repoOwner;
@@ -328,7 +328,7 @@ const ProjectDetailsView = () => {
     if (!pId) return null;
     const now = Date.now();
 
-    // 1. Fetch project core, summary, members, sprints, issues, polls, releases in parallel
+    
     const [projectRes, summaryRes, membersRes, sprintsRes, issuesRes, pollsRes, releasesRes] =
       await Promise.allSettled([
         getProjectById(pId),
@@ -364,8 +364,8 @@ const ProjectDetailsView = () => {
           : releasesRes.value?.releases || releasesRes.value?.items || releasesRes.value?.data || []
         : [];
 
-    // Milestones must come from this API so every row has a real milestone ID
-    // that can be edited or deleted through the milestone endpoints.
+    
+    
     let milestoneList = [];
     let milestoneError = '';
     try {
@@ -386,7 +386,7 @@ const ProjectDetailsView = () => {
       milestoneError = getFriendlyErrorMessage(error, 'project');
     }
 
-    // 3. Fetch activity history from recent issues
+    
     const recentIssues = [...issuesData]
       .sort(
         (a, b) =>
@@ -429,7 +429,7 @@ const ProjectDetailsView = () => {
       }
     });
 
-    // Supplement with milestone/issue lifecycle events
+    
     issuesData.slice(0, 20).forEach((iss) => {
       const issueKey =
         iss.key ||
@@ -457,7 +457,7 @@ const ProjectDetailsView = () => {
       }
     });
 
-    // Deduplicate by actor, action and timestamp
+    
     const seenActivityKeys = new Set();
     const uniqueGathered = gatheredActivities.filter((act) => {
       const key = `${act.actor}_${act.action}_${act.timestamp}`;
@@ -616,7 +616,7 @@ const ProjectDetailsView = () => {
 
   const handleUploadReleaseArtifact = async (releaseId, file) => {
     if (!releaseId || !file) return;
-    const MAX_BYTES = 100 * 1024 * 1024; // 100 MB max
+    const MAX_BYTES = 100 * 1024 * 1024; 
     if (file.size > MAX_BYTES) {
       showToast('error', 'File size exceeds maximum 100 MB limit.');
       return;
@@ -692,7 +692,7 @@ const ProjectDetailsView = () => {
     showToast('success', 'Issues attached to release.');
   };
 
-  // Project progress is shown only when the project API provides a valid value.
+  
   const overallProgress = getProjectProgress(project);
 
   const activeSprintsCount = useMemo(() => {
@@ -728,7 +728,7 @@ const ProjectDetailsView = () => {
     }).length;
   }, [issues, currentUserId, currentUserEmail]);
 
-  // Sprint Overview Gauge Data: completed, active, and planned sprints.
+  
   const sprintGaugeMetrics = useMemo(() => {
     const completed = sprints.filter((sprint) => String(sprint.status || '').toUpperCase() === 'COMPLETED').length;
     const active = sprints.filter((sprint) => ['ACTIVE', 'IN_PROGRESS'].includes(String(sprint.status || '').toUpperCase())).length;
@@ -921,7 +921,7 @@ const ProjectDetailsView = () => {
 
   return (
     <div className="w-full min-w-0 text-slate-900 dark:text-slate-100 space-y-6 animate-fadeIn pb-16 px-3 sm:px-6 lg:px-8">
-      {/* Toast Notice */}
+      {}
       {toastNotice && (
         <div
           className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm flex items-center justify-between gap-3 shadow-lg ${
@@ -948,7 +948,7 @@ const ProjectDetailsView = () => {
         </div>
       )}
 
-      {/* Top Breadcrumb & Controls */}
+      {}
       <div className="flex items-center justify-between gap-4">
         <Link
           to="/dashboard/projects"
@@ -992,7 +992,7 @@ const ProjectDetailsView = () => {
         </div>
       </div>
 
-      {/* Error Alert */}
+      {}
       {pageError && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300 text-xs sm:text-sm flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -1009,10 +1009,10 @@ const ProjectDetailsView = () => {
         </div>
       )}
 
-      {/* Hero Header and Project Summary */}
+      {}
       <section className="rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-          {/* Left: Folder Icon + Title + Description */}
+          {}
           <div className="flex items-start gap-4 sm:gap-5 min-w-0">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 dark:bg-[#241f3d] border border-indigo-100 dark:border-[#3b325c] flex items-center justify-center text-indigo-600 dark:text-white shrink-0 shadow-xs">
               <FiFolder size={28} className="text-indigo-600 dark:text-indigo-400" />
@@ -1027,7 +1027,7 @@ const ProjectDetailsView = () => {
             </div>
           </div>
 
-          {/* Right: Overall Progress Bar */}
+          {}
           <div className="lg:text-right shrink-0">
             <div className="flex items-center justify-between lg:justify-end gap-3 mb-1.5">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Overall Progress</span>
@@ -1048,7 +1048,7 @@ const ProjectDetailsView = () => {
           </div>
         </div>
 
-        {/* Hero Bottom Row: Meeting actions, project manager, and project metrics */}
+        {}
         <div className="pt-4 border-t border-slate-100 dark:border-[#2d2d34] flex flex-col xl:flex-row xl:items-center justify-between gap-5 flex-wrap">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button
@@ -1075,7 +1075,7 @@ const ProjectDetailsView = () => {
               View members
             </button>
 
-            {/* Project Manager Avatar and Name */}
+            {}
             <div className="flex items-center gap-3 ml-1 sm:ml-2">
               <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-[#26262b] dark:text-slate-300">
                 {projectManagerName !== 'Not assigned' ? getInitials(projectManagerName) : <FiUsers size={16} />}
@@ -1097,9 +1097,9 @@ const ProjectDetailsView = () => {
             </div>
           </div>
 
-          {/* Project metrics */}
+          {}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 shrink-0">
-            {/* Active Sprints */}
+            {}
             <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-purple-100 dark:bg-[#2f2249] text-purple-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiRepeat size={14} />
@@ -1114,7 +1114,7 @@ const ProjectDetailsView = () => {
               </div>
             </div>
 
-            {/* Active Issues */}
+            {}
             <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-rose-100 dark:bg-[#432328] text-rose-700 dark:text-[#F87171] flex items-center justify-center shrink-0">
                 <FiAlertTriangle size={14} />
@@ -1129,7 +1129,7 @@ const ProjectDetailsView = () => {
               </div>
             </div>
 
-            {/* Team Members */}
+            {}
             <div className="rounded-2xl border border-slate-200/90 dark:border-[#2d2d34] bg-slate-50 dark:bg-[#171717] px-3.5 py-2.5 flex items-center gap-3 min-w-[110px] shadow-2xs">
               <span className="h-7 w-7 rounded-lg bg-indigo-100 dark:bg-[#2f2249] text-indigo-700 dark:text-purple-400 flex items-center justify-center shrink-0">
                 <FiFolder size={14} />
@@ -1148,9 +1148,9 @@ const ProjectDetailsView = () => {
         </div>
       </section>
 
-      {/* Main Content Area */}
+      {}
       {viewingAllPolls ? (
-        /* Dedicated Full Polls View when "View all" is clicked */
+        
         <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <button
@@ -1170,11 +1170,11 @@ const ProjectDetailsView = () => {
           />
         </div>
       ) : (
-        /* Standard Overview Dashboard */
+        
         <div className="space-y-6">
-          {/* Upcoming milestones and recent activity */}
+          {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Upcoming Milestones Card */}
+            {}
             <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -1317,7 +1317,7 @@ const ProjectDetailsView = () => {
                 )}
               </div>
             </div>
-            {/* Recent Activity Card */}
+            {}
             <div className="min-h-[270px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Activity</h2>
@@ -1372,9 +1372,9 @@ const ProjectDetailsView = () => {
 
           </div>
 
-          {/* Project analytics and polls */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* Sprint Overview Card */}
+            {}
             <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -1382,7 +1382,7 @@ const ProjectDetailsView = () => {
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{sprintGaugeMetrics.total} project sprints</p>
 
-                {/* Semi-Circle Gauge */}
+                {}
                 <div className="relative h-[155px] w-full flex items-center justify-center mt-2 [&_svg]:outline-none [&_svg]:focus-visible:outline-none [&_*]:outline-none">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -1415,7 +1415,7 @@ const ProjectDetailsView = () => {
                   </div>
                 </div>
 
-                {/* Legend */}
+                {}
                 <div className="flex items-center justify-center gap-3.5 text-[11px] mt-4 pt-2 border-t border-slate-100 dark:border-[#2d2d34]">
                   <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                     <span className="h-2 w-2 rounded-full bg-[#38bdf8]" /> Completed
@@ -1430,7 +1430,7 @@ const ProjectDetailsView = () => {
               </div>
             </div>
 
-            {/* Issue Overview Card */}
+            {}
             <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col justify-between">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Issue overview</h2>
@@ -1456,7 +1456,7 @@ const ProjectDetailsView = () => {
               </div>
             </div>
 
-            {/* Project Polls Card */}
+            {}
             <div className="min-h-[310px] rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs flex flex-col">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -1603,7 +1603,7 @@ const ProjectDetailsView = () => {
           )}
 
           <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
-          {/* Under Dashboard: Project Sprints (Top 5 + View all) */}
+          {}
           <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
@@ -1713,7 +1713,7 @@ const ProjectDetailsView = () => {
             )}
           </section>
 
-          {/* Under Dashboard: Project Issues (Top 5 + View all + Create Issue) */}
+          {}
           <section className="h-full rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
@@ -1829,7 +1829,7 @@ const ProjectDetailsView = () => {
           </div>
 
           <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-4">
-          {/* Under Dashboard: Project Releases */}
+          {}
           <section className="min-w-0 rounded-3xl border border-slate-200/90 dark:border-[#2d2d34] bg-white dark:bg-[#171717] p-6 shadow-xs space-y-4 lg:col-span-1">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-[#2d2d34] pb-4">
               <div className="flex items-center gap-3">
@@ -1895,7 +1895,7 @@ const ProjectDetailsView = () => {
                       key={rId}
                       className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 dark:bg-[#1b1b1f] border border-slate-200/80 dark:border-[#2d2d34] hover:border-slate-300 dark:hover:border-[#3b3b44] transition space-y-3"
                     >
-                      {/* Release Header */}
+                      {}
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0 flex-wrap">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 dark:bg-cyan-950/50 dark:border-cyan-800/60 dark:text-cyan-300 text-xs font-bold tracking-wide">
@@ -1922,16 +1922,16 @@ const ProjectDetailsView = () => {
 
                       </div>
 
-                      {/* Release Description */}
+                      {}
                       {release.description && (
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                           {release.description}
                         </p>
                       )}
 
-                      {/* Interactive Meta Bars: Issues & File Artifact */}
+                      {}
                       <div className="pt-2 border-t border-slate-200/80 dark:border-[#2d2d34] flex flex-wrap items-center justify-between gap-3 text-xs">
-                        {/* Attached Issues info */}
+                        {}
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-slate-500 dark:text-slate-400 font-medium">Attached Issues:</span>
                           <span className="font-semibold text-slate-900 dark:text-white px-2 py-0.5 rounded-md bg-white dark:bg-[#25252c] border border-slate-200 dark:border-[#32323a]">
@@ -1939,7 +1939,7 @@ const ProjectDetailsView = () => {
                           </span>
                         </div>
 
-                        {/* File Artifact info & upload */}
+                        {}
                         <div className="flex items-center gap-2 flex-wrap">
                           {fileUrl ? (
                             <div className="flex items-center gap-2">
@@ -1964,7 +1964,7 @@ const ProjectDetailsView = () => {
             )}
           </section>
 
-          {/* GitHub Contributions & Code Activity */}
+          {}
           <div className="min-w-0 lg:col-span-3 [&>section]:h-full">
             <ProjectContributionsSection
               projectId={projectId}
@@ -1980,7 +1980,7 @@ const ProjectDetailsView = () => {
         </div>
       )}
 
-      {/* Modals */}
+      {}
       {isMeetingModalOpen && (
         <MeetingModal
           isOpen={isMeetingModalOpen}
@@ -2066,7 +2066,7 @@ const ProjectDetailsView = () => {
         }}
       />
 
-      {/* Milestone Modals */}
+      {}
       <MilestoneModal
         key={`milestone-${editingMilestone?.id || editingMilestone?._id || 'new'}-${isMilestoneModalOpen}`}
         isOpen={isMilestoneModalOpen}
@@ -2090,7 +2090,7 @@ const ProjectDetailsView = () => {
         onMilestoneDeleted={handleMilestoneDeleted}
       />
 
-      {/* Release Modals */}
+      {}
       <ReleaseModal
         key={`release-${editingRelease?.id || editingRelease?._id || 'new'}-${isReleaseModalOpen}`}
         isOpen={isReleaseModalOpen}

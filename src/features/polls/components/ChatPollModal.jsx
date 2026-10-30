@@ -64,7 +64,7 @@ const ChatPollModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs animate-fadeIn">
       <div className="flex flex-col w-full max-w-2xl max-h-[85vh] rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-[#303030] dark:bg-[#1a1a1d] overflow-hidden">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:px-6 dark:border-[#2b2b2e]">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
@@ -104,7 +104,7 @@ const ChatPollModal = ({
           </div>
         </div>
 
-        {/* Content list */}
+        {}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
           {isLoading ? (
             <div className="py-12 text-center text-xs text-slate-400">

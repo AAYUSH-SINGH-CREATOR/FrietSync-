@@ -125,7 +125,7 @@ export const initializeAccessTokenRefresh = () => {
   const expiry = getTokenExpiry(token);
   const now = Date.now();
 
-  // If token is already expired according to JWT exp, proactively refresh
+  
   if (expiry && expiry <= now) {
     refreshAccessToken().catch((error) => {
       const status = error?.response?.status || error?.status;
@@ -183,7 +183,7 @@ export const saveUserData = (data, fallbackData = {}) => {
         existing = parsed;
       }
     } catch {
-      // ignore JSON parse error
+      
     }
     localStorage.setItem(
       'frietSyncUser',
@@ -291,8 +291,8 @@ export const refreshAccessToken = () => {
         throw error;
       }
 
-      // The backend rotates the HttpOnly refresh cookie in the response. The
-      // browser stores it; JavaScript only persists the new access token.
+      
+      
       saveAccessToken(newToken);
       return data;
     } catch (error) {
@@ -369,7 +369,7 @@ export const getUserProfile = () => {
       return { name, role };
     }
   } catch {
-    // Ignore malformed cached data and fall back to the legacy name and role keys.
+    
   }
   return {
     name: localStorage.getItem('frietSyncName') || '',

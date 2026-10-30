@@ -49,12 +49,12 @@ const CreateIssueModal = ({
     (p) => String(p.id || p._id || p.projectId) === String(projectId)
   );
 
-  // Milestones state for project
+  
   const [projectMilestones, setProjectMilestones] = useState([]);
   const [isLoadingMilestones, setIsLoadingMilestones] = useState(false);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState('');
 
-  // Issue details form state
+  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('HIGH');
@@ -68,7 +68,7 @@ const CreateIssueModal = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load projects if not passed via props and modal opens
+  
   useEffect(() => {
     if (!isOpen || (projects && projects.length > 0)) return;
 
@@ -93,7 +93,7 @@ const CreateIssueModal = ({
     };
   }, [isOpen, projects]);
 
-  // Load milestones whenever active projectId changes
+  
   useEffect(() => {
     if (!projectId) {
       setProjectMilestones([]);
@@ -152,7 +152,7 @@ const CreateIssueModal = ({
     onClose();
   }, [resetForm, onClose]);
 
-  // ESC key listener
+  
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -240,7 +240,7 @@ const CreateIssueModal = ({
         className="relative w-full max-w-7xl bg-white dark:bg-[#1a1a1d] rounded-3xl shadow-2xl dark:shadow-black/70 border border-slate-100 dark:border-[#303030] p-5 sm:p-7 lg:p-8 max-h-[94vh] overflow-y-auto no-scrollbar transition-all text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-[#2b2b2e] mb-5">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">
@@ -261,7 +261,7 @@ const CreateIssueModal = ({
           </button>
         </div>
 
-        {/* Global Error Alert */}
+        {}
         {errorMessage && (
           <div className="mb-4 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-[#F87171] text-xs flex items-center gap-2">
             <FiAlertCircle size={16} className="shrink-0" />
@@ -272,14 +272,14 @@ const CreateIssueModal = ({
         <form onSubmit={handleSubmit} className="space-y-5 text-xs">
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:gap-6">
 
-            {/* LEFT COLUMN: Project & Milestones Selection */}
+            {}
             <section className="rounded-2xl bg-slate-50/80 p-4 sm:p-5 dark:bg-[#202024]">
               <div>
                 <h4 className="text-sm font-bold text-slate-800 dark:text-white">Project and milestones</h4>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Choose a project, then optionally select a milestone to associate with this issue.</p>
               </div>
 
-              {/* Project Selection Dropdown */}
+              {}
               {availableProjects.length > 0 && (
                 <div className="mt-4">
                   <label
@@ -332,7 +332,7 @@ const CreateIssueModal = ({
                 </div>
               )}
 
-              {/* Project dates summary card */}
+              {}
               <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-white px-3.5 py-3 dark:bg-[#1b1b1f]">
                 <div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Project start</p>
@@ -348,7 +348,7 @@ const CreateIssueModal = ({
                 </div>
               </div>
 
-              {/* Milestones list for selection */}
+              {}
               <div className="mt-5">
                 <h5 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Milestone <span className="font-normal text-slate-400">(optional)</span>
@@ -405,14 +405,14 @@ const CreateIssueModal = ({
               </div>
             </section>
 
-            {/* RIGHT COLUMN: Issue Details Form */}
+            {}
             <section className="space-y-4">
               <div className="mb-2">
                 <h4 className="text-sm font-bold text-slate-800 dark:text-white">Issue details</h4>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Provide the title, description, schedule, and priority.</p>
               </div>
 
-              {/* Issue Title */}
+              {}
               <div>
                 <label
                   htmlFor="issue-title"
@@ -445,7 +445,7 @@ const CreateIssueModal = ({
                 )}
               </div>
 
-              {/* Description */}
+              {}
               <div>
                 <label
                   htmlFor="issue-description"
@@ -464,7 +464,7 @@ const CreateIssueModal = ({
                 />
               </div>
 
-              {/* Priority & Estimated Hours Row */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label
@@ -519,7 +519,7 @@ const CreateIssueModal = ({
                 </div>
               </div>
 
-              {/* Start Date & Due Date Row */}
+              {}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label
@@ -566,7 +566,7 @@ const CreateIssueModal = ({
                 </div>
               </div>
 
-              {/* GitHub Action */}
+              {}
               <div className="pt-2 border-t border-slate-100 dark:border-[#2b2b2e]">
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -579,7 +579,7 @@ const CreateIssueModal = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {/* Option 1: CREATE_NEW */}
+                  {}
                   <button
                     type="button"
                     onClick={() => {
@@ -612,7 +612,7 @@ const CreateIssueModal = ({
                     </p>
                   </button>
 
-                  {/* Option 2: LOCAL */}
+                  {}
                   <button
                     type="button"
                     onClick={() => {
@@ -644,7 +644,7 @@ const CreateIssueModal = ({
                     </p>
                   </button>
 
-                  {/* Option 3: LINK_EXISTING */}
+                  {}
                   <button
                     type="button"
                     onClick={() => setGithubAction('LINK_EXISTING')}
@@ -673,7 +673,7 @@ const CreateIssueModal = ({
                   </button>
                 </div>
 
-                {/* Input for LINK_EXISTING */}
+                {}
                 {githubAction === 'LINK_EXISTING' && (
                   <div className="mt-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#202024] border border-slate-200/80 dark:border-[#35353a] animate-fadeIn">
                     <label
@@ -716,7 +716,7 @@ const CreateIssueModal = ({
             </section>
           </div>
 
-          {/* Footer Action Buttons */}
+          {}
           <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-[#2b2b2e]">
             <button
               type="button"

@@ -76,7 +76,7 @@ const SprintsView = () => {
   const isAdmin = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER'].includes(globalRole);
 
   const [projects, setProjects] = useState([]);
-  // Empty means the all projects view. A specific ID filters to one project.
+  
   const [projectId, setProjectId] = useState('');
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState('');
@@ -96,14 +96,14 @@ const SprintsView = () => {
   const [members, setMembers] = useState([]);
   const [membersProjectId, setMembersProjectId] = useState('');
 
-  // Selected sprint for details
+  
   const [selectedSprintId, setSelectedSprintId] = useState('');
   const [selectedSprint, setSelectedSprint] = useState(null);
 
-  // View mode: 'list' or 'board' (matching screenshot, default to list)
+  
   const [layoutView, setLayoutView] = useState('list');
 
-  // Search & Filter state
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -111,7 +111,7 @@ const SprintsView = () => {
   const [sortOrder, setSortOrder] = useState('due-asc');
   const [page, setPage] = useState(0);
 
-  // Create / Edit modal state
+  
   const [isCreateEditOpen, setIsCreateEditOpen] = useState(false);
   const [sprintToEdit, setSprintToEdit] = useState(null);
 
@@ -128,7 +128,7 @@ const SprintsView = () => {
   const selectedSprintProjectId = selectedSprint ? String(getSprintProjectId(selectedSprint) || '') : '';
   const selectedSprintProject = projects.find((project) => String(getProjectId(project)) === selectedSprintProjectId);
 
-  // Load Projects
+  
   useEffect(() => {
     let isMounted = true;
     getMyProjects()
@@ -155,7 +155,7 @@ const SprintsView = () => {
     return () => { isMounted = false; };
   }, [projectRefreshTrigger]);
 
-  // Load sprints for every project by default, or for the selected project.
+  
   useEffect(() => {
     if (projectsLoading) return undefined;
 
@@ -200,7 +200,7 @@ const SprintsView = () => {
     return () => { isMounted = false; };
   }, [projectId, projects, projectsLoading, sprintRefreshTrigger]);
 
-  // Load Project Issues & Members for accurate metrics & filters
+  
   useEffect(() => {
     if (projectsLoading) return undefined;
     const targetProjects = projectId
@@ -419,7 +419,7 @@ const SprintsView = () => {
     }
   };
 
-  // Derived metrics for summary cards
+  
   const summaryMetrics = useMemo(() => {
     const totalSprints = sprints.length;
     const activeSprints = sprints.filter((s) => {
@@ -438,7 +438,7 @@ const SprintsView = () => {
     return { totalSprints, activeSprints, completedSprints, openIssues };
   }, [sprints, projectIssues]);
 
-  // Filtered sprints
+  
   const filteredSprints = useMemo(() => {
     let result = [...sprints];
     if (searchQuery.trim()) {
@@ -469,7 +469,7 @@ const SprintsView = () => {
     } else if (sortOrder === 'name') {
       result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     } else {
-      // due-asc
+      
       result.sort((a, b) => new Date(a.endDate || '9999-12-31') - new Date(b.endDate || '9999-12-31'));
     }
     return result;
@@ -496,7 +496,7 @@ const SprintsView = () => {
     return <LoadingScreen fullScreen label="Loading sprint projects" />;
   }
 
-  // If a sprint is selected, render full dedicated SprintDetailsView
+  
   if (selectedSprintId) {
     return (
       <section className="min-h-[calc(100vh-7.5rem)] rounded-2xl bg-[#f4f5f7] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7">
@@ -589,7 +589,7 @@ const SprintsView = () => {
 
   return (
     <section className="min-h-[calc(100vh-7.5rem)] min-w-0 space-y-4 rounded-xl bg-[#f0f0f0] p-4 text-slate-900 dark:bg-[#292929] dark:text-white sm:p-6 lg:p-7 animate-fadeIn">
-      {/* 1. Header Row matching screenshot */}
+      {}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-[28px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
@@ -621,7 +621,7 @@ const SprintsView = () => {
         </div>
       </div>
 
-      {/* Notices */}
+      {}
       {toastNotice && (
         <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
           <span className="flex items-center gap-2"><FiCheckCircle />{toastNotice.message}</span>
@@ -641,7 +641,7 @@ const SprintsView = () => {
         </div>
       )}
 
-      {/* 2. 4 Summary Cards Row matching screenshot */}
+      {}
       <SprintsSummaryCards
         totalSprints={summaryMetrics.totalSprints}
         activeSprints={summaryMetrics.activeSprints}
@@ -720,7 +720,7 @@ const SprintsView = () => {
       <>
 
      
-{/* Board / List View Switcher */}
+{}
 <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-[#2b2b30] dark:bg-[#1f1f1f]">
   <button
     type="button"
@@ -750,9 +750,9 @@ const SprintsView = () => {
 </div>
 
 
-      {/* 4. Controls Row: Search & Filters matching screenshot */}
+      {}
       <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
-        {/* Search sprints */}
+        {}
         <div className="relative min-w-[200px] flex-1 sm:w-72">
           <FiSearch size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#777]" />
           <input
@@ -764,7 +764,7 @@ const SprintsView = () => {
           />
         </div>
 
-        {/* Filters Row */}
+        {}
         <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Status"
@@ -817,7 +817,7 @@ const SprintsView = () => {
         </div>
       </div>
 
-      {/* A project with no sprints keeps the normal controls and gets a direct create action. */}
+      {}
       {activeView !== 'assigned' && !projectId && sprints.length === 0 ? (
         <div className="flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-10 text-center dark:border-[#414148] dark:bg-[#1f1f1f]/70">
           <p className="text-sm font-semibold text-slate-800 dark:text-white">There are no sprints in your projects yet.</p>
@@ -861,7 +861,7 @@ const SprintsView = () => {
       </>
       )}
 
-      {/* Create / Edit Sprint Modal */}
+      {}
       <CreateEditSprintModal
         isOpen={isCreateEditOpen && (sprintToEdit ? canManageSelectedSprint : canCreateSprint)}
         onClose={() => { setIsCreateEditOpen(false); setSprintToEdit(null); }}
