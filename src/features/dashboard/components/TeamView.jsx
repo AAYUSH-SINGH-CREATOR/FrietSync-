@@ -9,6 +9,7 @@ import { getProjectIssues, getIssueHistory } from '../../issues/services/issueAp
 import { formatNotificationTime } from '../services/notificationApi';
 import { canSendInvites } from '../../invites/utils/invitePermissions';
 import InviteModal from '../../invites/components/InviteModal';
+import MemberDetailModal from './MemberDetailModal';
 
 const CHART_COLORS = [ '#d946ef', '#8b5cf6', '#06b6d4','#f59e0b', '#10b981', '#3b82f6','#ec4899','#6366f1'];
 
@@ -134,6 +135,7 @@ const TeamView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
   const [toastNotice, setToastNotice] = useState(null);
 
   const canInvite = !outletContext.isLoadingUserProfile && canSendInvites(currentUserProfile);
@@ -833,7 +835,8 @@ const TeamView = () => {
                     return (
                       <tr
                         key={member.id}
-                        className="hover:bg-slate-50 dark:hover:bg-[#232328] transition"
+                        className="hover:bg-slate-50 dark:hover:bg-[#232328] transition cursor-pointer"
+                        onClick={() => setSelectedMember(member)}
                       >
                         <td className="py-2.5 px-2">
                           <div className="flex items-center gap-2.5 min-w-[130px]">
@@ -983,6 +986,13 @@ const TeamView = () => {
           );
           loadTeamData();
         }}
+      />
+
+      {}
+      <MemberDetailModal
+        isOpen={!!selectedMember}
+        member={selectedMember}
+        onClose={() => setSelectedMember(null)}
       />
     </div>
   );

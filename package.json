@@ -15,6 +15,7 @@
     "axios": "^1.20.0",
     "dotenv": "^18.0.4",
     "janus-gateway": "^1.4.3",
+    "jspdf": "^4.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-icons": "^5.7.0",

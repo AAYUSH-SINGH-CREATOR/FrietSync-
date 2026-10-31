@@ -570,12 +570,14 @@ const ChatArea = ({
               type="button"
               onClick={() => setIsPinnedPanelOpen((prev) => !prev)}
               title="Pinned messages"
-              className={`p-2 rounded-xl transition cursor-pointer ${isPinnedPanelOpen || pinnedMessages.length > 0 ? 'text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+              aria-label={`Pinned messages${pinnedMessages.length ? `, ${pinnedMessages.length} pinned` : ''}`}
+              aria-expanded={isPinnedPanelOpen}
+              className={`p-2 rounded-md transition-colors cursor-pointer ${isPinnedPanelOpen || pinnedMessages.length > 0 ? 'text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/20' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
             >
               <BsPin size={18} />
             </button>
             {pinnedMessages.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-amber-700 dark:bg-amber-600 text-white text-[9px] font-semibold rounded-md flex items-center justify-center tabular-nums">
                 {pinnedMessages.length > 9 ? '9+' : pinnedMessages.length}
               </span>
             )}
@@ -631,38 +633,40 @@ const ChatArea = ({
       )}
 
       {isPinnedPanelOpen && (
-        <div className="mx-3 mt-2 shrink-0 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 overflow-hidden animate-fadeIn">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-amber-200 dark:border-amber-800/30">
-            <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
-              <BsPin size={13} />
-              <span>Pinned Messages {pinnedMessages.length > 0 ? `(${pinnedMessages.length})` : ''}</span>
+        <section aria-label="Pinned messages" className="mx-3 mt-2 shrink-0 border-y border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#191919] overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-white/10">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-100">
+              <BsPin size={13} className="text-amber-700 dark:text-amber-400" />
+              <span>Pinned messages</span>
+              {pinnedMessages.length > 0 && <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 tabular-nums">{pinnedMessages.length}</span>}
             </div>
             <button
               type="button"
               onClick={() => setIsPinnedPanelOpen(false)}
-              className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 p-1 rounded transition cursor-pointer"
+              aria-label="Close pinned messages"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 rounded-sm hover:bg-slate-200/70 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               <FiX size={14} />
             </button>
           </div>
           {isLoadingPinned ? (
             <div className="flex items-center justify-center py-4">
-              <span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-slate-300 dark:border-slate-700 border-t-amber-700 dark:border-t-amber-400 rounded-full animate-spin" />
             </div>
           ) : pinnedMessages.length === 0 ? (
-            <p className="text-xs text-amber-600 dark:text-amber-500 text-center py-4 px-3">No pinned messages in this chat.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 py-3 px-3">Pinned messages will appear here for quick reference.</p>
           ) : (
-            <ul className="max-h-48 overflow-y-auto divide-y divide-amber-100 dark:divide-amber-900/30">
+            <ul className="max-h-48 overflow-y-auto divide-y divide-slate-200 dark:divide-white/10">
               {pinnedMessages.map((pm) => (
-                <li key={pm.id} className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-amber-100/60 dark:hover:bg-amber-900/20 transition group">
-                  <BsPin size={12} className="shrink-0 mt-0.5 text-amber-500" />
+                <li key={pm.id} className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors group">
+                  <BsPin size={12} className="shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 mb-0.5">{pm.senderName || 'Member'}</p>
+                    <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 mb-0.5">{pm.senderName || 'Member'}</p>
                     <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 [overflow-wrap:anywhere]">
                       {pm.content || pm.text || ''}
                     </p>
                     {pm.pinnedAt && (
-                      <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                         Pinned {new Date(pm.pinnedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                       </p>
                     )}
@@ -671,7 +675,8 @@ const ChatArea = ({
                     type="button"
                     onClick={() => handleUnpinMessage(pm.id)}
                     title="Unpin message"
-                    className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 text-amber-600 dark:text-amber-400 transition cursor-pointer"
+                    aria-label="Unpin message"
+                    className="shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 p-1 rounded-sm hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                   >
                     <FiX size={12} />
                   </button>
@@ -679,7 +684,7 @@ const ChatArea = ({
               ))}
             </ul>
           )}
-        </div>
+        </section>
       )}
 
       <div
@@ -734,7 +739,7 @@ const ChatArea = ({
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">(edited)</span>
                   )}
                   {isPinned && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/50">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
                       <BsPin size={10} />
                       Pinned
                     </span>
@@ -760,7 +765,7 @@ const ChatArea = ({
                           <FiMoreVertical size={14} />
                         </button>
                         {messageMenuOpen === msg.id && (
-                          <div className="absolute bottom-full right-0 mb-1 w-32 bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg py-1 z-30 animate-fadeIn">
+                          <div className="absolute bottom-full right-0 mb-1 w-32 bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-white/10 rounded-md shadow-lg py-1 z-30">
                             {isMessagePinned(msg.id) ? (
                               <button
                                 type="button"

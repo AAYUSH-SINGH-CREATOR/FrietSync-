@@ -184,5 +184,47 @@ export const leaveWorkspace = async () => {
   }
 };
 
+export const getUserRecord = async (userId) => {
+  if (!userId) throw new Error('User ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/users/${userId}/record`, getAuthHeaders());
+    return response.data;
+  } catch (error) {
+    handleWorkspaceError(error, 'Failed to fetch user record.');
+  }
+};
+
+export const getUserRecordSprints = async (userId) => {
+  if (!userId) throw new Error('User ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/users/${userId}/record/sprints`, getAuthHeaders());
+    const data = response.data;
+    return data?.items || data || [];
+  } catch (error) {
+    handleWorkspaceError(error, 'Failed to fetch user sprints record.');
+  }
+};
+
+export const getUserRecordIssues = async (userId) => {
+  if (!userId) throw new Error('User ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/users/${userId}/record/issues`, getAuthHeaders());
+    const data = response.data;
+    return data?.items || data || [];
+  } catch (error) {
+    handleWorkspaceError(error, 'Failed to fetch user issues record.');
+  }
+};
+
+export const getUserRecordActivity = async (userId) => {
+  if (!userId) throw new Error('User ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/users/${userId}/record/activity`, getAuthHeaders());
+    return response.data;
+  } catch (error) {
+    handleWorkspaceError(error, 'Failed to fetch user activity record.');
+  }
+};
+
 export { getFriendlyErrorMessage };
 
