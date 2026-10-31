@@ -32,6 +32,7 @@ import {
 } from '../services/workspaceApi';
 import {
   getNotificationPreferences,
+  updateNotificationPreferences,
 } from '../services/notificationApi';
 import {
   getGoogleConnectUrl,
@@ -47,28 +48,58 @@ import { CiLock } from "react-icons/ci";
 
 const DEFAULT_PREFERENCES = [
   {
-    type: 'INVITE_RECEIVED',
-    title: 'Workspace Invitations',
-    description: 'When you are invited to join a workspace or project.',
-    inApp: true,
-    email: true,
-    emailSupported: true,
+    type: 'ISSUE_ASSIGNED', title: 'Issue assigned', description: 'When an issue is assigned to you.', inApp: true, email: false, emailSupported: true,
   },
   {
-    type: 'INVITE_ACCEPTED',
-    title: 'Invitation Responses',
-    description: 'When an invite you sent is accepted by a teammate.',
-    inApp: true,
-    email: true,
-    emailSupported: true,
+    type: 'ISSUE_ASSIGNMENT_REQUESTED', title: 'Issue assignment requested', description: 'When someone requests assignment to an issue you manage.', inApp: true, email: false, emailSupported: true,
   },
   {
-    type: 'CHAT_MESSAGE',
-    title: 'Direct and Channel Messages',
-    description: 'Real-time chat alerts from team discussions.',
-    inApp: true,
-    email: false,
-    emailSupported: false,
+    type: 'ISSUE_REQUEST_APPROVED', title: 'Issue request approved', description: 'When your issue assignment request is approved.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'ISSUE_REQUEST_REJECTED', title: 'Issue request rejected', description: 'When your issue assignment request is rejected.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'ISSUE_RESOLVED', title: 'Issue resolved', description: 'When an issue you follow is resolved.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'ISSUE_REVIEW_APPROVED', title: 'Issue review approved', description: 'When your issue review is approved.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'ISSUE_REVIEW_REJECTED', title: 'Issue review rejected', description: 'When your issue review is rejected.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'PROJECT_MEMBER_ADDED', title: 'Project member added', description: 'When someone is added to a project you manage.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'PROJECT_ROLE_CHANGED', title: 'Project role changed', description: 'When your role in a project changes.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'COMMENT_ADDED', title: 'Comment added', description: 'When someone comments on an issue you follow.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'MENTION', title: 'Mentions', description: 'When someone mentions you in a discussion.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'SPRINT_ASSIGNED', title: 'Sprint assigned', description: 'When a sprint is assigned to you.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'SPRINT_ASSIGNMENT_REQUESTED', title: 'Sprint assignment requested', description: 'When someone requests assignment to a sprint you manage.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'MEETING_INVITE', title: 'Meeting invitations', description: 'When you are invited to a meeting.', inApp: true, email: false, emailSupported: false,
+  },
+  {
+    type: 'POLL_CREATED', title: 'Poll created', description: 'When a poll is created in one of your projects.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'INVITE_RECEIVED', title: 'Workspace invitations', description: 'When you are invited to join a workspace or project.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'INVITE_ACCEPTED', title: 'Invitation responses', description: 'When an invite you sent is accepted by a teammate.', inApp: true, email: false, emailSupported: true,
+  },
+  {
+    type: 'CHAT_MESSAGE', title: 'Direct and channel messages', description: 'Real-time chat alerts from team discussions.', inApp: true, email: false, emailSupported: false,
   },
 ];
 
@@ -95,6 +126,9 @@ const SettingsView = () => {
   
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
+  const [savingPreferenceKey, setSavingPreferenceKey] = useState('');
+  const [preferencesError, setPreferencesError] = useState('');
+  const [preferencesNotice, setPreferencesNotice] = useState('');
 
   
   const [workspace, setWorkspace] = useState(null);
@@ -331,28 +365,51 @@ const SettingsView = () => {
   
   const loadPreferences = useCallback(async () => {
     setIsLoadingPreferences(true);
+    setPreferencesError('');
     try {
       const serverPrefs = await getNotificationPreferences();
-      if (Array.isArray(serverPrefs) && serverPrefs.length > 0) {
-        setPreferences((prev) =>
-          prev.map((item) => {
-            const found = serverPrefs.find((sp) => sp.type === item.type);
-            return found
-              ? {
-                  ...item,
-                  inApp: found.inApp ?? item.inApp,
-                  email: item.emailSupported === false ? false : (found.email ?? item.email),
-                }
-              : item;
-          })
-        );
-      }
+      const serverByType = new Map((Array.isArray(serverPrefs) ? serverPrefs : []).map((item) => [item.type, item]));
+      setPreferences(DEFAULT_PREFERENCES.map((item) => {
+        const found = serverByType.get(item.type);
+        return found ? {
+          ...item,
+          inApp: found.inApp ?? item.inApp,
+          email: item.emailSupported ? (found.email ?? item.email) : false,
+        } : item;
+      }));
     } catch (err) {
       console.warn('Failed to fetch notification preferences:', err);
+      setPreferencesError(err.message || 'Failed to load notification preferences.');
     } finally {
       setIsLoadingPreferences(false);
     }
   }, []);
+
+  const saveNotificationPreference = async (type, channel, enabled) => {
+    const key = `${type}:${channel}`;
+    const previous = preferences.find((item) => item.type === type)?.[channel];
+    setPreferences((current) => current.map((item) => item.type === type ? { ...item, [channel]: enabled } : item));
+    setSavingPreferenceKey(key);
+    setPreferencesError('');
+    setPreferencesNotice('');
+    try {
+      const updated = await updateNotificationPreferences([{ type, [channel]: enabled }]);
+      const savedPreference = Array.isArray(updated) ? updated.find((item) => item.type === type) : null;
+      if (savedPreference) {
+        setPreferences((current) => current.map((item) => item.type === type ? {
+          ...item,
+          inApp: savedPreference.inApp ?? item.inApp,
+          email: item.emailSupported ? (savedPreference.email ?? item.email) : false,
+        } : item));
+      }
+      setPreferencesNotice('Notification preference saved.');
+    } catch (err) {
+      setPreferences((current) => current.map((item) => item.type === type ? { ...item, [channel]: previous } : item));
+      setPreferencesError(err.message || 'Failed to save notification preference.');
+    } finally {
+      setSavingPreferenceKey('');
+    }
+  };
 
   const toggleSection = (key) => {
     setExpandedSection((prev) => {
@@ -700,6 +757,15 @@ const SettingsView = () => {
                 </div>
               </div>
 
+              {preferencesError && (
+                <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                  {preferencesError}
+                </div>
+              )}
+              {preferencesNotice && !preferencesError && (
+                <p role="status" className="text-xs text-emerald-700 dark:text-emerald-400">{preferencesNotice}</p>
+              )}
+
               {isLoadingPreferences ? (
                 <div className="p-6 text-center text-slate-400 dark:text-[#858585] flex flex-col items-center justify-center">
                   <FiRefreshCw size={20} className="animate-spin mb-2" />
@@ -708,21 +774,49 @@ const SettingsView = () => {
               ) : (
                 <div className="space-y-2.5">
                   {preferences.map((item) => (
-                      <div
-                        key={item.type}
-                        className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#181a20] border border-slate-200/60 dark:border-[#262833]"
-                      >
-                        <div className="min-w-0">
+                    <div
+                      key={item.type}
+                      className="flex flex-col gap-4 rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-[#262833] dark:bg-[#181a20] sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                    >
+                      <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">
                             {item.title}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5 leading-normal">
                             {item.description}
                           </p>
-                        </div>
-
                       </div>
-                    ))}
+                      <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3">
+                        {[
+                          { channel: 'inApp', label: 'In-app' },
+                          ...(item.emailSupported ? [{ channel: 'email', label: 'Email' }] : []),
+                        ].map(({ channel, label }) => {
+                          const enabled = Boolean(item[channel]);
+                          const key = `${item.type}:${channel}`;
+                          const isSaving = savingPreferenceKey === key;
+                          return (
+                            <div key={channel} className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{label}</span>
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={enabled}
+                                aria-label={`${item.title} ${label} notifications`}
+                                disabled={Boolean(savingPreferenceKey) || isLoadingPreferences}
+                                onClick={() => saveNotificationPreference(item.type, channel, !enabled)}
+                                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#181a20] disabled:cursor-wait disabled:opacity-60 ${enabled ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                              >
+                                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                              </button>
+                              <span className={`w-10 text-xs font-semibold ${enabled ? 'text-sky-700 dark:text-sky-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {isSaving ? 'Saving' : enabled ? 'On' : 'Off'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
