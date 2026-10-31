@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { FiGithub, FiX, FiCalendar } from 'react-icons/fi';
+import { FiGithub, FiX, FiCalendar, FiDownload } from 'react-icons/fi';
 import { formatDate } from '../utils/projectUtils';
+import { downloadProjectSummaryPdf } from '../utils/projectSummaryPdf';
 
 const ProjectSummaryModal = ({
   isOpen,
@@ -47,6 +48,20 @@ const ProjectSummaryModal = ({
     ['Overdue issues', summary?.overdueIssues ?? '—'],
     ['Team members', totalMembers],
   ];
+
+  const handleDownload = () => {
+    downloadProjectSummaryPdf({
+      project,
+      summary,
+      projectManagerName,
+      teamLeadName,
+      totalIssues,
+      totalSprints,
+      totalMembers,
+      overallProgress,
+      linkedRepo,
+    });
+  };
 
   return (
     <div
@@ -121,6 +136,14 @@ const ProjectSummaryModal = ({
                 title="View project timeline, Gantt chart, and task dependencies"
               >
                 <FiCalendar size={13} /> View Timeline
+              </button>
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-700"
+                title="Download project summary as a PDF"
+              >
+                <FiDownload size={13} /> Download Summary
               </button>
             </div>
           </div>
