@@ -278,6 +278,40 @@ export const getPinnedMessages = async (projectId) => {
   }
 };
 
+export const getProjectChatMuteStatus = async (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  try {
+    const response = await axios.get(`${BASE_URL}/projects/${projectId}/chat/mute`, getAuthHeaders());
+    return response.data?.data || response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to load chat notification settings.');
+  }
+};
+
+export const muteProjectChat = async (projectId, mutedUntil) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  try {
+    const response = await axios.put(
+      `${BASE_URL}/projects/${projectId}/chat/mute`,
+      { mutedUntil },
+      getAuthHeaders()
+    );
+    return response.data?.data || response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to mute chat notifications.');
+  }
+};
+
+export const unmuteProjectChat = async (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  try {
+    const response = await axios.delete(`${BASE_URL}/projects/${projectId}/chat/mute`, getAuthHeaders());
+    return response.data?.data || response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to unmute chat notifications.');
+  }
+};
+
 export const formatFileSize = (bytes) => {
   if (!bytes || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];

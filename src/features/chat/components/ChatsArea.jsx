@@ -16,7 +16,8 @@ import {
   FiTrash2,
   FiCheck,
   FiPhone,
-  FiUsers,
+  FiBell,
+  FiBellOff,
 } from 'react-icons/fi';
 import { BsPin } from 'react-icons/bs';
 import {
@@ -35,6 +36,9 @@ import {
   pinMessage,
   unpinMessage,
   getPinnedMessages,
+  getProjectChatMuteStatus,
+  muteProjectChat,
+  unmuteProjectChat,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
 
@@ -82,6 +86,10 @@ const ChatArea = ({
   const [searchInChat, setSearchInChat] = useState('');
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isProjectDetailsOpen, setIsProjectDetailsOpen] = useState(false);
+  const [chatMuteStatus, setChatMuteStatus] = useState({ muted: false, mutedUntil: null });
+  const [isUpdatingMute, setIsUpdatingMute] = useState(false);
+  const [projectDetailsError, setProjectDetailsError] = useState('');
+  const [detailsSearch, setDetailsSearch] = useState('');
   const [pollToOpenId, setPollToOpenId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingText, setEditingText] = useState('');
@@ -104,6 +112,44 @@ const ChatArea = ({
   const messageMenuRef = useRef(null);
 
   const currentUser = currentUserProp || getCurrentChatUser();
+
+  const visibleMembers = useMemo(() => {
+    const normalizedQuery = detailsSearch.trim().toLowerCase();
+    if (!normalizedQuery) return activeChat?.members || [];
+    return (activeChat?.members || []).filter((member) => getMemberName(member).toLowerCase().includes(normalizedQuery));
+  }, [activeChat?.members, detailsSearch]);
+
+  useEffect(() => {
+    if (!isProjectDetailsOpen || !activeChat?.id) return undefined;
+    let cancelled = false;
+    setProjectDetailsError('');
+    setDetailsSearch('');
+    getProjectChatMuteStatus(activeChat.id)
+      .then((status) => { if (!cancelled) setChatMuteStatus(status || { muted: false, mutedUntil: null }); })
+      .catch((error) => { if (!cancelled) setProjectDetailsError(error.message || 'Could not load notification settings.'); });
+    return () => { cancelled = true; };
+  }, [isProjectDetailsOpen, activeChat?.id]);
+
+  const handleToggleChatMute = async () => {
+    if (!activeChat?.id || isUpdatingMute) return;
+    setIsUpdatingMute(true);
+    setProjectDetailsError('');
+    try {
+      if (chatMuteStatus.muted) {
+        await unmuteProjectChat(activeChat.id);
+        setChatMuteStatus({ muted: false, mutedUntil: null });
+      } else {
+        const mutedUntil = new Date();
+        mutedUntil.setMonth(mutedUntil.getMonth() + 1);
+        const result = await muteProjectChat(activeChat.id, mutedUntil.toISOString());
+        setChatMuteStatus({ muted: true, mutedUntil: result?.mutedUntil || mutedUntil.toISOString() });
+      }
+    } catch (error) {
+      setProjectDetailsError(error.message || 'Could not update chat notifications.');
+    } finally {
+      setIsUpdatingMute(false);
+    }
+  };
 
   const closeImagePreview = useCallback(() => {
     if (previewObjectUrlRef.current) {
@@ -495,7 +541,6 @@ const ChatArea = ({
   const projectColor = getAvatarColor(activeChat.name);
   const projectInfo = activeChat.raw || activeChat;
   const projectDescription = projectInfo.description || projectInfo.projectDescription || '';
-  const projectOwner = projectInfo.projectManager?.name || projectInfo.projectManagerName || projectInfo.owner?.name || '';
   const findMemberAvatar = (message) => {
     const senderId = String(message.senderId || message.userId || '');
     const senderEmail = String(message.senderEmail || message.email || '').toLowerCase();
@@ -1102,64 +1147,68 @@ const ChatArea = ({
 
       {isProjectDetailsOpen && (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-5"
+          className="fixed inset-0 z-[80] flex justify-end bg-black/20 p-3 sm:p-4"
           role="presentation"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setIsProjectDetailsOpen(false); }}
           onKeyDown={(event) => { if (event.key === 'Escape') setIsProjectDetailsOpen(false); }}
         >
-          <section role="dialog" aria-modal="true" aria-labelledby="chat-overview-title" className="flex max-h-[88dvh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-[#303030] dark:bg-[#1f1f1f]">
-            <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-[#303030]">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400"><FiUsers size={18} /></span>
-                <div className="min-w-0">
-                  <h2 id="chat-overview-title" className="truncate text-base font-bold text-slate-900 dark:text-white">Chat overview</h2>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{activeChat.name}</p>
-                </div>
-              </div>
-              <button type="button" onClick={() => setIsProjectDetailsOpen(false)} aria-label="Close project overview" className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#2b2b30]"><FiX size={18} /></button>
+          <section role="dialog" aria-modal="true" aria-labelledby="chat-overview-title" className="relative flex h-full max-h-[calc(100dvh-24px)] w-[min(360px,calc(100vw-24px))] flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-[#303030] dark:bg-[#171717] sm:max-h-[calc(100dvh-32px)]">
+            <header className="flex shrink-0 items-center justify-end gap-1 px-3 pt-3">
+              <button
+                type="button"
+                onClick={handleToggleChatMute}
+                disabled={isUpdatingMute}
+                aria-label={chatMuteStatus.muted ? 'Unmute chat notifications' : 'Mute chat notifications for one month'}
+                title={chatMuteStatus.muted ? 'Unmute notifications' : 'Mute notifications for one month'}
+                className="rounded-full p-2 text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/10"
+              >
+                {chatMuteStatus.muted ? <FiBell size={18} /> : <FiBellOff size={18} />}
+              </button>
+              <button type="button" onClick={() => setIsProjectDetailsOpen(false)} aria-label="Close project overview" className="rounded-full p-2 text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-950/30"><FiX size={20} /></button>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#303030] dark:bg-[#252529]">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{activeChat.name}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{projectDescription || 'No project description has been added.'}</p>
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
-                  {projectOwner && <span>Project manager: {projectOwner}</span>}
-                  {(projectInfo.status || projectInfo.projectStatus) && <span>Status: {projectInfo.status || projectInfo.projectStatus}</span>}
-                </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-20">
+              <div className="flex flex-col items-center pt-1 text-center">
+                <ChatAvatar src={activeChat.avatar || projectInfo.profilePictureUrl || projectInfo.projectImageUrl || projectInfo.imageUrl || projectInfo.logoUrl || projectInfo.project?.profilePictureUrl} name={activeChat.name} color={projectColor} className="h-36 w-36 border border-slate-200 text-2xl shadow-sm dark:border-slate-700" />
+                <h2 id="chat-overview-title" className="mt-3 max-w-full truncate text-xl font-semibold text-slate-950 dark:text-white">{activeChat.name}</h2>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{memberCount} members</p>
+                {projectDescription && <p className="mt-2 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{projectDescription}</p>}
               </div>
 
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Project members</h3>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">{activeChat.members?.length || 0}</span>
+              <label className="mt-4 flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 dark:bg-[#29292d]">
+                <FiSearch size={14} className="shrink-0 text-slate-500" />
+                <input value={detailsSearch} onChange={(event) => setDetailsSearch(event.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-500 dark:text-white" />
+              </label>
+
+              {projectDetailsError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-[11px] text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">{projectDetailsError}</p>}
+              {chatMuteStatus.muted && chatMuteStatus.mutedUntil && <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">Muted until {new Date(chatMuteStatus.mutedUntil).toLocaleString()}</p>}
+
+              <section className="mt-5">
+                <div className="mb-1 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Team members</h3>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{activeChat.members?.length || 0}</span>
                 </div>
-                {activeChat.members?.length ? (
-                  <ul className="divide-y divide-slate-100 dark:divide-[#303030]">
-                    {activeChat.members.map((member, index) => {
+                {visibleMembers.length ? (
+                  <ul>
+                    {visibleMembers.map((member, index) => {
                       const name = getMemberName(member);
                       const email = typeof member === 'string' ? '' : member?.email || member?.user?.email || '';
                       const role = typeof member === 'string' ? '' : member?.role || member?.projectRole || member?.user?.role || '';
                       const profileUrl = getProfileImageUrl(member);
                       const memberId = typeof member === 'string' ? member : member?.userId || member?.id || member?._id || member?.user?.id || email || index;
-                      return (
-                        <li key={memberId} className="flex items-center gap-3 py-3">
-                          <ChatAvatar src={profileUrl} name={name} color={getAvatarColor(name)} className="h-10 w-10 text-xs" />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{name}</p>
-                            {email && <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{email}</p>}
-                          </div>
-                          {role && <span className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-[10px] font-medium text-slate-600 dark:border-[#3b3b42] dark:text-slate-300">{String(role).replace(/[_-]/g, ' ')}</span>}
-                        </li>
-                      );
+                      return <li key={memberId} className="flex items-center gap-2 py-1.5">
+                        <ChatAvatar src={profileUrl} name={name} color={getAvatarColor(name)} className="h-6 w-6 text-[9px]" />
+                        <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-medium text-slate-800 dark:text-slate-100">{name}</p>{email && <p className="truncate text-[9px] text-slate-500 dark:text-slate-400">{email}</p>}</div>
+                        {role && <span className="text-[9px] text-slate-500 dark:text-slate-400">{String(role).replace(/[_-]/g, ' ')}</span>}
+                      </li>;
                     })}
                   </ul>
-                ) : (
-                  <p className="rounded-xl border border-dashed border-slate-200 px-4 py-7 text-center text-xs text-slate-500 dark:border-[#35353d] dark:text-slate-400">Project member details are unavailable.</p>
-                )}
-              </div>
+                ) : <p className="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">No matching team members</p>}
+              </section>
             </div>
+            <footer className="absolute inset-x-0 bottom-0 flex justify-center border-t border-slate-100 bg-white/95 px-4 py-3 backdrop-blur dark:border-white/5 dark:bg-[#171717]/95">
+              <button type="button" onClick={() => { setIsProjectDetailsOpen(false); setIsPinnedPanelOpen(true); }} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:bg-[#29292d] dark:text-slate-200 dark:hover:bg-[#34343a]"><BsPin size={13} /> Pinned messages</button>
+            </footer>
           </section>
         </div>
       )}
