@@ -456,7 +456,7 @@ const ChatArea = ({
 
           {}
           <div className="relative shrink-0">
-            <ChatAvatar src={activeChat.avatar || projectInfo.projectImageUrl || projectInfo.imageUrl || projectInfo.logoUrl} name={activeChat.name} color={projectColor} className="w-10 h-10 border border-slate-200 dark:border-slate-700 text-xs shadow-xs" />
+            <ChatAvatar src={activeChat.avatar || projectInfo.profilePictureUrl || projectInfo.projectImageUrl || projectInfo.imageUrl || projectInfo.logoUrl || projectInfo.project?.profilePictureUrl} name={activeChat.name} color={projectColor} className="w-10 h-10 border border-slate-200 dark:border-slate-700 text-xs shadow-xs" />
           </div>
 
           <div className="min-w-0 text-left">

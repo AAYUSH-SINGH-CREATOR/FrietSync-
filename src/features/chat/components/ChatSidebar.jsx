@@ -1,6 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FiSearch, FiX, FiMessageSquare } from 'react-icons/fi';
 import { getInitials, getAvatarColor, formatMessagePreview } from '../services/chatApi';
+
+const ConversationAvatar = ({ item, initials, color }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => setImageFailed(false), [item.id, item.avatar]);
+
+  if (item.avatar && !imageFailed) {
+    return <img src={item.avatar} alt={`${item.name} project`} onError={() => setImageFailed(true)} className="h-10 w-10 rounded-full border border-slate-200 object-cover dark:border-slate-700" />;
+  }
+
+  return <div className={`flex h-10 w-10 items-center justify-center rounded-full ${color} text-xs font-bold text-white shadow-xs select-none`}>{initials}</div>;
+};
 
 const ChatSidebar = ({
   groups = [],
@@ -111,13 +123,7 @@ const ChatSidebar = ({
               >
                 {}
                 <div className="relative shrink-0">
-                  {item.avatar ? (
-                    <img src={item.avatar} alt={item.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
-                  ) : (
-                    <div className={`w-10 h-10 rounded-full ${avatarColor} text-white font-bold text-xs flex items-center justify-center shadow-xs select-none`}>
-                      {initials}
-                    </div>
-                  )}
+                  <ConversationAvatar item={item} initials={initials} color={avatarColor} />
                   {item.status === 'Online' && (
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#171717]" />
                   )}

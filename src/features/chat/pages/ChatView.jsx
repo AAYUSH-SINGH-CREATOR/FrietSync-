@@ -319,6 +319,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
             ...p,
             id: String(id),
             name,
+            avatar: p.avatar || p.profilePictureUrl || p.projectImageUrl || p.imageUrl || p.logoUrl || p.project?.profilePictureUrl || '',
             members: Array.isArray(p.members) ? p.members : [],
             memberCount: p.memberCount ?? p.membersCount ?? p.totalMembers,
             lastMessage: '',

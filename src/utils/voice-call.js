@@ -60,6 +60,7 @@ export class VoiceCall {
       resolve: null,
       reject: null,
       audios: new Map(),
+      localTracks: new Set(),
     };
     this._s = s;
 
@@ -98,7 +99,18 @@ export class VoiceCall {
 
             onmessage: (msg, jsep) => this._onMessage(s, msg, jsep, muted),
 
-            onlocaltrack: () => {},
+            onlocaltrack: (track, added) => {
+              if (!track) return;
+              if (this._s !== s) {
+                if (added) track.stop();
+                return;
+              }
+              if (added) s.localTracks.add(track);
+              else {
+                s.localTracks.delete(track);
+                track.stop();
+              }
+            },
 
             onremotetrack: (track, mid, added) =>
               this._onRemoteTrack(s, track, mid, added),
@@ -163,6 +175,9 @@ export class VoiceCall {
     } catch (_) {
       
     }
+
+    s.localTracks.forEach((track) => track.stop());
+    s.localTracks.clear();
 
     try {
       if (s.janus) s.janus.destroy();
