@@ -21,6 +21,7 @@ import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import CreateEditSprintModal from '../../sprints/components/CreateEditSprintModal';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
+import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProjectId } from '../../../utils/dashboardProjectSelection';
 import EmptyState from '../../../components/ui/EmptyState';
 import esmywork from '../../../assets/esmywork.png';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
@@ -261,7 +262,7 @@ const MyWorkView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [projectFilter, setProjectFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState(() => getDashboardProjectId() || 'all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('due-asc');
   const [page, setPage] = useState(0);
@@ -336,6 +337,24 @@ const MyWorkView = () => {
     loadWork();
     return () => { isCurrent = false; };
   }, [refreshKey]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!projects.length) {
+      if (projectFilter !== 'all') setProjectFilter('all');
+      return;
+    }
+    if (projectFilter !== 'all' && !projects.some((project) => String(getId(project)) === projectFilter)) {
+      setProjectFilter('all');
+    }
+  }, [projects, projectFilter, isLoading]);
+
+  useEffect(() => subscribeToDashboardProjectId((projectId) => {
+    if (projects.some((project) => String(getId(project)) === projectId)) {
+      setPage(0);
+      setProjectFilter(projectId);
+    }
+  }), [projects]);
 
   const getProjectRole = useCallback((projectId) => {
     const project = projects.find((item) => String(getId(item)) === String(projectId));
@@ -620,6 +639,11 @@ const MyWorkView = () => {
     setPage(0);
   };
 
+  const updateProjectFilter = (value) => {
+    updateFilter(setProjectFilter)(value);
+    if (value !== 'all') setDashboardProjectId(value);
+  };
+
   const openTask = (task) => {
     if (task.type === 'sprint') {
       setSelectedIssue(null);
@@ -738,7 +762,7 @@ const MyWorkView = () => {
           { value: 'HIGHEST', label: 'Highest' }, { value: 'HIGH', label: 'High' },
           { value: 'MEDIUM', label: 'Medium' }, { value: 'LOW', label: 'Low' }, { value: 'LOWEST', label: 'Lowest' },
         ]} />
-        <FilterSelect label="Project" value={projectFilter} onChange={updateFilter(setProjectFilter)} options={projectOptions} />
+        <FilterSelect label="Project" value={projectFilter} onChange={updateProjectFilter} options={projectOptions} />
         <FilterSelect label="Assignee" value={assigneeFilter} onChange={updateFilter(setAssigneeFilter)} options={assigneeOptions} />
         <FilterSelect label="Sort by" value={sortOrder} onChange={updateFilter(setSortOrder)} options={[
           { value: 'due-asc', label: 'Due date: earliest' }, { value: 'due-desc', label: 'Due date: latest' },

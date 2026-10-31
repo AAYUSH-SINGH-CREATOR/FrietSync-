@@ -18,6 +18,7 @@ import IssueDetailsView from './IssueDetailsView';
 import KanbanBoardView from './KanbanBoardView';
 import EmptyState from '../../../components/ui/EmptyState';
 import esissues from '../../../assets/esissues.png';
+import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProjectId } from '../../../utils/dashboardProjectSelection';
 
 const PAGE_SIZE = 20;
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
@@ -81,7 +82,7 @@ const IssuesView = () => {
   const [isLoadingIssues, setIsLoadingIssues] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [projectFilter, setProjectFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState(() => getDashboardProjectId() || 'all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
@@ -188,6 +189,21 @@ const IssuesView = () => {
       .finally(() => { if (active) setIsLoadingProjects(false); });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (isLoadingProjects) return;
+    if (projectFilter !== 'all' && !projects.some((project) => String(project.id || project._id || project.projectId) === projectFilter)) {
+      setProjectFilter('all');
+    }
+  }, [projects, isLoadingProjects, projectFilter]);
+
+  useEffect(() => subscribeToDashboardProjectId((projectId) => {
+    if (projects.some((project) => String(project.id || project._id || project.projectId) === projectId)) {
+      setIsLoadingIssues(true);
+      setPage(0);
+      setProjectFilter(projectId);
+    }
+  }), [projects]);
 
   const projectMap = useMemo(() => new Map(projects.map((p) => [String(p.id || p._id || p.projectId), p.name || 'Project'])), [projects]);
 
@@ -358,7 +374,12 @@ const IssuesView = () => {
   }, [issues, activeTab, projectFilter, statusFilter, priorityFilter, assigneeFilter, searchQuery, sortOrder, displayAssignee, currentUserId]);
 
   const refresh = () => { setIsLoadingIssues(true); setRefreshTrigger((c) => c + 1); };
-  const changeProjectFilter = (v) => { setIsLoadingIssues(true); setPage(0); setProjectFilter(v); };
+  const changeProjectFilter = (v) => {
+    setIsLoadingIssues(true);
+    setPage(0);
+    setProjectFilter(v);
+    if (v !== 'all') setDashboardProjectId(v);
+  };
   const handleIssueCreated = (created) => { showToast('success', `“${created?.title || 'New issue'}” created.`); refresh(); };
 
   const handleUpdateIssueStatus = useCallback(async (id, newStatus) => {

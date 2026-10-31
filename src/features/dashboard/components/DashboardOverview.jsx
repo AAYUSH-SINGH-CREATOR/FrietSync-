@@ -23,8 +23,8 @@ import {
   FiAlertCircle,
 } from 'react-icons/fi';
 
-import { getMyWorkspace, getWorkspaceMembers, getFriendlyErrorMessage } from '../services/workspaceApi';
-import { getMyProjects } from '../../projects/services/projectApi';
+import { getMyWorkspace, getFriendlyErrorMessage } from '../services/workspaceApi';
+import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { getProjectProgress } from '../../projects/utils/projectUtils';
 import { getProjectIssues } from '../../issues/services/issueApi';
 import { getProjectSprints } from '../../sprints/services/sprintsApi';
@@ -33,8 +33,10 @@ import { formatFigmaDate } from '../../issues/utils/issueUtils';
 import NoWorkspace from './NoWorkspace';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { getUserProfile } from '../../auth/services/authApi';
+import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProjectId } from '../../../utils/dashboardProjectSelection';
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
+const getProjectId = (project) => String(project?.id || project?._id || project?.projectId || '');
 const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
 const isInProgress = (s) => normalize(s) === 'IN_PROGRESS';
 
@@ -94,11 +96,12 @@ const DashboardOverview = () => {
   const { currentUserProfile } = outletContext;
 
   const [workspace, setWorkspace] = useState(null);
-  const [members, setMembers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [issues, setIssues] = useState([]);
   const [sprints, setSprints] = useState([]);
-  const [totalReportedIssues, setTotalReportedIssues] = useState(0);
+  const [issueTotalsByProject, setIssueTotalsByProject] = useState({});
+  const [selectedProjectId, setSelectedProjectId] = useState(getDashboardProjectId);
+  const [selectedProjectMembers, setSelectedProjectMembers] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -129,32 +132,23 @@ const DashboardOverview = () => {
     if (!validWs) {
       return {
         workspace: null,
-        members: [],
         projects: [],
         issues: [],
         sprints: [],
-        totalReportedIssues: 0,
+        issueTotalsByProject: {},
       };
     }
 
-    const wsId = validWs.id || validWs._id || validWs.workspaceId;
-
-    
-    const [membersRes, projectsRes] = await Promise.allSettled([
-      getWorkspaceMembers(wsId),
-      getMyProjects(),
-    ]);
-
-    const loadedMembers = membersRes.status === 'fulfilled' && Array.isArray(membersRes.value) ? membersRes.value : [];
+    const projectsRes = await getMyProjects().then((value) => ({ status: 'fulfilled', value })).catch((reason) => ({ status: 'rejected', reason }));
     const loadedProjects = projectsRes.status === 'fulfilled' && Array.isArray(projectsRes.value) ? projectsRes.value : [];
 
     let aggregatedIssues = [];
     let aggregatedSprints = [];
-    let totalCount = 0;
+    const issueTotals = {};
 
     
     if (loadedProjects.length > 0) {
-      const targetProjects = loadedProjects.slice(0, 10);
+      const targetProjects = loadedProjects;
       const [issuesSettled, sprintsSettled] = await Promise.allSettled([
         Promise.allSettled(
           targetProjects.map((p) => {
@@ -177,7 +171,8 @@ const DashboardOverview = () => {
           const pname = proj?.name || 'Project';
           if (res.status === 'fulfilled' && res.value) {
             const items = res.value.items || (Array.isArray(res.value) ? res.value : []);
-            totalCount += Number(res.value.totalElements ?? items.length);
+            const projectTotal = Number(res.value.totalElements ?? items.length);
+            issueTotals[String(pid)] = projectTotal;
             items.forEach((item) => {
               aggregatedIssues.push({
                 ...item,
@@ -209,11 +204,10 @@ const DashboardOverview = () => {
 
     return {
       workspace: validWs,
-      members: loadedMembers,
       projects: loadedProjects,
       issues: aggregatedIssues,
       sprints: aggregatedSprints,
-      totalReportedIssues: totalCount > 0 ? totalCount : aggregatedIssues.length,
+      issueTotalsByProject: issueTotals,
     };
   }, []);
 
@@ -223,11 +217,10 @@ const DashboardOverview = () => {
     try {
       const data = await fetchDashboardDataCore();
       setWorkspace(data.workspace);
-      setMembers(data.members);
       setProjects(data.projects);
       setIssues(data.issues);
       setSprints(data.sprints);
-      setTotalReportedIssues(data.totalReportedIssues);
+      setIssueTotalsByProject(data.issueTotalsByProject);
     } catch (err) {
       setError(getFriendlyErrorMessage(err, 'workspace'));
     } finally {
@@ -241,11 +234,10 @@ const DashboardOverview = () => {
       .then((data) => {
         if (!isMounted) return;
         setWorkspace(data.workspace);
-        setMembers(data.members);
         setProjects(data.projects);
         setIssues(data.issues);
         setSprints(data.sprints);
-        setTotalReportedIssues(data.totalReportedIssues);
+        setIssueTotalsByProject(data.issueTotalsByProject);
         setError('');
         setIsLoading(false);
       })
@@ -260,14 +252,60 @@ const DashboardOverview = () => {
     };
   }, [fetchDashboardDataCore]);
 
+  useEffect(() => {
+    if (projects.length === 0) {
+      if (selectedProjectId) setSelectedProjectId('');
+      setSelectedProjectMembers([]);
+      return;
+    }
+    if (!projects.some((project) => getProjectId(project) === selectedProjectId)) {
+      setSelectedProjectId(getProjectId(projects[0]));
+    }
+  }, [projects, selectedProjectId]);
+
+  useEffect(() => subscribeToDashboardProjectId((projectId) => {
+    if (projects.some((project) => getProjectId(project) === projectId)) {
+      setSelectedProjectId(projectId);
+    }
+  }), [projects]);
+
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setSelectedProjectMembers([]);
+      return undefined;
+    }
+
+    setDashboardProjectId(selectedProjectId);
+    let active = true;
+    setSelectedProjectMembers([]);
+    getProjectMembers(selectedProjectId)
+      .then((projectMembers) => {
+        if (active) setSelectedProjectMembers(Array.isArray(projectMembers) ? projectMembers : []);
+      })
+      .catch(() => {
+        if (active) setSelectedProjectMembers([]);
+      });
+    return () => { active = false; };
+  }, [selectedProjectId]);
+
+  const selectedProject = useMemo(
+    () => projects.find((project) => getProjectId(project) === selectedProjectId) || null,
+    [projects, selectedProjectId]
+  );
+  const selectedProjectIssues = useMemo(
+    () => issues.filter((issue) => String(issue.projectId || issue.project?.id || issue.project?._id) === selectedProjectId),
+    [issues, selectedProjectId]
+  );
+  const selectedProjectIssueTotal = issueTotalsByProject[selectedProjectId] ?? selectedProjectIssues.length;
+  const selectedProjectSprints = useMemo(
+    () => sprints.filter((sprint) => String(sprint.projectId || sprint.project?.id || sprint.project?._id) === selectedProjectId),
+    [sprints, selectedProjectId]
+  );
+
   
   const summaryMetrics = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - 7);
-
-    
     const totalProjects = projects.length;
     const newProjectsThisMonth = projects.filter((p) => {
       const d = p.createdAt || p.startDate;
@@ -275,46 +313,27 @@ const DashboardOverview = () => {
     }).length;
 
     
-    const totalIssues = totalReportedIssues > 0 ? totalReportedIssues : issues.length;
-    const newIssuesThisWeek = issues.filter((i) => {
-      const d = i.createdAt;
-      return d && !isNaN(new Date(d).getTime()) && new Date(d) >= startOfWeek;
-    }).length;
-
-    
-    const totalSprints = sprints.length;
-    const activeSprintsCount = sprints.filter((s) => {
-      const norm = normalize(s.status);
-      return norm === 'ACTIVE';
-    }).length;
-
-    
-    const totalMembers = members.length;
-    const newMembersThisMonth = members.filter((m) => {
-      const d = m.joinedAt || m.createdAt;
-      return d && !isNaN(new Date(d).getTime()) && new Date(d) >= startOfMonth;
-    }).length;
+    const totalIssues = selectedProjectIssueTotal;
+    const totalSprints = selectedProjectSprints.length;
+    const totalMembers = selectedProjectMembers.length;
 
     return {
       totalProjects,
       newProjectsThisMonth,
       totalIssues,
-      newIssuesThisWeek,
       totalSprints,
-      activeSprintsCount,
       totalMembers,
-      newMembersThisMonth,
     };
-  }, [projects, issues, sprints, members, totalReportedIssues]);
+  }, [projects, selectedProjectIssues, selectedProjectIssueTotal, selectedProjectSprints, selectedProjectMembers]);
 
   
   const issueOverviewMetrics = useMemo(() => {
-    const total = issues.length;
+    const total = selectedProjectIssueTotal;
     let completed = 0;
     let inProgress = 0;
     let pending = 0;
 
-    issues.forEach((i) => {
+    selectedProjectIssues.forEach((i) => {
       if (isResolved(i.status)) completed++;
       else if (isInProgress(i.status)) inProgress++;
       else pending++;
@@ -337,7 +356,7 @@ const DashboardOverview = () => {
       chartData,
       statusLabel: inProgress > 0 ? 'Active Issues' : total > 0 ? 'Issues Done' : 'No Issues',
     };
-  }, [issues]);
+  }, [selectedProjectIssues, selectedProjectIssueTotal]);
 
   
   const myFilteredTasks = useMemo(() => {
@@ -384,9 +403,9 @@ const DashboardOverview = () => {
       return false;
     };
 
-    const userTasks = issues.filter(isAssignedToMe);
+    const userTasks = selectedProjectIssues.filter(isAssignedToMe);
     
-    const taskPool = userTasks.length > 0 ? userTasks : issues;
+    const taskPool = userTasks.length > 0 ? userTasks : selectedProjectIssues;
 
     if (taskFilter === 'overdue') {
       return taskPool
@@ -414,14 +433,14 @@ const DashboardOverview = () => {
     return taskPool
       .filter((i) => !isResolved(i.status))
       .slice(0, 8);
-  }, [issues, currentUserProfile, taskFilter]);
+  }, [selectedProjectIssues, currentUserProfile, taskFilter]);
 
   
   const projectProgressList = useMemo(() => {
     const now = new Date();
-    return projects.slice(0, 4).map((p) => {
+    return (selectedProject ? [selectedProject] : []).map((p) => {
       const pid = String(p.id || p._id || p.projectId);
-      const projectIssuesList = issues.filter((i) => String(i.projectId) === pid);
+      const projectIssuesList = selectedProjectIssues.filter((i) => String(i.projectId) === pid);
       const progressPct = getProjectProgress(p);
 
       const isOverdue = p.deadline && !isNaN(new Date(p.deadline).getTime()) && new Date(p.deadline) < now;
@@ -438,21 +457,12 @@ const DashboardOverview = () => {
         isAtRisk,
       };
     });
-  }, [projects, issues]);
+  }, [selectedProject, selectedProjectIssues]);
 
   
   const sprintData = useMemo(() => {
-    const selectedSprint = sprints.find((s) => normalize(s.status) === 'ACTIVE') ||
-      sprints.find((s) => normalize(s.status) === 'PLANNED') ||
-      [...sprints].sort((a, b) => String(b.endDate || '').localeCompare(String(a.endDate || '')))[0] || null;
-    const selectedProjectId = selectedSprint?.projectId || selectedSprint?.project?.id || selectedSprint?.project?._id;
-    const project = projects.find((item) => String(item.id || item._id || item.projectId) === String(selectedProjectId)) ||
-      projects.find((item) => sprints.some((sprint) => String(sprint.projectId || sprint.project?.id || sprint.project?._id) === String(item.id || item._id || item.projectId))) ||
-      null;
-    const projectId = project?.id || project?._id || project?.projectId;
-    const projectSprints = projectId
-      ? sprints.filter((sprint) => String(sprint.projectId || sprint.project?.id || sprint.project?._id) === String(projectId))
-      : [];
+    const project = selectedProject;
+    const projectSprints = selectedProjectSprints;
 
     const sprintStartDates = projectSprints.map((sprint) => asDate(sprint.startDate)).filter(Boolean);
     const sprintEndDates = projectSprints.map((sprint) => asDate(sprint.endDate)).filter(Boolean);
@@ -476,7 +486,7 @@ const DashboardOverview = () => {
       completedSprints,
       burndownPoints,
     };
-  }, [sprints, projects]);
+  }, [selectedProjectSprints, selectedProject]);
 
   
   const recentProjects = useMemo(() => {
@@ -498,7 +508,7 @@ const DashboardOverview = () => {
 
     const deadlineTasks = [];
 
-    issues.forEach((i) => {
+    selectedProjectIssues.forEach((i) => {
       if (isResolved(i.status)) return;
       if (!i.dueDate) {
         laterCount++;
@@ -561,7 +571,7 @@ const DashboardOverview = () => {
       donutData,
       displayTasks,
     };
-  }, [issues]);
+  }, [selectedProjectIssues]);
 
   if (isLoading && !workspace) {
     return <LoadingScreen fullScreen label="Loading your dashboard" />;
@@ -611,13 +621,28 @@ const DashboardOverview = () => {
   return (
     <div className="space-y-6 animate-fadeIn pb-10 px-3 sm:px-6 lg:px-8 text-slate-900 dark:text-white">
       {}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          {timeGreeting} {firstName}!
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-[#a1a1aa] mt-1 font-medium">
-          Here is what is happening with your projects today
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {timeGreeting} {firstName}!
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#a1a1aa] mt-1 font-medium">
+            Here is what is happening with your projects today
+          </p>
+        </div>
+        <label className="flex min-w-[220px] flex-col gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <span>Dashboard project</span>
+          <select
+            value={selectedProjectId}
+            onChange={(event) => setSelectedProjectId(event.target.value)}
+            disabled={projects.length === 0}
+            className="h-10 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-60 dark:border-[#35353d] dark:bg-[#202026] dark:text-white"
+          >
+            {projects.length === 0 ? <option value="">No projects available</option> : projects.map((project) => (
+              <option key={getProjectId(project)} value={getProjectId(project)}>{project.name || 'Untitled project'}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {}
@@ -665,7 +690,7 @@ const DashboardOverview = () => {
               </span>
             </div>
             <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
-              From last week
+              {selectedProject?.name || 'Selected project'}
             </span>
           </div>
         </div>
@@ -688,7 +713,7 @@ const DashboardOverview = () => {
               </span>
             </div>
             <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
-              From last week
+              {selectedProject?.name || 'Selected project'}
             </span>
           </div>
         </div>
@@ -710,11 +735,9 @@ const DashboardOverview = () => {
                 {summaryMetrics.totalMembers}
               </span>
             </div>
-            {summaryMetrics.newMembersThisMonth > 0 && (
-              <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
-                +{summaryMetrics.newMembersThisMonth} this month
-              </span>
-            )}
+            <span className="text-[11px] text-slate-400 dark:text-[#888] mt-1 block truncate">
+              {selectedProject?.name || 'Selected project'}
+            </span>
           </div>
         </div>
       </div>

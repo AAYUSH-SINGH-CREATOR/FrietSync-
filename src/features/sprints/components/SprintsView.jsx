@@ -32,6 +32,7 @@ import CreateEditSprintModal from './CreateEditSprintModal';
 import EmptyState from '../../../components/ui/EmptyState';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import essprints from '../../../assets/essprints.png';
+import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProjectId } from '../../../utils/dashboardProjectSelection';
 
 const getCollection = (value, keys) => {
   const queue = [value];
@@ -77,7 +78,7 @@ const SprintsView = () => {
 
   const [projects, setProjects] = useState([]);
   
-  const [projectId, setProjectId] = useState('');
+  const [projectId, setProjectId] = useState(getDashboardProjectId);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState('');
 
@@ -136,10 +137,13 @@ const SprintsView = () => {
         if (!isMounted) return;
         const records = getCollection(response, ['projects', 'items', 'content', 'results']);
         setProjects(records);
+        const dashboardProjectId = getDashboardProjectId();
         setProjectId((currentId) =>
           currentId && records.some((project) => String(getProjectId(project)) === currentId)
             ? currentId
-            : ''
+            : records.some((project) => String(getProjectId(project)) === dashboardProjectId)
+              ? dashboardProjectId
+              : ''
         );
         setProjectsError('');
       })
@@ -154,6 +158,20 @@ const SprintsView = () => {
 
     return () => { isMounted = false; };
   }, [projectRefreshTrigger]);
+
+  useEffect(() => subscribeToDashboardProjectId((selectedProjectId) => {
+    if (projects.some((project) => String(getProjectId(project)) === selectedProjectId)) {
+      setProjectId(selectedProjectId);
+      setPage(0);
+    }
+  }), [projects]);
+
+  const changeProjectFilter = (value) => {
+    const nextProjectId = value === 'all' ? '' : value;
+    setProjectId(nextProjectId);
+    setPage(0);
+    if (nextProjectId) setDashboardProjectId(nextProjectId);
+  };
 
   
   useEffect(() => {
@@ -789,7 +807,7 @@ const SprintsView = () => {
           <FilterSelect
             label="Project"
             value={projectId || 'all'}
-            onChange={(v) => { setProjectId(v === 'all' ? '' : v); setPage(0); }}
+            onChange={changeProjectFilter}
             options={projects.map((p) => ({
               value: String(getProjectId(p)),
               label: p.name || 'Untitled project',
