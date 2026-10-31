@@ -48,6 +48,7 @@ const KanbanBoardView = ({
   onStatusChange,
   onCreateInColumn,
   displayAssignee,
+  displayAssigneeAvatar,
   pendingStatusIssueIds = new Set(),
 }) => {
   const [dragOverColumn, setDragOverColumn] = useState(null);
@@ -116,6 +117,7 @@ const KanbanBoardView = ({
                 {col.items.map((issue, idx) => {
                   const id = issueId(issue);
                   const assignee = displayAssignee?.(issue) || '';
+                  const assigneeAvatar = displayAssigneeAvatar?.(issue) || issue.assigneeAvatar || '';
                   const assigneeInitial = (assignee || 'U').slice(0, 1).toUpperCase();
                   const avatarColor = avatarColors[(assignee.charCodeAt(0) || idx) % avatarColors.length];
                   const num = issue.issueNumber || (id ? String(id).slice(-4) : idx + 1);
@@ -143,8 +145,8 @@ const KanbanBoardView = ({
                       </div>
                       <span className="truncate text-xs font-bold text-sky-600 dark:text-sky-400">{keyBadge}</span>
                     </div>
-                    {issue.assigneeAvatar ? (
-                      <img src={issue.assigneeAvatar} alt={assignee} className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/10" />
+                    {assigneeAvatar ? (
+                      <img src={assigneeAvatar} alt={assignee} className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/10" />
                     ) : (
                       <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ${avatarColor}`}>
                         {assigneeInitial}

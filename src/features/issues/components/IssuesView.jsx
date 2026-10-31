@@ -24,9 +24,19 @@ const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
 const issueId = (i) => i?.id || i?._id || i?.issueId;
 const memberId = (m) => m?.userId || m?.id || m?._id || m?.user?.id || m?.user?._id;
 const memberRole = (m) => String(m?.role || m?.projectRole || m?.user?.role || '').toUpperCase();
-const assigneeIds = (i) => i?.assigneeIds || i?.assignedUserIds || i?.assignees?.map(memberId) || i?.assignedTo?.map?.(memberId) || (i?.assigneeId ? [i.assigneeId] : []);
+const assigneeIds = (i) => {
+  const values = i?.assigneeIds || i?.assignedUserIds || i?.assignees || i?.assignedTo;
+  const ids = (Array.isArray(values) ? values : values ? [values] : [])
+    .map((value) => (value && typeof value === 'object' ? memberId(value) : value))
+    .filter(Boolean);
+  return ids.length ? ids : (i?.assigneeId || i?.assigneeUserId || i?.assignedToId ? [i.assigneeId || i.assigneeUserId || i.assignedToId] : []);
+};
 const memberName = (m) => m?.name || m?.fullName || m?.user?.name || m?.email || m?.user?.email || '';
-const personLabel = (i) => i?.assigneeName || i?.assignedTo?.name || i?.assignedTo?.fullName || i?.assignee?.name || i?.assigneeEmail || '';
+const personLabel = (i) => {
+  const person = Array.isArray(i?.assignees) ? i.assignees[0] : i?.assignees || i?.assignedTo || i?.assignee;
+  return i?.assigneeName || i?.assignedToName || person?.name || person?.fullName || person?.userName || i?.assigneeEmail || person?.email || '';
+};
+const personAvatar = (person) => person?.profilePictureUrl || person?.profilePicture || person?.avatarUrl || person?.avatar || person?.profileImageUrl || person?.imageUrl || person?.pictureUrl || person?.photoUrl || person?.user?.profilePictureUrl || person?.user?.profilePicture || person?.user?.avatarUrl || person?.user?.avatar || person?.user?.profileImageUrl || '';
 const isResolved = (s) => ['RESOLVED', 'CLOSED'].includes(normalize(s));
 const isInProgress = (s) => normalize(s) === 'IN_PROGRESS';
 const compactDate = (d) => {
@@ -154,7 +164,13 @@ const IssuesView = () => {
       results.filter((res) => res.status === 'fulfilled').flatMap((res) => res.value).forEach((m) => {
         const mid = memberId(m);
         const name = memberName(m);
-        if (name) people.set(String(mid || name).toLowerCase(), { id: String(mid || name), name, email: m.email || m.user?.email || '' });
+        if (name) people.set(String(mid || name).toLowerCase(), {
+          ...m,
+          id: String(mid || name),
+          name,
+          email: m.email || m.user?.email || '',
+          profilePictureUrl: personAvatar(m),
+        });
       });
       setMembers([...people.values()]);
       const failed = results.find((res) => res.status === 'rejected');
@@ -276,7 +292,7 @@ const IssuesView = () => {
     return () => { active = false; };
   }, [activeTab, projects, projectFilter, projectMap]);
 
-  const memberById = useMemo(() => new Map(members.map((m) => [String(m.id).toLowerCase(), m.name])), [members]);
+  const memberById = useMemo(() => new Map(members.map((m) => [String(m.id).toLowerCase(), m])), [members]);
 
   const canCreateIssue = projects.some((p) => {
     const pid = String(p.id || p._id || p.projectId);
@@ -290,9 +306,27 @@ const IssuesView = () => {
   const displayAssignee = useCallback((i) => {
     const direct = personLabel(i);
     if (direct && !/^[0-9a-f-]{32,}$/i.test(direct)) return direct;
-    const id = i.assigneeId || i.assigneeUserId || i.assignedToId || i.assignedTo?.id || i.assignedTo?._id || direct;
-    return (id && memberById.get(String(id).toLowerCase())) || '';
+    const id = i.assigneeId || i.assigneeUserId || i.assignedToId || i.assignedTo?.id || i.assignedTo?._id || assigneeIds(i)[0] || direct;
+    const assignedMember = id && memberById.get(String(id).toLowerCase());
+    return assignedMember?.name || '';
   }, [memberById]);
+
+  const displayAssigneeAvatar = useCallback((issue) => {
+    const directAssignees = Array.isArray(issue?.assignees)
+      ? issue.assignees
+      : [issue?.assignees, issue?.assignee, issue?.assignedTo].filter(Boolean);
+    const directAvatar = issue?.assigneeProfilePictureUrl || issue?.assigneeAvatarUrl || issue?.assigneeAvatar || issue?.assignedToProfilePictureUrl || directAssignees.map(personAvatar).find(Boolean);
+    if (directAvatar) return directAvatar;
+
+    const projectId = issue?.projectId || issue?.project?.id || issue?.project?._id;
+    const membersForProject = projectMembers[String(projectId)] || [];
+    const ids = assigneeIds(issue).map((id) => String(id).toLowerCase());
+    const matchedMember = membersForProject.find((member) => ids.includes(String(memberId(member) || '').toLowerCase()));
+    if (matchedMember) return personAvatar(matchedMember);
+
+    const id = issue?.assigneeId || issue?.assigneeUserId || issue?.assignedToId || issue?.assignedTo?.id || issue?.assignedTo?._id || assigneeIds(issue)[0];
+    return id ? memberById.get(String(id).toLowerCase())?.profilePictureUrl || '' : '';
+  }, [memberById, projectMembers]);
 
   const counts = useMemo(() => ({
     total: issues.length,
@@ -651,6 +685,7 @@ const IssuesView = () => {
                 pendingStatusIssueIds={pendingStatusIssueIds}
                 onCreateInColumn={() => setIsCreateModalOpen(true)}
                 displayAssignee={displayAssignee}
+                displayAssigneeAvatar={displayAssigneeAvatar}
               />
               {totalPages > 1 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600 dark:border-[#303030] dark:bg-[#1f1f1f] dark:text-[#bbb] sm:px-4">
@@ -681,7 +716,8 @@ const IssuesView = () => {
                     )) : filteredIssues.map((issueItem, idx) => {
                       const id = issueId(issueItem);
                       const number = issueItem.issueNumber || (id ? String(id).slice(-6) : `#${idx + 1}`);
-                      const assignee = displayAssignee(issueItem);
+                      const assigneeAvatar = displayAssigneeAvatar(issueItem);
+                      const assignee = displayAssignee(issueItem) || (assigneeAvatar ? 'Assignee' : '');
                       const avatarColor = avatarColors[(assignee.charCodeAt(0) || idx) % avatarColors.length];
                       return (
                         <tr
@@ -696,7 +732,7 @@ const IssuesView = () => {
                           <td className="px-3"><span className="inline-flex max-w-[150px] items-center gap-1 truncate rounded-md bg-slate-100 px-2 py-1 text-slate-700 dark:bg-[#303030] dark:text-[#ddd]"><FiLayers size={11} className="shrink-0" />{issueItem.projectName || projectMap.get(String(issueItem.projectId)) || issueItem.project?.name || '—'}</span></td>
                           <td className="px-3"><span className={`whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium ${getStatusBadge(issueItem.status)}`}>{String(issueItem.status || 'OPEN').replace(/[_-]/g, ' ')}</span></td>
                           <td className="px-3"><span className={`whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium ${getPriorityBadge(issueItem.priority)}`}>{String(issueItem.priority || 'MEDIUM').replace(/[_-]/g, ' ')}</span></td>
-                          <td className="px-3">{assignee ? <span title={assignee} className={`flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold text-white ${avatarColor}`}>{assignee.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase()}</span> : <span className="text-slate-400 dark:text-[#888]">—</span>}</td>
+                          <td className="px-3">{assignee ? <span title={assignee} className={`relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full text-[10px] font-semibold text-white ${avatarColor}`}><span>{assignee.trim().split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase()}</span>{assigneeAvatar && <img src={assigneeAvatar} alt={assignee} className="absolute inset-0 h-full w-full rounded-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}</span> : <span className="text-slate-400 dark:text-[#888]">—</span>}</td>
                           <td className="whitespace-nowrap px-3 text-slate-700 dark:text-[#ddd]">{compactDate(issueItem.dueDate)}</td>
                         </tr>
                       );
