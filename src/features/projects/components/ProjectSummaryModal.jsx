@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { FiDownload, FiGithub, FiX, FiCalendar } from 'react-icons/fi';
+import { FiGithub, FiX, FiCalendar } from 'react-icons/fi';
 import { formatDate } from '../utils/projectUtils';
 
 const ProjectSummaryModal = ({
@@ -13,8 +13,6 @@ const ProjectSummaryModal = ({
   totalSprints,
   totalMembers,
   overallProgress,
-  isDownloadingPdf,
-  onDownloadPdf,
   linkedRepo,
   canManageGithubRepository,
   isUnlinkingRepo,
@@ -68,8 +66,6 @@ const ProjectSummaryModal = ({
         </header>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5">
-          {summary?.summaryText && <p className="rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:bg-[#222228] dark:text-slate-300">{summary.summaryText}</p>}
-
           <section className="rounded-xl border border-slate-200 p-4 dark:border-[#35353d]">
             <h3 className="mb-4 text-sm font-bold text-slate-900 dark:text-white">Project Information</h3>
             <dl className="space-y-3 text-xs sm:text-sm">
@@ -125,9 +121,6 @@ const ProjectSummaryModal = ({
                 title="View project timeline, Gantt chart, and task dependencies"
               >
                 <FiCalendar size={13} /> View Timeline
-              </button>
-              <button type="button" onClick={onDownloadPdf} disabled={isDownloadingPdf} className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50 transition">
-                <FiDownload size={13} /> {isDownloadingPdf ? 'Downloading…' : 'Download PDF Summary'}
               </button>
             </div>
           </div>

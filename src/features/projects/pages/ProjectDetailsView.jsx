@@ -32,7 +32,6 @@ import {
   removeProjectMember,
   getProjectMilestones,
   getProjectSummary,
-  getProjectSummaryPdf,
   getProjectReleases,
   uploadReleaseFile,
   unlinkProjectRepository,
@@ -186,7 +185,6 @@ const ProjectDetailsView = () => {
   const [detailPanel, setDetailPanel] = useState(null);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [uploadingReleaseId, setUploadingReleaseId] = useState(null);
 
   
@@ -597,30 +595,6 @@ const ProjectDetailsView = () => {
       isMounted = false;
     };
   }, [projectId, loadAllProjectDataCore]);
-
-  const handleDownloadSummaryPdf = async () => {
-    if (!projectId || isDownloadingPdf) return;
-    setIsDownloadingPdf(true);
-    try {
-      const data = await getProjectSummaryPdf(projectId);
-      if (!data) throw new Error('No PDF content returned');
-      const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const safeName = (project?.name || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      a.download = `${safeName}-summary.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      showToast('success', 'Project summary PDF downloaded.');
-    } catch (err) {
-      showToast('error', getFriendlyErrorMessage(err, 'project') || 'Failed to download PDF summary.');
-    } finally {
-      setIsDownloadingPdf(false);
-    }
-  };
 
   const handleUnlinkRepository = async () => {
     if (!projectId || isUnlinkingRepo) return;
@@ -2268,8 +2242,6 @@ const ProjectDetailsView = () => {
         totalSprints={summary?.totalSprints ?? sprints.length}
         totalMembers={members.length}
         overallProgress={overallProgress}
-        isDownloadingPdf={isDownloadingPdf}
-        onDownloadPdf={handleDownloadSummaryPdf}
         linkedRepo={linkedRepo}
         canManageGithubRepository={canManageGithubRepository}
         isUnlinkingRepo={isUnlinkingRepo}
