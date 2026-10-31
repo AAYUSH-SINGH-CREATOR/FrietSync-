@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
 import {
-  getIssueDetails, getProjectIssues, updateIssue, deleteIssue, assignIssue, resolveIssue, reviewIssue,
+  getIssueDetails, getProjectIssues, updateIssue, updateIssueStatus, deleteIssue, assignIssue, resolveIssue, reviewIssue,
   getIssueHistory, getIssueLabels, attachIssueLabel, removeIssueLabel,
   getIssueLinks, createIssueLink, deleteIssueLink, getIssueDependencies, getIssueImpact,
   getIssueAttachments, uploadIssueAttachment, downloadIssueAttachment, deleteIssueAttachment,
@@ -121,6 +121,8 @@ const IssueDetailsView = ({
   const myMembership = members.find((m) => (currentUserId && String(getId(m)) === String(currentUserId)) || (currentUserEmail && String(m.email || m.user?.email || '').toLowerCase() === currentUserEmail));
   const currentRole = String(myMembership?.role || myMembership?.projectRole || currentUserProfile?.role || '').toUpperCase();
   const isManager = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER', 'PROJECT_MANAGER', 'TEAM_LEAD'].includes(currentRole);
+  const canManageIssueStatus = ['ADMIN', 'PROJECT_MANAGER'].includes(currentRole);
+  const isResolved = normalize(issue?.status) === 'RESOLVED';
   const assigneeIdsList = useMemo(() => issue?.assigneeIds || issue?.assignedUserIds || issue?.assignees?.map(getId) || issue?.assignedTo?.map?.(getId) || (issue?.assigneeId ? [issue.assigneeId] : []), [issue]);
   const isAssignee = currentUserId && assigneeIdsList.some((id) => String(id) === String(currentUserId));
   const createdBy = issue?.createdBy?.id || issue?.createdBy?._id || issue?.createdBy || issue?.creator?.id;
@@ -416,18 +418,40 @@ const IssueDetailsView = ({
           </div>
         </div>
 
-        {(isManager || !isAssignee) && (
-          <button
-            type="button"
-            onClick={() => {
-              if (isManager) setIsAssignOpen(true);
-              else if (!myRequest) runAction('req', () => requestIssueAssignment(issueId, 'Interested in taking this task.'), 'Assignment requested!');
-            }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
-          >
-            {isManager ? <><FiUserPlus size={15} /> Assign Member</> : <><FiSend size={15} /> Request Task</>}
-          </button>
-        )}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {(isManager || !isAssignee) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isManager) setIsAssignOpen(true);
+                else if (!myRequest) runAction('req', () => requestIssueAssignment(issueId, 'Interested in taking this task.'), 'Assignment requested!');
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition hover:bg-sky-700 active:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
+            >
+              {isManager ? <><FiUserPlus size={15} /> Assign Member</> : <><FiSend size={15} /> Request Task</>}
+            </button>
+          )}
+          {canManageIssueStatus && isResolved && (
+            <>
+              <button
+                type="button"
+                onClick={() => runAction('reopen', () => updateIssueStatus(issueId, 'REOPENED'), 'Issue reopened.')}
+                disabled={Boolean(busyAction)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50"
+              >
+                <FiRefreshCw size={14} /> Reopen Issue
+              </button>
+              <button
+                type="button"
+                onClick={() => runAction('close', () => updateIssueStatus(issueId, 'CLOSED'), 'Issue closed.')}
+                disabled={Boolean(busyAction)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-600 dark:hover:bg-slate-500"
+              >
+                <FiCheck size={14} /> Close Issue
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
