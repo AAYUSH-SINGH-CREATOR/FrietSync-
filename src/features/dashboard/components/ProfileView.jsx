@@ -3,7 +3,9 @@ import { Link, useOutletContext } from 'react-router-dom';
 import {
   FiArrowLeft,
   FiCamera,
+  FiPlus,
   FiStar,
+  FiX,
 } from 'react-icons/fi';
 import { updateProfile, uploadAvatar } from '../services/profileApi';
 import profileBanner from '../../../assets/profile-banner.png';
@@ -47,6 +49,8 @@ const ProfileView = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [newSkill, setNewSkill] = useState('');
+  const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [draftProfile, setDraftProfile] = useState(() => mapProfile(currentUserProfile));
   const profile = isEditing ? draftProfile : mapProfile(currentUserProfile);
   const [feedbackMsg, setFeedbackMsg] = useState(null);
@@ -58,6 +62,26 @@ const ProfileView = () => {
 
   const handleChange = (field, value) => {
     setDraftProfile((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddSkill = () => {
+    const additions = newSkill.split(',').map((skill) => skill.trim()).filter(Boolean);
+    if (!additions.length) return;
+    setDraftProfile((prev) => {
+      const skills = [...(prev.skills || [])];
+      additions.forEach((skill) => {
+        if (skills.length < 20 && !skills.some((existing) => existing.toLowerCase() === skill.toLowerCase())) {
+          skills.push(skill.slice(0, 50));
+        }
+      });
+      return { ...prev, skills };
+    });
+    setNewSkill('');
+    setIsAddingSkill(false);
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setDraftProfile((prev) => ({ ...prev, skills: (prev.skills || []).filter((skill) => skill !== skillToRemove) }));
   };
 
   const handleAvatarChange = async (e) => {
@@ -115,11 +139,15 @@ const ProfileView = () => {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setIsAddingSkill(false);
+    setNewSkill('');
     setFeedbackMsg(null);
   };
 
   const handleStartEditing = () => {
     setDraftProfile(mapProfile(currentUserProfile));
+    setIsAddingSkill(false);
+    setNewSkill('');
     setIsEditing(true);
   };
 
@@ -216,14 +244,40 @@ const ProfileView = () => {
                   <span>Skills</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2.5">
-                  {profile.skills.length > 0 ? profile.skills.map((skill) => (
-                    <span key={skill} className="h-7 bg-white text-slate-900 rounded-full text-xs font-bold px-2 flex items-center justify-center shadow-xs truncate">
+                <div className="flex flex-wrap items-center gap-2">
+                  {profile.skills.map((skill) => (
+                    <span key={skill} className="inline-flex h-7 items-center gap-1 rounded-full bg-white px-3 text-xs font-bold text-slate-900 shadow-xs">
                       {skill}
+                      {isEditing && (
+                        <button type="button" onClick={() => handleRemoveSkill(skill)} aria-label={`Remove ${skill}`} className="ml-0.5 rounded-full text-slate-500 hover:text-rose-600">
+                          <FiX size={12} />
+                        </button>
+                      )}
                     </span>
-                  )) : (
-                    <p className="col-span-3 text-xs text-slate-500 dark:text-slate-400">No skills listed.</p>
-                  )}
+                  ))}
+                  {profile.skills.length === 0 && !isEditing && <p className="text-xs text-slate-500 dark:text-slate-400">No skills listed.</p>}
+                  {isEditing && (isAddingSkill ? (
+                    <div className="flex h-7 items-center gap-1 rounded-full border border-sky-400 bg-white px-2 shadow-xs">
+                      <input
+                        autoFocus
+                        value={newSkill}
+                        onChange={(event) => setNewSkill(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') { event.preventDefault(); handleAddSkill(); }
+                          if (event.key === 'Escape') { setIsAddingSkill(false); setNewSkill(''); }
+                        }}
+                        placeholder="Skill"
+                        maxLength={50}
+                        aria-label="New skill"
+                        className="w-20 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
+                      />
+                      <button type="button" onClick={handleAddSkill} className="text-xs font-semibold text-sky-600">Add</button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setIsAddingSkill(true)} disabled={profile.skills.length >= 20} className="inline-flex h-7 items-center gap-1 rounded-full bg-sky-400 px-3 text-xs font-bold text-slate-900 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-50">
+                      <FiPlus size={12} /> Add+
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

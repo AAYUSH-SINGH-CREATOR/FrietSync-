@@ -49,6 +49,7 @@ export const updateProfile = async (profileData) => {
     githubUrl: profileData.githubUrl?.trim() || null,
     linkedinUrl: profileData.linkedinUrl?.trim() || null,
     portfolioUrl: profileData.portfolioUrl?.trim() || null,
+    skills: Array.isArray(profileData.skills) ? profileData.skills : [],
   };
 
   try {
