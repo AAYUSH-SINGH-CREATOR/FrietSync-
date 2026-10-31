@@ -6,9 +6,11 @@ import {
   FiMail,
   FiShield,
   FiAlertCircle,
+  FiImage,
 } from 'react-icons/fi';
 import {
   createProject,
+  uploadProjectProfilePicture,
   getFriendlyErrorMessage,
 } from '../services/projectApi';
 
@@ -42,6 +44,18 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+
+  useEffect(() => {
+    if (!profilePicture) {
+      setImagePreviewUrl('');
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(profilePicture);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [profilePicture]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -100,7 +114,13 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     setErrorMessage('');
 
     try {
-      const response = await createProject(formData);
+      let response = await createProject(formData);
+      if (profilePicture) {
+        const created = response?.project || response?.data?.project || response?.data || response;
+        const projectId = created?.id || created?._id;
+        if (!projectId) throw new Error('Project was created, but its ID was missing, so the image could not be uploaded.');
+        response = await uploadProjectProfilePicture(projectId, profilePicture);
+      }
       if (onProjectCreated) {
         onProjectCreated(response);
       }
@@ -174,6 +194,21 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
               onChange={handleChange}
               className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] text-sm sm:text-base focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition placeholder:text-slate-400 dark:placeholder:text-[#858585]"
             />
+          </div>
+          <div>
+            <label htmlFor="project-image" className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2">
+              Project Image <span className="text-xs font-normal text-slate-500 dark:text-[#b3b3b3]">(optional)</span>
+            </label>
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-[#3a3a3a] p-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-400 dark:bg-[#242424] dark:text-[#858585]">
+                {imagePreviewUrl ? <img src={imagePreviewUrl} alt="Project image preview" className="h-full w-full object-cover" /> : <FiImage size={24} />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <input id="project-image" type="file" accept="image/*" onChange={(event) => setProfilePicture(event.target.files?.[0] || null)} className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:font-semibold file:text-sky-700 dark:text-[#b3b3b3] dark:file:bg-blue-950/40 dark:file:text-[#60A5FA]" />
+                <p className="mt-1 text-xs text-slate-500 dark:text-[#858585]">Choose an image to identify this project.</p>
+              </div>
+              {profilePicture && <button type="button" onClick={() => setProfilePicture(null)} className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600">Remove</button>}
+            </div>
           </div>
           <div>
             <label

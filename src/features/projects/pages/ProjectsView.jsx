@@ -424,8 +424,8 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               >
                 <div>
                   <div className="flex items-start gap-3.5">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700 transition-transform group-hover:scale-105 dark:bg-purple-950/70 dark:text-purple-300 shadow-2xs">
-                      <FiFolder size={22} />
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-purple-100 text-purple-700 transition-transform group-hover:scale-105 dark:bg-purple-950/70 dark:text-purple-300 shadow-2xs">
+                      {project.profilePictureUrl ? <img src={project.profilePictureUrl} alt={`${project.name || 'Project'} image`} className="h-full w-full object-cover" /> : <FiFolder size={22} />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="truncate font-sans text-base font-bold text-slate-900 dark:text-white" title={project.name}>

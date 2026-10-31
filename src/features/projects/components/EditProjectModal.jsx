@@ -6,8 +6,9 @@ import {
   FiMail,
   FiShield,
   FiAlertCircle,
+  FiImage,
 } from 'react-icons/fi';
-import { updateProject, getFriendlyErrorMessage } from '../services/projectApi';
+import { updateProject, uploadProjectProfilePicture, removeProjectProfilePicture, getFriendlyErrorMessage } from '../services/projectApi';
 import { PROJECT_STATUS_OPTIONS } from '../utils/projectUtils';
 
 const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
@@ -24,6 +25,20 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [currentProfilePictureUrl, setCurrentProfilePictureUrl] = useState(project?.profilePictureUrl || '');
+  const [isRemovingPicture, setIsRemovingPicture] = useState(false);
+
+  useEffect(() => {
+    if (!profilePicture) {
+      setImagePreviewUrl('');
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(profilePicture);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [profilePicture]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -39,6 +54,25 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errorMessage) setErrorMessage('');
+  };
+
+  const handleRemoveProjectImage = async () => {
+    const projectId = project?.id || project?._id;
+    if (!projectId || isRemovingPicture) return;
+    setIsRemovingPicture(true);
+    setErrorMessage('');
+    try {
+      const updatedProject = await removeProjectProfilePicture(projectId);
+      setCurrentProfilePictureUrl(updatedProject?.profilePictureUrl || '');
+      setProfilePicture(null);
+      const input = document.getElementById('edit-project-image');
+      if (input) input.value = '';
+      if (onProjectUpdated) onProjectUpdated(updatedProject);
+    } catch (error) {
+      setErrorMessage(getFriendlyErrorMessage(error, 'project'));
+    } finally {
+      setIsRemovingPicture(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -80,7 +114,10 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
     setErrorMessage('');
 
     try {
-      const response = await updateProject(projectId, formData);
+      let response = await updateProject(projectId, formData);
+      if (profilePicture) {
+        response = await uploadProjectProfilePicture(projectId, profilePicture);
+      }
       if (onProjectUpdated) {
         onProjectUpdated(response);
       }
@@ -156,6 +193,22 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
             />
           </div>
 
+          <div>
+            <label htmlFor="edit-project-image" className="block text-sm sm:text-base font-semibold text-slate-800 dark:text-[#e0e0e0] mb-2">
+              Project Image <span className="text-xs font-normal text-slate-500 dark:text-[#b3b3b3]">(optional)</span>
+            </label>
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-[#3a3a3a] p-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-400 dark:bg-[#242424] dark:text-[#858585]">
+                {imagePreviewUrl || currentProfilePictureUrl ? <img src={imagePreviewUrl || currentProfilePictureUrl} alt="Project image preview" className="h-full w-full object-cover" /> : <FiImage size={24} />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <input id="edit-project-image" type="file" accept="image/*" onChange={(event) => setProfilePicture(event.target.files?.[0] || null)} className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:font-semibold file:text-sky-700 dark:text-[#b3b3b3] dark:file:bg-blue-950/40 dark:file:text-[#60A5FA]" />
+                <p className="mt-1 text-xs text-slate-500 dark:text-[#858585]">{currentProfilePictureUrl ? 'Choose a new image to replace the current one.' : 'Choose an image to identify this project.'}</p>
+              </div>
+              {profilePicture && <button type="button" onClick={() => { setProfilePicture(null); const input = document.getElementById('edit-project-image'); if (input) input.value = ''; }} className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600">Clear selection</button>}
+              {currentProfilePictureUrl && !profilePicture && <button type="button" onClick={handleRemoveProjectImage} disabled={isRemovingPicture || isSubmitting} className="shrink-0 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50 dark:text-rose-400">{isRemovingPicture ? 'Removing…' : 'Remove image'}</button>}
+            </div>
+          </div>
           <div>
             <label
               htmlFor="edit-project-desc"

@@ -1037,8 +1037,8 @@ const ProjectDetailsView = () => {
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           {}
           <div className="flex items-start gap-4 sm:gap-5 min-w-0">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 dark:bg-[#241f3d] border border-indigo-100 dark:border-[#3b325c] flex items-center justify-center text-indigo-600 dark:text-white shrink-0 shadow-xs">
-              <FiFolder size={28} className="text-indigo-600 dark:text-indigo-400" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 dark:bg-[#241f3d] border border-indigo-100 dark:border-[#3b325c] flex items-center justify-center text-indigo-600 dark:text-white shrink-0 shadow-xs overflow-hidden">
+              {project?.profilePictureUrl ? <img src={project.profilePictureUrl} alt={`${project.name || 'Project'} image`} className="h-full w-full object-cover" /> : <FiFolder size={28} className="text-indigo-600 dark:text-indigo-400" />}
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">

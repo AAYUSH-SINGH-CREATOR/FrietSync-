@@ -152,8 +152,7 @@ export const VoiceCallPanel = ({
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{getCallStatus({ state: voiceCallState, isCallActive, isConfigured })}</p>
           <h2 id="voice-call-title" className="mt-1 max-w-full truncate text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{projectName || 'FrietSync team'}</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {teamSize > 0 ? `${teamSize} team ${teamSize === 1 ? 'member' : 'members'}` : 'Project voice call'}
-            {isConnected && <span className="ml-2 font-medium text-emerald-600 dark:text-emerald-400">In call</span>}
+            {isConnected && <span className="font-medium text-emerald-600 dark:text-emerald-400">In call</span>}
           </p>
 
           <div className="my-5 w-full max-w-[16rem]">

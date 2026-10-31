@@ -69,6 +69,40 @@ export const getProjectById = async (projectId) => {
   }
 };
 
+export const uploadProjectProfilePicture = async (projectId, file) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  if (!file) throw new Error('Select an image to upload.');
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const rawToken = localStorage.getItem('frietSyncToken') || '';
+    const token = rawToken.replace(/^Bearer\s+/i, '').trim();
+    const response = await axios.post(
+      `${BASE_URL}/projects/${projectId}/profile-picture`,
+      formData,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    );
+    const data = response.data;
+    return data?.project || data?.data?.project || data?.data || data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to upload project image.');
+  }
+};
+
+export const removeProjectProfilePicture = async (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/projects/${projectId}/profile-picture`,
+      getAuthHeaders()
+    );
+    const data = response.data;
+    return data?.project || data?.data?.project || data?.data || data;
+  } catch (error) {
+    handleProjectError(error, 'Failed to remove project image.');
+  }
+};
+
 export const createProject = async (projectData) => {
   try {
     const payload = {
