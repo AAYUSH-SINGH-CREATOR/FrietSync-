@@ -234,6 +234,50 @@ export const editMessage = async (projectId, messageId, content, mentionedUserId
   }
 };
 
+export const pinMessage = async (projectId, messageId) => {
+  if (!projectId || !messageId) throw new Error('Project ID and Message ID are required.');
+  try {
+    const response = await axios.put(
+      `${BASE_URL}/projects/${projectId}/chat/messages/${messageId}/pin`,
+      {},
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to pin message.');
+  }
+};
+
+export const unpinMessage = async (projectId, messageId) => {
+  if (!projectId || !messageId) throw new Error('Project ID and Message ID are required.');
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/projects/${projectId}/chat/messages/${messageId}/pin`,
+      getAuthHeaders()
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to unpin message.');
+  }
+};
+
+export const getPinnedMessages = async (projectId) => {
+  if (!projectId) throw new Error('Project ID is required.');
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/projects/${projectId}/chat/pinned-messages`,
+      getAuthHeaders()
+    );
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.messages)) return data.messages;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to load pinned messages.');
+  }
+};
+
 export const formatFileSize = (bytes) => {
   if (!bytes || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];

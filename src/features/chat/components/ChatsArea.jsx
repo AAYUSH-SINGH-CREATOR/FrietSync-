@@ -18,6 +18,7 @@ import {
   FiPhone,
   FiUsers,
 } from 'react-icons/fi';
+import { BsPin } from 'react-icons/bs';
 import {
   getInitials,
   getAvatarColor,
@@ -31,6 +32,9 @@ import {
   downloadChatAttachment,
   deleteMessage,
   editMessage,
+  pinMessage,
+  unpinMessage,
+  getPinnedMessages,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
 
@@ -62,6 +66,10 @@ const ChatArea = ({
   currentUser: currentUserProp,
   onMessageUpdate,
   onMessageDelete,
+  onPinMessage,
+  onUnpinMessage,
+  onPinnedMessagesChange,
+  showToast,
   voiceCall,
 }) => {
   const [inputText, setInputText] = useState('');
@@ -80,6 +88,9 @@ const ChatArea = ({
   const [messageMenuOpen, setMessageMenuOpen] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [isLoadingPinned, setIsLoadingPinned] = useState(false);
+  const [isPinnedPanelOpen, setIsPinnedPanelOpen] = useState(false);
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -383,6 +394,68 @@ const ChatArea = ({
     }
   };
 
+  const loadPinnedMessages = useCallback(async (projectId) => {
+    if (!projectId) return;
+    setIsLoadingPinned(true);
+    try {
+      const pinned = await getPinnedMessages(projectId);
+      setPinnedMessages(Array.isArray(pinned) ? pinned : []);
+    } catch (error) {
+      console.warn('Failed to load pinned messages:', error);
+      setPinnedMessages([]);
+    } finally {
+      setIsLoadingPinned(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeChat?.id) {
+      setPinnedMessages([]);
+      return;
+    }
+    let isMounted = true;
+    loadPinnedMessages(activeChat.id);
+    return () => {
+      isMounted = false;
+    };
+  }, [activeChat?.id, loadPinnedMessages]);
+
+  const handlePinMessage = async (messageId) => {
+    if (!activeChat?.id || !messageId) return;
+    setMessageMenuOpen(null);
+    try {
+      const updated = await pinMessage(activeChat.id, messageId);
+      if (updated) {
+        setPinnedMessages((prev) => {
+          const existing = prev.find((m) => String(m.id) === String(messageId));
+          if (existing) {
+            return prev.map((m) => String(m.id) === String(messageId) ? { ...m, ...updated } : m);
+          }
+          return [...prev, updated];
+        });
+        if (onPinMessage) onPinMessage(messageId, updated);
+        if (showToast) showToast('success', 'Message pinned.');
+      }
+    } catch (error) {
+      setAttachmentError(error.message || 'Failed to pin message.');
+    }
+  };
+
+  const handleUnpinMessage = async (messageId) => {
+    if (!activeChat?.id || !messageId) return;
+    setMessageMenuOpen(null);
+    try {
+      const updated = await unpinMessage(activeChat.id, messageId);
+      setPinnedMessages((prev) => prev.filter((m) => String(m.id) !== String(messageId)));
+      if (onUnpinMessage) onUnpinMessage(messageId, updated);
+      if (showToast) showToast('success', 'Message unpinned.');
+    } catch (error) {
+      setAttachmentError(error.message || 'Failed to unpin message.');
+    }
+  };
+
+  const isMessagePinned = (messageId) => pinnedMessages.some((m) => String(m.id) === String(messageId));
+
   const displayedMessages = useMemo(() => {
     if (!searchInChat.trim()) return messages;
     const q = searchInChat.trim().toLowerCase();
@@ -492,6 +565,21 @@ const ChatArea = ({
           >
             <FiBarChart2 size={18} />
           </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsPinnedPanelOpen((prev) => !prev)}
+              title="Pinned messages"
+              className={`p-2 rounded-xl transition cursor-pointer ${isPinnedPanelOpen || pinnedMessages.length > 0 ? 'text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+            >
+              <BsPin size={18} />
+            </button>
+            {pinnedMessages.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                {pinnedMessages.length > 9 ? '9+' : pinnedMessages.length}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setIsSearchOpen((prev) => !prev)}
@@ -542,6 +630,58 @@ const ChatArea = ({
         </div>
       )}
 
+      {isPinnedPanelOpen && (
+        <div className="mx-3 mt-2 shrink-0 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 overflow-hidden animate-fadeIn">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-amber-200 dark:border-amber-800/30">
+            <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
+              <BsPin size={13} />
+              <span>Pinned Messages {pinnedMessages.length > 0 ? `(${pinnedMessages.length})` : ''}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPinnedPanelOpen(false)}
+              className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 p-1 rounded transition cursor-pointer"
+            >
+              <FiX size={14} />
+            </button>
+          </div>
+          {isLoadingPinned ? (
+            <div className="flex items-center justify-center py-4">
+              <span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+            </div>
+          ) : pinnedMessages.length === 0 ? (
+            <p className="text-xs text-amber-600 dark:text-amber-500 text-center py-4 px-3">No pinned messages in this chat.</p>
+          ) : (
+            <ul className="max-h-48 overflow-y-auto divide-y divide-amber-100 dark:divide-amber-900/30">
+              {pinnedMessages.map((pm) => (
+                <li key={pm.id} className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-amber-100/60 dark:hover:bg-amber-900/20 transition group">
+                  <BsPin size={12} className="shrink-0 mt-0.5 text-amber-500" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 mb-0.5">{pm.senderName || 'Member'}</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 [overflow-wrap:anywhere]">
+                      {pm.content || pm.text || ''}
+                    </p>
+                    {pm.pinnedAt && (
+                      <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">
+                        Pinned {new Date(pm.pinnedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleUnpinMessage(pm.id)}
+                    title="Unpin message"
+                    className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 text-amber-600 dark:text-amber-400 transition cursor-pointer"
+                  >
+                    <FiX size={12} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
@@ -582,6 +722,7 @@ const ChatArea = ({
             const pollId = isDeleted ? null : getMessagePollId(msg);
             const isLegacyPollMessage = !isDeleted && msg.text?.includes('📊') && /\bpoll\b/i.test(msg.text);
             const isEditingThis = editingMessageId === msg.id;
+            const isPinned = isMessagePinned(msg.id);
 
             return (
               <div key={msg.id} className={`group flex flex-col min-w-0 max-w-full ${isOutgoing ? 'items-end' : 'items-start'}`}>
@@ -592,6 +733,12 @@ const ChatArea = ({
                   {msg.editedAt && !isDeleted && (
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">(edited)</span>
                   )}
+                  {isPinned && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/50">
+                      <BsPin size={10} />
+                      Pinned
+                    </span>
+                  )}
                 </div>
 
                 {}
@@ -601,8 +748,8 @@ const ChatArea = ({
                   )}
 
                   {}
-                  {isOutgoing && !isDeleted && !isEditingThis && (
-                      <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1 mr-1 order-first">
+                  {!isDeleted && !isEditingThis && (
+                      <div className={`opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1 mx-1 ${isOutgoing ? 'order-first' : 'order-last'}`}>
                       <div className="relative" ref={messageMenuOpen === msg.id ? messageMenuRef : null}>
                         <button
                           type="button"
@@ -614,7 +761,26 @@ const ChatArea = ({
                         </button>
                         {messageMenuOpen === msg.id && (
                           <div className="absolute bottom-full right-0 mb-1 w-32 bg-white dark:bg-[#1e1e1e] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg py-1 z-30 animate-fadeIn">
-                            {!pollId && !isLegacyPollMessage && (
+                            {isMessagePinned(msg.id) ? (
+                              <button
+                                type="button"
+                                onClick={() => handleUnpinMessage(msg.id)}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition cursor-pointer"
+                              >
+                                <BsPin size={12} />
+                                Unpin
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handlePinMessage(msg.id)}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition cursor-pointer"
+                              >
+                                <BsPin size={12} />
+                                Pin
+                              </button>
+                            )}
+                            {isOutgoing && !pollId && !isLegacyPollMessage && (
                               <button
                                 type="button"
                                 onClick={() => handleStartEdit(msg)}
@@ -624,15 +790,17 @@ const ChatArea = ({
                                 Edit
                               </button>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteMessage(msg.id)}
-                              disabled={isDeleting}
-                              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition cursor-pointer disabled:opacity-50"
-                            >
-                              <FiTrash2 size={12} />
-                              Delete
-                            </button>
+                            {isOutgoing && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                disabled={isDeleting}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition cursor-pointer disabled:opacity-50"
+                              >
+                                <FiTrash2 size={12} />
+                                Delete
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

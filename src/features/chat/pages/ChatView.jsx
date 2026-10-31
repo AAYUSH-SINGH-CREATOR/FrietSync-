@@ -5,6 +5,9 @@ import {
   getCurrentChatUser,
   formatMessageTime,
   getFriendlyErrorMessage,
+  pinMessage,
+  unpinMessage,
+  getPinnedMessages,
 } from '../services/chatApi';
 import { getMyProjects, getProjectMembers } from '../../projects/services/projectApi';
 import { StompChatClient } from '../services/stompClient';
@@ -21,6 +24,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const currentUserProfile = profileProp || outletContext.currentUserProfile;
   const [searchParams, setSearchParams] = useSearchParams();
   const urlProjectId = searchParams.get('projectId');
+  const [toastNotice, setToastNotice] = useState(null);
 
   const [projects, setProjects] = useState([]);
   const [messagesMap, setMessagesMap] = useState({});
@@ -34,9 +38,8 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [toastNotice, setToastNotice] = useState(null);
 
-  
+
   const [activeCallId, setActiveCallId] = useState(null);
   const [activeCallDetails, setActiveCallDetails] = useState(null);
   const [activeCallProjectId, setActiveCallProjectId] = useState(null);
@@ -45,6 +48,9 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const [showCallPanel, setShowCallPanel] = useState(false);
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const [isJoiningCall, setIsJoiningCall] = useState(false);
+
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [isLoadingPinned, setIsLoadingPinned] = useState(false);
 
   const unwrapCallResponse = (response) => {
     let value = response;
@@ -370,6 +376,36 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     };
   }, [urlProjectId, showToast]);
 
+  const loadPinnedMessagesEffect = useCallback(async (projectId) => {
+    if (!projectId) {
+      setPinnedMessages([]);
+      setIsLoadingPinned(false);
+      return;
+    }
+    setIsLoadingPinned(true);
+    try {
+      const pinned = await getPinnedMessages(projectId);
+      setPinnedMessages(Array.isArray(pinned) ? pinned : []);
+    } catch (error) {
+      console.warn('Failed to load pinned messages:', error);
+      setPinnedMessages([]);
+    } finally {
+      setIsLoadingPinned(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeProjectId) {
+      setPinnedMessages([]);
+      return;
+    }
+    let isMounted = true;
+    loadPinnedMessagesEffect(activeProjectId);
+    return () => {
+      isMounted = false;
+    };
+  }, [activeProjectId, loadPinnedMessagesEffect]);
+
   const activeMessages = useMemo(() => {
     if (!activeChat) return [];
     return messagesMap[activeChat.id] || [];
@@ -412,6 +448,9 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
               attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
               timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
               isOutgoing: outgoing,
+              pinned: Boolean(msg.pinned),
+              pinnedAt: msg.pinnedAt,
+              pinnedBy: msg.pinnedBy,
             };
           });
 
@@ -495,6 +534,9 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         attachments: Array.isArray(receivedMsg.attachments) ? receivedMsg.attachments : [],
         timestamp: formatMessageTime(receivedMsg.createdAt || receivedMsg.timestamp || receivedMsg.sentAt || receivedMsg.time),
         isOutgoing: outgoing,
+        pinned: Boolean(receivedMsg.pinned),
+        pinnedAt: receivedMsg.pinnedAt,
+        pinnedBy: receivedMsg.pinnedBy,
       };
 
       setMessagesMap((prev) => {
@@ -605,6 +647,9 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
           attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
           timestamp: formatMessageTime(msg.createdAt || msg.timestamp),
           isOutgoing: outgoing,
+          pinned: Boolean(msg.pinned),
+          pinnedAt: msg.pinnedAt,
+          pinnedBy: msg.pinnedBy,
         };
       });
       setMessagesMap((prev) => {
@@ -705,6 +750,58 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     });
   };
 
+  const handlePinMessage = (messageId, updatedMessage) => {
+    if (!activeChat?.id || !messageId) return;
+    setPinnedMessages((prev) => {
+      const existing = prev.find((m) => String(m.id) === String(messageId));
+      if (existing) {
+        return prev.map((m) => String(m.id) === String(messageId) ? { ...m, ...updatedMessage } : m);
+      }
+      return [...prev, updatedMessage];
+    });
+    setMessagesMap((prev) => {
+      const currentList = prev[activeChat.id] || [];
+      const updatedList = currentList.map((msg) => {
+        if (String(msg.id) === String(messageId)) {
+          return {
+            ...msg,
+            pinned: true,
+            pinnedAt: updatedMessage.pinnedAt,
+            pinnedBy: updatedMessage.pinnedBy,
+          };
+        }
+        return msg;
+      });
+      return {
+        ...prev,
+        [activeChat.id]: updatedList,
+      };
+    });
+  };
+
+  const handleUnpinMessage = (messageId, updatedMessage) => {
+    if (!activeChat?.id || !messageId) return;
+    setPinnedMessages((prev) => prev.filter((m) => String(m.id) !== String(messageId)));
+    setMessagesMap((prev) => {
+      const currentList = prev[activeChat.id] || [];
+      const updatedList = currentList.map((msg) => {
+        if (String(msg.id) === String(messageId)) {
+          return {
+            ...msg,
+            pinned: false,
+            pinnedAt: null,
+            pinnedBy: null,
+          };
+        }
+        return msg;
+      });
+      return {
+        ...prev,
+        [activeChat.id]: updatedList,
+      };
+    });
+  };
+
   return (
     <>
     <div className={isPageActive ? 'h-full min-h-0 min-w-0 flex flex-col animate-fadeIn bg-[#e8e8e8] dark:bg-[#1d1d1d] rounded-2xl p-2 sm:p-3 overflow-hidden' : 'hidden'}>
@@ -768,6 +865,10 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
             currentUser={currentUser}
             onMessageUpdate={handleMessageUpdate}
             onMessageDelete={handleMessageDelete}
+            onPinMessage={handlePinMessage}
+            onUnpinMessage={handleUnpinMessage}
+            onPinnedMessagesChange={setPinnedMessages}
+            showToast={showToast}
             voiceCall={activeProjectId ? {
               isCallActive: Boolean(visibleCall) || (activeCallProjectId === activeProjectId && isCallActive),
               isJoined,
