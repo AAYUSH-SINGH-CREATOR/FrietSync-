@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import { FiCalendar, FiClock, FiPlus } from 'react-icons/fi';
+import AssigneeAvatar from '../../../components/ui/AssigneeAvatar';
+import { getAssigneeAvatarUrl } from '../../../utils/assigneeAvatar';
 
 const COLUMNS = [
   { id: 'PLANNED', label: 'Planned', bg: 'bg-[#CBB0FF]', text: 'text-[#2e1065]', darkBg: 'dark:bg-[#4c3875]', darkText: 'dark:text-[#E9D8FD]', match: ['PLANNED'] },
@@ -22,6 +24,7 @@ const avatarColors = ['bg-pink-600', 'bg-blue-600', 'bg-purple-600', 'bg-emerald
 
 const SprintsBoard = ({
   sprints = [],
+  members = [],
   isLoading = false,
   onSprintClick,
   onCreateSprint,
@@ -133,9 +136,7 @@ const SprintsBoard = ({
                     <span className="font-mono text-xs font-bold text-sky-600 dark:text-sky-400">
                       {sprintKey}
                     </span>
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-2xs ${avatarColor}`}>
-                      {assigneeInitials}
-                    </span>
+                    <AssigneeAvatar src={getAssigneeAvatarUrl(sprint, members)} name={assigneeName === 'Unassigned' ? '' : assigneeName} className="h-5 w-5 text-[9px] shadow-2xs" color={avatarColor} />
                   </div>
 
                   {}

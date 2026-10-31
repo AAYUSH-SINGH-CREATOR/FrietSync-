@@ -14,7 +14,9 @@ import {
   getFriendlyErrorMessage,
 } from '../services/sprintsApi';
 import CommentsThread from '../../../components/ui/CommentsThread';
+import AssigneeAvatar from '../../../components/ui/AssigneeAvatar';
 import { getProjectMembers } from '../../projects/services/projectApi';
+import { getProfileImage } from '../../../utils/assigneeAvatar';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return 'Not set';
@@ -183,8 +185,9 @@ const SprintDetailsView = ({
   
   useEffect(() => {
     const pid = projectId || sprint?.projectId || sprint?.project?.id;
-    if (!pid || !canManage) return undefined;
+    if (!pid) return undefined;
     let isMounted = true;
+    setMembers([]);
     getProjectMembers(pid)
       .then((data) => {
         if (!isMounted) return;
@@ -193,7 +196,7 @@ const SprintDetailsView = ({
       })
       .catch((err) => console.warn('Failed loading members for sprint assignment:', err));
     return () => { isMounted = false; };
-  }, [projectId, sprint?.projectId, sprint?.project?.id, canManage]);
+  }, [projectId, sprint?.projectId, sprint?.project?.id]);
 
   
   const loadRequests = useCallback(() => {
@@ -222,6 +225,13 @@ const SprintDetailsView = ({
   const sprintContributorId = sprint?.contributorId || sprint?.assignedContributorId || sprint?.contributor?.id || sprint?.contributor?._id || sprint?.contributor?.userId;
   const sprintContributorName = sprint?.contributorName || sprint?.assignedContributorName || sprint?.contributor?.name;
   const sprintContributorEmail = sprint?.contributorEmail || sprint?.assignedContributorEmail || sprint?.contributor?.email;
+  const sprintContributor = members.find((member) => {
+    const memberId = member.userId || member.id || member._id || member.user?.id || member.user?._id;
+    const memberEmail = String(member.email || member.user?.email || '').toLowerCase();
+    return (sprintContributorId && String(memberId) === String(sprintContributorId))
+      || (sprintContributorEmail && memberEmail === String(sprintContributorEmail).toLowerCase());
+  });
+  const sprintContributorAvatar = getProfileImage(sprint?.contributor) || getProfileImage(sprintContributor) || getProfileImage(sprintContributor?.user);
   const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
   const canTransitionSprint = currentProjectRoleName === 'PROJECT_MANAGER' ||
     String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase() === 'PROJECT_MANAGER' ||
@@ -638,11 +648,7 @@ const SprintDetailsView = ({
               <FiUser size={13} /> Contributor
             </h4>
             <div className="flex items-center gap-2.5 pt-1">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-600 text-xs font-bold text-white shadow-sm">
-                {sprintContributorName
-                  ? sprintContributorName.slice(0, 2).toUpperCase()
-                  : '—'}
-              </div>
+              <AssigneeAvatar src={sprintContributorAvatar} name={sprintContributorName || ''} className="h-9 w-9 shrink-0 text-xs shadow-sm" color="bg-sky-600" />
               <div className="truncate flex-1">
                 <p className="font-semibold text-slate-900 dark:text-white truncate text-sm">
                   {sprintContributorName || 'Not assigned'}

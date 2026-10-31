@@ -25,6 +25,8 @@ import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProje
 import EmptyState from '../../../components/ui/EmptyState';
 import esmywork from '../../../assets/esmywork.png';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
+import AssigneeAvatar from '../../../components/ui/AssigneeAvatar';
+import { getAssigneeAvatarUrl } from '../../../utils/assigneeAvatar';
 
 const PAGE_SIZE = 10;
 const normalize = (value) => String(value || '').toUpperCase().replace(/[\s-]+/g, '_');
@@ -219,7 +221,7 @@ const WorkTable = ({
                 </td>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-1.5">
-                    <span title={task.assigneeName} className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ${getAvatarColor(task.assigneeName, index)}`}>{task.assigneeInitials}</span>
+                    <AssigneeAvatar src={task.assigneeAvatar} name={task.assigneeName === 'Unassigned' ? '' : task.assigneeName} className="h-6 w-6 text-[10px] shadow-2xs" color={getAvatarColor(task.assigneeName, index)} />
                     {task.otherAssigneesCount > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-[#888]">+{task.otherAssigneesCount}</span>}
                   </div>
                 </td>
@@ -458,6 +460,7 @@ const MyWorkView = () => {
         priority: 'MEDIUM',
         assigneeName,
         assigneeInitials: assigneeName === 'Unassigned' ? '—' : getInitials(assigneeName),
+        assigneeAvatar: getAssigneeAvatarUrl(sprint, projectMembers[String(sprint.projectId)] || []),
         otherAssigneesCount: Array.isArray(sprint.assignees) ? Math.max(0, sprint.assignees.length - 1) : 0,
         velocity: sprint.velocity ?? sprint.storyPoints ?? sprint.estimatedPoints ?? sprint.issuesCount ?? '—',
         projectId: sprint.projectId,
@@ -487,6 +490,7 @@ const MyWorkView = () => {
         priority: normalize(issue.priority || 'MEDIUM'),
         assigneeName,
         assigneeInitials: assigneeName === 'Unassigned' ? '—' : getInitials(assigneeName),
+        assigneeAvatar: getAssigneeAvatarUrl(issue, projectMembers[String(issue.projectId)] || []),
         otherAssigneesCount: Math.max(0, assignedNames.length - 1),
         velocity: issue.storyPoints ?? issue.estimate ?? issue.estimatedHours ?? '—',
         projectId: issue.projectId,
@@ -494,7 +498,7 @@ const MyWorkView = () => {
       };
     });
     return [...sprintTasks, ...issueTasks];
-  }, [visibleSprints, visibleIssues]);
+  }, [visibleSprints, visibleIssues, projectMembers]);
 
   const metrics = useMemo(() => ({
     total: tasks.length,

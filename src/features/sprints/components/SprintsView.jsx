@@ -860,6 +860,7 @@ const SprintsView = () => {
       ) : layoutView === 'list' ? (
         <SprintsTable
           sprints={visibleSprints}
+          members={members}
           isLoading={sprintsLoading}
           onSprintClick={handleSprintClick}
           page={page}
@@ -869,6 +870,7 @@ const SprintsView = () => {
       ) : (
         <SprintsBoard
           sprints={visibleSprints}
+          members={members}
           isLoading={sprintsLoading}
           onSprintClick={handleSprintClick}
           onStatusChange={handleSprintStatusChange}

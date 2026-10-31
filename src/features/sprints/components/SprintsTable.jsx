@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import AssigneeAvatar from '../../../components/ui/AssigneeAvatar';
+import { getAssigneeAvatarUrl } from '../../../utils/assigneeAvatar';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -27,6 +29,7 @@ const avatarColors = ['bg-pink-600', 'bg-blue-600', 'bg-purple-600', 'bg-emerald
 
 const SprintsTable = ({
   sprints = [],
+  members = [],
   isLoading = false,
   onSprintClick,
   page = 0,
@@ -140,9 +143,7 @@ const SprintsTable = ({
                     </td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-1.5">
-                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ${avatarColor}`}>
-                          {assigneeInitials}
-                        </span>
+                        <AssigneeAvatar src={getAssigneeAvatarUrl(sprint, members)} name={assigneeName === 'Unassigned' ? '' : assigneeName} className="h-6 w-6 text-[10px] shadow-2xs" color={avatarColor} />
                         {otherAssigneesCount > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-[#888]">+{otherAssigneesCount}</span>}
                       </div>
                     </td>
