@@ -60,7 +60,7 @@ import LinkRepositoryModal from '../components/LinkRepositoryModal';
 import ProjectContributionsSection from '../components/ProjectContributionsSection';
 import ProjectSummaryModal from '../components/ProjectSummaryModal';
 import ProjectMembersModal from '../components/ProjectMembersModal';
-import ProjectTimelineModal from '../components/ProjectTimelineModal';
+import ProjectTimelineRoadmap from '../components/ProjectTimelineRoadmap';
 import ProjectItemsModal from '../components/ProjectItemsModal';
 import CreateIssueModal from '../../issues/components/CreateIssueModal';
 import IssueDetailsModal from '../../issues/components/IssueDetailsModal';
@@ -2139,7 +2139,7 @@ const ProjectDetailsView = () => {
         }}
       />
 
-      <ProjectTimelineModal
+      <ProjectTimelineRoadmap
         isOpen={isTimelineOpen}
         onClose={() => setIsTimelineOpen(false)}
         projectId={projectId}
