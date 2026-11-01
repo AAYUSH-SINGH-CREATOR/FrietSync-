@@ -61,6 +61,13 @@ export const getStatusBadge = (status) => {
         dot: 'bg-slate-500',
         label: 'On Hold',
       };
+    case 'CANCELLED':
+    case 'CANCELED':
+      return {
+        bg: 'bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] border-slate-200 dark:border-[#3a3a3a]',
+        dot: 'bg-slate-500',
+        label: 'Cancelled',
+      };
     default:
       return {
         bg: 'bg-slate-100 dark:bg-[#242424] text-slate-700 dark:text-[#e0e0e0] border-slate-200 dark:border-[#3a3a3a]',
@@ -128,11 +135,20 @@ export const isUserAdmin = () => {
 };
 
 export const PROJECT_STATUS_OPTIONS = [
-  { value: 'ACTIVE', label: 'Active' },
   { value: 'PLANNING', label: 'Planning' },
-  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'ACTIVE', label: 'Active' },
   { value: 'ON_HOLD', label: 'On Hold' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
 ];
+
+export const PROJECT_STATUS_DESCRIPTIONS = {
+  PLANNING: 'Initial setup. Sprints, issues, milestones, chats, and calls are available.',
+  ACTIVE: 'Ongoing execution. All project operations are available.',
+  ON_HOLD: 'Temporarily paused. Modifications, team coordination, chats, and calls remain available.',
+  COMPLETED: 'Finished. Project changes, chats, and calls are locked.',
+  CANCELLED: 'Aborted. Project changes, chats, and calls are locked.',
+};
 
 export const PROJECT_MEMBER_ROLES = [
   { value: 'CONTRIBUTOR', label: 'Contributor' },

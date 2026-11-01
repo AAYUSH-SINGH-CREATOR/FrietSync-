@@ -28,6 +28,7 @@ import {
 } from 'react-icons/fi';
 import {
   getProjectById,
+  updateProject,
   getProjectMembers,
   removeProjectMember,
   getProjectMilestones,
@@ -46,7 +47,7 @@ import {
   subscribeToPollResults,
   voteInPoll,
 } from '../../polls/services/pollApi';
-import { formatDate, formatProjectRoleLabel, getProjectProgress, isUserAdmin, getRoleBadge } from '../utils/projectUtils';
+import { formatDate, formatProjectRoleLabel, getProjectProgress, isUserAdmin, getRoleBadge, getStatusBadge, PROJECT_STATUS_DESCRIPTIONS } from '../utils/projectUtils';
 import { getPriorityBadge, getStatusBadge as getIssueStatusBadge } from '../../issues/utils/issueUtils';
 import EditProjectModal from '../components/EditProjectModal';
 import DeleteProjectModal from '../components/DeleteProjectModal';
@@ -197,6 +198,8 @@ const ProjectDetailsView = () => {
   const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [toastNotice, setToastNotice] = useState(null);
+  const [isUpdatingProjectStatus, setIsUpdatingProjectStatus] = useState(false);
+  const [reopenStatus, setReopenStatus] = useState('ACTIVE');
 
   
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
@@ -300,6 +303,8 @@ const ProjectDetailsView = () => {
     project?.teamLead?._id,
     project?.teamLead?.userId,
   ].filter(Boolean).map(String);
+  const projectStatus = String(project?.status || '').toUpperCase();
+  const isProjectClosed = ['COMPLETED', 'CANCELLED', 'CANCELED'].includes(projectStatus);
 
   const repositoryManagerIds = [
     project?.adminId,
@@ -311,28 +316,67 @@ const ProjectDetailsView = () => {
     project?.teamLead?.id,
     project?.teamLead?._id,
   ].filter(Boolean).map(String);
-  const canManageGithubRepository = currentUserIds.some((id) => repositoryManagerIds.includes(id)) ||
-    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role));
+  const canManageGithubRepository = !isProjectClosed && (currentUserIds.some((id) => repositoryManagerIds.includes(id)) ||
+    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role)));
 
-  const canManageMilestones = currentUserIds.some((id) =>
+  const canManageMilestones = !isProjectClosed && currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
   const globalRole = normalizeRole(currentUserProfile?.role || currentUserProfile?.user?.role);
-  const canCreateSprint =
+  const canCreateSprint = !isProjectClosed && (
     isAdmin ||
     globalRole === 'ADMIN' ||
     currentUserIds.some((id) => projectAdminIds.includes(id)) ||
     currentUserIds.some((id) => projectManagerIds.includes(id) || teamLeadIds.includes(id)) ||
     ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(globalRole) ||
-    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role));
-  const canCreateIssue = canCreateSprint ||
+    currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role)));
+  const canCreateIssue = !isProjectClosed && (canCreateSprint ||
     globalRole === 'REPORTER' ||
-    currentProjectRoleNames.includes('REPORTER');
-  const canRequestAssignment = globalRole === 'CONTRIBUTOR' || currentProjectRoleNames.includes('CONTRIBUTOR');
-  const canManageReleases = isAdmin || ['ADMIN', 'PROJECT_MANAGER'].includes(globalRole) ||
+    currentProjectRoleNames.includes('REPORTER'));
+  const canRequestAssignment = !isProjectClosed && (globalRole === 'CONTRIBUTOR' || currentProjectRoleNames.includes('CONTRIBUTOR'));
+  const canManageReleases = !isProjectClosed && (isAdmin || ['ADMIN', 'PROJECT_MANAGER'].includes(globalRole) ||
     currentUserIds.some((id) => projectAdminIds.includes(id) || projectManagerIds.includes(id)) ||
-    currentProjectRoleNames.includes('PROJECT_MANAGER');
+    currentProjectRoleNames.includes('PROJECT_MANAGER'));
   const canAttachIssues = canManageReleases;
+  const canReopenProject = isAdmin || globalRole === 'PROJECT_MANAGER' ||
+    currentUserIds.some((id) => projectManagerIds.includes(id)) ||
+    currentProjectRoleNames.includes('PROJECT_MANAGER');
+  const canEditProject = canReopenProject && !isProjectClosed;
+
+  const changeProjectStatus = async (status) => {
+    const id = project?.id || project?._id || project?.projectId;
+    if (!id || isUpdatingProjectStatus) return;
+    if (status === 'CANCELLED' && !window.confirm(`Cancel "${project.name}"? This will make the project read-only.`)) return;
+    setIsUpdatingProjectStatus(true);
+    try {
+      await updateProject(id, { name: project.name, status });
+      const statusLabel = status.replace('_', ' ');
+      showToast('success', `Project status changed to ${statusLabel}.`);
+      await reloadData();
+    } catch (error) {
+      showToast('error', getFriendlyErrorMessage(error, 'project'));
+    } finally {
+      setIsUpdatingProjectStatus(false);
+    }
+  };
+
+  const projectStatusActions = {
+    PLANNING: [
+      { label: 'Start Project', status: 'ACTIVE', icon: '▶', tone: 'primary' },
+      { label: 'On Hold', status: 'ON_HOLD', icon: '⏸', tone: 'hold' },
+      { label: 'Cancel Project', status: 'CANCELLED', icon: '✕', tone: 'cancel' },
+    ],
+    ACTIVE: [
+      { label: 'Put On Hold', status: 'ON_HOLD', icon: '⏸', tone: 'hold' },
+      { label: 'Mark as Completed', status: 'COMPLETED', icon: '✓', tone: 'complete' },
+      { label: 'Cancel Project', status: 'CANCELLED', icon: '✕', tone: 'cancel' },
+    ],
+    ON_HOLD: [
+      { label: 'Resume Project', status: 'ACTIVE', icon: '▶', tone: 'primary' },
+      { label: 'Mark as Completed', status: 'COMPLETED', icon: '✓', tone: 'complete' },
+      { label: 'Cancel Project', status: 'CANCELLED', icon: '✕', tone: 'cancel' },
+    ],
+  };
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -777,7 +821,7 @@ const ProjectDetailsView = () => {
   }, [summary, issues, issueTotalCount]);
 
   const handleVoteInRecentPoll = async (pollId, optionId) => {
-    if (!pollId || !optionId) return;
+    if (isProjectClosed || !pollId || !optionId) return;
     try {
       const updated = await voteInPoll(pollId, optionId);
       window.localStorage.setItem(`frietSync_poll_${pollId}_voted`, String(optionId));
@@ -966,24 +1010,88 @@ const ProjectDetailsView = () => {
             <FiRefreshCw size={15} className={isLoading ? 'animate-spin text-sky-500 dark:text-sky-400' : ''} />
           </button>
 
-          {isAdmin && project && (
+          {canReopenProject && project && (
             <>
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(true)}
-                title="Edit Project"
-                className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2b2b32] hover:text-sky-600 dark:hover:text-sky-400 transition cursor-pointer shadow-xs"
-              >
-                <FiEdit2 size={15} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsDeleteModalOpen(true)}
-                title="Delete Project"
-                className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shadow-xs"
-              >
-                <FiTrash2 size={15} />
-              </button>
+              {isProjectClosed ? (
+                <div className="flex items-center gap-1.5">
+                  <label htmlFor="reopen-project-status" className="sr-only">
+                    {projectStatus === 'COMPLETED' ? 'Reopen project as' : 'Restore project as'}
+                  </label>
+                  <select
+                    id="reopen-project-status"
+                    value={reopenStatus}
+                    onChange={(event) => setReopenStatus(event.target.value)}
+                    disabled={isUpdatingProjectStatus}
+                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 dark:border-[#35353d] dark:bg-[#222228] dark:text-slate-200"
+                  >
+                    {projectStatus === 'COMPLETED' ? (
+                      <>
+                        <option value="ACTIVE">Active</option>
+                        <option value="PLANNING">Planning</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="PLANNING">Planning</option>
+                        <option value="ACTIVE">Active</option>
+                      </>
+                    )}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => changeProjectStatus(reopenStatus)}
+                    disabled={isUpdatingProjectStatus}
+                    title={projectStatus === 'COMPLETED' ? 'Reopen or resume project' : 'Restore project'}
+                    className="px-3 py-2 rounded-xl border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-500/20 transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {isUpdatingProjectStatus ? 'Updating…' : projectStatus === 'COMPLETED' ? 'Reopen / Resume Project' : 'Restore Project'}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(projectStatusActions[projectStatus] || []).map((action) => {
+                    const toneClasses = {
+                      primary: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20',
+                      hold: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20',
+                      complete: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20',
+                      cancel: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20',
+                    };
+                    return (
+                      <button
+                        key={action.status}
+                        type="button"
+                        onClick={() => changeProjectStatus(action.status)}
+                        disabled={isUpdatingProjectStatus}
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:opacity-50 cursor-pointer ${toneClasses[action.tone]}`}
+                      >
+                        <span aria-hidden="true" className="mr-1">{action.icon}</span>
+                        {isUpdatingProjectStatus ? 'Updating…' : action.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {canEditProject && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(true)}
+                    title="Edit Project"
+                    className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2b2b32] hover:text-sky-600 dark:hover:text-sky-400 transition cursor-pointer shadow-xs"
+                  >
+                    <FiEdit2 size={15} />
+                  </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      title="Delete Project"
+                      className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer shadow-xs"
+                    >
+                      <FiTrash2 size={15} />
+                    </button>
+                  )}
+                </>
+              )}
             </>
           )}
         </div>
@@ -1021,6 +1129,19 @@ const ProjectDetailsView = () => {
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
                 {project?.description || 'No description provided.'}
               </p>
+              {project && (() => {
+                const statusInfo = getStatusBadge(project.status);
+                return (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusInfo.bg}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />{statusInfo.label}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {PROJECT_STATUS_DESCRIPTIONS[projectStatus] || ''}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -1048,13 +1169,13 @@ const ProjectDetailsView = () => {
         {}
         <div className="pt-4 border-t border-slate-100 dark:border-[#2d2d34] flex flex-col xl:flex-row xl:items-center justify-between gap-5 flex-wrap">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <button
+            {!isProjectClosed && <button
               type="button"
               onClick={() => setIsMeetingModalOpen(true)}
               className="rounded-full bg-[#55c2f4] hover:bg-[#43b3e8] text-[#071522] font-semibold text-sm px-4 sm:px-5 py-3 shadow-sm transition shrink-0 cursor-pointer"
             >
               Schedule meeting
-            </button>
+            </button>}
 
             <button
               type="button"
@@ -1162,7 +1283,8 @@ const ProjectDetailsView = () => {
           <ProjectPollsSection
             projectId={projectId}
             projectName={project?.name}
-            canManage={isAdmin}
+            canManage={isAdmin && !isProjectClosed}
+            readOnly={isProjectClosed}
             onShareToChat={() => navigate(`/dashboard/chats?projectId=${projectId}`)}
           />
         </div>
@@ -1459,7 +1581,7 @@ const ProjectDetailsView = () => {
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Project Polls</h2>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => setIsCreatePollOpen(true)} className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"><FiPlus size={13} /> Create Poll</button>
+                    {!isProjectClosed && <button type="button" onClick={() => setIsCreatePollOpen(true)} className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"><FiPlus size={13} /> Create Poll</button>}
                     <button type="button" onClick={() => setViewingAllPolls(true)} className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">View all <FiArrowRight size={12} className="inline" /></button>
                   </div>
                 </div>
@@ -1485,13 +1607,13 @@ const ProjectDetailsView = () => {
                             <p className="min-w-0 flex-1 text-xs font-semibold text-slate-900 dark:text-white leading-snug">
                               {poll.question || 'Untitled poll'}
                             </p>
-                            <button
+                            {!isProjectClosed && <button
                               type="button"
                               onClick={() => openPoll(pollId)}
                               className="shrink-0 rounded-lg border border-sky-600 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-500 dark:text-sky-300 dark:hover:bg-sky-950/40"
                             >
                               Vote
-                            </button>
+                            </button>}
                         </div>
                       );
                     })}
@@ -1560,7 +1682,7 @@ const ProjectDetailsView = () => {
                             <button
                               key={optionId || index}
                               type="button"
-                              disabled={isClosed || !optionId}
+                              disabled={isProjectClosed || isClosed || !optionId}
                               onClick={() => handleVoteInRecentPoll(pollId, optionId)}
                               className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-3 text-left transition-all disabled:cursor-default ${
                                 isSelected
@@ -1682,8 +1804,8 @@ const ProjectDetailsView = () => {
                     {sprints.slice(0, 5).map((sprint, idx) => (
                       <tr
                         key={sprint.id || sprint._id || idx}
-                        onClick={() => navigate('/dashboard/sprints')}
-                        className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#27272e] transition"
+                        onClick={() => { if (!isProjectClosed) navigate('/dashboard/sprints'); }}
+                        className={`${isProjectClosed ? '' : 'cursor-pointer'} hover:bg-slate-50 dark:hover:bg-[#27272e] transition`}
                       >
                         <td className="py-3 px-3">
                           <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
@@ -2034,7 +2156,7 @@ const ProjectDetailsView = () => {
       {}
       {isMeetingModalOpen && (
         <MeetingModal
-          isOpen={isMeetingModalOpen}
+            isOpen={!isProjectClosed && isMeetingModalOpen}
           onClose={() => setIsMeetingModalOpen(false)}
           projects={project ? [project] : []}
           onMeetingSaved={() => {
@@ -2043,7 +2165,7 @@ const ProjectDetailsView = () => {
         />
       )}
 
-      {isAdmin && project && isEditModalOpen && (
+      {canEditProject && project && isEditModalOpen && (
         <EditProjectModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
@@ -2055,7 +2177,7 @@ const ProjectDetailsView = () => {
         />
       )}
 
-      {isAdmin && project && isDeleteModalOpen && (
+      {isAdmin && canEditProject && project && isDeleteModalOpen && (
         <DeleteProjectModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
@@ -2064,7 +2186,7 @@ const ProjectDetailsView = () => {
         />
       )}
 
-      {isAdmin && isAddMemberModalOpen && (
+      {isAdmin && !isProjectClosed && isAddMemberModalOpen && (
         <AddProjectMemberModal
           isOpen={isAddMemberModalOpen}
           onClose={() => setIsAddMemberModalOpen(false)}
@@ -2091,7 +2213,7 @@ const ProjectDetailsView = () => {
       />
 
       <CreateEditSprintModal
-        isOpen={isCreateSprintOpen}
+        isOpen={canCreateSprint && isCreateSprintOpen}
         onClose={() => setIsCreateSprintOpen(false)}
         projectId={projectId}
         projects={project ? [project] : []}
@@ -2115,6 +2237,7 @@ const ProjectDetailsView = () => {
           setSelectedIssue(null);
           reloadData();
         }}
+        readOnly={isProjectClosed}
       />
 
       <ProjectItemsModal
@@ -2150,7 +2273,7 @@ const ProjectDetailsView = () => {
       {}
       <MilestoneModal
         key={`milestone-${editingMilestone?.id || editingMilestone?._id || 'new'}-${isMilestoneModalOpen}`}
-        isOpen={isMilestoneModalOpen}
+        isOpen={canManageMilestones && isMilestoneModalOpen}
         onClose={() => {
           setIsMilestoneModalOpen(false);
           setEditingMilestone(null);
@@ -2162,7 +2285,7 @@ const ProjectDetailsView = () => {
 
       <DeleteMilestoneModal
         key={`delete-milestone-${deletingMilestone?.id || deletingMilestone?._id || 'none'}-${isDeleteMilestoneOpen}`}
-        isOpen={isDeleteMilestoneOpen}
+        isOpen={canManageMilestones && isDeleteMilestoneOpen}
         onClose={() => {
           setIsDeleteMilestoneOpen(false);
           setDeletingMilestone(null);
@@ -2174,7 +2297,7 @@ const ProjectDetailsView = () => {
       {}
       <ReleaseModal
         key={`release-${editingRelease?.id || editingRelease?._id || 'new'}-${isReleaseModalOpen}`}
-        isOpen={isReleaseModalOpen}
+        isOpen={canManageReleases && isReleaseModalOpen}
         onClose={() => {
           setIsReleaseModalOpen(false);
           setEditingRelease(null);
@@ -2186,7 +2309,7 @@ const ProjectDetailsView = () => {
 
       <DeleteReleaseModal
         key={`delete-release-${deletingRelease?.id || deletingRelease?._id || 'none'}-${isDeleteReleaseOpen}`}
-        isOpen={isDeleteReleaseOpen}
+        isOpen={canManageReleases && isDeleteReleaseOpen}
         onClose={() => {
           setIsDeleteReleaseOpen(false);
           setDeletingRelease(null);
@@ -2197,7 +2320,7 @@ const ProjectDetailsView = () => {
 
       <AttachReleaseIssuesModal
         key={`attach-${attachingRelease?.id || attachingRelease?._id || 'none'}-${isAttachIssuesOpen}`}
-        isOpen={isAttachIssuesOpen}
+        isOpen={canAttachIssues && isAttachIssuesOpen}
         onClose={() => {
           setIsAttachIssuesOpen(false);
           setAttachingRelease(null);
@@ -2207,7 +2330,7 @@ const ProjectDetailsView = () => {
         onIssuesAttached={handleIssuesAttached}
       />
 
-      {projectId && isLinkRepoModalOpen && (
+      {projectId && canManageGithubRepository && isLinkRepoModalOpen && (
         <LinkRepositoryModal
           isOpen={isLinkRepoModalOpen}
           onClose={() => setIsLinkRepoModalOpen(false)}
@@ -2222,7 +2345,7 @@ const ProjectDetailsView = () => {
       )}
 
       <CreatePollModal
-        isOpen={isCreatePollOpen}
+        isOpen={!isProjectClosed && isCreatePollOpen}
         onClose={() => setIsCreatePollOpen(false)}
         projectId={projectId}
         onPollCreated={(created) => {
@@ -2262,7 +2385,8 @@ const ProjectDetailsView = () => {
         members={members}
         isLoading={isLoading}
         removingMemberId={removingMemberId}
-        canAddMember={isAdmin}
+          canAddMember={isAdmin && !isProjectClosed}
+        canManageMembers={isAdmin && !isProjectClosed}
         onAddMember={() => {
           setDetailPanel(null);
           setIsAddMemberModalOpen(true);

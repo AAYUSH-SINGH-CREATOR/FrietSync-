@@ -138,15 +138,14 @@ export const updateProject = async (projectId, projectData) => {
     throw new Error('Project ID is required.');
   }
   try {
-    const payload = {
-      name: projectData.name?.trim(),
-      description: projectData.description !== undefined ? projectData.description.trim() : '',
-      status: projectData.status || 'ACTIVE',
-      startDate: projectData.startDate || '',
-      deadline: projectData.deadline || '',
-      projectManagerEmail: projectData.projectManagerEmail ? projectData.projectManagerEmail.trim() : '',
-      teamLeadEmail: projectData.teamLeadEmail ? projectData.teamLeadEmail.trim() : '',
-    };
+    const payload = {};
+    if (projectData.name !== undefined) payload.name = projectData.name?.trim();
+    if (projectData.description !== undefined) payload.description = projectData.description.trim();
+    if (projectData.status !== undefined) payload.status = projectData.status;
+    if (projectData.startDate !== undefined) payload.startDate = projectData.startDate || '';
+    if (projectData.deadline !== undefined) payload.deadline = projectData.deadline || '';
+    if (projectData.projectManagerEmail !== undefined) payload.projectManagerEmail = projectData.projectManagerEmail?.trim() || '';
+    if (projectData.teamLeadEmail !== undefined) payload.teamLeadEmail = projectData.teamLeadEmail?.trim() || '';
 
     if (projectData.workspaceId) {
       payload.workspaceId = projectData.workspaceId;

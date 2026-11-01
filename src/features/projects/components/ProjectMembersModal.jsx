@@ -6,7 +6,7 @@ const avatarColors = ['#86198f', '#0369a1', '#15803d', '#6b21a8', '#b45309', '#b
 const getInitials = (name = '') => name.trim().split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'U';
 const getAvatarColor = (name = '') => [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % avatarColors.length;
 
-const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removingMemberId, canAddMember = false, onAddMember, onRemoveMember }) => {
+const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removingMemberId, canAddMember = false, canManageMembers = canAddMember, onAddMember, onRemoveMember }) => {
   useEffect(() => {
     if (!isOpen) return undefined;
     const oldBodyOverflow = document.body.style.overflow;
@@ -71,9 +71,9 @@ const ProjectMembersModal = ({ isOpen, onClose, members = [], isLoading, removin
                         {email && <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400">{email}</p>}
                       </div>
                     </div>
-                    <button type="button" disabled={isRemoving} onClick={() => onRemoveMember(member)} title={`Remove ${name} from project`} aria-label={`Remove ${name} from project`} className="shrink-0 rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400">
+                    {canManageMembers && <button type="button" disabled={isRemoving} onClick={() => onRemoveMember(member)} title={`Remove ${name} from project`} aria-label={`Remove ${name} from project`} className="shrink-0 rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950/30 dark:hover:text-rose-400">
                       {isRemoving ? <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" /> : <FiTrash2 size={15} />}
-                    </button>
+                    </button>}
                   </div>
                 );
               })}
