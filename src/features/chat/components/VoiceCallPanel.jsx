@@ -9,6 +9,7 @@ import {
   FiMicOff,
   FiPhone,
   FiPhoneOff,
+  FiUsers,
   FiVolume2,
   FiX,
 } from 'react-icons/fi';
@@ -65,6 +66,8 @@ export const VoiceCallPanel = ({
   onMinimize,
   onRestore,
   onClose,
+  showParticipants = false,
+  onToggleParticipants = () => {},
 }) => {
   const { isDarkMode } = useTheme();
   const isConnecting = isJoining || voiceCallState === 'connecting';
@@ -188,6 +191,15 @@ export const VoiceCallPanel = ({
               <div className="flex w-full gap-3">
                 <button type="button" onClick={onLeave} className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-bold text-white shadow-lg shadow-rose-950/15 transition hover:bg-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500">
                   <FiPhoneOff size={17} /> Leave call
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleParticipants?.()}
+                  title="Show participants"
+                  aria-label="Show participants"
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${showParticipants ? 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'}`}
+                >
+                  <FiUsers size={18} />
                 </button>
                 {canEndCall && isCallActive && (
                   <button type="button" onClick={onEnd} title="End call for everyone" aria-label="End call for everyone" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-rose-200 text-rose-700 transition hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-950/40">

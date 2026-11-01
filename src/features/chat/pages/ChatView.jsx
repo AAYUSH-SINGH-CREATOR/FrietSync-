@@ -14,6 +14,7 @@ import { StompChatClient } from '../services/stompClient';
 import { useVoiceCall } from '../hooks/useVoiceCall';
 import { endCall, findActiveCall, joinCall, leaveCall, startCall } from '../services/voiceCallApi';
 import { VoiceCallPanel } from '../components/VoiceCallPanel';
+import { CallParticipants } from '../components/CallParticipants';
 
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
@@ -48,6 +49,8 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const [showCallPanel, setShowCallPanel] = useState(false);
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const [isJoiningCall, setIsJoiningCall] = useState(false);
+  const [callParticipants, setCallParticipants] = useState([]);
+  const [showParticipantsList, setShowParticipantsList] = useState(false);
 
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [isLoadingPinned, setIsLoadingPinned] = useState(false);
@@ -570,18 +573,27 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       const callId = call.id || call.callId || event.callId;
       if (!callId) return;
 
+      if (Array.isArray(event.participants)) {
+        setCallParticipants(event.participants.map((p) => ({
+          id: p.userId || p.id,
+          name: p.userName || p.name,
+          joinedAt: p.joinedAt,
+          lastActiveAt: p.lastActiveAt,
+        })));
+      }
+
       if (eventType === 'ENDED') {
         setIsCallActive(false);
         setActiveCallId(null);
         setActiveCallDetails(null);
         setActiveCallProjectId(projectId);
+        setCallParticipants([]);
 
         if (String(joinedCallRef.current?.callId || '') === String(callId)) {
-          
-          
           joinedCallRef.current = null;
           setIsJoined(false);
           setShowCallPanel(false);
+          setShowParticipantsList(false);
         }
         return;
       }
@@ -898,31 +910,41 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     </div>
 
       {showCallPanel && activeChat && !isActiveProjectReadOnly && (
-        <VoiceCallPanel
-          isOpen={showCallPanel}
-          isMinimized={isCallMinimized}
-          projectName={activeChat.name}
-          teamSize={activeChat.memberCount || activeChat.members?.length || 0}
-          isConfigured={isVoiceCallConfigured}
-          configurationError={voiceCallConfigurationError}
-          isCallActive={Boolean(visibleCall) || (activeCallProjectId === activeProjectId && isCallActive)}
-          isJoined={isJoined}
-          isJoining={isJoiningCall}
-          voiceCallState={voiceCallState}
-          voiceCallMuted={voiceCallMuted}
-          voiceCallVolume={voiceCallVolume}
-          onJoin={handleStartOrJoinCall}
-          onLeave={handleLeaveCall}
-          onEnd={handleEndCall}
-          onToggleMute={toggleVoiceCallMute}
-          onVolumeChange={setVoiceCallVolume}
-          onResumePlayback={resumePlayback}
-          isAutoplayBlocked={isAutoplayBlocked}
-          canEndCall={canEndActiveCall}
-          onMinimize={() => setIsCallMinimized(true)}
-          onRestore={() => setIsCallMinimized(false)}
-          onClose={handleCloseCallPanel}
-        />
+        <>
+          <VoiceCallPanel
+            isOpen={showCallPanel}
+            isMinimized={isCallMinimized}
+            projectName={activeChat.name}
+            teamSize={activeChat.memberCount || activeChat.members?.length || 0}
+            isConfigured={isVoiceCallConfigured}
+            configurationError={voiceCallConfigurationError}
+            isCallActive={Boolean(visibleCall) || (activeCallProjectId === activeProjectId && isCallActive)}
+            isJoined={isJoined}
+            isJoining={isJoiningCall}
+            voiceCallState={voiceCallState}
+            voiceCallMuted={voiceCallMuted}
+            voiceCallVolume={voiceCallVolume}
+            onJoin={handleStartOrJoinCall}
+            onLeave={handleLeaveCall}
+            onEnd={handleEndCall}
+            onToggleMute={toggleVoiceCallMute}
+            onVolumeChange={setVoiceCallVolume}
+            onResumePlayback={resumePlayback}
+            isAutoplayBlocked={isAutoplayBlocked}
+            canEndCall={canEndActiveCall}
+            onMinimize={() => setIsCallMinimized(true)}
+            onRestore={() => setIsCallMinimized(false)}
+            onClose={handleCloseCallPanel}
+            showParticipants={showParticipantsList}
+            onToggleParticipants={() => setShowParticipantsList(!showParticipantsList)}
+          />
+          <CallParticipants
+            participants={callParticipants}
+            isVisible={showParticipantsList}
+            onClose={() => setShowParticipantsList(false)}
+            isDarkMode={true}
+          />
+        </>
       )}
     </>
   );
