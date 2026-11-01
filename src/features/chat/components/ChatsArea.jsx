@@ -75,6 +75,7 @@ const ChatArea = ({
   onPinnedMessagesChange,
   showToast,
   voiceCall,
+  readOnly = false,
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedAttachments, setSelectedAttachments] = useState([]);
@@ -131,7 +132,7 @@ const ChatArea = ({
   }, [isProjectDetailsOpen, activeChat?.id]);
 
   const handleToggleChatMute = async () => {
-    if (!activeChat?.id || isUpdatingMute) return;
+    if (readOnly || !activeChat?.id || isUpdatingMute) return;
     setIsUpdatingMute(true);
     setProjectDetailsError('');
     try {
@@ -259,7 +260,7 @@ const ChatArea = ({
     const files = Array.from(e.target.files || []);
     const projectId = activeChat?.id;
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (!projectId || files.length === 0) return;
+    if (readOnly || !projectId || files.length === 0) return;
 
     const slots = Math.max(0, 10 - selectedAttachments.length);
     if (slots === 0) {
@@ -327,6 +328,7 @@ const ChatArea = ({
 
   const handleSend = (e) => {
     e?.preventDefault();
+    if (readOnly) return;
     const text = inputText.trim();
     if (isUploadingAttachments) {
       setAttachmentError('Wait for the selected files to finish uploading.');
@@ -392,7 +394,7 @@ const ChatArea = ({
   };
 
   const handleDeleteMessage = async (messageId) => {
-    if (!activeChat?.id || !messageId || isDeleting) return;
+    if (readOnly || !activeChat?.id || !messageId || isDeleting) return;
     setIsDeleting(true);
     setMessageMenuOpen(null);
     try {
@@ -419,7 +421,7 @@ const ChatArea = ({
   };
 
   const handleSaveEdit = async (messageId) => {
-    if (!activeChat?.id || !messageId || isEditing) return;
+    if (readOnly || !activeChat?.id || !messageId || isEditing) return;
     const trimmedText = editingText.trim();
     if (!trimmedText) {
       setAttachmentError('Message cannot be empty.');
@@ -467,7 +469,7 @@ const ChatArea = ({
   }, [activeChat?.id, loadPinnedMessages]);
 
   const handlePinMessage = async (messageId) => {
-    if (!activeChat?.id || !messageId) return;
+    if (readOnly || !activeChat?.id || !messageId) return;
     setMessageMenuOpen(null);
     try {
       const updated = await pinMessage(activeChat.id, messageId);
@@ -488,7 +490,7 @@ const ChatArea = ({
   };
 
   const handleUnpinMessage = async (messageId) => {
-    if (!activeChat?.id || !messageId) return;
+    if (readOnly || !activeChat?.id || !messageId) return;
     setMessageMenuOpen(null);
     try {
       const updated = await unpinMessage(activeChat.id, messageId);
@@ -716,7 +718,7 @@ const ChatArea = ({
                       </p>
                     )}
                   </div>
-                  <button
+                  {!readOnly && <button
                     type="button"
                     onClick={() => handleUnpinMessage(pm.id)}
                     title="Unpin message"
@@ -724,7 +726,7 @@ const ChatArea = ({
                     className="shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 p-1 rounded-sm hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                   >
                     <FiX size={12} />
-                  </button>
+                  </button>}
                 </li>
               ))}
             </ul>
@@ -798,7 +800,7 @@ const ChatArea = ({
                   )}
 
                   {}
-                  {!isDeleted && !isEditingThis && (
+                  {!readOnly && !isDeleted && !isEditingThis && (
                       <div className={`opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1 mx-1 ${isOutgoing ? 'order-first' : 'order-last'}`}>
                       <div className="relative" ref={messageMenuOpen === msg.id ? messageMenuRef : null}>
                         <button
@@ -1007,7 +1009,7 @@ const ChatArea = ({
       )}
 
       {}
-      <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10 relative">
+      {!readOnly && <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10 relative">
         <input
           ref={fileInputRef}
           type="file"
@@ -1088,7 +1090,7 @@ const ChatArea = ({
         >
           <FiSend size={18} />
         </button>
-      </form>
+      </form>}
 
       {}
       {previewImage && (
@@ -1136,6 +1138,7 @@ const ChatArea = ({
         isOpen={isPollModalOpen}
         pollId={pollToOpenId}
         onClose={() => { setIsPollModalOpen(false); setPollToOpenId(null); }}
+        readOnly={readOnly}
         activeChat={activeChat}
         currentUserId={currentUser?.userId || currentUser?.id}
         onShareToChat={(poll) => {
@@ -1154,7 +1157,7 @@ const ChatArea = ({
         >
           <section role="dialog" aria-modal="true" aria-labelledby="chat-overview-title" className="relative flex h-full max-h-[calc(100dvh-24px)] w-[min(360px,calc(100vw-24px))] flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-[#303030] dark:bg-[#171717] sm:max-h-[calc(100dvh-32px)]">
             <header className="flex shrink-0 items-center justify-end gap-1 px-3 pt-3">
-              <button
+              {!readOnly && <button
                 type="button"
                 onClick={handleToggleChatMute}
                 disabled={isUpdatingMute}
@@ -1163,7 +1166,7 @@ const ChatArea = ({
                 className="rounded-full p-2 text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/10"
               >
                 {chatMuteStatus.muted ? <FiBell size={18} /> : <FiBellOff size={18} />}
-              </button>
+              </button>}
               <button type="button" onClick={() => setIsProjectDetailsOpen(false)} aria-label="Close project overview" className="rounded-full p-2 text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-950/30"><FiX size={20} /></button>
             </header>
 

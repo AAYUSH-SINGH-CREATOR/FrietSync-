@@ -11,6 +11,7 @@ const ChatPollModal = ({
   currentUserId,
   pollId,
   onShareToChat,
+  readOnly = false,
 }) => {
   const [polls, setPolls] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,14 +80,14 @@ const ChatPollModal = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            {!readOnly && <button
               type="button"
               onClick={reloadPolls}
               title="Refresh polls"
               className="rounded-xl border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 dark:border-[#333] dark:text-[#aaa] dark:hover:bg-[#252528] cursor-pointer"
             >
               <FiRefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
-            </button>
+            </button>}
             <button
               type="button"
               onClick={() => setIsCreateOpen(true)}
@@ -117,6 +118,7 @@ const ChatPollModal = ({
                 poll={poll}
                 currentUserId={currentUserId}
                 canManage={true}
+                readOnly={readOnly}
                 onPollUpdated={handlePollUpdated}
                 onShareToChat={(p) => {
                   onShareToChat?.(p);
@@ -131,19 +133,19 @@ const ChatPollModal = ({
               </div>
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">No polls yet in {projectName}</p>
               <p className="mt-1 text-xs text-slate-500 dark:text-[#888]">Create a poll to get instant team consensus in chat.</p>
-              <button
+              {!readOnly && <button
                 type="button"
                 onClick={() => setIsCreateOpen(true)}
                 className="mt-3.5 inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-700 transition cursor-pointer"
               >
                 <FiPlus size={14} /> Create First Poll
-              </button>
+              </button>}
             </div>
           )}
         </div>
 
         <CreatePollModal
-          isOpen={isCreateOpen}
+          isOpen={!readOnly && isCreateOpen}
           onClose={() => setIsCreateOpen(false)}
           projectId={projectId}
           onPollCreated={handlePollCreated}

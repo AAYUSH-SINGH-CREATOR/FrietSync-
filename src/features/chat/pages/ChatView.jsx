@@ -81,6 +81,8 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   }, [activeConversationId, projects]);
 
   const activeProjectId = activeChat?.id || null;
+  const activeProjectStatus = String(activeChat?.status || activeChat?.raw?.status || '').toUpperCase();
+  const isActiveProjectReadOnly = ['COMPLETED', 'CANCELLED', 'CANCELED'].includes(activeProjectStatus);
   const visibleCall = activeCallProjectId === activeProjectId ? activeCallDetails : null;
   const visibleCallId = visibleCall?.id || visibleCall?.callId || (activeCallProjectId === activeProjectId ? activeCallId : null);
   const currentUserId = String(currentUser.userId || currentUser.id || '');
@@ -154,7 +156,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   }, [activeProjectId]);
 
   const handleStartOrJoinCall = async () => {
-    if (!activeProjectId || joiningCallRef.current || joinedCallRef.current) return;
+    if (isActiveProjectReadOnly || !activeProjectId || joiningCallRef.current || joinedCallRef.current) return;
     if (!isVoiceCallConfigured) {
       showToast('error', voiceCallConfigurationError || 'Voice calling is not configured.');
       return;
@@ -672,7 +674,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const handleSendMessage = (text, attachmentIds = []) => {
     const trimmedText = String(text || '').trim();
     const attachmentIdList = Array.isArray(attachmentIds) ? attachmentIds.filter(Boolean) : [];
-    if (!activeChat || (!trimmedText && attachmentIdList.length === 0)) return false;
+    if (isActiveProjectReadOnly || !activeChat || (!trimmedText && attachmentIdList.length === 0)) return false;
 
     if (stompClientRef.current && stompClientRef.current.connected) {
       try {
@@ -854,6 +856,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         >
           <ChatArea
             activeChat={activeChat}
+            readOnly={isActiveProjectReadOnly}
             messages={activeMessages}
             onSendMessage={handleSendMessage}
             onBackToList={() => setIsMobileThreadOpen(false)}
@@ -869,7 +872,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
             onUnpinMessage={handleUnpinMessage}
             onPinnedMessagesChange={setPinnedMessages}
             showToast={showToast}
-            voiceCall={activeProjectId ? {
+            voiceCall={activeProjectId && !isActiveProjectReadOnly ? {
               isCallActive: Boolean(visibleCall) || (activeCallProjectId === activeProjectId && isCallActive),
               isJoined,
               isJoining: isJoiningCall,
@@ -894,7 +897,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
 
     </div>
 
-      {showCallPanel && activeChat && (
+      {showCallPanel && activeChat && !isActiveProjectReadOnly && (
         <VoiceCallPanel
           isOpen={showCallPanel}
           isMinimized={isCallMinimized}
