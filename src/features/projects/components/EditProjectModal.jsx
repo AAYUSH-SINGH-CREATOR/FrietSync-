@@ -9,7 +9,7 @@ import {
   FiImage,
 } from 'react-icons/fi';
 import { updateProject, uploadProjectProfilePicture, removeProjectProfilePicture, getFriendlyErrorMessage } from '../services/projectApi';
-import { PROJECT_STATUS_OPTIONS } from '../utils/projectUtils';
+import { PROJECT_STATUS_OPTIONS, PROJECT_STATUS_DESCRIPTIONS } from '../utils/projectUtils';
 
 const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
   const [formData, setFormData] = useState({
@@ -259,6 +259,9 @@ const EditProjectModal = ({ isOpen, onClose, project, onProjectUpdated }) => {
                 ▼
               </div>
             </div>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              {PROJECT_STATUS_DESCRIPTIONS[formData.status] || 'Choose the project lifecycle state.'}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">

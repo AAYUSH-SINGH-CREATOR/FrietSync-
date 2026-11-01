@@ -13,13 +13,7 @@ import {
   uploadProjectProfilePicture,
   getFriendlyErrorMessage,
 } from '../services/projectApi';
-
-const STATUS_OPTIONS = [
-  { value: 'ACTIVE', label: 'Active', badge: 'bg-emerald-100 text-emerald-800' },
-  { value: 'PLANNING', label: 'Planning', badge: 'bg-amber-100 text-amber-800' },
-  { value: 'COMPLETED', label: 'Completed', badge: 'bg-blue-100 text-blue-800' },
-  { value: 'ON_HOLD', label: 'On Hold', badge: 'bg-slate-100 text-slate-700' },
-];
+import { PROJECT_STATUS_OPTIONS, PROJECT_STATUS_DESCRIPTIONS } from '../utils/projectUtils';
 
 const getTodayString = () => new Date().toISOString().slice(0, 10);
 
@@ -245,16 +239,21 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                 onChange={(e) => handleStatusChange(e.target.value)}
                 className="w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-xl border border-slate-200 dark:border-[#3a3a3a] text-sm sm:text-base font-medium bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9] focus:outline-none focus:border-sky-500 dark:focus:border-[#60A5FA] focus:ring-4 focus:ring-sky-100 dark:focus:ring-blue-900/30 transition cursor-pointer appearance-none"
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value} className="bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9]">
-                    {opt.label}
-                  </option>
-                ))}
+                {PROJECT_STATUS_OPTIONS
+                  .filter((opt) => !['COMPLETED', 'CANCELLED'].includes(opt.value))
+                  .map((opt) => (
+                    <option key={opt.value} value={opt.value} className="bg-white dark:bg-[#242424] text-slate-800 dark:text-[#F1F5F9]">
+                      {opt.label}
+                    </option>
+                  ))}
               </select>
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 dark:text-[#858585] text-sm">
                 ▼
               </div>
             </div>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              {PROJECT_STATUS_DESCRIPTIONS[formData.status] || 'Choose the project lifecycle state.'}
+            </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <div>

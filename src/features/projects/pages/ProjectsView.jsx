@@ -125,12 +125,16 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
     const completed = projects.filter(
       (p) => (p.status || '').toUpperCase() === 'COMPLETED'
     ).length;
-    return { all, active, completed };
+    const planning = projects.filter(
+      (p) => (p.status || '').toUpperCase() === 'PLANNING'
+    ).length;
+    return { all, active, completed, planning };
   }, [projects]);
 
   const filterTabs = [
     { id: 'all', label: 'All Projects', count: counts.all },
     { id: 'active', label: 'Active', count: counts.active },
+    { id: 'planning', label: 'Planning', count: counts.planning },
     { id: 'completed', label: 'Completed', count: counts.completed },
   ];
 
@@ -138,6 +142,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
     return projects.filter((project) => {
       const status = (project.status || '').toUpperCase();
       if (filter === 'active' && status !== 'ACTIVE') return false;
+      if (filter === 'planning' && status !== 'PLANNING') return false;
       if (filter === 'completed' && status !== 'COMPLETED') return false;
 
       if (searchQuery.trim()) {
@@ -169,30 +174,16 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
     });
   }, [projects, filter, searchQuery, sortOrder]);
 
-  if (!isLoading && !error && filteredProjects.length === 0) {
+  if (!isLoading && !error && projects.length === 0) {
     return (
       <>
         <div className="px-3 sm:px-6 lg:px-8">
           <EmptyState
             title="Projects"
-            subtitle={projects.length === 0
-              ? "No projects yet. Create one to organize your team's work."
-              : 'No projects match your current search or filters.'}
+            subtitle="No projects yet. Create one to organize your team's work."
             illustration={esproject}
             illustrationAlt="No projects yet"
             onCreateProject={() => setIsCreateModalOpen(true)}
-            actionButton={projects.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  onFilterChange?.('all');
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
-              >
-                <FiRefreshCw size={15} /> Show all projects
-              </button>
-            ) : null}
           />
         </div>
         <CreateProjectModal
@@ -384,6 +375,26 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {!isLoading && filteredProjects.length === 0 && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white px-5 py-12 text-center dark:border-[#303030] dark:bg-[#1d1d1d]">
+          <FiFolder className="mx-auto mb-3 text-slate-400 dark:text-slate-500" size={30} />
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+            {searchQuery.trim()
+              ? 'No projects match your current search or filters.'
+              : filter === 'active'
+              ? 'No active projects yet.'
+              : filter === 'planning'
+              ? 'No planning projects yet.'
+              : filter === 'completed'
+              ? 'No completed projects yet.'
+              : 'No projects match your current search or filters.'}
+          </h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {filter !== 'all' && !searchQuery.trim() && 'Projects in other statuses are still available under All Projects.'}
+          </p>
         </div>
       )}
 
