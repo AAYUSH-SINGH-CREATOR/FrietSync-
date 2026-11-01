@@ -76,6 +76,7 @@ const IssueDetailsView = ({
   onIssueUpdated,
   onIssueDeleted,
   currentUserProfile = null,
+  readOnly = false,
 }) => {
   const [issue, setIssue] = useState(initialIssue);
   const [error, setError] = useState('');
@@ -121,15 +122,15 @@ const IssueDetailsView = ({
   const myMembership = members.find((m) => (currentUserId && String(getId(m)) === String(currentUserId)) || (currentUserEmail && String(m.email || m.user?.email || '').toLowerCase() === currentUserEmail));
   const currentRole = String(myMembership?.role || myMembership?.projectRole || currentUserProfile?.role || '').toUpperCase();
   const isManager = ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER', 'PROJECT_MANAGER', 'TEAM_LEAD'].includes(currentRole);
-  const canManageIssueStatus = ['ADMIN', 'PROJECT_MANAGER'].includes(currentRole);
+  const canManageIssueStatus = !readOnly && ['ADMIN', 'PROJECT_MANAGER'].includes(currentRole);
   const isResolved = normalize(issue?.status) === 'RESOLVED';
   const assigneeIdsList = useMemo(() => issue?.assigneeIds || issue?.assignedUserIds || issue?.assignees?.map(getId) || issue?.assignedTo?.map?.(getId) || (issue?.assigneeId ? [issue.assigneeId] : []), [issue]);
   const isAssignee = currentUserId && assigneeIdsList.some((id) => String(id) === String(currentUserId));
   const createdBy = issue?.createdBy?.id || issue?.createdBy?._id || issue?.createdBy || issue?.creator?.id;
   const isCreator = currentUserId && String(createdBy) === String(currentUserId);
-  const canEdit = isManager || (currentRole === 'REPORTER' && isCreator);
-  const canResolve = currentRole === 'CONTRIBUTOR' && isAssignee && normalize(issue?.status) === 'IN_PROGRESS';
-  const canReview = ['PROJECT_MANAGER', 'TEAM_LEAD', 'REPORTER'].includes(currentRole) && normalize(issue?.status) === 'RESOLVED';
+  const canEdit = !readOnly && (isManager || (currentRole === 'REPORTER' && isCreator));
+  const canResolve = !readOnly && currentRole === 'CONTRIBUTOR' && isAssignee && normalize(issue?.status) === 'IN_PROGRESS';
+  const canReview = !readOnly && ['PROJECT_MANAGER', 'TEAM_LEAD', 'REPORTER'].includes(currentRole) && normalize(issue?.status) === 'RESOLVED';
 
   const showToast = useCallback((msg, isErr = false) => {
     if (isErr) setError(msg);
@@ -362,7 +363,7 @@ const IssueDetailsView = ({
             </button>
             </>
           )}
-          {isManager && (
+          {!readOnly && isManager && (
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
@@ -419,7 +420,7 @@ const IssueDetailsView = ({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {(isManager || !isAssignee) && (
+          {!readOnly && (isManager || !isAssignee) && (
             <button
               type="button"
               onClick={() => {
@@ -826,7 +827,7 @@ const IssueDetailsView = ({
             <CardHeader
               title="Assignees"
               action={
-                isManager && (
+                !readOnly && isManager && (
                   <button
                     type="button"
                     onClick={() => { setSelectedUserIds(assigneeIdsList.map(String)); setIsAssignOpen(true); }}
@@ -898,7 +899,7 @@ const IssueDetailsView = ({
                     <p className="font-semibold text-slate-900 dark:text-white">Your Request Status</p>
                     <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium capitalize">{myRequest.status || 'Pending'}</span>
                   </div>
-                  {String(myRequest.status || 'PENDING').toUpperCase() === 'PENDING' && (
+                  {!readOnly && String(myRequest.status || 'PENDING').toUpperCase() === 'PENDING' && (
                     <button
                       type="button"
                       disabled={!!busyAction}
@@ -909,7 +910,7 @@ const IssueDetailsView = ({
                     </button>
                   )}
                 </div>
-              ) : !isManager && !isAssignee ? (
+              ) : !readOnly && !isManager && !isAssignee ? (
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -929,7 +930,7 @@ const IssueDetailsView = ({
                 </div>
               ) : null}
 
-              {isManager && (
+              {!readOnly && isManager && (
                 <div className="space-y-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#777]">Project Requests</span>
                   {projectRequests.length > 0 ? (

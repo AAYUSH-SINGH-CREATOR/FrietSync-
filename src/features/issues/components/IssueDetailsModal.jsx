@@ -10,6 +10,7 @@ const IssueDetailsModal = ({
   projectName = '',
   onIssueUpdated,
   onIssueDeleted,
+  readOnly = false,
 }) => {
   const { currentUserProfile } = useOutletContext() || {};
 
@@ -40,6 +41,7 @@ const IssueDetailsModal = ({
           onIssueUpdated={onIssueUpdated}
           onIssueDeleted={onIssueDeleted}
           currentUserProfile={currentUserProfile}
+          readOnly={readOnly}
         />
       </div>
     </div>

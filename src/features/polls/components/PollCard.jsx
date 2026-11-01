@@ -23,6 +23,7 @@ const PollCard = ({
   poll,
   currentUserId,
   canManage = false,
+  readOnly = false,
   onPollUpdated,
   onShareToChat,
 }) => {
@@ -106,7 +107,7 @@ const PollCard = ({
   }, [pollData]);
 
   const handleVote = async (optionId) => {
-    if (!pollId || isClosed || voteInProgressRef.current || isVoting) return;
+    if (!pollId || readOnly || isClosed || voteInProgressRef.current || isVoting) return;
 
     if (pollData?.mode !== 'MULTI' && String(userVotedOptionId) === String(optionId)) {
       return;
@@ -202,7 +203,7 @@ const PollCard = ({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {onShareToChat && (
+          {onShareToChat && !readOnly && (
             <button
               type="button"
               onClick={() => onShareToChat(pollData)}
@@ -212,7 +213,7 @@ const PollCard = ({
               <FiShare2 size={12} /> Share
             </button>
           )}
-          {canManage && !isClosed && (
+          {canManage && !readOnly && !isClosed && (
             <button
               type="button"
               onClick={handleClosePoll}
@@ -256,13 +257,13 @@ const PollCard = ({
             <button
               key={optId}
               type="button"
-              disabled={isClosed || isVoting}
+              disabled={readOnly || isClosed || isVoting}
               onClick={() => handleVote(optId)}
               className={`group relative w-full overflow-hidden rounded-xl border p-2.5 text-left transition-all cursor-pointer ${
                 isSelected
                   ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/50 dark:border-sky-400 dark:bg-sky-950/20'
                   : 'border-slate-200/80 bg-slate-50/60 hover:border-sky-300 hover:bg-slate-100/60 dark:border-[#303030] dark:bg-[#252528] dark:hover:border-[#48484e]'
-              } ${isClosed ? 'cursor-default' : ''}`}
+              } ${isClosed || readOnly ? 'cursor-default' : ''}`}
             >
               {}
               <div
