@@ -18,6 +18,8 @@ import {
   FiPhone,
   FiBell,
   FiBellOff,
+  FiMic,
+  FiSquare,
 } from 'react-icons/fi';
 import { BsPin } from 'react-icons/bs';
 import {
@@ -26,6 +28,7 @@ import {
   getCurrentChatUser,
   formatFileSize,
   getFileExtension,
+  getChatAttachments,
   parseAttachmentFromText,
   getMessagePollId,
   stripPollMetadata,
@@ -56,6 +59,39 @@ const ChatAvatar = ({ src, name, className, color }) => {
     : <div className={`${className} ${color || getAvatarColor(name)} rounded-full text-white font-semibold flex items-center justify-center shrink-0 select-none`}>{initials}</div>;
 };
 
+const VoiceNotePlayer = ({ projectId, attachment }) => {
+  const [audioUrl, setAudioUrl] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl = '';
+    downloadChatAttachment(projectId, attachment)
+      .then((blob) => {
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
+        setAudioUrl(objectUrl);
+      })
+      .catch((downloadError) => {
+        if (active) setError(downloadError.message || 'Voice note could not be loaded.');
+      });
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [projectId, attachment.id, attachment.attachmentId, attachment.downloadUrl]);
+
+  return (
+    <div className="mt-2 flex min-w-0 items-start gap-2.5 rounded-xl border border-sky-200 bg-white/70 p-2.5 dark:border-white/10 dark:bg-white/5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-400"><FiMic size={17} /></span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold">{attachment.fileName || attachment.name || 'Voice note'}</p>
+        {audioUrl ? <audio controls preload="none" src={audioUrl} className="mt-1 h-9 w-full max-w-[260px]" aria-label="Play voice note" /> : <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{error || 'Loading voice note…'}</p>}
+      </div>
+    </div>
+  );
+};
+
 const ChatArea = ({
   activeChat,
   messages = [],
@@ -79,7 +115,10 @@ const ChatArea = ({
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedAttachments, setSelectedAttachments] = useState([]);
+  const [chatAttachmentMetadata, setChatAttachmentMetadata] = useState({});
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [voiceRecordingSeconds, setVoiceRecordingSeconds] = useState(0);
   const [attachmentError, setAttachmentError] = useState('');
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
@@ -109,6 +148,12 @@ const ChatArea = ({
   const currentChatIdRef = useRef(activeChat?.id);
   const attachmentProjectIdRef = useRef(activeChat?.id);
   const uploadIdRef = useRef(0);
+  const voiceRecorderRef = useRef(null);
+  const voiceStreamRef = useRef(null);
+  const voiceChunksRef = useRef([]);
+  const voiceTimerRef = useRef(null);
+  const voiceRecordingProjectRef = useRef(null);
+  const pendingAudioUrlsRef = useRef(new Set());
   const previewObjectUrlRef = useRef(null);
   const messageMenuRef = useRef(null);
 
@@ -170,11 +215,31 @@ const ChatArea = ({
   useEffect(() => {
     if (attachmentProjectIdRef.current === activeChat?.id) return;
     attachmentProjectIdRef.current = activeChat?.id;
+    pendingAudioUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    pendingAudioUrlsRef.current.clear();
     setSelectedAttachments([]);
     setAttachmentError('');
     setInputText('');
     closeImagePreview();
   }, [activeChat?.id, closeImagePreview]);
+
+  useEffect(() => {
+    if (!activeChat?.id) {
+      setChatAttachmentMetadata({});
+      return undefined;
+    }
+    let active = true;
+    setChatAttachmentMetadata({});
+    getChatAttachments(activeChat.id, { page: 0, size: 100 })
+      .then((result) => {
+        if (!active) return;
+        setChatAttachmentMetadata(Object.fromEntries((result.items || []).map((item) => [String(item.id), item])));
+      })
+      .catch(() => {
+        if (active) setChatAttachmentMetadata({});
+      });
+    return () => { active = false; };
+  }, [activeChat?.id]);
 
   useLayoutEffect(() => {
     const container = messagesContainerRef.current;
@@ -256,10 +321,7 @@ const ChatArea = ({
     inputRef.current?.focus();
   };
 
-  const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files || []);
-    const projectId = activeChat?.id;
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const uploadSelectedFiles = async (files, projectId = activeChat?.id) => {
     if (readOnly || !projectId || files.length === 0) return;
 
     const slots = Math.max(0, 10 - selectedAttachments.length);
@@ -285,11 +347,14 @@ const ChatArea = ({
     setIsUploadingAttachments(true);
     for (const file of acceptedFiles) {
       const localId = `chat-upload-${++uploadIdRef.current}`;
+      const previewUrl = file.type?.startsWith('audio/') ? URL.createObjectURL(file) : '';
+      if (previewUrl) pendingAudioUrlsRef.current.add(previewUrl);
       setSelectedAttachments((current) => [...current, {
         localId,
         name: file.name,
         size: file.size,
         contentType: file.type || 'application/octet-stream',
+        previewUrl,
         status: 'uploading',
       }]);
 
@@ -321,14 +386,110 @@ const ChatArea = ({
     setIsUploadingAttachments(false);
   };
 
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    uploadSelectedFiles(files);
+  };
+
+  const stopVoiceRecording = () => {
+    if (voiceTimerRef.current) {
+      window.clearInterval(voiceTimerRef.current);
+      voiceTimerRef.current = null;
+    }
+    if (voiceRecorderRef.current?.state === 'recording') voiceRecorderRef.current.stop();
+  };
+
+  const startVoiceRecording = async () => {
+    if (readOnly || !activeChat?.id || isUploadingAttachments || selectedAttachments.length >= 10) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setAttachmentError('Voice recording is not supported by this browser.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      voiceStreamRef.current = stream;
+      voiceChunksRef.current = [];
+      const supportedTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+      const mimeType = supportedTypes.find((type) => MediaRecorder.isTypeSupported?.(type));
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const projectId = activeChat.id;
+      voiceRecordingProjectRef.current = projectId;
+      recorder.ondataavailable = (event) => {
+        if (event.data?.size) voiceChunksRef.current.push(event.data);
+      };
+      recorder.onerror = () => {
+        setAttachmentError('There was a problem recording your voice note.');
+        setIsRecordingVoice(false);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      recorder.onstop = () => {
+        setIsRecordingVoice(false);
+        setVoiceRecordingSeconds(0);
+        stream.getTracks().forEach((track) => track.stop());
+        voiceStreamRef.current = null;
+        voiceRecorderRef.current = null;
+        if (attachmentProjectIdRef.current !== projectId) {
+          voiceRecordingProjectRef.current = null;
+          voiceChunksRef.current = [];
+          return;
+        }
+        const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        voiceChunksRef.current = [];
+        if (!blob.size) {
+          setAttachmentError('The voice note was empty. Try recording again.');
+          return;
+        }
+        const extension = blob.type.includes('mp4') ? 'm4a' : 'webm';
+        const file = new File([blob], `voice-note-${Date.now()}.${extension}`, { type: blob.type || 'audio/webm' });
+        voiceRecordingProjectRef.current = null;
+        uploadSelectedFiles([file], projectId);
+      };
+      recorder.start();
+      voiceRecorderRef.current = recorder;
+      setAttachmentError('');
+      setIsRecordingVoice(true);
+      setVoiceRecordingSeconds(0);
+      voiceTimerRef.current = window.setInterval(() => setVoiceRecordingSeconds((seconds) => seconds + 1), 1000);
+    } catch (error) {
+      setAttachmentError(error.name === 'NotAllowedError' ? 'Allow microphone access to record a voice note.' : error.message || 'Could not start voice recording.');
+      voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
+      voiceStreamRef.current = null;
+    }
+  };
+
+  useEffect(() => () => {
+    attachmentProjectIdRef.current = null;
+    if (voiceTimerRef.current) window.clearInterval(voiceTimerRef.current);
+    voiceRecorderRef.current?.stop();
+    voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
+    pendingAudioUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    pendingAudioUrlsRef.current.clear();
+  }, []);
+
+  useEffect(() => {
+    if (!voiceRecordingProjectRef.current || voiceRecordingProjectRef.current === activeChat?.id) return;
+    if (voiceTimerRef.current) window.clearInterval(voiceTimerRef.current);
+    voiceTimerRef.current = null;
+    voiceRecorderRef.current?.stop();
+    setIsRecordingVoice(false);
+    setVoiceRecordingSeconds(0);
+  }, [activeChat?.id]);
+
   const handleRemoveAttachment = (localId) => {
+    const selected = selectedAttachments.find((attachment) => attachment.localId === localId);
+    if (selected?.previewUrl) {
+      URL.revokeObjectURL(selected.previewUrl);
+      pendingAudioUrlsRef.current.delete(selected.previewUrl);
+    }
     setSelectedAttachments((current) => current.filter((item) => item.localId !== localId));
     setAttachmentError('');
   };
 
   const handleSend = (e) => {
     e?.preventDefault();
-    if (readOnly) return;
+    if (readOnly || isRecordingVoice) return;
     const text = inputText.trim();
     if (isUploadingAttachments) {
       setAttachmentError('Wait for the selected files to finish uploading.');
@@ -344,6 +505,12 @@ const ChatArea = ({
     const attachmentIds = selectedAttachments.map((attachment) => attachment.id);
     const sent = onSendMessage(text, attachmentIds);
     if (sent === false) return;
+    selectedAttachments.forEach((attachment) => {
+      if (attachment.previewUrl) {
+        URL.revokeObjectURL(attachment.previewUrl);
+        pendingAudioUrlsRef.current.delete(attachment.previewUrl);
+      }
+    });
     setInputText('');
     setSelectedAttachments([]);
     setAttachmentError('');
@@ -767,7 +934,11 @@ const ChatArea = ({
             const { cleanText, attachment: parsedAtt } = parseAttachmentFromText(msg.text || '');
             const messageAttachments = isDeleted ? [] : (Array.isArray(msg.attachments) && msg.attachments.length
               ? msg.attachments
-              : (msg.attachment ? [msg.attachment] : parsedAtt ? [parsedAtt] : []));
+              : msg.attachment
+                ? [msg.attachment]
+                : Array.isArray(msg.attachmentIds) && msg.attachmentIds.length
+                  ? msg.attachmentIds.map((id) => chatAttachmentMetadata[String(id)] || { id })
+                  : parsedAtt ? [parsedAtt] : []);
             const displayText = isDeleted
               ? ''
               : stripPollMetadata(cleanText).replace('📊 Poll:', '🗳️ Poll:');
@@ -917,35 +1088,45 @@ const ChatArea = ({
                           {displayText && <p className="min-w-0 max-w-full [overflow-wrap:anywhere]">{displayText}</p>}
 
                           {messageAttachments.map((rawAttachment, attachmentIndex) => {
+                            const attachmentId = rawAttachment.id || rawAttachment.attachmentId;
+                            const attachmentDetails = { ...(chatAttachmentMetadata[String(attachmentId)] || {}), ...rawAttachment };
                             const attachment = {
-                              ...rawAttachment,
-                              name: rawAttachment.fileName || rawAttachment.name || 'Attachment',
-                              size: rawAttachment.sizeBytes ?? rawAttachment.size ?? 0,
-                              type: rawAttachment.contentType || rawAttachment.type || '',
-                              downloadUrl: rawAttachment.downloadUrl || rawAttachment.url,
+                              ...attachmentDetails,
+                              name: attachmentDetails.fileName || attachmentDetails.name || 'Attachment',
+                              size: attachmentDetails.sizeBytes ?? attachmentDetails.size ?? 0,
+                              type: attachmentDetails.contentType || attachmentDetails.type || '',
+                              downloadUrl: attachmentDetails.downloadUrl || attachmentDetails.url,
                             };
-                            const isImage = rawAttachment.isImage || attachment.type.startsWith('image/');
+                            const isImage = attachmentDetails.isImage || attachment.type.startsWith('image/');
+                            const isAudio = attachment.type.startsWith('audio/') || /\.(webm|m4a|mp3|wav|ogg|aac)$/i.test(attachment.name);
                             return (
                               <div key={rawAttachment.id || attachmentIndex} className={`mt-2 flex min-w-0 items-center gap-2.5 rounded-xl border p-2.5 ${
                                 isOutgoing
                                   ? 'bg-white/60 dark:bg-white/5 border-sky-300 dark:border-white/10 text-slate-900 dark:text-white'
                                   : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white'
                               }`}>
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-400">
-                                  {isImage ? <FiImage size={18} /> : <FiFileText size={18} />}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  {isImage ? (
-                                    <button type="button" onClick={() => handlePreviewAttachment(attachment)} className="block max-w-full truncate text-left text-xs font-semibold hover:text-sky-600 dark:hover:text-sky-400">
-                                      {attachment.name}
-                                    </button>
-                                  ) : (
-                                    <p className="truncate text-xs font-semibold">{attachment.name}</p>
-                                  )}
-                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                    {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
-                                  </p>
-                                </div>
+                                {isAudio ? (
+                                  <div className="min-w-0 flex-1">
+                                    <VoiceNotePlayer projectId={activeChat?.id} attachment={attachment} />
+                                    <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{formatFileSize(attachment.size)}</p>
+                                  </div>
+                                ) : <>
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-400">
+                                    {isImage ? <FiImage size={18} /> : <FiFileText size={18} />}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    {isImage ? (
+                                      <button type="button" onClick={() => handlePreviewAttachment(attachment)} className="block max-w-full truncate text-left text-xs font-semibold hover:text-sky-600 dark:hover:text-sky-400">
+                                        {attachment.name}
+                                      </button>
+                                    ) : (
+                                      <p className="truncate text-xs font-semibold">{attachment.name}</p>
+                                    )}
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                      {formatFileSize(attachment.size)} • {getFileExtension(attachment.name)}
+                                    </p>
+                                  </div>
+                                </>}
                                 <button type="button" onClick={() => handleDownloadAttachment(attachment)} className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-white/80 hover:text-sky-600 dark:hover:bg-white/10 dark:hover:text-sky-400" title="Download attachment">
                                   <FiDownload size={16} />
                                 </button>
@@ -994,6 +1175,7 @@ const ChatArea = ({
                   <p className="text-[10px] text-slate-500 dark:text-slate-400">
                     {formatFileSize(attachment.size)} · {attachment.status === 'uploading' ? 'Uploading…' : attachment.status === 'failed' ? 'Upload failed' : 'Uploaded'}
                   </p>
+                  {attachment.previewUrl && <audio controls preload="metadata" src={attachment.previewUrl} className="mt-1 h-7 w-48 max-w-full" aria-label="Preview voice note" />}
                 </div>
                 {attachment.status === 'uploading' ? (
                   <span className="ml-1 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-sky-500/30 border-t-sky-500" />
@@ -1014,7 +1196,7 @@ const ChatArea = ({
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+          accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -1027,6 +1209,18 @@ const ChatArea = ({
           className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <FiPaperclip size={18} />
+        </button>
+
+        <button
+          type="button"
+          onClick={isRecordingVoice ? stopVoiceRecording : startVoiceRecording}
+          disabled={isUploadingAttachments || (!isRecordingVoice && selectedAttachments.length >= 10)}
+          title={isRecordingVoice ? 'Stop and attach voice note' : 'Record a voice note'}
+          aria-label={isRecordingVoice ? 'Stop voice note recording' : 'Record a voice note'}
+          className={`inline-flex items-center gap-1.5 rounded-full p-1.5 transition cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:opacity-40 ${isRecordingVoice ? 'text-rose-500 hover:text-rose-600 dark:text-rose-400' : 'text-sky-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300'}`}
+        >
+          {isRecordingVoice ? <FiSquare size={16} fill="currentColor" /> : <FiMic size={18} />}
+          {isRecordingVoice && <span className="min-w-[2.4rem] text-[11px] font-semibold tabular-nums">{String(Math.floor(voiceRecordingSeconds / 60)).padStart(2, '0')}:{String(voiceRecordingSeconds % 60).padStart(2, '0')}</span>}
         </button>
 
         {}
@@ -1084,7 +1278,7 @@ const ChatArea = ({
         {}
         <button
           type="submit"
-          disabled={isUploadingAttachments || selectedAttachments.some((attachment) => attachment.status === 'failed') || (!inputText.trim() && !selectedAttachments.some((attachment) => attachment.status === 'uploaded'))}
+          disabled={isUploadingAttachments || isRecordingVoice || selectedAttachments.some((attachment) => attachment.status === 'failed') || (!inputText.trim() && !selectedAttachments.some((attachment) => attachment.status === 'uploaded'))}
           title={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Send message'}
           className="p-2 rounded-full text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 disabled:opacity-40 transition cursor-pointer shrink-0"
         >
