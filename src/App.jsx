@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import 'react-toastify/dist/ReactToastify.css';
+import AppToaster from './components/ui/AppToaster';
 import LandingPage from './components/landingPage';
 import LegalPage from './pages/LegalPage';
 import Signup from './features/auth/pages/Signup';
@@ -31,6 +33,7 @@ function App() {
   return (
     <>
       <AuthSessionManager />
+      <AppToaster />
       <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/privacy" element={<LegalPage type="privacy" />} />
