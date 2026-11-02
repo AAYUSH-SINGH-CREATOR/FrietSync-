@@ -7,6 +7,7 @@ const documents = {
   privacy: {
     title: 'Privacy Policy for Frietsync',
     pageTitle: 'Privacy Policy | Frietsync',
+    description: 'Learn how Frietsync collects, uses, and protects personal information when you use the Frietsync project collaboration service.',
     sections: [
       {
         title: 'Introduction',
@@ -57,6 +58,7 @@ const documents = {
   terms: {
     title: 'Terms of Service for Frietsync',
     pageTitle: 'Terms of Service | Frietsync',
+    description: 'Read the terms that apply when you access or use Frietsync, the project management and team collaboration service.',
     sections: [
       {
         title: 'Agreement to Terms',
@@ -137,10 +139,36 @@ export default function LegalPage({ type }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const canonicalUrl = `https://frietsync.me/${type}`;
+    const pageMetadata = [
+      ['meta[name="description"]', 'content', document.description],
+      ['link[rel="canonical"]', 'href', canonicalUrl],
+      ['meta[property="og:title"]', 'content', document.pageTitle],
+      ['meta[property="og:description"]', 'content', document.description],
+      ['meta[property="og:url"]', 'content', canonicalUrl],
+      ['meta[name="twitter:title"]', 'content', document.pageTitle],
+      ['meta[name="twitter:description"]', 'content', document.description],
+    ];
     const previousTitle = window.document.title;
+    const previousMetadata = pageMetadata.map(([selector, attribute]) => {
+      const element = window.document.querySelector(selector);
+      return { element, attribute, value: element?.getAttribute(attribute) };
+    });
+
     window.document.title = document.pageTitle;
-    return () => { window.document.title = previousTitle; };
-  }, [document.pageTitle]);
+    pageMetadata.forEach(([selector, attribute, value]) => {
+      window.document.querySelector(selector)?.setAttribute(attribute, value);
+    });
+
+    return () => {
+      window.document.title = previousTitle;
+      previousMetadata.forEach(({ element, attribute, value }) => {
+        if (!element) return;
+        if (value === null) element.removeAttribute(attribute);
+        else element.setAttribute(attribute, value);
+      });
+    };
+  }, [document.description, document.pageTitle, type]);
 
   const otherPage = type === 'privacy'
     ? { label: 'Terms of Service', to: '/terms' }

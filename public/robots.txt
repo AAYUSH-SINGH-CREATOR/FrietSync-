@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /create-workspace
+Disallow: /invite
+Disallow: /verify-otp
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+
+Sitemap: https://frietsync.me/sitemap.xml
