@@ -28,15 +28,38 @@ export const uploadChatAttachment = async (projectId, file) => {
   }
 };
 
+export const getChatAttachments = async (projectId, { page = 0, size = 50 } = {}) => {
+  if (!projectId) return { items: [], page: 0, size, totalElements: 0, totalPages: 0 };
+  try {
+    const response = await axios.get(`${BASE_URL}/projects/${projectId}/chat/attachments`, {
+      params: { page: Math.max(0, page), size: Math.min(Math.max(size, 1), 100) },
+      ...getAuthHeaders(),
+    });
+    const data = response.data?.data || response.data;
+    return {
+      items: Array.isArray(data?.items) ? data.items : [],
+      page: Number(data?.page ?? page),
+      size: Number(data?.size ?? size),
+      totalElements: Number(data?.totalElements ?? 0),
+      totalPages: Number(data?.totalPages ?? 0),
+    };
+  } catch (error) {
+    throw new Error(getFriendlyErrorMessage(error, 'chat') || 'Failed to load chat attachments.');
+  }
+};
+
 export const downloadChatAttachment = async (projectId, attachment) => {
-  if (!projectId || !attachment?.downloadUrl) {
+  if (!projectId || (!attachment?.id && !attachment?.attachmentId && !attachment?.downloadUrl)) {
     throw new Error('Chat attachment download information is missing.');
   }
 
-  const apiOrigin = BASE_URL.replace(/\/api\/v1\/?$/, '');
-  const downloadUrl = /^https?:\/\//i.test(attachment.downloadUrl)
-    ? attachment.downloadUrl
-    : `${apiOrigin}${attachment.downloadUrl.startsWith('/') ? '' : '/'}${attachment.downloadUrl}`;
+  const attachmentId = attachment?.id || attachment?.attachmentId;
+  const apiOrigin = BASE_URL.replace(/\/$/, '');
+  const downloadUrl = attachmentId
+    ? `${apiOrigin}/projects/${encodeURIComponent(projectId)}/chat/attachments/${encodeURIComponent(attachmentId)}/download`
+    : /^https?:\/\//i.test(attachment.downloadUrl)
+      ? attachment.downloadUrl
+      : `${BASE_URL.replace(/\/api\/v1\/?$/, '')}${attachment.downloadUrl.startsWith('/') ? '' : '/'}${attachment.downloadUrl}`;
   const token = getAuthToken();
 
   try {
