@@ -199,7 +199,6 @@ const ProjectDetailsView = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [toastNotice, setToastNotice] = useState(null);
   const [isUpdatingProjectStatus, setIsUpdatingProjectStatus] = useState(false);
-  const [reopenStatus, setReopenStatus] = useState('ACTIVE');
 
   
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
@@ -1014,31 +1013,9 @@ const ProjectDetailsView = () => {
             <>
               {isProjectClosed ? (
                 <div className="flex items-center gap-1.5">
-                  <label htmlFor="reopen-project-status" className="sr-only">
-                    {projectStatus === 'COMPLETED' ? 'Reopen project as' : 'Restore project as'}
-                  </label>
-                  <select
-                    id="reopen-project-status"
-                    value={reopenStatus}
-                    onChange={(event) => setReopenStatus(event.target.value)}
-                    disabled={isUpdatingProjectStatus}
-                    className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 dark:border-[#35353d] dark:bg-[#222228] dark:text-slate-200"
-                  >
-                    {projectStatus === 'COMPLETED' ? (
-                      <>
-                        <option value="ACTIVE">Active</option>
-                        <option value="PLANNING">Planning</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="PLANNING">Planning</option>
-                        <option value="ACTIVE">Active</option>
-                      </>
-                    )}
-                  </select>
                   <button
                     type="button"
-                    onClick={() => changeProjectStatus(reopenStatus)}
+                    onClick={() => changeProjectStatus('ACTIVE')}
                     disabled={isUpdatingProjectStatus}
                     title={projectStatus === 'COMPLETED' ? 'Reopen or resume project' : 'Restore project'}
                     className="px-3 py-2 rounded-xl border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-500/20 transition disabled:opacity-50 cursor-pointer"

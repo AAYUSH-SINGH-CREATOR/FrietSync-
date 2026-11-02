@@ -21,6 +21,7 @@ import {
   FiCalendar,
   FiArrowRight,
   FiAlertCircle,
+  FiSunrise,
 } from 'react-icons/fi';
 
 import { getMyWorkspace, getFriendlyErrorMessage } from '../services/workspaceApi';
@@ -644,6 +645,18 @@ const DashboardOverview = () => {
           </select>
         </label>
       </div>
+
+      <button
+        type="button"
+        onClick={() => navigate('/dashboard/briefing')}
+        className="group flex w-full flex-wrap items-center justify-between gap-4 rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 to-indigo-50 p-4 text-left shadow-xs transition hover:border-sky-400 hover:shadow-md dark:border-sky-500/20 dark:from-[#172536] dark:to-[#211e35]"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300"><FiSunrise size={21} /></span>
+          <span><strong className="block text-sm font-bold">Your Daily Briefing</strong><span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Deadlines, tasks, meetings, and project updates in one place.</span></span>
+        </span>
+        <span className="rounded-xl bg-sky-600 px-4 py-2 text-xs font-bold text-white transition group-hover:bg-sky-700">Open briefing</span>
+      </button>
 
       {}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -14,6 +14,7 @@ import DashboardOverview from './features/dashboard/components/DashboardOverview
 import IssuesView from './features/dashboard/components/IssuesView';
 import SprintsView from './features/dashboard/components/SprintsView';
 import MyWorkView from './features/dashboard/components/MyWorkView';
+import DailyBriefingView from './features/dashboard/components/DailyBriefingView';
 import CalendarView from './features/calendar/pages/CalendarView';
 import TeamView from './features/dashboard/components/TeamView';
 import DependencyGraphView from './features/issues/components/DependencyGraphView';
@@ -51,6 +52,7 @@ function App() {
           <Route path="issues/dependency-graph/:projectId" element={<DependencyGraphView />} />
           <Route path="sprints" element={<SprintsView />} />
           <Route path="my-work" element={<MyWorkView />} />
+          <Route path="briefing" element={<DailyBriefingView />} />
           <Route path="calendar" element={<CalendarView />} />
           <Route path="chats" element={<></>} />
           <Route path="invites" element={<InvitesView />} />
