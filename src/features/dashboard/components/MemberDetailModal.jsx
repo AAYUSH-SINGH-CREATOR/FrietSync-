@@ -345,7 +345,7 @@ const MemberDetailModal = ({ member, isOpen, onClose }) => {
                 <StatCard
                   icon={FiActivity}
                   label="Completion"
-                  value={record.sprints?.completionRate ? `${(record.sprints.completionRate * 100).toFixed(0)}%` : '-'}
+                  value={record.sprints?.completionRate ? `${record.sprints.completionRate.toFixed(0)}%` : '-'}
                   colorClass="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
                 />
               </div>
