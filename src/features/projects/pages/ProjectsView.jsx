@@ -18,6 +18,7 @@ import CreateProjectModal from '../components/CreateProjectModal';
 import EmptyState from '../../../components/ui/EmptyState';
 import esproject from '../../../assets/esproject.png';
 import { canCreateProject, formatDate, getProjectProgress } from '../utils/projectUtils';
+import { notifySuccess } from '../../../utils/toast';
 const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }) => {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
@@ -31,7 +32,6 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('recent');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [successNotice, setSuccessNotice] = useState('');
 
   const reloadProjects = useCallback(() => {
     setIsLoading(true);
@@ -109,12 +109,9 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
   }, []);
 
   const handleProjectCreated = (created) => {
-    const createdName = created?.name || created?.project?.name || 'Project';
-    setSuccessNotice(`"${createdName}" was created successfully!`);
+    const createdName = created?.name || created?.project?.name;
+    notifySuccess(createdName ? `"${createdName}" was created successfully.` : 'Project created successfully.');
     reloadProjects();
-    setTimeout(() => {
-      setSuccessNotice('');
-    }, 4500);
   };
 
   const counts = useMemo(() => {
@@ -249,22 +246,6 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
       </div>
 
       {}
-      {successNotice && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-[#34D399] text-xs sm:text-sm flex items-center justify-between gap-3 animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <FiCheckCircle className="shrink-0 text-emerald-600 dark:text-[#34D399]" size={17} />
-            <span className="font-medium">{successNotice}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSuccessNotice('')}
-            className="text-emerald-700 dark:text-[#34D399] hover:text-emerald-900 dark:hover:text-emerald-200 text-xs font-semibold cursor-pointer"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {}
       {error && (
         <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800/60 text-red-700 dark:text-[#F87171] text-xs sm:text-sm flex items-center justify-between gap-3">

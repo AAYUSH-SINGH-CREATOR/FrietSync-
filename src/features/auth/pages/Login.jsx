@@ -4,6 +4,7 @@ import AuthLayout from '../../../components/layout/AuthLayout';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { loginUser, getFriendlyErrorMessage } from '../services/authApi';
+import { notifySuccess } from '../../../utils/toast';
 import loginImg from '../../../assets/loginimg.svg';
 
 
@@ -62,6 +63,7 @@ const Login = () => {
     try {
       await loginUser(formData);
       sessionStorage.removeItem('login_form');
+      notifySuccess('Logged in successfully. Welcome back!');
       navigate('/dashboard');
     } catch (error) {
       const status = error.response?.status || error.status;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiAlertTriangle, FiX, FiTrash2 } from 'react-icons/fi';
 import { deleteProject, getFriendlyErrorMessage } from '../services/projectApi';
+import { notifySuccess } from '../../../utils/toast';
 
 const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,6 +33,7 @@ const DeleteProjectModal = ({ isOpen, onClose, project, onProjectDeleted }) => {
 
     try {
       await deleteProject(projectId);
+      notifySuccess(`"${projectName}" deleted successfully.`);
       if (onProjectDeleted) {
         onProjectDeleted(projectId);
       }
