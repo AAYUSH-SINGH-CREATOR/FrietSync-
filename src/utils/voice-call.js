@@ -3,7 +3,7 @@ import adapter from 'webrtc-adapter';
 
 let janusInit = null;
 
-function initJanus() {
+export function initJanus() {
   if (!janusInit) {
     janusInit = new Promise((resolve) => {
       Janus.init({
