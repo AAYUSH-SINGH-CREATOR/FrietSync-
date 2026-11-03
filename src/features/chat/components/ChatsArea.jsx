@@ -21,6 +21,7 @@ import {
   FiBellOff,
   FiMic,
   FiSquare,
+  FiAlertCircle,
 } from 'react-icons/fi';
 import { BsPin } from 'react-icons/bs';
 import {
@@ -114,6 +115,7 @@ const ChatArea = ({
   voiceCall,
   videoCall,
   readOnly = false,
+  projectStatusMessage = '',
 }) => {
   const [inputText, setInputText] = useState('');
   const [selectedAttachments, setSelectedAttachments] = useState([]);
@@ -674,9 +676,10 @@ const ChatArea = ({
   const isMessagePinned = (messageId) => pinnedMessages.some((m) => String(m.id) === String(messageId));
 
   const displayedMessages = useMemo(() => {
-    if (!searchInChat.trim()) return messages;
+    const visibleMessages = messages.filter((message) => !message.deleted && String(message.status || '').toUpperCase() !== 'DELETED');
+    if (!searchInChat.trim()) return visibleMessages;
     const q = searchInChat.trim().toLowerCase();
-    return messages.filter((m) => {
+    return visibleMessages.filter((m) => {
       const { cleanText, attachment: legacyAttachment } = parseAttachmentFromText(m.text || '');
       const attachments = Array.isArray(m.attachments) && m.attachments.length
         ? m.attachments
@@ -830,6 +833,12 @@ const ChatArea = ({
           </button>
         </div>
       </div>
+      {projectStatusMessage && (
+        <div role="status" className="mx-2.5 mt-2.5 flex shrink-0 items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200 sm:mx-3">
+          <FiAlertCircle size={16} className="mt-0.5 shrink-0" />
+          <p>{projectStatusMessage}</p>
+        </div>
+      )}
       {isSearchOpen && (
         <div className="mx-3 mt-2 px-3 py-1.5 bg-white dark:bg-[#171717] rounded-xl border border-sky-100 dark:border-white/5 shadow-xs flex items-center gap-2 text-xs shrink-0 min-w-0">
           <FiSearch className="text-slate-400" size={14} />

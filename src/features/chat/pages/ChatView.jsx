@@ -93,8 +93,15 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   }, [activeConversationId, projects]);
 
   const activeProjectId = activeChat?.id || null;
-  const activeProjectStatus = String(activeChat?.status || activeChat?.raw?.status || '').toUpperCase();
-  const isActiveProjectReadOnly = ['COMPLETED', 'CANCELLED', 'CANCELED'].includes(activeProjectStatus);
+  const activeProjectStatus = String(activeChat?.status || activeChat?.raw?.status || '').toUpperCase().replace(/[\s-]+/g, '_');
+  const isActiveProjectReadOnly = ['COMPLETED', 'CANCELLED', 'CANCELED', 'ON_HOLD', 'ONHOLD'].includes(activeProjectStatus);
+  const projectChatStatusMessage = activeProjectStatus === 'ON_HOLD' || activeProjectStatus === 'ONHOLD'
+    ? 'This project is on hold. Chat is paused until the project becomes active again.'
+    : activeProjectStatus === 'COMPLETED'
+      ? 'This project is completed. Its chat is read-only.'
+      : isActiveProjectReadOnly
+        ? 'This project is cancelled. Its chat is read-only.'
+        : '';
   const visibleCall = activeCallProjectId === activeProjectId ? activeCallDetails : null;
   const visibleCallId = visibleCall?.id || visibleCall?.callId || (activeCallProjectId === activeProjectId ? activeCallId : null);
   const currentUserId = String(currentUser.userId || currentUser.id || '');
@@ -132,7 +139,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
 
   
   useEffect(() => {
-    if (!activeProjectId) return undefined;
+    if (!activeProjectId || isActiveProjectReadOnly) return undefined;
 
     let isMounted = true;
     const refreshActiveCall = async () => {
@@ -166,7 +173,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     return () => {
       isMounted = false;
     };
-  }, [activeProjectId]);
+  }, [activeProjectId, isActiveProjectReadOnly]);
 
   const handleStartOrJoinCall = async () => {
     if (isActiveProjectReadOnly || !activeProjectId || joiningCallRef.current || joinedCallRef.current) return;
@@ -330,7 +337,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   }, [showToast]);
 
   useEffect(() => {
-    if (!activeProjectId) return undefined;
+    if (!activeProjectId || isActiveProjectReadOnly) return undefined;
     let current = true;
     findActiveCall(activeProjectId, 'VIDEO').then((response) => {
       if (!current) return;
@@ -344,7 +351,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       }
     }).catch(() => { if (current) { setVideoCallDetails(null); setIsVideoCallActive(false); } });
     return () => { current = false; };
-  }, [activeProjectId]);
+  }, [activeProjectId, isActiveProjectReadOnly]);
 
   const handleStartOrJoinVideoCall = async () => {
     if (isVideoCallJoined) { setShowVideoCall(true); return; }
@@ -567,6 +574,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
               pinned: Boolean(msg.pinned),
               pinnedAt: msg.pinnedAt,
               pinnedBy: msg.pinnedBy,
+              deleted: Boolean(msg.deleted || String(msg.status || '').toUpperCase() === 'DELETED'),
             };
           });
 
@@ -616,6 +624,11 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       stompClientRef.current = null;
     }
 
+    if (isActiveProjectReadOnly) {
+      setConnectionStatus('disconnected');
+      return () => { isMounted = false; };
+    }
+
     const client = new StompChatClient({
       onStatusChange: (status) => {
         if (isMounted) setConnectionStatus(status);
@@ -654,6 +667,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         pinned: Boolean(receivedMsg.pinned),
         pinnedAt: receivedMsg.pinnedAt,
         pinnedBy: receivedMsg.pinnedBy,
+        deleted: Boolean(receivedMsg.deleted || String(receivedMsg.status || '').toUpperCase() === 'DELETED'),
       };
 
       setMessagesMap((prev) => {
@@ -757,7 +771,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       }
     };
     
-  }, [activeProjectId, leaveVideoCall]);
+  }, [activeProjectId, isActiveProjectReadOnly, leaveVideoCall]);
 
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
@@ -870,27 +884,13 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     });
   };
 
-  const handleMessageDelete = (messageId, deletedMessage) => {
+  const handleMessageDelete = (messageId) => {
     if (!activeChat?.id || !messageId) return;
     setMessagesMap((prev) => {
       const currentList = prev[activeChat.id] || [];
-      const updatedList = currentList.map((msg) => {
-        if (String(msg.id) === String(messageId)) {
-          return {
-            ...msg,
-            text: '',
-            deleted: true,
-            attachments: [],
-            timestamp: formatMessageTime(deletedMessage.createdAt || msg.timestamp),
-            editedAt: deletedMessage.updatedAt,
-            metadata: deletedMessage.metadata || msg.metadata,
-          };
-        }
-        return msg;
-      });
       return {
         ...prev,
-        [activeChat.id]: updatedList,
+        [activeChat.id]: currentList.filter((msg) => String(msg.id) !== String(messageId)),
       };
     });
   };
@@ -1000,6 +1000,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
           <ChatArea
             activeChat={activeChat}
             readOnly={isActiveProjectReadOnly}
+            projectStatusMessage={projectChatStatusMessage}
             messages={activeMessages}
             onSendMessage={handleSendMessage}
             onBackToList={() => setIsMobileThreadOpen(false)}

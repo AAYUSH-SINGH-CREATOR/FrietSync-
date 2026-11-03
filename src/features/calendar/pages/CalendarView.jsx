@@ -26,7 +26,7 @@ import {
   normalizeGenericCalendarEvent,
 } from '../services/calendarApi';
 
-const DEFAULT_CATEGORIES = ['meeting', 'issue', 'sprint', 'milestone', 'google'];
+const DEFAULT_CATEGORIES = ['meeting', 'google'];
 let projectsRequestInFlight = null;
 
 const loadCalendarProjects = () => {
