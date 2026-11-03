@@ -16,6 +16,7 @@ import {
   FiTrash2,
   FiCheck,
   FiPhone,
+  FiVideo,
   FiBell,
   FiBellOff,
   FiMic,
@@ -111,6 +112,7 @@ const ChatArea = ({
   onPinnedMessagesChange,
   showToast,
   voiceCall,
+  videoCall,
   readOnly = false,
 }) => {
   const [inputText, setInputText] = useState('');
@@ -817,6 +819,7 @@ const ChatArea = ({
               </button>
             </div>
           )}
+          {videoCall && <button type="button" onClick={videoCall.onStart} disabled={videoCall.isJoining} title={videoCall.isJoining ? 'Connecting to video call' : videoCall.isJoined ? 'Open video call' : videoCall.isCallActive ? 'Join video call' : 'Start video call'} aria-label={videoCall.isJoined ? 'Open video call' : videoCall.isCallActive ? 'Join video call' : 'Start video call'} className={`rounded-xl p-2 transition disabled:opacity-50 ${videoCall.isCallActive || videoCall.isJoined ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5'}`}><FiVideo size={18} /></button>}
           <button
             type="button"
             onClick={() => { onOpenGroupDetails?.(); setIsProjectDetailsOpen(true); }}
