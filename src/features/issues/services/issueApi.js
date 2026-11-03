@@ -3,7 +3,7 @@ import { getAccessToken } from '../../auth/services/authApi';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-const V2_BASE_URL = 'https://frietsync.live/api/v2';
+const V2_BASE_URL = import.meta.env.VITE_BASE_URLV2?.replace(/\/+$/, '') || '';
 
 const getAuthHeaders = (params = {}) => {
   const token = getAccessToken();

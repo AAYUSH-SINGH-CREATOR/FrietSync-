@@ -63,13 +63,13 @@ export const voiceCallApi = {
     }
   },
 
-  findActiveCall: async (projectId) => {
+  findActiveCall: async (projectId, type = 'VOICE') => {
     if (!projectId) {
       throw new Error('Project ID is required.');
     }
     try {
       const response = await axios.get(
-        `${BASE_URL}/projects/${projectId}/calls/active`,
+        `${BASE_URL}/projects/${projectId}/calls/active?type=${type}`,
         getAuthHeaders()
       );
       return response.data;
@@ -78,14 +78,14 @@ export const voiceCallApi = {
     }
   },
 
-  startCall: async (projectId) => {
+  startCall: async (projectId, type = 'VOICE') => {
     if (!projectId) {
       throw new Error('Project ID is required.');
     }
     try {
       const response = await axios.post(
         `${BASE_URL}/projects/${projectId}/calls`,
-        null,
+        { type },
         getAuthHeaders()
       );
       return response.data;
