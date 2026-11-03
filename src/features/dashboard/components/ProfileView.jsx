@@ -5,9 +5,10 @@ import {
   FiCamera,
   FiPlus,
   FiStar,
+  FiTrash2,
   FiX,
 } from 'react-icons/fi';
-import { updateProfile, uploadAvatar } from '../services/profileApi';
+import { updateProfile, uploadAvatar, removeAvatar } from '../services/profileApi';
 import profileBanner from '../../../assets/profile-banner.png';
 import defaultAvatar from '../../../assets/oggy-img.png';
 import { formatRoleLabel } from '../../../utils/formatRoleLabel';
@@ -48,6 +49,7 @@ const ProfileView = () => {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [isAddingSkill, setIsAddingSkill] = useState(false);
@@ -110,6 +112,24 @@ const ProfileView = () => {
       setFeedbackMsg({ type: 'error', text: error?.message || 'Failed to upload avatar.' });
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (isRemovingAvatar || isUploadingAvatar || !profile.profilePictureUrl) return;
+    setIsRemovingAvatar(true);
+    setFeedbackMsg(null);
+    try {
+      await removeAvatar();
+      const refreshedProfile = await refreshCurrentUserProfile();
+      setDraftProfile((prev) => ({ ...prev, profilePictureUrl: refreshedProfile?.profilePictureUrl || '' }));
+      setAvatarPreviewUrl('');
+      setFeedbackMsg({ type: 'success', text: 'Profile picture removed.' });
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (error) {
+      setFeedbackMsg({ type: 'error', text: error?.message || 'Failed to remove profile picture.' });
+    } finally {
+      setIsRemovingAvatar(false);
     }
   };
 
@@ -207,11 +227,23 @@ const ProfileView = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingAvatar}
+                      disabled={isUploadingAvatar || isRemovingAvatar}
                       title="Change profile picture"
                       className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white text-slate-800 hover:bg-slate-100 shadow-md flex items-center justify-center transition-transform hover:scale-105 cursor-pointer"
                     >
                       {isUploadingAvatar ? '…' : <FiCamera size={16} />}
+                    </button>
+                  )}
+                  {isEditing && profile.profilePictureUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      disabled={isUploadingAvatar || isRemovingAvatar}
+                      title="Remove profile picture"
+                      aria-label="Remove profile picture"
+                      className="absolute top-2.5 left-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white text-rose-600 shadow-md transition-transform hover:scale-105 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isRemovingAvatar ? '…' : <FiTrash2 size={15} />}
                     </button>
                   )}
                   <input

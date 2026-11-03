@@ -94,4 +94,13 @@ export const uploadAvatar = async (file) => {
   }
 };
 
-export default { getProfile, updateProfile, uploadAvatar, deleteMyAccount };
+export const removeAvatar = async () => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/users/me/profile-picture`, getAuthHeaders());
+    return unwrapProfile(response.data);
+  } catch (error) {
+    handleProfileError(error, 'Failed to remove profile picture.');
+  }
+};
+
+export default { getProfile, updateProfile, uploadAvatar, removeAvatar, deleteMyAccount };
