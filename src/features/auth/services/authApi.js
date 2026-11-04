@@ -1,6 +1,7 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 import axios from 'axios';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
+import { getCaptchaToken } from './recaptcha';
 
 export { getFriendlyErrorMessage };
 
@@ -228,7 +229,8 @@ export const saveUserData = (data, fallbackData = {}) => {
 
 export const registerUser = async (userData) => {
   try {
-    const apiData = { ...userData };
+    const recaptchaToken = await getCaptchaToken('signup');
+    const apiData = { ...userData, recaptchaToken };
     delete apiData.confirmPassword;
 
     const response = await axios.post(`${BASE_URL}/auth/signup`, apiData);
@@ -242,7 +244,8 @@ export const registerUser = async (userData) => {
 
 export const loginUser = async (userData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/login`, userData, {
+    const recaptchaToken = await getCaptchaToken('login');
+    const response = await axios.post(`${BASE_URL}/auth/login`, { ...userData, recaptchaToken }, {
       withCredentials: true,
     });
     const data = response.data;
@@ -274,7 +277,8 @@ export const verifyOtp = async (email, otp) => {
 
 export const sendForgotPasswordOtp = async (email) => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
+    const recaptchaToken = await getCaptchaToken('forgot_password');
+    const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email, recaptchaToken });
     return response.data;
   } catch (error) {
     handleAxiosError(error, 'Failed to send OTP.');
@@ -283,10 +287,12 @@ export const sendForgotPasswordOtp = async (email) => {
 
 export const resetPassword = async (email, otp, newPassword) => {
   try {
+    const recaptchaToken = await getCaptchaToken('forgot_password');
     const response = await axios.post(`${BASE_URL}/auth/reset-password`, {
       email,
       code: otp,
       newPassword,
+      recaptchaToken,
     });
     return response.data;
   } catch (error) {

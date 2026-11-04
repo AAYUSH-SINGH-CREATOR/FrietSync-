@@ -111,6 +111,10 @@ const Signup = () => {
       sessionStorage.removeItem('signup_form');
       navigate('/verify-otp', { state: { email: formData.email } });
     } catch (error) {
+      if (error.name === 'RecaptchaError') {
+        setErrorMessage(error.message);
+        return;
+      }
       const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 

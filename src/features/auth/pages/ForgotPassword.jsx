@@ -76,6 +76,10 @@ const ForgotPassword = () => {
       await sendForgotPasswordOtp(email);
       setStep(2);
     } catch (error) {
+      if (error.name === 'RecaptchaError') {
+        setErrorMessage(error.message);
+        return;
+      }
       const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 
@@ -106,6 +110,10 @@ const ForgotPassword = () => {
       setTimeout(() => setResendStatus(''), 4000);
     } catch (err) {
       setResendStatus('');
+      if (err.name === 'RecaptchaError') {
+        setErrorMessage(err.message);
+        return;
+      }
       const status = err.response?.status || err.status;
       if (status === 429) {
         setErrorMessage('Too many requests. Please wait a moment');
@@ -167,6 +175,10 @@ const ForgotPassword = () => {
       sessionStorage.removeItem('forgot_password_email');
       navigate('/login');
     } catch (error) {
+      if (error.name === 'RecaptchaError') {
+        setErrorMessage(error.message);
+        return;
+      }
       const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 

@@ -66,6 +66,10 @@ const Login = () => {
       notifySuccess('Logged in successfully. Welcome back!');
       navigate('/dashboard');
     } catch (error) {
+      if (error.name === 'RecaptchaError') {
+        setErrorMessage(error.message);
+        return;
+      }
       const status = error.response?.status || error.status;
       const rawMsg = (error.data?.message || error.message || '').toLowerCase();
 
