@@ -21,7 +21,7 @@ export const voiceCallApi = {
     }
     try {
       const response = await axios.post(
-        `${BASE_URL}/projects/${projectId}/calls/${callId}/join`,
+        `${BASE_URL}/projects/${encodeURIComponent(projectId)}/calls/${encodeURIComponent(callId)}/join`,
         null,
         getAuthHeaders()
       );
@@ -37,7 +37,7 @@ export const voiceCallApi = {
     }
     try {
       const response = await axios.post(
-        `${BASE_URL}/projects/${projectId}/calls/${callId}/leave`,
+        `${BASE_URL}/projects/${encodeURIComponent(projectId)}/calls/${encodeURIComponent(callId)}/leave`,
         null,
         getAuthHeaders()
       );
@@ -53,7 +53,7 @@ export const voiceCallApi = {
     }
     try {
       const response = await axios.post(
-        `${BASE_URL}/projects/${projectId}/calls/${callId}/end`,
+        `${BASE_URL}/projects/${encodeURIComponent(projectId)}/calls/${encodeURIComponent(callId)}/end`,
         null,
         getAuthHeaders()
       );
@@ -69,7 +69,7 @@ export const voiceCallApi = {
     }
     try {
       const response = await axios.get(
-        `${BASE_URL}/projects/${projectId}/calls/active?type=${type}`,
+        `${BASE_URL}/projects/${encodeURIComponent(projectId)}/calls/active?type=${encodeURIComponent(type)}`,
         getAuthHeaders()
       );
       return response.data;
@@ -84,7 +84,7 @@ export const voiceCallApi = {
     }
     try {
       const response = await axios.post(
-        `${BASE_URL}/projects/${projectId}/calls`,
+        `${BASE_URL}/projects/${encodeURIComponent(projectId)}/calls`,
         { type },
         getAuthHeaders()
       );

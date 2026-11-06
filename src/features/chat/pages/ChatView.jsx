@@ -72,6 +72,9 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     }
     return value;
   };
+  const getCallId = (call) => call?.id ?? call?.callId ?? call?.call_id ?? call?._id;
+  const getJanusRoomId = (call) => call?.roomId ?? call?.janusRoomId ?? call?.room_id ?? call?.janus?.roomId ?? call?.janus?.room_id;
+  const getJanusRoomPin = (call) => call?.roomPin ?? call?.janusRoomPin ?? call?.room_pin ?? call?.pin ?? call?.janus?.pin;
 
   const stompClientRef = useRef(null);
   const unsubscribeRef = useRef(null);
@@ -342,7 +345,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     findActiveCall(activeProjectId, 'VIDEO').then((response) => {
       if (!current) return;
       const call = unwrapCallResponse(response);
-      if (call?.id || call?.callId || call?.call_id) {
+      if (getCallId(call)) {
         setVideoCallDetails(call);
         setIsVideoCallActive(true);
       } else {
@@ -359,7 +362,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     if (!isVideoCallConfigured) { showToast('error', 'Video calling is not configured.'); return; }
     joiningVideoCallRef.current = true;
     setIsJoiningVideoCall(true);
-    let callId = videoCallDetails?.id || videoCallDetails?.callId || videoCallDetails?.call_id;
+    let callId = getCallId(videoCallDetails);
     let backendJoined = false;
     try {
       let call = videoCallDetails;
@@ -367,9 +370,9 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         try { call = unwrapCallResponse(await startCall(activeProjectId, 'VIDEO')); }
         catch (startError) {
           call = unwrapCallResponse(await findActiveCall(activeProjectId, 'VIDEO'));
-          if (!call?.id && !call?.callId && !call?.call_id) throw startError;
+          if (!getCallId(call)) throw startError;
         }
-        callId = call?.id || call?.callId || call?.call_id;
+        callId = getCallId(call);
         if (!callId) throw new Error('Failed to create video call.');
         setVideoCallDetails(call);
         setIsVideoCallActive(true);
@@ -377,10 +380,10 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       const joinResponse = await joinCall(activeProjectId, callId);
       backendJoined = true;
       const details = unwrapCallResponse(joinResponse);
-      const roomId = details?.roomId ?? details?.janusRoomId ?? details?.room_id;
+      const roomId = getJanusRoomId(details) ?? getJanusRoomId(call);
       if (roomId === undefined || roomId === null || roomId === '') throw new Error('The call service did not return a Janus room ID.');
-      await joinVideoCall({ roomId, pin: details?.roomPin ?? details?.janusRoomPin ?? details?.room_pin ?? details?.pin ?? '', display: currentUser.name || 'User' });
-      setVideoCallDetails({ ...call, ...details, id: callId });
+      await joinVideoCall({ roomId, pin: getJanusRoomPin(details) ?? getJanusRoomPin(call) ?? '', display: currentUser.name || 'User' });
+      setVideoCallDetails({ ...call, ...details, id: callId, roomId });
       joinedVideoCallRef.current = { projectId: activeProjectId, callId };
       setIsVideoCallJoined(true);
       setShowVideoCall(true);
@@ -412,7 +415,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   ));
   const handleEndVideoCall = async () => {
     if (!canEndVideoCall) return;
-    const target = joinedVideoCallRef.current || { projectId: activeProjectId, callId: videoCallDetails?.id || videoCallDetails?.callId || videoCallDetails?.call_id };
+    const target = joinedVideoCallRef.current || { projectId: activeProjectId, callId: getCallId(videoCallDetails) };
     leaveVideoCall();
     joinedVideoCallRef.current = null;
     setIsVideoCallJoined(false);

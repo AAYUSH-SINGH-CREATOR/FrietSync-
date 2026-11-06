@@ -337,7 +337,7 @@ const ProfileView = () => {
                     </div>
                   ) : (
                     <button type="button" onClick={() => setIsAddingSkill(true)} disabled={profile.skills.length >= 8 || isLoadingSkills} className="inline-flex h-7 items-center gap-1 rounded-full bg-sky-400 px-3 text-xs font-bold text-slate-900 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-50">
-                      <FiPlus size={12} /> Add+
+                      <FiPlus size={12} /> Add
                     </button>
                   ))}
                 </div>

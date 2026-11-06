@@ -79,7 +79,7 @@ export const getMySkills = async () => {
 
 export const addMySkill = async (name) => {
   try {
-    const response = await axios.post(`${BASE_URL}/users/me/skills`, { name }, getAuthHeaders());
+    const response = await axios.post(`${BASE_URL}/users/me/skills`, { skillName: name }, getAuthHeaders());
     return response.data;
   } catch (error) {
     handleProfileError(error, 'Failed to add skill.');
