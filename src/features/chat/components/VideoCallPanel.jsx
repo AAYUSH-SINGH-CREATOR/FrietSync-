@@ -20,17 +20,41 @@ const ControlButton = ({ label, onClick, active = false, danger = false, childre
 const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = false, isDarkMode }) => {
   const videoRef = useRef(null);
 
+  // Track the previous stream and mount/dismount cleanly
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return undefined;
-    video.srcObject = stream || null;
-    if (stream) video.play().catch(() => {});
-    return () => { video.srcObject = null; };
-  }, [stream]);
+    if (!video) return;
+
+    if (stream !== video.srcObject) {
+      video.srcObject = stream || null;
+    }
+
+    // Play if we have a stream with tracks
+    if (stream && stream.active && stream.getTracks().length > 0) {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((err) => {
+          // Autoplay failures are expected; they'll be handled by the resumePlayback button
+          if (err.name !== 'NotAllowedError') {
+            console.debug('Video play error (non‑autoplay):', err);
+          }
+        });
+      }
+    }
+
+    return () => {
+      if (video.srcObject) {
+        // Only detach if this is a remote stream (local stream will be stopped by Janus on leave)
+        if (!local) {
+          video.srcObject = null;
+        }
+      }
+    };
+  }, [stream, local]);
 
   return (
     <article className={`relative aspect-video min-h-[150px] overflow-hidden rounded-2xl border shadow-sm sm:min-h-[190px] ${isDarkMode ? 'border-white/10 bg-slate-800' : 'border-white/80 bg-white'}`}>
-      {!cameraOff && stream ? (
+      {!cameraOff && stream && stream.active && stream.getTracks().length > 0 ? (
         <video ref={videoRef} autoPlay playsInline muted={muted || local} className={`h-full w-full object-cover ${local ? '-scale-x-100' : ''}`} />
       ) : (
         <div className={`flex h-full min-h-[150px] items-center justify-center bg-gradient-to-br ${isDarkMode ? 'from-slate-700 to-slate-900' : 'from-sky-100 to-sky-200'}`}>
