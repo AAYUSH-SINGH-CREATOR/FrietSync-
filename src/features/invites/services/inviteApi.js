@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
+import { getAccessToken } from '../../auth/services/authApi';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('frietSyncToken');
+  const token = getAccessToken();
   return {
     headers: {
       'Content-Type': 'application/json',

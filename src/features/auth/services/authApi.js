@@ -27,13 +27,9 @@ const cleanupLegacyLocalStorage = () => {
     });
     if (Object.keys(migratedUser).length) localStorage.setItem('frietSyncUser', JSON.stringify(migratedUser));
 
-    if (!localStorage.getItem('frietSyncToken')) {
-      const legacyToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
-      if (legacyToken) localStorage.setItem('frietSyncToken', legacyToken.replace(/^Bearer\s+/i, '').trim());
-    }
-
     [
       'accessToken', 'token', 'frietSyncName', 'frietSyncRole', 'frietSyncEmail', 'frietSyncUserId',
+      'frietSyncToken', 'frietSyncTokenIssuedAt',
       'frietSync_issues_view', 'frietSync_sprints_view', 'frietsync_chat_state_v1', 'frietsync_user_profile',
     ].forEach((key) => localStorage.removeItem(key));
   } catch {
@@ -45,7 +41,10 @@ cleanupLegacyLocalStorage();
 
 const ACCESS_TOKEN_REFRESH_INTERVAL_MS = 14 * 60_000;
 const ACCESS_TOKEN_REFRESH_RETRY_MS = 30_000;
+let accessToken = '';
+let accessTokenIssuedAt = 0;
 let refreshRequestPromise = null;
+let restoreRequestPromise = null;
 let scheduledRefreshTimeout = null;
 let expirationHandled = false;
 let refreshScheduleActive = false;
@@ -66,8 +65,7 @@ const handleAxiosError = (error, defaultMessage) => {
 };
 
 export const getAccessToken = () => {
-  const rawToken = localStorage.getItem('frietSyncToken') || '';
-  return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : '';
+  return accessToken;
 };
 
 const getTokenExpiry = (token) => {
@@ -108,7 +106,7 @@ export const scheduleAccessTokenRefresh = (token = getAccessToken()) => {
   if (!refreshScheduleActive || !token || typeof window === 'undefined') return;
 
   const now = Date.now();
-  const storedIssueTime = Number(localStorage.getItem('frietSyncTokenIssuedAt'));
+  const storedIssueTime = accessTokenIssuedAt;
   const refreshAt = storedIssueTime
     ? storedIssueTime + ACCESS_TOKEN_REFRESH_INTERVAL_MS
     : getTokenExpiry(token)
@@ -156,7 +154,12 @@ const scheduleRefreshRetry = () => {
 export const initializeAccessTokenRefresh = () => {
   refreshScheduleActive = true;
   const token = getAccessToken();
-  if (!token) return;
+  if (!token) {
+    restoreAccessToken().then((restoredToken) => {
+      if (restoredToken && refreshScheduleActive) scheduleAccessTokenRefresh(restoredToken);
+    }).catch(() => {});
+    return;
+  }
 
   const expiry = getTokenExpiry(token);
   const now = Date.now();
@@ -179,10 +182,12 @@ export const initializeAccessTokenRefresh = () => {
 
 const saveAccessToken = (token) => {
   const normalizedToken = String(token).replace(/^Bearer\s+/i, '').trim();
-  localStorage.setItem('frietSyncToken', normalizedToken);
+  accessToken = normalizedToken;
+  accessTokenIssuedAt = Date.now();
   localStorage.removeItem('accessToken');
   localStorage.removeItem('token');
-  localStorage.setItem('frietSyncTokenIssuedAt', String(Date.now()));
+  localStorage.removeItem('frietSyncToken');
+  localStorage.removeItem('frietSyncTokenIssuedAt');
   expirationHandled = false;
   scheduleAccessTokenRefresh(normalizedToken);
 };
@@ -254,7 +259,9 @@ export const loginUser = async (userData) => {
 
     if (token) {
       saveAccessToken(token);
-      localStorage.removeItem('frietSyncRefreshToken');
+      initializeAccessTokenRefresh();
+    } else {
+      await refreshAccessToken();
       initializeAccessTokenRefresh();
     }
     saveUserData(data, userData);
@@ -318,7 +325,8 @@ export const refreshAccessToken = () => {
         withCredentials: true,
       });
       const data = response.data;
-      const newToken = typeof data?.accessToken === 'string' ? data.accessToken.trim() : '';
+      const candidateToken = data?.accessToken || data?.token || data?.data?.accessToken || data?.data?.token;
+      const newToken = typeof candidateToken === 'string' ? candidateToken.trim() : '';
 
       if (!newToken) {
         const error = new Error('Refresh response did not include an access token.');
@@ -339,6 +347,15 @@ export const refreshAccessToken = () => {
   });
 
   return refreshRequestPromise;
+};
+
+export const restoreAccessToken = () => {
+  if (getAccessToken()) return Promise.resolve(getAccessToken());
+  if (restoreRequestPromise) return restoreRequestPromise;
+  restoreRequestPromise = refreshAccessToken()
+    .then(() => getAccessToken())
+    .finally(() => { restoreRequestPromise = null; });
+  return restoreRequestPromise;
 };
 
 export const logoutUser = async () => {
@@ -410,6 +427,8 @@ export const getUserProfile = () => {
 
 export const clearAuthStorage = () => {
   stopAccessTokenRefreshSchedule();
+  accessToken = '';
+  accessTokenIssuedAt = 0;
   localStorage.removeItem('frietSyncToken');
   localStorage.removeItem('accessToken');
   localStorage.removeItem('token');

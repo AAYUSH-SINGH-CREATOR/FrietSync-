@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
+import { getAccessToken } from '../../auth/services/authApi';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 const V2_BASE_URL = import.meta.env.VITE_BASE_URLV2?.replace(/\/+$/, '') || '';
 
 const getAuthHeaders = () => {
-  const rawToken = localStorage.getItem('frietSyncToken') || '';
-  const token = rawToken.replace(/^Bearer\s+/i, '').trim();
+  const token = getAccessToken();
 
   return {
     headers: {

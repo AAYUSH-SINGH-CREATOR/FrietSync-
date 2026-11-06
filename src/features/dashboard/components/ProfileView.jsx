@@ -81,7 +81,7 @@ const ProfileView = () => {
   const handleAddSkill = async () => {
     const name = newSkill.trim();
     if (!name || isSavingSkill || skills.length >= 8) return;
-    if (skills.some((item) => String(item?.name || item?.skill || item).toLowerCase() === name.toLowerCase())) {
+    if (skills.some((item) => String(item?.skillName || item?.name || item?.skill || item).toLowerCase() === name.toLowerCase())) {
       setFeedbackMsg({ type: 'error', text: 'That skill is already listed.' });
       return;
     }
@@ -307,10 +307,10 @@ const ProfileView = () => {
 
                 <div className="flex flex-wrap items-center gap-2">
                   {profile.skills.map((skill, index) => (
-                    <span key={skill?.id ?? skill?._id ?? skill?.skillId ?? `${skill?.name || skill?.skill || skill}-${index}`} className="inline-flex h-7 items-center gap-1 rounded-full bg-white px-3 text-xs font-bold text-slate-900 shadow-xs">
-                      {skill?.name || skill?.skill || skill}
+                    <span key={skill?.id ?? skill?._id ?? skill?.skillId ?? `${skill?.skillName || skill?.name || skill?.skill || skill}-${index}`} className="inline-flex h-7 items-center gap-1 rounded-full bg-white px-3 text-xs font-bold text-slate-900 shadow-xs">
+                      {skill?.skillName || skill?.name || skill?.skill || skill}
                       {isEditing && (
-                        <button type="button" onClick={() => handleRemoveSkill(skill)} disabled={isSavingSkill} aria-label={`Remove ${skill?.name || skill?.skill || skill}`} className="ml-0.5 rounded-full text-slate-500 hover:text-rose-600 disabled:opacity-50">
+                        <button type="button" onClick={() => handleRemoveSkill(skill)} disabled={isSavingSkill} aria-label={`Remove ${skill?.skillName || skill?.name || skill?.skill || skill}`} className="ml-0.5 rounded-full text-slate-500 hover:text-rose-600 disabled:opacity-50">
                           <FiX size={12} />
                         </button>
                       )}

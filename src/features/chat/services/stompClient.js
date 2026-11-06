@@ -17,8 +17,7 @@ export const getWebSocketUrl = () => {
 };
 
 const getToken = () => {
-  const rawToken = localStorage.getItem('frietSyncToken') || '';
-  return rawToken ? rawToken.replace(/^Bearer\s+/i, '').trim() : getAccessToken() || '';
+  return getAccessToken();
 };
 
 export class StompChatClient {

@@ -1,11 +1,11 @@
 import axios from 'axios';
+import { getAccessToken } from '../../auth/services/authApi';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 const PROFILE_PICTURE_FIELD = 'file';
 
 const getAuthHeaders = (isMultipart = false) => {
-  const rawToken = localStorage.getItem('frietSyncToken') || '';
-  const token = rawToken.replace(/^Bearer\s+/i, '').trim();
+  const token = getAccessToken();
 
   return {
     headers: {
