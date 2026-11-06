@@ -304,6 +304,8 @@ const ProjectDetailsView = () => {
   ].filter(Boolean).map(String);
   const projectStatus = String(project?.status || '').toUpperCase();
   const isProjectClosed = ['COMPLETED', 'CANCELLED', 'CANCELED'].includes(projectStatus);
+  const globalRole = normalizeRole(currentUserProfile?.role || currentUserProfile?.user?.role);
+  const isContributor = globalRole === 'CONTRIBUTOR' || currentProjectRoleNames.includes('CONTRIBUTOR');
 
   const repositoryManagerIds = [
     project?.adminId,
@@ -321,15 +323,14 @@ const ProjectDetailsView = () => {
   const canManageMilestones = !isProjectClosed && currentUserIds.some((id) =>
     projectAdminIds.includes(id) || projectManagerIds.includes(id)
   );
-  const globalRole = normalizeRole(currentUserProfile?.role || currentUserProfile?.user?.role);
-  const canCreateSprint = !isProjectClosed && (
+  const canCreateSprint = !isContributor && !isProjectClosed && (
     isAdmin ||
     globalRole === 'ADMIN' ||
     currentUserIds.some((id) => projectAdminIds.includes(id)) ||
     currentUserIds.some((id) => projectManagerIds.includes(id) || teamLeadIds.includes(id)) ||
     ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(globalRole) ||
     currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role)));
-  const canCreateIssue = !isProjectClosed && (canCreateSprint ||
+  const canCreateIssue = !isContributor && !isProjectClosed && (canCreateSprint ||
     globalRole === 'REPORTER' ||
     currentProjectRoleNames.includes('REPORTER'));
   const canRequestAssignment = !isProjectClosed && (globalRole === 'CONTRIBUTOR' || currentProjectRoleNames.includes('CONTRIBUTOR'));
@@ -1729,7 +1730,7 @@ const ProjectDetailsView = () => {
                     <FiPlus size={14} /> Create Sprint
                   </button>
                 )}
-                {canCreateSprint ? (
+                {canCreateSprint && !isContributor ? (
                   <Link
                     to="/dashboard/sprints"
                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:border-[#35353d] dark:bg-[#26262c] dark:text-slate-300 dark:hover:bg-[#32323a] dark:hover:text-white"
@@ -1851,7 +1852,7 @@ const ProjectDetailsView = () => {
                     <span>Create Issue</span>
                   </button>
                 )}
-                {canCreateSprint ? (
+                {canCreateSprint && !isContributor ? (
                   <Link
                     to={`/dashboard/issues?projectId=${projectId}`}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-[#35353d] bg-slate-50 dark:bg-[#26262c] hover:bg-slate-100 dark:hover:bg-[#32323a] text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
@@ -2218,7 +2219,7 @@ const ProjectDetailsView = () => {
       />
 
       <ProjectItemsModal
-        isOpen={isAllSprintsOpen && !canCreateSprint}
+        isOpen={isAllSprintsOpen && (isContributor || !canCreateSprint)}
         kind="sprints"
         projectName={project?.name}
         items={sprints}
@@ -2227,7 +2228,7 @@ const ProjectDetailsView = () => {
       />
 
       <ProjectItemsModal
-        isOpen={isAllIssuesOpen && !canCreateSprint}
+        isOpen={isAllIssuesOpen && (isContributor || !canCreateSprint)}
         kind="issues"
         projectName={project?.name}
         items={issues}
