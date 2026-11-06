@@ -80,6 +80,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+html:has([aria-modal="true"]),
+body:has([aria-modal="true"]) {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
 .brand-script {
   font-family: "Satisfy", "Brush Script MT", cursive;
   font-weight: 400;
