@@ -128,7 +128,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     setVolume: setVoiceCallVolume,
     resumePlayback,
   } = useVoiceCall();
-  const { state: videoCallState, muted: videoMuted, cameraOff, participants: videoParticipants, localStream, join: joinVideoCall, leave: leaveVideoCall, toggleMute: toggleVideoMute, toggleCamera, resumePlayback: resumeVideoPlayback, isConfigured: isVideoCallConfigured } = useVideoCall();
+  const { state: videoCallState, muted: videoMuted, cameraOff, participants: videoParticipants, localStream, join: joinVideoCall, leave: leaveVideoCall, toggleMute: toggleVideoMute, toggleCamera, resumePlayback: resumeVideoPlayback, isConfigured: isVideoCallConfigured } = useVideoCall({ onError: (error) => showToast('error', error.message || 'Video call error.') });
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
