@@ -49,7 +49,6 @@ export const updateProfile = async (profileData) => {
     githubUrl: profileData.githubUrl?.trim() || null,
     linkedinUrl: profileData.linkedinUrl?.trim() || null,
     portfolioUrl: profileData.portfolioUrl?.trim() || null,
-    skills: Array.isArray(profileData.skills) ? profileData.skills : [],
   };
 
   try {
@@ -61,6 +60,37 @@ export const updateProfile = async (profileData) => {
     return unwrapProfile(response.data);
   } catch (error) {
     handleProfileError(error, 'Failed to update user profile.');
+  }
+};
+
+const unwrapSkills = (data) => {
+  const skills = data?.data?.skills || data?.skills || data?.data || data;
+  return Array.isArray(skills) ? skills : [];
+};
+
+export const getMySkills = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/users/me/skills`, getAuthHeaders());
+    return unwrapSkills(response.data);
+  } catch (error) {
+    handleProfileError(error, 'Failed to fetch your skills.');
+  }
+};
+
+export const addMySkill = async (name) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/users/me/skills`, { name }, getAuthHeaders());
+    return response.data;
+  } catch (error) {
+    handleProfileError(error, 'Failed to add skill.');
+  }
+};
+
+export const deleteMySkill = async (skillId) => {
+  try {
+    await axios.delete(`${BASE_URL}/users/me/skills/${encodeURIComponent(skillId)}`, getAuthHeaders());
+  } catch (error) {
+    handleProfileError(error, 'Failed to remove skill.');
   }
 };
 
@@ -103,4 +133,4 @@ export const removeAvatar = async () => {
   }
 };
 
-export default { getProfile, updateProfile, uploadAvatar, removeAvatar, deleteMyAccount };
+export default { getProfile, updateProfile, uploadAvatar, removeAvatar, deleteMyAccount, getMySkills, addMySkill, deleteMySkill };

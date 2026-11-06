@@ -8,7 +8,7 @@ import {
   FiTrash2,
   FiX,
 } from 'react-icons/fi';
-import { updateProfile, uploadAvatar, removeAvatar } from '../services/profileApi';
+import { updateProfile, uploadAvatar, removeAvatar, getMySkills, addMySkill, deleteMySkill } from '../services/profileApi';
 import profileBanner from '../../../assets/profile-banner.png';
 import defaultAvatar from '../../../assets/oggy-img.png';
 import { formatRoleLabel } from '../../../utils/formatRoleLabel';
@@ -25,7 +25,7 @@ const mapProfile = (data) => ({
   linkedinUrl: data?.linkedinUrl || '',
   portfolioUrl: data?.portfolioUrl || '',
   profilePictureUrl: data?.profilePictureUrl || '',
-  skills: Array.isArray(data?.skills) ? data.skills : [],
+  skills: [],
 });
 
 const safeExternalUrl = (value) => {
@@ -53,10 +53,22 @@ const ProfileView = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [isAddingSkill, setIsAddingSkill] = useState(false);
+  const [skills, setSkills] = useState([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(true);
+  const [isSavingSkill, setIsSavingSkill] = useState(false);
   const [draftProfile, setDraftProfile] = useState(() => mapProfile(currentUserProfile));
-  const profile = isEditing ? draftProfile : mapProfile(currentUserProfile);
+  const profile = { ...(isEditing ? draftProfile : mapProfile(currentUserProfile)), skills };
   const [feedbackMsg, setFeedbackMsg] = useState(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    getMySkills()
+      .then((items) => { if (active) setSkills(items); })
+      .catch((error) => { if (active) setFeedbackMsg({ type: 'error', text: error?.message || 'Failed to load skills.' }); })
+      .finally(() => { if (active) setIsLoadingSkills(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => () => {
     if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
@@ -66,24 +78,41 @@ const ProfileView = () => {
     setDraftProfile((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAddSkill = () => {
-    const additions = newSkill.split(',').map((skill) => skill.trim()).filter(Boolean);
-    if (!additions.length) return;
-    setDraftProfile((prev) => {
-      const skills = [...(prev.skills || [])];
-      additions.forEach((skill) => {
-        if (skills.length < 20 && !skills.some((existing) => existing.toLowerCase() === skill.toLowerCase())) {
-          skills.push(skill.slice(0, 50));
-        }
-      });
-      return { ...prev, skills };
-    });
-    setNewSkill('');
-    setIsAddingSkill(false);
+  const handleAddSkill = async () => {
+    const name = newSkill.trim();
+    if (!name || isSavingSkill || skills.length >= 8) return;
+    if (skills.some((item) => String(item?.name || item?.skill || item).toLowerCase() === name.toLowerCase())) {
+      setFeedbackMsg({ type: 'error', text: 'That skill is already listed.' });
+      return;
+    }
+    setIsSavingSkill(true);
+    setFeedbackMsg(null);
+    try {
+      const result = await addMySkill(name);
+      const created = result?.data?.skill || result?.data || result?.skill || result;
+      setSkills((prev) => [...prev, typeof created === 'object' && created !== null ? created : { name, id: created }]);
+      setNewSkill('');
+      setIsAddingSkill(false);
+    } catch (error) {
+      setFeedbackMsg({ type: 'error', text: error?.message || 'Failed to add skill.' });
+    } finally {
+      setIsSavingSkill(false);
+    }
   };
 
-  const handleRemoveSkill = (skillToRemove) => {
-    setDraftProfile((prev) => ({ ...prev, skills: (prev.skills || []).filter((skill) => skill !== skillToRemove) }));
+  const handleRemoveSkill = async (skillToRemove) => {
+    const skillId = skillToRemove?.id ?? skillToRemove?._id ?? skillToRemove?.skillId;
+    if (!skillId || isSavingSkill) return;
+    setIsSavingSkill(true);
+    setFeedbackMsg(null);
+    try {
+      await deleteMySkill(skillId);
+      setSkills((prev) => prev.filter((skill) => skill !== skillToRemove));
+    } catch (error) {
+      setFeedbackMsg({ type: 'error', text: error?.message || 'Failed to remove skill.' });
+    } finally {
+      setIsSavingSkill(false);
+    }
   };
 
   const handleAvatarChange = async (e) => {
@@ -277,17 +306,18 @@ const ProfileView = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {profile.skills.map((skill) => (
-                    <span key={skill} className="inline-flex h-7 items-center gap-1 rounded-full bg-white px-3 text-xs font-bold text-slate-900 shadow-xs">
-                      {skill}
+                  {profile.skills.map((skill, index) => (
+                    <span key={skill?.id ?? skill?._id ?? skill?.skillId ?? `${skill?.name || skill?.skill || skill}-${index}`} className="inline-flex h-7 items-center gap-1 rounded-full bg-white px-3 text-xs font-bold text-slate-900 shadow-xs">
+                      {skill?.name || skill?.skill || skill}
                       {isEditing && (
-                        <button type="button" onClick={() => handleRemoveSkill(skill)} aria-label={`Remove ${skill}`} className="ml-0.5 rounded-full text-slate-500 hover:text-rose-600">
+                        <button type="button" onClick={() => handleRemoveSkill(skill)} disabled={isSavingSkill} aria-label={`Remove ${skill?.name || skill?.skill || skill}`} className="ml-0.5 rounded-full text-slate-500 hover:text-rose-600 disabled:opacity-50">
                           <FiX size={12} />
                         </button>
                       )}
                     </span>
                   ))}
-                  {profile.skills.length === 0 && !isEditing && <p className="text-xs text-slate-500 dark:text-slate-400">No skills listed.</p>}
+                  {isLoadingSkills && <p className="text-xs text-slate-500 dark:text-slate-400">Loading skills…</p>}
+                  {!isLoadingSkills && profile.skills.length === 0 && !isEditing && <p className="text-xs text-slate-500 dark:text-slate-400">No skills listed.</p>}
                   {isEditing && (isAddingSkill ? (
                     <div className="flex h-7 items-center gap-1 rounded-full border border-sky-400 bg-white px-2 shadow-xs">
                       <input
@@ -303,10 +333,10 @@ const ProfileView = () => {
                         aria-label="New skill"
                         className="w-20 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
                       />
-                      <button type="button" onClick={handleAddSkill} className="text-xs font-semibold text-sky-600">Add</button>
+                      <button type="button" onClick={handleAddSkill} disabled={isSavingSkill} className="text-xs font-semibold text-sky-600 disabled:opacity-50">{isSavingSkill ? '…' : 'Add'}</button>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setIsAddingSkill(true)} disabled={profile.skills.length >= 20} className="inline-flex h-7 items-center gap-1 rounded-full bg-sky-400 px-3 text-xs font-bold text-slate-900 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-50">
+                    <button type="button" onClick={() => setIsAddingSkill(true)} disabled={profile.skills.length >= 8 || isLoadingSkills} className="inline-flex h-7 items-center gap-1 rounded-full bg-sky-400 px-3 text-xs font-bold text-slate-900 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-50">
                       <FiPlus size={12} /> Add+
                     </button>
                   ))}
