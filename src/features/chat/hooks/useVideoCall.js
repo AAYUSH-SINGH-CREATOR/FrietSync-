@@ -7,6 +7,7 @@ export const useVideoCall = ({ onError } = {}) => {
   const [state, setState] = useState('disconnected');
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
+  const [mediaPlaybackEnabled, setMediaPlaybackEnabled] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [localStream, setLocalStream] = useState(null);
 
@@ -18,34 +19,61 @@ export const useVideoCall = ({ onError } = {}) => {
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
   const joinedRef = useRef(false);
 
-  const [videoCall] = useState(() => new VideoCall({
-    server: JANUS_SERVER_URL,
-    onState: setState,
-    onParticipants: setParticipants,
-    onLocalStream: setLocalStream,
-    onError: (error) => {
-      if (joinedRef.current && onErrorRef.current) onErrorRef.current(error);
-      else console.error('Video call error:', error);
-    },
-  }));
+  const videoCallRef = useRef(null);
+  const getVideoCall = useCallback(() => {
+    if (!videoCallRef.current) throw new Error('The video call is still initializing. Please try again.');
+    return videoCallRef.current;
+  }, []);
 
-  useEffect(() => () => videoCall.leave(), [videoCall]);
+  useEffect(() => {
+    const videoCall = new VideoCall({
+      server: JANUS_SERVER_URL,
+      onState: setState,
+      onParticipants: setParticipants,
+      onLocalStream: setLocalStream,
+      onError: (error) => {
+        if (joinedRef.current && onErrorRef.current) onErrorRef.current(error);
+      },
+    });
+    videoCallRef.current = videoCall;
+    const cleanup = () => {
+      joinedRef.current = false;
+      videoCall.leave();
+    };
+    window.addEventListener('pagehide', cleanup);
+    return () => {
+      window.removeEventListener('pagehide', cleanup);
+      cleanup();
+      if (videoCallRef.current === videoCall) videoCallRef.current = null;
+    };
+  }, []);
 
   const join = useCallback(async (details) => {
+    const videoCall = getVideoCall();
     try {
       await videoCall.join(details);
       joinedRef.current = true;
       setMuted(false);
       setCameraOff(false);
+      setMediaPlaybackEnabled(false);
     } catch (error) {
       videoCall.leave();
       throw error;
     }
-  }, [videoCall]);
-  const leave = useCallback(() => { joinedRef.current = false; videoCall.leave(); setMuted(false); setCameraOff(false); }, [videoCall]);
-  const toggleMute = useCallback(() => setMuted(videoCall.setMuted(!videoCall.muted)), [videoCall]);
-  const toggleCamera = useCallback(() => setCameraOff(videoCall.setCameraOff(!videoCall.cameraOff)), [videoCall]);
-  const resumePlayback = useCallback(() => videoCall.resumePlayback(), [videoCall]);
+  }, [getVideoCall]);
+  const leave = useCallback(() => { joinedRef.current = false; videoCallRef.current?.leave(); setMuted(false); setCameraOff(false); setMediaPlaybackEnabled(false); }, []);
+  const toggleMute = useCallback(() => {
+    const videoCall = getVideoCall();
+    setMuted(videoCall.setMuted(!videoCall.muted));
+  }, [getVideoCall]);
+  const toggleCamera = useCallback(() => {
+    const videoCall = getVideoCall();
+    setCameraOff(videoCall.setCameraOff(!videoCall.cameraOff));
+  }, [getVideoCall]);
+  const resumePlayback = useCallback(() => {
+    setMediaPlaybackEnabled(true);
+    getVideoCall().resumePlayback();
+  }, [getVideoCall]);
 
-  return { state, muted, cameraOff, participants, localStream, join, leave, toggleMute, toggleCamera, resumePlayback, isConfigured: Boolean(JANUS_SERVER_URL) };
+  return { state, muted, cameraOff, mediaPlaybackEnabled, participants, localStream, join, leave, toggleMute, toggleCamera, resumePlayback, isConfigured: Boolean(JANUS_SERVER_URL) };
 };

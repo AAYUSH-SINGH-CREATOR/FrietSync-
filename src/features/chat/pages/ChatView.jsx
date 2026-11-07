@@ -131,7 +131,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     setVolume: setVoiceCallVolume,
     resumePlayback,
   } = useVoiceCall();
-  const { state: videoCallState, muted: videoMuted, cameraOff, participants: videoParticipants, localStream, join: joinVideoCall, leave: leaveVideoCall, toggleMute: toggleVideoMute, toggleCamera, resumePlayback: resumeVideoPlayback, isConfigured: isVideoCallConfigured } = useVideoCall({ onError: (error) => showToast('error', error.message || 'Video call error.') });
+  const { state: videoCallState, muted: videoMuted, cameraOff, mediaPlaybackEnabled, participants: videoParticipants, localStream, join: joinVideoCall, leave: leaveVideoCall, toggleMute: toggleVideoMute, toggleCamera, resumePlayback: resumeVideoPlayback, isConfigured: isVideoCallConfigured } = useVideoCall({ onError: (error) => showToast('error', error.message || 'Video call error.') });
 
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
@@ -301,6 +301,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     const handlePageHide = () => {
       const joinedCall = joinedCallRef.current;
       const joinedVideo = joinedVideoCallRef.current;
+      joinedVideoCallRef.current = null;
       leaveVoiceCall();
       leaveVideoCall();
       if (joinedCall) leaveCall(joinedCall.projectId, joinedCall.callId).catch(() => {});
@@ -309,6 +310,15 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     window.addEventListener('pagehide', handlePageHide);
     return () => window.removeEventListener('pagehide', handlePageHide);
   }, [leaveVoiceCall, leaveVideoCall]);
+
+  useEffect(() => () => {
+    const joinedVideo = joinedVideoCallRef.current;
+    joinedVideoCallRef.current = null;
+    if (joinedVideo) {
+      leaveVideoCall();
+      leaveCall(joinedVideo.projectId, joinedVideo.callId).catch(() => {});
+    }
+  }, [leaveVideoCall]);
 
   const isOutgoingMessage = useCallback((msg) => {
     if (!msg) return false;
@@ -382,7 +392,11 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       const details = unwrapCallResponse(joinResponse);
       const roomId = getJanusRoomId(details) ?? getJanusRoomId(call);
       if (roomId === undefined || roomId === null || roomId === '') throw new Error('The call service did not return a Janus room ID.');
-      await joinVideoCall({ roomId, pin: getJanusRoomPin(details) ?? getJanusRoomPin(call) ?? '', display: currentUser.name || 'User' });
+      await joinVideoCall({
+        roomId,
+        pin: getJanusRoomPin(details) ?? getJanusRoomPin(call) ?? '',
+        display: currentUserProfile?.name || currentUserProfile?.user?.name || currentUser.name || 'User',
+      });
       setVideoCallDetails({ ...call, ...details, id: callId, roomId });
       joinedVideoCallRef.current = { projectId: activeProjectId, callId };
       setIsVideoCallJoined(true);
@@ -1095,6 +1109,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         localStream={localStream}
         muted={videoMuted}
         cameraOff={cameraOff}
+        mediaPlaybackEnabled={mediaPlaybackEnabled}
         onToggleMute={toggleVideoMute}
         onToggleCamera={toggleCamera}
         onLeave={handleLeaveVideoCall}
