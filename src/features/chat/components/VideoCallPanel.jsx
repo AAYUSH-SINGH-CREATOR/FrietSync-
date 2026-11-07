@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiVolume2, FiX, FiUsers } from 'react-icons/fi';
+import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiVolume2, FiVolumeX, FiX, FiUsers } from 'react-icons/fi';
 import { useTheme } from '../../../context/ThemeContext';
 import { getInitials } from '../services/chatApi';
 
@@ -81,7 +81,7 @@ const VideoTile = ({ name, stream, avatarUrl = '', muted = false, cameraOff = fa
   );
 };
 
-export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], localStream, localAvatar = '', muted, cameraOff, mediaPlaybackEnabled = false, onToggleMute, onToggleCamera, onLeave, onEnd, canEndCall, onResumePlayback }) => {
+export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], localStream, localAvatar = '', muted, cameraOff, mediaPlaybackEnabled = false, onToggleMute, onToggleCamera, onLeave, onEnd, canEndCall, onTogglePlayback }) => {
   const { isDarkMode } = useTheme();
   if (!isOpen) return null;
 
@@ -118,7 +118,7 @@ export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], 
           <div className={`flex shrink-0 items-center justify-center gap-2 rounded-2xl p-2 lg:w-[60px] lg:flex-col lg:gap-3 ${isDarkMode ? 'bg-black/15' : 'bg-white/45'}`} aria-label="Call controls">
             <ControlButton label={muted ? 'Unmute microphone' : 'Mute microphone'} onClick={onToggleMute} active={muted}><>{muted ? <FiMicOff size={19} /> : <FiMic size={19} />}</></ControlButton>
             <ControlButton label={cameraOff ? 'Start camera' : 'Stop camera'} onClick={onToggleCamera} active={cameraOff}><>{cameraOff ? <FiVideoOff size={19} /> : <FiVideo size={19} />}</></ControlButton>
-            <ControlButton label={mediaPlaybackEnabled ? 'Audio enabled' : 'Enable audio'} onClick={onResumePlayback} active={mediaPlaybackEnabled}><FiVolume2 size={19} /></ControlButton>
+            <ControlButton label={mediaPlaybackEnabled ? 'Turn speaker off' : 'Turn speaker on'} onClick={onTogglePlayback} active={mediaPlaybackEnabled}>{mediaPlaybackEnabled ? <FiVolume2 size={19} /> : <FiVolumeX size={19} />}</ControlButton>
             {canEndCall && <ControlButton label="End call for everyone" onClick={onEnd} danger><FiUsers size={18} /></ControlButton>}
             <ControlButton label="Leave call" onClick={onLeave} danger className="lg:mt-2"><FiPhoneOff size={19} /></ControlButton>
           </div>

@@ -297,11 +297,13 @@ export class VideoCall {
     } catch { /* The channel can close while the call is ending. */ }
   }
 
-  resumePlayback() {
+  setPlaybackEnabled(enabled) {
+    const isEnabled = Boolean(enabled);
     document.querySelectorAll('[data-video-call] video[data-remote-video="true"], [data-video-call] audio').forEach((media) => {
-      media.muted = false;
-      media.play().catch(() => {});
+      media.muted = !isEnabled;
+      if (isEnabled) media.play().catch(() => {});
     });
+    return isEnabled;
   }
 
   fail(session, error, { destroyJanus = true } = {}) {

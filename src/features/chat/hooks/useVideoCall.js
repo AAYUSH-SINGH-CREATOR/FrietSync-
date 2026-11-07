@@ -72,10 +72,11 @@ export const useVideoCall = ({ onError } = {}) => {
     const videoCall = getVideoCall();
     setCameraOff(videoCall.setCameraOff(!videoCall.cameraOff));
   }, [getVideoCall]);
-  const resumePlayback = useCallback(() => {
-    setMediaPlaybackEnabled(true);
-    getVideoCall().resumePlayback();
-  }, [getVideoCall]);
+  const togglePlayback = useCallback(() => {
+    const enabled = !mediaPlaybackEnabled;
+    setMediaPlaybackEnabled(enabled);
+    getVideoCall().setPlaybackEnabled(enabled);
+  }, [getVideoCall, mediaPlaybackEnabled]);
 
-  return { state, muted, cameraOff, mediaPlaybackEnabled, participants, localStream, join, leave, toggleMute, toggleCamera, resumePlayback, isConfigured: Boolean(JANUS_SERVER_URL) };
+  return { state, muted, cameraOff, mediaPlaybackEnabled, participants, localStream, join, leave, toggleMute, toggleCamera, togglePlayback, isConfigured: Boolean(JANUS_SERVER_URL) };
 };
