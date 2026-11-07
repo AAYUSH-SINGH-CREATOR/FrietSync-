@@ -17,8 +17,11 @@ const ControlButton = ({ label, onClick, active = false, danger = false, childre
   </button>
 );
 
-const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = false, isDarkMode }) => {
+const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = false, isDarkMode, mediaPlaybackEnabled = false }) => {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
+  const hasVideo = Boolean(stream?.getVideoTracks?.().some((track) => track.readyState === 'live'));
+  const hasAudio = Boolean(stream?.getAudioTracks?.().some((track) => track.readyState === 'live'));
 
   // Track the previous stream and mount/dismount cleanly
   useEffect(() => {
@@ -33,11 +36,8 @@ const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = fal
     if (stream && stream.active && stream.getTracks().length > 0) {
       const playPromise = video.play();
       if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch((err) => {
-          // Autoplay failures are expected; they'll be handled by the resumePlayback button
-          if (err.name !== 'NotAllowedError') {
-            console.debug('Video play error (non‑autoplay):', err);
-          }
+        playPromise.catch(() => {
+          // Autoplay may be blocked until the user enables media playback.
         });
       }
     }
@@ -50,12 +50,21 @@ const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = fal
         }
       }
     };
-  }, [stream, local]);
+  }, [stream, local, mediaPlaybackEnabled]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || local || hasVideo || !stream || !hasAudio) return undefined;
+    audio.srcObject = stream;
+    if (mediaPlaybackEnabled) audio.play().catch(() => {});
+    return () => { audio.srcObject = null; };
+  }, [stream, local, hasVideo, hasAudio, mediaPlaybackEnabled]);
 
   return (
     <article className={`relative aspect-video min-h-[150px] overflow-hidden rounded-2xl border shadow-sm sm:min-h-[190px] ${isDarkMode ? 'border-white/10 bg-slate-800' : 'border-white/80 bg-white'}`}>
-      {!cameraOff && stream && stream.active && stream.getTracks().length > 0 ? (
-        <video ref={videoRef} autoPlay playsInline muted={muted || local} className={`h-full w-full object-cover ${local ? '-scale-x-100' : ''}`} />
+      {!local && <audio ref={audioRef} autoPlay playsInline muted={!mediaPlaybackEnabled} className="hidden" />}
+      {!cameraOff && hasVideo ? (
+        <video ref={videoRef} autoPlay playsInline muted={local || !mediaPlaybackEnabled} data-remote-video={local ? undefined : 'true'} className={`h-full w-full object-cover ${local ? '-scale-x-100' : ''}`} />
       ) : (
         <div className={`flex h-full min-h-[150px] items-center justify-center bg-gradient-to-br ${isDarkMode ? 'from-slate-700 to-slate-900' : 'from-sky-100 to-sky-200'}`}>
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-500 text-xl font-semibold text-white shadow-sm sm:h-20 sm:w-20 sm:text-2xl">
@@ -64,18 +73,18 @@ const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = fal
         </div>
       )}
       <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-8 text-sm font-medium text-white">
-        {(muted || local) && <FiMicOff aria-label="Microphone muted" size={15} className="shrink-0" />}
+        {local && muted && <FiMicOff aria-label="Microphone muted" size={15} className="shrink-0" />}
         <span className="truncate">{local ? 'You' : name || 'Participant'}</span>
       </div>
     </article>
   );
 };
 
-export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], localStream, muted, cameraOff, onToggleMute, onToggleCamera, onLeave, onEnd, canEndCall, onResumePlayback }) => {
+export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], localStream, muted, cameraOff, mediaPlaybackEnabled = false, onToggleMute, onToggleCamera, onLeave, onEnd, canEndCall, onResumePlayback }) => {
   const { isDarkMode } = useTheme();
   if (!isOpen) return null;
 
-  const tiles = [{ id: 'local', name: 'You', stream: localStream, local: true, muted, cameraOff }, ...participants];
+  const tiles = [{ id: 'local', name: 'You', stream: localStream, local: true, muted, cameraOff, mediaPlaybackEnabled }, ...participants.map((participant) => ({ ...participant, mediaPlaybackEnabled }))];
   const count = tiles.length;
   const grid = count === 1
     ? 'grid-cols-1 max-w-3xl mx-auto'
@@ -108,7 +117,7 @@ export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], 
           <div className={`flex shrink-0 items-center justify-center gap-2 rounded-2xl p-2 lg:w-[60px] lg:flex-col lg:gap-3 ${isDarkMode ? 'bg-black/15' : 'bg-white/45'}`} aria-label="Call controls">
             <ControlButton label={muted ? 'Unmute microphone' : 'Mute microphone'} onClick={onToggleMute} active={muted}><>{muted ? <FiMicOff size={19} /> : <FiMic size={19} />}</></ControlButton>
             <ControlButton label={cameraOff ? 'Start camera' : 'Stop camera'} onClick={onToggleCamera} active={cameraOff}><>{cameraOff ? <FiVideoOff size={19} /> : <FiVideo size={19} />}</></ControlButton>
-            <ControlButton label="Enable media playback" onClick={onResumePlayback}><FiVolume2 size={19} /></ControlButton>
+            <ControlButton label={mediaPlaybackEnabled ? 'Audio enabled' : 'Enable audio'} onClick={onResumePlayback} active={mediaPlaybackEnabled}><FiVolume2 size={19} /></ControlButton>
             {canEndCall && <ControlButton label="End call for everyone" onClick={onEnd} danger><FiUsers size={18} /></ControlButton>}
             <ControlButton label="Leave call" onClick={onLeave} danger className="lg:mt-2"><FiPhoneOff size={19} /></ControlButton>
           </div>

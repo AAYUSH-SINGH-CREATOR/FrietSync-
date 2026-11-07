@@ -1,6 +1,29 @@
 import Janus from 'janus-gateway';
 import { initJanus } from './voice-call.js';
 
+const toVideoCallError = (error, fallback = 'Could not connect to the video call.') => {
+  const name = error?.name || '';
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    return new Error('Allow camera and microphone access to join the video call. Camera access requires HTTPS or localhost.');
+  }
+  if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+    return new Error('A camera or microphone was not found on this device.');
+  }
+  if (name === 'NotReadableError' || name === 'TrackStartError') {
+    return new Error('Your camera or microphone is already being used by another application.');
+  }
+  if (/no such room|room .*not found|invalid room/i.test(String(error?.message || ''))) {
+    return new Error('This video call room is no longer available. Refresh the call list and try again.');
+  }
+  if (/call has ended|call.*closed|room.*destroyed/i.test(String(error?.message || ''))) {
+    return new Error('This video call has ended.');
+  }
+  if (/websocket|connection|network|ice|peerconnection/i.test(String(error?.message || ''))) {
+    return new Error('The video connection was interrupted. Check your network and try again.');
+  }
+  return new Error(fallback);
+};
+
 export class VideoCall {
   constructor({ server, onState = () => {}, onParticipants = () => {}, onLocalStream = () => {}, onError = () => {} }) {
     Object.assign(this, { server, onState, onParticipants, onLocalStream, onError });
@@ -11,93 +34,169 @@ export class VideoCall {
 
   async join({ roomId, pin, display = 'Guest' }) {
     this.leave();
-    if (!this.server) throw new Error('Janus server URL is missing.');
-    await initJanus();
-    const session = { janus: null, publisher: null, subscribers: new Map(), streams: new Map(), settled: false };
+    if (!this.server) throw new Error('Video calling is not configured.');
+    const numericRoomId = Number(roomId);
+    if (!Number.isFinite(numericRoomId) || numericRoomId <= 0) throw new Error('The video call returned an invalid room.');
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      throw new Error('Video calls require HTTPS or localhost so your browser can access the camera and microphone.');
+    }
+    const session = { janus: null, publisher: null, publisherId: null, privateId: null, roomId: numericRoomId, pin, display, subscribers: new Map(), subscribing: new Set(), streams: new Map(), settled: false, cleaned: false };
     this.session = session;
-    this.roomId = Number(roomId);
-    this.display = display;
+    this.roomId = numericRoomId;
+    this.pin = pin;
     this.onState('connecting');
     await new Promise((resolve, reject) => {
       session.resolve = resolve;
       session.reject = reject;
-      session.janus = new Janus({
+      initJanus().then(() => {
+        if (this.session !== session) throw new Error('Video call join was cancelled.');
+        session.janus = new Janus({
         server: this.server,
-        success: () => session.janus.attach({
+        success: () => session.janus?.attach({
           plugin: 'janus.plugin.videoroom',
           success: (handle) => {
             if (this.session !== session) return;
             session.publisher = handle;
-            const request = { request: 'join', room: this.roomId, ptype: 'publisher', display };
-            if (pin) request.pin = pin;
+            const request = { request: 'join', room: session.roomId, ptype: 'publisher', display: session.display };
+            if (session.pin) request.pin = session.pin;
             handle.send({ message: request });
           },
-          error: (error) => this.fail(session, new Error(`Video room connection failed: ${error}`)),
+          error: (error) => this.fail(session, error),
           onmessage: (message, jsep) => this.onPublisherMessage(session, message, jsep),
+          webrtcState: (connected) => {
+            if (connected) session.webRtcConnected = true;
+            else if (session.webRtcConnected && this.session === session) {
+              this.fail(session, new Error('The WebRTC video connection was interrupted.'));
+            }
+          },
           onlocaltrack: (track, added) => {
+            if (!track) return;
             if (this.session !== session) { if (added) track.stop(); return; }
-            const stream = session.localStream || new MediaStream();
-            if (added && !stream.getTracks().some((item) => item.id === track.id)) stream.addTrack(track);
-            if (!added) stream.removeTrack(track);
+            const tracks = session.localStream?.getTracks() || [];
+            const nextTracks = added
+              ? [...tracks.filter((item) => item.id !== track.id), track]
+              : tracks.filter((item) => item.id !== track.id);
+            const stream = new MediaStream(nextTracks);
             session.localStream = stream;
             this.onLocalStream(stream);
           },
-          oncleanup: () => this.onLocalStream(null),
+          oncleanup: () => {
+            if (this.session === session) {
+              session.localStream?.getTracks().forEach((track) => track.stop());
+              session.localStream = null;
+              this.onLocalStream(null);
+            }
+          },
         }),
-        error: (error) => this.fail(session, new Error(`Janus connection failed: ${error}`)),
-        destroyed: () => { if (this.session === session) this.onState('disconnected'); },
-      });
+        error: (error) => this.fail(session, error),
+        destroyed: () => {
+          if (this.session === session) {
+            this.fail(session, new Error('The Janus video connection was closed.'), { destroyJanus: false });
+          }
+        },
+        });
+      }).catch((error) => this.fail(session, error));
     });
   }
 
   onPublisherMessage(session, message, jsep) {
     if (this.session !== session) return;
     const data = message?.plugindata?.data || message;
-    if (data.videoroom === 'joined') {
+    if (data.error) {
+      this.fail(session, new Error(String(data.error)));
+    } else if (data.videoroom === 'joined') {
+      session.publisherId = data.id;
       session.privateId = data.private_id;
       this.publish(session);
       (data.publishers || []).forEach((publisher) => this.subscribe(session, publisher));
-      this.resolve(session);
+    } else if (data.videoroom === 'destroyed' || data.destroyed) {
+      this.fail(session, new Error('The video call has ended.'));
     } else if (data.videoroom === 'event') {
       (data.publishers || []).forEach((publisher) => this.subscribe(session, publisher));
-      (data.leaving || data.unpublished) && this.removeParticipant(session, data.leaving || data.unpublished);
-      if (data.error) this.fail(session, new Error(data.error));
+      if (data.leaving && data.leaving !== 'ok') this.removeParticipant(session, data.leaving);
+      if (data.unpublished && data.unpublished !== 'ok') this.removeParticipant(session, data.unpublished);
     }
-    if (jsep) session.publisher.handleRemoteJsep({ jsep });
+    if (jsep && this.session === session) session.publisher?.handleRemoteJsep({ jsep });
   }
 
   publish(session) {
     session.publisher.createOffer({
-      media: { audio: true, video: true, data: false },
-      success: (jsep) => session.publisher.send({ message: { request: 'configure', audio: true, video: true }, jsep }),
-      error: (error) => this.fail(session, new Error(`Camera or microphone unavailable: ${error}`)),
+      media: {
+        audio: true,
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 360 },
+          frameRate: { ideal: 24 },
+        },
+        data: false,
+      },
+      success: (jsep) => {
+        if (this.session !== session) return;
+        session.publisher.send({ message: { request: 'configure', audio: true, video: true }, jsep });
+        this.resolve(session);
+      },
+      error: (error) => this.fail(session, error),
     });
   }
 
   subscribe(session, publisher) {
-    if (!publisher?.id || session.subscribers.has(String(publisher.id))) return;
+    if (!publisher?.id) return;
     const id = String(publisher.id);
+    if (session.subscribers.has(id) || session.subscribing.has(id)) return;
+    session.subscribing.add(id);
     const participant = { id, name: publisher.display || 'Participant', stream: new MediaStream() };
     session.streams.set(id, participant);
     const notify = () => this.onParticipants([...session.streams.values()]);
     session.janus.attach({
       plugin: 'janus.plugin.videoroom',
       success: (handle) => {
-        if (this.session !== session) return;
+        session.subscribing.delete(id);
+        if (this.session !== session || !session.streams.has(id)) {
+          try { handle.detach(); } catch { /* Janus may already have detached this handle. */ }
+          return;
+        }
         session.subscribers.set(id, handle);
-        handle.send({ message: { request: 'join', room: this.roomId, ptype: 'subscriber', feed: publisher.id, private_id: session.privateId } });
+        const request = {
+          request: 'join',
+          room: session.roomId,
+          ptype: 'subscriber',
+          feed: publisher.id,
+          private_id: session.privateId,
+        };
+        if (session.pin) request.pin = session.pin;
+        handle.send({ message: request });
       },
-      error: (error) => this.fail(session, new Error(`Could not join participant video: ${error}`)),
+      error: (error) => {
+        session.subscribing.delete(id);
+        this.fail(session, error);
+      },
+      webrtcState: (connected) => {
+        if (connected) participant.webRtcConnected = true;
+        else if (participant.webRtcConnected && this.session === session) {
+          this.onError(toVideoCallError(new Error('The participant video connection was interrupted.')));
+          this.removeParticipant(session, id);
+        }
+      },
       onmessage: (message, jsep) => {
         const handle = session.subscribers.get(id);
-        if (jsep && handle) handle.createAnswer({ jsep, media: { audioSend: false, videoSend: false, audioRecv: true, videoRecv: true }, success: (answer) => handle.send({ message: { request: 'start', room: this.roomId }, jsep: answer }), error: (error) => this.fail(session, new Error(`Could not receive participant video: ${error}`)) });
+        if (jsep && handle) handle.createAnswer({
+          jsep,
+          media: { audioSend: false, videoSend: false, audioRecv: true, videoRecv: true },
+          success: (answer) => {
+            if (this.session === session) handle.send({ message: { request: 'start', room: session.roomId }, jsep: answer });
+          },
+          error: (error) => this.fail(session, error),
+        });
         const data = message?.plugindata?.data || message;
-        if (data.error) this.fail(session, new Error(data.error));
+        if (data.error) this.fail(session, new Error(String(data.error)));
       },
       onremotetrack: (track, _mid, added) => {
-        if (this.session !== session) return;
-        if (added && !participant.stream.getTracks().some((item) => item.id === track.id)) participant.stream.addTrack(track);
-        if (!added) participant.stream.removeTrack(track);
+        if (this.session !== session || !track) return;
+        const tracks = participant.stream.getTracks();
+        const nextTracks = added
+          ? [...tracks.filter((item) => item.id !== track.id), track]
+          : tracks.filter((item) => item.id !== track.id);
+        participant.stream = new MediaStream(nextTracks);
         notify();
       },
       oncleanup: () => this.removeParticipant(session, id),
@@ -107,9 +206,14 @@ export class VideoCall {
 
   removeParticipant(session, id) {
     const key = String(id);
-    session.subscribers.get(key)?.detach();
+    session.subscribing.delete(key);
+    const handle = session.subscribers.get(key);
     session.subscribers.delete(key);
+    const participant = session.streams.get(key);
+    if (!participant) return;
     session.streams.delete(key);
+    participant.stream.getTracks().forEach((track) => track.stop());
+    try { handle?.detach(); } catch { /* Janus may already have detached this handle. */ }
     this.onParticipants([...session.streams.values()]);
   }
 
@@ -128,14 +232,17 @@ export class VideoCall {
   }
 
   resumePlayback() {
-    document.querySelectorAll('[data-video-call] video').forEach((video) => video.play().catch(() => {}));
-    this.onState('connected');
+    document.querySelectorAll('[data-video-call] video[data-remote-video="true"], [data-video-call] audio').forEach((media) => {
+      media.muted = false;
+      media.play().catch(() => {});
+    });
   }
 
-  fail(session, error) {
+  fail(session, error, { destroyJanus = true } = {}) {
     if (this.session !== session) return;
-    this.onError(error);
-    if (!session.settled) { session.settled = true; session.reject(error); }
+    const safeError = toVideoCallError(error);
+    this.onError(safeError);
+    this.cleanupSession(session, { error: safeError, destroyJanus });
   }
 
   resolve(session) {
@@ -145,15 +252,36 @@ export class VideoCall {
   leave() {
     const session = this.session;
     if (!session) return;
-    this.session = null;
-    try { session.publisher?.send({ message: { request: 'leave' } }); } catch { /* session is already closing */ }
-    session.subscribers.forEach((handle) => { try { handle.detach(); } catch { /* Janus may have detached it already */ } });
+    this.cleanupSession(session, { sendLeave: true, destroyJanus: true, rejectError: new Error('Video call left before connecting.') });
+  }
+
+  cleanupSession(session, { sendLeave = false, destroyJanus = true, rejectError = null, error = null } = {}) {
+    if (!session || session.cleaned) return;
+    session.cleaned = true;
+    if (this.session === session) this.session = null;
+    if (sendLeave) {
+      try { session.publisher?.send({ message: { request: 'leave' } }); } catch { /* Janus may already be closing. */ }
+    }
+    const handles = [...session.subscribers.values()];
+    session.subscribers.clear();
+    session.subscribing.clear();
+    handles.forEach((handle) => { try { handle.detach(); } catch { /* Janus may already have detached this handle. */ } });
     session.localStream?.getTracks().forEach((track) => track.stop());
+    session.streams.forEach((participant) => participant.stream.getTracks().forEach((track) => track.stop()));
     session.streams.clear();
     this.onLocalStream(null);
     this.onParticipants([]);
-    try { session.janus?.destroy(); } catch { /* Janus may already be destroyed */ }
-    if (!session.settled) { session.settled = true; session.reject(new Error('Call left before it connected.')); }
+    if (destroyJanus) {
+      try { session.janus?.destroy(); } catch { /* Janus may already be destroyed. */ }
+    }
+    if (!session.settled) {
+      session.settled = true;
+      session.reject(rejectError || error || new Error('Video call connection ended.'));
+    }
+    this.muted = false;
+    this.cameraOff = false;
+    this.roomId = null;
+    this.pin = null;
     this.onState('disconnected');
   }
 }
