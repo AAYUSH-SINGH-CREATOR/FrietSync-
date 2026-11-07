@@ -17,7 +17,7 @@ const ControlButton = ({ label, onClick, active = false, danger = false, childre
   </button>
 );
 
-const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = false, isDarkMode, mediaPlaybackEnabled = false }) => {
+const VideoTile = ({ name, stream, avatarUrl = '', muted = false, cameraOff = false, local = false, isDarkMode, mediaPlaybackEnabled = false }) => {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const hasVideo = Boolean(stream?.getVideoTracks?.().some((track) => track.readyState === 'live'));
@@ -67,24 +67,25 @@ const VideoTile = ({ name, stream, muted = false, cameraOff = false, local = fal
         <video ref={videoRef} autoPlay playsInline muted={local || !mediaPlaybackEnabled} data-remote-video={local ? undefined : 'true'} className={`h-full w-full object-cover ${local ? '-scale-x-100' : ''}`} />
       ) : (
         <div className={`flex h-full min-h-[150px] items-center justify-center bg-gradient-to-br ${isDarkMode ? 'from-slate-700 to-slate-900' : 'from-sky-100 to-sky-200'}`}>
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-500 text-xl font-semibold text-white shadow-sm sm:h-20 sm:w-20 sm:text-2xl">
+          <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-sky-500 text-2xl font-semibold text-white shadow-sm sm:h-24 sm:w-24">
             {getInitials(name || 'Guest')}
+            {avatarUrl && <img src={avatarUrl} alt="" onError={(event) => event.currentTarget.remove()} className="absolute inset-0 h-full w-full object-cover" />}
           </span>
         </div>
       )}
       <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-3 pb-3 pt-8 text-sm font-medium text-white">
-        {local && muted && <FiMicOff aria-label="Microphone muted" size={15} className="shrink-0" />}
+        {muted && <FiMicOff aria-label={local ? 'Your microphone is muted' : `${name || 'Participant'} has muted their microphone`} title="Microphone muted" size={15} className="shrink-0" />}
         <span className="truncate">{local ? 'You' : name || 'Participant'}</span>
       </div>
     </article>
   );
 };
 
-export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], localStream, muted, cameraOff, mediaPlaybackEnabled = false, onToggleMute, onToggleCamera, onLeave, onEnd, canEndCall, onResumePlayback }) => {
+export const VideoCallPanel = ({ isOpen, projectName, state, participants = [], localStream, localAvatar = '', muted, cameraOff, mediaPlaybackEnabled = false, onToggleMute, onToggleCamera, onLeave, onEnd, canEndCall, onResumePlayback }) => {
   const { isDarkMode } = useTheme();
   if (!isOpen) return null;
 
-  const tiles = [{ id: 'local', name: 'You', stream: localStream, local: true, muted, cameraOff, mediaPlaybackEnabled }, ...participants.map((participant) => ({ ...participant, mediaPlaybackEnabled }))];
+  const tiles = [{ id: 'local', name: 'You', stream: localStream, avatarUrl: localAvatar, local: true, muted, cameraOff, mediaPlaybackEnabled }, ...participants.map((participant) => ({ ...participant, mediaPlaybackEnabled }))];
   const count = tiles.length;
   const grid = count === 1
     ? 'grid-cols-1 max-w-3xl mx-auto'

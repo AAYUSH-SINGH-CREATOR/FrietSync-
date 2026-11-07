@@ -32,7 +32,7 @@ export class VideoCall {
     this.cameraOff = false;
   }
 
-  async join({ roomId, pin, display = 'Guest' }) {
+  async join({ roomId, pin, display = 'Guest', avatarUrl = '' }) {
     this.leave();
     if (!this.server) throw new Error('Video calling is not configured.');
     const numericRoomId = Number(roomId);
@@ -40,7 +40,7 @@ export class VideoCall {
     if (typeof window !== 'undefined' && !window.isSecureContext) {
       throw new Error('Video calls require HTTPS or localhost so your browser can access the camera and microphone.');
     }
-    const session = { janus: null, publisher: null, publisherId: null, privateId: null, roomId: numericRoomId, pin, display, subscribers: new Map(), subscribing: new Set(), streams: new Map(), settled: false, cleaned: false };
+    const session = { janus: null, publisher: null, publisherId: null, privateId: null, roomId: numericRoomId, pin, display, avatarUrl, subscribers: new Map(), subscribing: new Set(), streams: new Map(), settled: false, cleaned: false };
     this.session = session;
     this.roomId = numericRoomId;
     this.pin = pin;
@@ -63,6 +63,11 @@ export class VideoCall {
           },
           error: (error) => this.fail(session, error),
           onmessage: (message, jsep) => this.onPublisherMessage(session, message, jsep),
+          ondataopen: () => {
+            session.dataOpen = true;
+            this.sendMediaState(session);
+            session.mediaStateTimer = window.setInterval(() => this.sendMediaState(session), 2000);
+          },
           webrtcState: (connected) => {
             if (connected) session.webRtcConnected = true;
             else if (session.webRtcConnected && this.session === session) {
@@ -72,6 +77,8 @@ export class VideoCall {
           onlocaltrack: (track, added) => {
             if (!track) return;
             if (this.session !== session) { if (added) track.stop(); return; }
+            if (added && track.kind === 'audio') track.enabled = !this.muted;
+            if (added && track.kind === 'video') track.enabled = !this.cameraOff;
             const tracks = session.localStream?.getTracks() || [];
             const nextTracks = added
               ? [...tracks.filter((item) => item.id !== track.id), track]
@@ -128,11 +135,15 @@ export class VideoCall {
           height: { ideal: 360 },
           frameRate: { ideal: 24 },
         },
-        data: false,
+        data: true,
       },
       success: (jsep) => {
         if (this.session !== session) return;
-        session.publisher.send({ message: { request: 'configure', audio: true, video: true }, jsep });
+        // Start with the microphone live. Browsers can return tracks that are
+        // disabled by a prior device/session state, so make the default clear.
+        session.localStream?.getAudioTracks().forEach((track) => { track.enabled = true; });
+        this.muted = false;
+        session.publisher.send({ message: { request: 'configure', audio: true, video: true, data: true }, jsep });
         this.resolve(session);
       },
       error: (error) => this.fail(session, error),
@@ -144,7 +155,15 @@ export class VideoCall {
     const id = String(publisher.id);
     if (session.subscribers.has(id) || session.subscribing.has(id)) return;
     session.subscribing.add(id);
-    const participant = { id, name: publisher.display || 'Participant', stream: new MediaStream() };
+    const publisherStreams = publisher.streams || [];
+    const participant = {
+      id,
+      name: publisher.display || 'Participant',
+      avatarUrl: publisher.metadata?.avatarUrl || '',
+      stream: new MediaStream(),
+      muted: Boolean(publisherStreams.find((stream) => stream.type === 'audio')?.disabled),
+      cameraOff: Boolean(publisherStreams.find((stream) => stream.type === 'video')?.disabled),
+    };
     session.streams.set(id, participant);
     const notify = () => this.onParticipants([...session.streams.values()]);
     session.janus.attach({
@@ -181,7 +200,7 @@ export class VideoCall {
         const handle = session.subscribers.get(id);
         if (jsep && handle) handle.createAnswer({
           jsep,
-          media: { audioSend: false, videoSend: false, audioRecv: true, videoRecv: true },
+          media: { audioSend: false, videoSend: false, audioRecv: true, videoRecv: true, data: true },
           success: (answer) => {
             if (this.session === session) handle.send({ message: { request: 'start', room: session.roomId }, jsep: answer });
           },
@@ -198,6 +217,16 @@ export class VideoCall {
           : tracks.filter((item) => item.id !== track.id);
         participant.stream = new MediaStream(nextTracks);
         notify();
+      },
+      ondata: (text) => {
+        try {
+          const update = JSON.parse(text);
+          if (update?.type !== 'frietsync-media-state' || !session.streams.has(id)) return;
+          participant.muted = Boolean(update.muted);
+          participant.cameraOff = Boolean(update.cameraOff);
+          if (typeof update.avatarUrl === 'string') participant.avatarUrl = update.avatarUrl;
+          notify();
+        } catch { /* Ignore non-FrietSync data channel messages. */ }
       },
       oncleanup: () => this.removeParticipant(session, id),
     });
@@ -219,16 +248,53 @@ export class VideoCall {
 
   setMuted(value) {
     this.muted = Boolean(value);
-    this.session?.publisher?.send({ message: { request: 'configure', audio: !this.muted, video: !this.cameraOff } });
+    this.session?.publisher?.send({ message: { request: 'configure', audio: !this.muted } });
     this.session?.localStream?.getAudioTracks().forEach((track) => { track.enabled = !this.muted; });
+    this.sendMediaState(this.session);
     return this.muted;
   }
 
   setCameraOff(value) {
     this.cameraOff = Boolean(value);
-    this.session?.publisher?.send({ message: { request: 'configure', audio: !this.muted, video: !this.cameraOff } });
-    this.session?.localStream?.getVideoTracks().forEach((track) => { track.enabled = !this.cameraOff; });
+    const session = this.session;
+    const publisher = session?.publisher;
+    const videoTracks = session?.localStream?.getVideoTracks() || [];
+    videoTracks.forEach((track) => { track.enabled = !this.cameraOff; });
+
+    if (publisher && session && !session.cleaned) {
+      this.sendMediaState(session);
+      if (this.cameraOff) {
+        // Keep the negotiated video transceiver alive while pausing publication.
+        // Re-enabling below renegotiates with a fresh offer; a bare
+        // configure(video:true) can leave subscribers with a black track.
+        publisher.send({ message: { request: 'configure', video: false } });
+      } else {
+        publisher.createOffer({
+          media: {
+            audio: !this.muted,
+            video: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 24 } },
+            data: true,
+          },
+          success: (jsep) => {
+            if (this.session !== session || session.cleaned) return;
+            publisher.send({ message: { request: 'configure', audio: !this.muted, video: true }, jsep });
+          },
+          error: (error) => {
+            if (this.session === session) this.onError(toVideoCallError(error));
+          },
+        });
+      }
+    }
     return this.cameraOff;
+  }
+
+  sendMediaState(session) {
+    if (!session?.dataOpen || this.session !== session || session.cleaned) return;
+    try {
+      session.publisher?.data({
+        text: JSON.stringify({ type: 'frietsync-media-state', muted: this.muted, cameraOff: this.cameraOff, avatarUrl: session.avatarUrl }),
+      });
+    } catch { /* The channel can close while the call is ending. */ }
   }
 
   resumePlayback() {
@@ -258,6 +324,7 @@ export class VideoCall {
   cleanupSession(session, { sendLeave = false, destroyJanus = true, rejectError = null, error = null } = {}) {
     if (!session || session.cleaned) return;
     session.cleaned = true;
+    if (session.mediaStateTimer) window.clearInterval(session.mediaStateTimer);
     if (this.session === session) this.session = null;
     if (sendLeave) {
       try { session.publisher?.send({ message: { request: 'leave' } }); } catch { /* Janus may already be closing. */ }

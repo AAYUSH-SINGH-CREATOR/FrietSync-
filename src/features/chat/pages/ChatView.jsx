@@ -396,6 +396,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         roomId,
         pin: getJanusRoomPin(details) ?? getJanusRoomPin(call) ?? '',
         display: currentUserProfile?.name || currentUserProfile?.user?.name || currentUser.name || 'User',
+        avatarUrl: currentUser.profilePictureUrl,
       });
       setVideoCallDetails({ ...call, ...details, id: callId, roomId });
       joinedVideoCallRef.current = { projectId: activeProjectId, callId };
@@ -1107,6 +1108,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         state={videoCallState}
         participants={videoParticipants}
         localStream={localStream}
+        localAvatar={currentUser.profilePictureUrl}
         muted={videoMuted}
         cameraOff={cameraOff}
         mediaPlaybackEnabled={mediaPlaybackEnabled}

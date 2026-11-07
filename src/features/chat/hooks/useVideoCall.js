@@ -55,7 +55,9 @@ export const useVideoCall = ({ onError } = {}) => {
       joinedRef.current = true;
       setMuted(false);
       setCameraOff(false);
-      setMediaPlaybackEnabled(false);
+      // Start remote audio unmuted; the panel still exposes an explicit retry
+      // button for browsers that block autoplay.
+      setMediaPlaybackEnabled(true);
     } catch (error) {
       videoCall.leave();
       throw error;
