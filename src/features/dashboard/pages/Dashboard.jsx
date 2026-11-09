@@ -138,7 +138,7 @@ const Dashboard = () => {
 
   return (
     <div
-      className={`${isChat ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-[var(--bg-dashboard)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-200`}
+      className={`${isChat ? 'h-dvh overflow-hidden' : 'min-h-screen'} bg-[var(--bg-dashboard)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-200`}
     >
       <DashboardNavbar
         unreadNotificationCount={unreadNotificationCount}

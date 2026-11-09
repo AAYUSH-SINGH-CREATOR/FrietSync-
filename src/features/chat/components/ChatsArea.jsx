@@ -733,7 +733,7 @@ const ChatArea = ({
     <div className="w-full flex-1 min-w-0 bg-gradient-to-br from-[#D9EAFD] via-[#EAF2FF] to-[#D5E7FC] dark:from-[#060D1A] dark:via-[#091527] dark:to-[#040A14] border-2 sm:border-4 border-[#CCE5FE] dark:border-[#1B3654] rounded-3xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden relative transition-colors">
       {}
       <div className="bg-white dark:bg-[#171717] rounded-2xl mx-2.5 sm:mx-3 mt-2.5 sm:mt-3 px-3.5 sm:px-5 py-2.5 sm:py-3 shadow-xs border border-sky-100 dark:border-white/5 flex items-center justify-between shrink-0 z-10">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 sm:gap-3">
           {}
           {onBackToList && (
             <button
@@ -748,7 +748,7 @@ const ChatArea = ({
 
           {}
           <div className="relative shrink-0">
-            <ChatAvatar src={activeChat.avatar || projectInfo.profilePictureUrl || projectInfo.projectImageUrl || projectInfo.imageUrl || projectInfo.logoUrl || projectInfo.project?.profilePictureUrl} name={activeChat.name} color={projectColor} className="w-10 h-10 border border-slate-200 dark:border-slate-700 text-xs shadow-xs" />
+            <ChatAvatar src={activeChat.avatar || projectInfo.profilePictureUrl || projectInfo.projectImageUrl || projectInfo.imageUrl || projectInfo.logoUrl || projectInfo.project?.profilePictureUrl} name={activeChat.name} color={projectColor} className="w-8 h-8 sm:w-10 sm:h-10 border border-slate-200 dark:border-slate-700 text-xs shadow-xs" />
           </div>
 
           <div className="min-w-0 text-left">
@@ -775,14 +775,14 @@ const ChatArea = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0 text-slate-600 dark:text-slate-300">
+        <div className="flex items-center gap-0 shrink-0 text-slate-600 dark:text-slate-300 sm:gap-1">
           <button
             type="button"
             onClick={() => { setPollToOpenId(null); setIsPollModalOpen(true); }}
             title="Project Polls & Decisions"
-            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+            className="p-1 sm:p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
-            <FiBarChart2 size={18} />
+            <FiBarChart2 size={16} className="sm:h-[18px] sm:w-[18px]" />
           </button>
           <div className="relative">
             <button
@@ -791,9 +791,9 @@ const ChatArea = ({
               title="Pinned messages"
               aria-label={`Pinned messages${pinnedMessages.length ? `, ${pinnedMessages.length} pinned` : ''}`}
               aria-expanded={isPinnedPanelOpen}
-              className={`p-2 rounded-md transition-colors cursor-pointer ${isPinnedPanelOpen || pinnedMessages.length > 0 ? 'text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/20' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`p-1 sm:p-2 rounded-md transition-colors cursor-pointer ${isPinnedPanelOpen || pinnedMessages.length > 0 ? 'text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/20' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
             >
-              <BsPin size={18} />
+              <BsPin size={16} className="sm:h-[18px] sm:w-[18px]" />
             </button>
             {pinnedMessages.length > 0 && (
               <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-amber-700 dark:bg-amber-600 text-white text-[9px] font-semibold rounded-md flex items-center justify-center tabular-nums">
@@ -805,9 +805,9 @@ const ChatArea = ({
             type="button"
             onClick={() => setIsSearchOpen((prev) => !prev)}
             title="Search in messages"
-            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+            className="p-1 sm:p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
-            <FiSearch size={18} />
+            <FiSearch size={16} className="sm:h-[18px] sm:w-[18px]" />
           </button>
           {voiceCall && (
             <div className="relative">
@@ -816,20 +816,20 @@ const ChatArea = ({
                 onClick={voiceCall.onTogglePanel}
                 title={voiceCall.isJoined ? 'Voice call controls' : voiceCall.isCallActive ? 'Join voice call' : 'Start voice call'}
                 aria-label={voiceCall.isJoined ? 'Voice call controls' : voiceCall.isCallActive ? 'Join voice call' : 'Start voice call'}
-                className={`p-2 rounded-xl transition cursor-pointer ${voiceCall.isCallActive || voiceCall.isJoined ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`p-1 sm:p-2 rounded-xl transition cursor-pointer ${voiceCall.isCallActive || voiceCall.isJoined ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                <FiPhone size={18} />
+                <FiPhone size={16} className="sm:h-[18px] sm:w-[18px]" />
               </button>
             </div>
           )}
-          {videoCall && <button type="button" onClick={videoCall.onStart} disabled={videoCall.isJoining} title={videoCall.isJoining ? 'Connecting to video call' : videoCall.isJoined ? 'Open video call' : videoCall.isCallActive ? 'Join video call' : 'Start video call'} aria-label={videoCall.isJoined ? 'Open video call' : videoCall.isCallActive ? 'Join video call' : 'Start video call'} className={`rounded-xl p-2 transition disabled:opacity-50 ${videoCall.isCallActive || videoCall.isJoined ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5'}`}><FiVideo size={18} /></button>}
+          {videoCall && <button type="button" onClick={videoCall.onStart} disabled={videoCall.isJoining} title={videoCall.isJoining ? 'Connecting to video call' : videoCall.isJoined ? 'Open video call' : videoCall.isCallActive ? 'Join video call' : 'Start video call'} aria-label={videoCall.isJoined ? 'Open video call' : videoCall.isCallActive ? 'Join video call' : 'Start video call'} className={`rounded-xl p-1 sm:p-2 transition disabled:opacity-50 ${videoCall.isCallActive || videoCall.isJoined ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30' : 'hover:bg-slate-100 dark:hover:bg-white/5'}`}><FiVideo size={16} className="sm:h-[18px] sm:w-[18px]" /></button>}
           <button
             type="button"
             onClick={() => { onOpenGroupDetails?.(); setIsProjectDetailsOpen(true); }}
             title="Conversation details"
-            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+            className="p-1 sm:p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
-            <FiMoreVertical size={18} />
+            <FiMoreVertical size={16} className="sm:h-[18px] sm:w-[18px]" />
           </button>
         </div>
       </div>
@@ -1203,7 +1203,7 @@ const ChatArea = ({
       )}
 
       {}
-      {!readOnly && <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2.5 sm:mx-3 mb-2.5 sm:mb-3 p-2 px-3 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-2 sm:gap-3 shrink-0 z-10 relative">
+      {!readOnly && <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2 mb-2 sm:mx-3 sm:mb-3 p-1.5 px-2.5 sm:p-2 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-1 min-[380px]:gap-1.5 sm:gap-3 shrink-0 z-10 relative">
         <input
           ref={fileInputRef}
           type="file"
@@ -1220,7 +1220,7 @@ const ChatArea = ({
           title="Attach files (up to 10, 25 MB each)"
           className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <FiPaperclip size={18} />
+          <FiPaperclip size={16} className="sm:h-[18px] sm:w-[18px]" />
         </button>
 
         <button
@@ -1231,7 +1231,7 @@ const ChatArea = ({
           aria-label={isRecordingVoice ? 'Stop voice note recording' : 'Record a voice note'}
           className={`inline-flex items-center gap-1.5 rounded-full p-1.5 transition cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:opacity-40 ${isRecordingVoice ? 'text-rose-500 hover:text-rose-600 dark:text-rose-400' : 'text-sky-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300'}`}
         >
-          {isRecordingVoice ? <FiSquare size={16} fill="currentColor" /> : <FiMic size={18} />}
+          {isRecordingVoice ? <FiSquare size={16} fill="currentColor" /> : <FiMic size={16} className="sm:h-[18px] sm:w-[18px]" />}
           {isRecordingVoice && <span className="min-w-[2.4rem] text-[11px] font-semibold tabular-nums">{String(Math.floor(voiceRecordingSeconds / 60)).padStart(2, '0')}:{String(voiceRecordingSeconds % 60).padStart(2, '0')}</span>}
         </button>
 
@@ -1242,11 +1242,11 @@ const ChatArea = ({
           title="Project Polls & Decisions"
           className="text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition cursor-pointer p-1 shrink-0"
         >
-          <FiBarChart2 size={18} />
+          <FiBarChart2 size={16} className="sm:h-[18px] sm:w-[18px]" />
         </button>
 
         {}
-        <div className="flex-1 flex items-center bg-[#F1F3F5] dark:bg-[#252525] rounded-full px-3.5 sm:px-4 py-1.5 border border-transparent dark:border-white/5 focus-within:border-sky-400 transition relative">
+        <div className="min-w-0 flex-1 flex items-center bg-[#F1F3F5] dark:bg-[#252525] rounded-full px-2.5 sm:px-4 py-1.5 border border-transparent dark:border-white/5 focus-within:border-sky-400 transition relative">
           <input
             ref={inputRef}
             type="text"
@@ -1255,7 +1255,7 @@ const ChatArea = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder-slate-500 bg-transparent outline-none w-full"
+            className="min-w-0 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder-slate-500 bg-transparent outline-none w-full"
           />
           <button
             type="button"
@@ -1294,7 +1294,7 @@ const ChatArea = ({
           title={isProject && connectionStatus !== 'connected' ? `Connecting (${connectionStatus})...` : 'Send message'}
           className="p-2 rounded-full text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 disabled:opacity-40 transition cursor-pointer shrink-0"
         >
-          <FiSend size={18} />
+          <FiSend size={16} className="sm:h-[18px] sm:w-[18px]" />
         </button>
       </form>}
 

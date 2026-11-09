@@ -593,7 +593,7 @@ const DashboardNavbar = ({
       </header>
 
       {}
-      <header className="flex md:hidden flex-col gap-2 bg-[#81ebfe] px-4 py-2 sticky top-0 z-40 w-full shadow-xs select-none">
+      <header className="flex md:hidden flex-col gap-2 bg-[#81ebfe] px-3 min-[380px]:px-4 py-2 sticky top-0 z-40 w-full shadow-xs select-none">
         <div className="flex h-[38px] w-full items-center justify-between">
           <button
             type="button"
