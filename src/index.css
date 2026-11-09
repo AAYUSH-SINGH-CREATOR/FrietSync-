@@ -7,11 +7,19 @@
   contain-intrinsic-size: auto 720px;
 }
 
+.landing-hero-title {
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  transform: scaleX(0.78);
+  transform-origin: left center;
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Google Sans Flex", "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Inter", "Google Sans Flex", sans-serif;
+  --font-anton: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  --font-anton: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   --text-xs: 0.8125rem;
   --text-lg: 1.25rem;
   --text-2xl: 1.625rem;

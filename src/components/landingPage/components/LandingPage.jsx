@@ -183,9 +183,8 @@ function Header({ isAuthenticated, scrolled, scrollToSection, mobileMenuOpen, se
           <span className="text-lg font-bold tracking-tight text-white sm:text-2xl">Frietsync</span>
         </Link>
         <nav className="hidden items-center md:flex">
-          <button type="button" onClick={() => scrollToSection('features')} className="rounded-full px-5 py-1.5 text-sm font-medium text-white/90 transition hover:bg-white/10 hover:text-white">
-          Features
-          </button>
+          <button type="button" onClick={() => scrollToSection('landing-top')} className="rounded-full px-5 py-1.5 text-sm font-medium text-white/90 transition hover:bg-white/10 hover:text-white">Home</button>
+          <button type="button" onClick={() => scrollToSection('features')} className="rounded-full px-5 py-1.5 text-sm font-medium text-white/90 transition hover:bg-white/10 hover:text-white">Features</button>
         </nav>
         <div className="hidden shrink-0 items-center gap-3 sm:flex">
           {isAuthenticated ? (
@@ -264,46 +263,48 @@ function Header({ isAuthenticated, scrolled, scrollToSection, mobileMenuOpen, se
 
 function Hero({ scrollToSection }) {
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#6EB0EF] via-[#8195EF] to-[#74A7EF] pb-12 pt-24 sm:pb-24 sm:pt-36">
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[700px] w-[1440px] -translate-x-1/2 select-none opacity-80">
-        <div className="absolute left-10 top-10 h-[400px] w-[500px] rounded-full bg-[#7E7AFE]/60 blur-[140px]" />
-        <div className="absolute right-20 top-40 h-[350px] w-[450px] rounded-full bg-[#75A5EF]/70 blur-[120px]" />
+    <section id="landing-top" className="relative min-h-[680px] w-full overflow-hidden bg-gradient-to-br from-[#70A8E9] via-[#666FE4] to-[#477DBB] pb-12 pt-[76px] sm:pb-0 sm:pt-[76px] md:min-h-[calc(100svh_+_4rem)] md:pt-24">
+      <div className="pointer-events-none absolute inset-0 select-none opacity-90">
+        <div className="absolute -left-20 top-20 h-[420px] w-[520px] rounded-full bg-[#9CCBFF]/35 blur-[150px]" />
+        <div className="absolute right-[-5%] top-24 h-[430px] w-[520px] rounded-full bg-[#6250E8]/35 blur-[150px]" />
       </div>
 
-      <div className="relative mx-auto mb-5 w-full max-w-[1440px] select-none px-2 text-center sm:mb-10 sm:px-8 lg:px-14">
-        <h1 className="w-full whitespace-nowrap font-anton text-[clamp(2rem,9vw,10rem)] uppercase leading-none tracking-tight text-white/90">
-          Make Work Flow
-        </h1>
+      <div className="relative z-10 mx-auto mb-[-0.1rem] max-w-[1376px] px-4 sm:px-12">
+        <div className="mx-2 select-none pl-6 sm:mx-4 sm:pl-7 lg:pl-16">
+          <h1 className="landing-hero-title relative w-full whitespace-nowrap text-left text-[clamp(1.5rem,8vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.065em] text-white md:top-8 md:text-[clamp(5rem,11vw,10rem)]">
+            Make Work Flow
+          </h1>
+        </div>
       </div>
 
-      <div className="relative mx-auto max-w-[1282px] px-4 sm:px-8">
-        <div className="overflow-hidden rounded-[24px] border border-white/25 bg-white/[0.08] p-5 shadow-2xl backdrop-blur-2xl sm:rounded-[36px] sm:p-10 lg:p-12">
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
-            <div className="space-y-6 text-left sm:space-y-8 lg:col-span-4">
-              <h2 className="text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-[34px]">
+      <div className="relative mx-auto mt-6 max-w-[1376px] px-4 sm:px-12 md:-mt-[clamp(8rem,10vw,9rem)]">
+        <div className="relative mx-2 mb-6 min-h-0 overflow-hidden rounded-[24px] border border-white/35 bg-gradient-to-br from-[#164B93]/60 via-[#3C5CB2]/55 to-[#143F83]/55 px-6 pb-7 pt-28 shadow-[0_24px_80px_rgba(16,35,100,0.28)] backdrop-blur-2xl sm:mx-4 sm:mb-8 sm:rounded-[34px] sm:pl-7 sm:pr-9 sm:pb-9 sm:pt-28 md:mb-12 md:flex md:min-h-[calc(100svh_-_5rem)] md:flex-col md:pt-36 lg:pl-16 lg:pr-16 lg:pb-12 lg:pt-44">
+          <div className="grid grid-cols-1 items-start gap-8 md:my-auto md:w-full md:grid-cols-[1fr_1.35fr_.72fr] md:gap-4">
+            <div className="space-y-6 text-left sm:space-y-8">
+              <h2 className="text-2xl font-semibold leading-tight text-white sm:text-[26px] lg:text-[34px]">
                 Sync projects,<br />sprints, and issues<br />in one workspace<br />with Frietsync.
               </h2>
               <div>
-                <Link to="/signup" className="group inline-flex items-center gap-3 rounded-full bg-[#FFF16B] px-6 py-3.5 text-sm font-semibold text-slate-950 shadow-xl transition hover:bg-yellow-300 sm:text-base">
+                <Link to="/signup" className="group inline-flex items-center gap-3 rounded-full bg-[#FFF16B] px-5 py-2 text-sm font-semibold text-slate-950 shadow-xl transition hover:bg-yellow-300 sm:px-6 sm:py-2 sm:text-base">
                   <span>Get started</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/30"><FiArrowRight size={15} /></span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/30"><FiArrowRight size={14} /></span>
                 </Link>
-                <button type="button" onClick={() => scrollToSection('features')} className="mt-2 block text-xs text-white underline underline-offset-2 sm:text-sm">Explore Platform</button>
+                <button type="button" onClick={() => scrollToSection('features')} className="mt-5 block text-xs text-white underline underline-offset-2 sm:text-sm">Explore Platform</button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center py-2 lg:col-span-5 sm:py-0">
+            <div className="flex items-center justify-center py-2 sm:py-0">
               <img src={lnheroimg} alt="Frietsync workspace illustration" fetchPriority="high" decoding="async" className="w-full max-w-[420px] object-contain drop-shadow-2xl transition-transform hover:scale-[1.02] sm:max-w-[480px]" />
             </div>
 
-            <div className="flex flex-col justify-between space-y-6 text-left lg:col-span-3 lg:pl-4">
+            <div className="flex flex-col justify-between space-y-6 text-left md:pl-1">
               <div>
                 <div className="font-anton text-4xl tracking-tight text-white sm:text-5xl">2K+</div>
-                <div className="font-anton text-2xl text-white/90 sm:text-3xl">Teams</div>
+                <div className="font-anton text-base text-white/90 sm:text-xl">Teams</div>
               </div>
               <div className="flex -space-x-2 sm:-space-x-3">
                 {[lnuser1, lnuser2, lnuser3].map((image, index) => (
-                  <img key={image} src={image} alt={`Frietsync team member ${index + 1}`} className="h-12 w-12 rounded-full border-2 border-white object-cover shadow-md" />
+                  <img key={image} src={image} alt={`Frietsync team member ${index + 1}`} className="h-10 w-10 rounded-full border-2 border-white object-cover shadow-md sm:h-11 sm:w-11" />
                 ))}
               </div>
               <p className="max-w-[200px] text-xs font-normal leading-relaxed text-white/85 sm:text-sm">
@@ -311,16 +312,17 @@ function Hero({ scrollToSection }) {
               </p>
             </div>
           </div>
+          <div className="relative z-10 mt-8 flex justify-center text-center md:pointer-events-none md:absolute md:inset-x-0 md:bottom-4 md:mt-0">
+            <div className="relative flex h-[78px] w-[330px] items-end justify-center pb-1">
+              <button type="button" onClick={() => scrollToSection('about')} className="group pointer-events-auto relative z-10 flex flex-col items-center gap-1 text-slate-950 transition">
+                <span className="text-xs font-semibold tracking-wide">Scroll to explore</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FA8CC7] text-white shadow-md transition-transform group-hover:translate-y-1">
+                  <FiArrowDown size={15} />
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="mt-8 flex flex-col items-center justify-center gap-4 text-center sm:mt-12">
-        <button type="button" onClick={() => scrollToSection('about')} className="group mt-2 flex flex-col items-center gap-1.5 text-slate-900 transition hover:text-slate-800">
-          <span className="text-xs font-semibold tracking-wide">Scroll to explore</span>
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FA8CC7] text-white shadow-md transition-transform group-hover:translate-y-1">
-            <FiArrowDown size={15} />
-          </span>
-        </button>
       </div>
     </section>
   );
