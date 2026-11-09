@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Defer painting and layout work for landing page sections until they approach
+   the viewport. Intrinsic sizes keep the scroll position stable while skipped. */
+.landing-page-main > section:not(:first-child) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 @theme {

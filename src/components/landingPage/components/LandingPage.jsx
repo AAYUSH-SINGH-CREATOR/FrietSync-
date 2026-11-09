@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { Link } from 'react-router-dom';
 import { FiArrowDown, FiArrowRight, FiBarChart2, FiCheck, FiMenu, FiSend, FiSettings, FiUsers, FiX, FiZap } from 'react-icons/fi';
 import { AiFillBug } from 'react-icons/ai';
@@ -113,8 +115,21 @@ const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [tasks, setTasks] = useState(initialTasks);
+  const lenisRef = useRef(null);
   const isAuthenticated = Boolean(getAccessToken());
   const completedCount = tasks.filter((task) => task.completed).length;
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const lenis = new Lenis({ autoRaf: true, smoothWheel: true });
+    lenisRef.current = lenis;
+
+    return () => {
+      lenis.destroy();
+      lenisRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -124,7 +139,15 @@ const LandingPage = () => {
 
   const scrollToSection = (id) => {
     setMobileMenuOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    const section = document.getElementById(id);
+    if (!section) return;
+
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(section, { offset: -80, duration: 1.2 });
+    } else {
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      section.scrollIntoView({ behavior });
+    }
   };
 
   const toggleTask = (id) => {
@@ -136,7 +159,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-white font-sans text-slate-900 antialiased selection:bg-sky-200 selection:text-slate-900">
       <Header isAuthenticated={isAuthenticated} scrolled={scrolled} scrollToSection={scrollToSection} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
-      <main>
+      <main className="landing-page-main">
         <Hero scrollToSection={scrollToSection} />
         <AboutSection />
         <PlanSection />
@@ -270,7 +293,7 @@ function Hero({ scrollToSection }) {
             </div>
 
             <div className="flex items-center justify-center py-2 lg:col-span-5 sm:py-0">
-              <img src={lnheroimg} alt="Frietsync workspace illustration" className="w-full max-w-[420px] object-contain drop-shadow-2xl transition-transform hover:scale-[1.02] sm:max-w-[480px]" />
+              <img src={lnheroimg} alt="Frietsync workspace illustration" fetchPriority="high" decoding="async" className="w-full max-w-[420px] object-contain drop-shadow-2xl transition-transform hover:scale-[1.02] sm:max-w-[480px]" />
             </div>
 
             <div className="flex flex-col justify-between space-y-6 text-left lg:col-span-3 lg:pl-4">
@@ -336,7 +359,7 @@ function PlanSection() {
             <ArrowLink>Create your project</ArrowLink>
           </div>
           <div className="flex items-center justify-center lg:col-span-6">
-            <img src={lnrender} alt="A visual preview of planning, tracking, and collaboration" className="w-full max-w-[640px] object-contain drop-shadow-2xl transition-transform hover:scale-[1.02]" />
+            <img src={lnrender} alt="A visual preview of planning, tracking, and collaboration" loading="lazy" decoding="async" className="w-full max-w-[640px] object-contain drop-shadow-2xl transition-transform hover:scale-[1.02]" />
           </div>
         </div>
       </div>
@@ -429,7 +452,7 @@ function ShowcaseSection() {
               <div key={setIndex} className="flex shrink-0 items-center gap-3 pr-3 sm:gap-6 sm:pr-6" aria-hidden={setIndex === 1}>
                 {showcaseCards.map((image, index) => (
                   <div key={`${setIndex}-${image}`} className={`w-[140px] shrink-0 overflow-hidden rounded-2xl border border-white/40 shadow-lg transition-transform duration-300 hover:-translate-y-2 sm:w-[220px] ${index % 2 ? '-translate-y-2 sm:-translate-y-3' : ''}`}>
-                    <img src={image} alt={setIndex === 0 ? `Frietsync platform feature ${index + 1}` : ''} className="h-auto w-full object-cover" />
+                    <img src={image} alt={setIndex === 0 ? `Frietsync platform feature ${index + 1}` : ''} loading="lazy" decoding="async" className="h-auto w-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -550,9 +573,9 @@ function Footer({ scrollToSection }) {
 
         <div className="relative mx-auto flex max-w-lg items-center justify-center">
           <div className="relative w-full max-w-[440px] sm:max-w-[480px]">
-            <img src={lnlaptopMockup} alt="Frietsync laptop preview" className="relative z-20 h-auto w-full select-none object-contain drop-shadow-2xl" />
+            <img src={lnlaptopMockup} alt="Frietsync laptop preview" loading="lazy" decoding="async" className="relative z-20 h-auto w-full select-none object-contain drop-shadow-2xl" />
             <div className="absolute left-[13%] top-[8%] z-10 h-[74%] w-[74%] overflow-hidden rounded-md bg-slate-900">
-              <img src={lnissuesPreview} alt="Frietsync issue tracking screen" className="h-full w-full object-cover" />
+              <img src={lnissuesPreview} alt="Frietsync issue tracking screen" loading="lazy" decoding="async" className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
