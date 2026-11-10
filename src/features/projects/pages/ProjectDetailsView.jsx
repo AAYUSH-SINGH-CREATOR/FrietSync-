@@ -1782,7 +1782,15 @@ const ProjectDetailsView = () => {
                     {sprints.slice(0, 5).map((sprint, idx) => (
                       <tr
                         key={sprint.id || sprint._id || idx}
-                        onClick={() => { if (!isProjectClosed) navigate('/dashboard/sprints'); }}
+                        onClick={() => {
+                          if (isProjectClosed) return;
+                          navigate('/dashboard/sprints', {
+                            state: canCreateSprint ? {
+                              openSprintId: sprint.id || sprint.sprintId || sprint._id,
+                              projectId: project.id || project.projectId || project._id,
+                            } : undefined,
+                          });
+                        }}
                         className={`${isProjectClosed ? '' : 'cursor-pointer'} hover:bg-slate-50 dark:hover:bg-[#27272e] transition`}
                       >
                         <td className="py-3 px-3">

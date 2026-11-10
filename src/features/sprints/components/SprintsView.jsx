@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   FiAlertCircle,
   FiCheckCircle,
@@ -71,6 +71,10 @@ const FilterSelect = ({ label, value, onChange, options }) => (
 );
 
 const SprintsView = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const requestedSprintId = location.state?.openSprintId ? String(location.state.openSprintId) : '';
+  const requestedProjectId = location.state?.projectId ? String(location.state.projectId) : '';
   const { currentUserProfile, isLoadingUserProfile } = useOutletContext() || {};
   const globalRole = String(currentUserProfile?.role || currentUserProfile?.user?.role || '').toUpperCase();
   const currentUserEmail = String(currentUserProfile?.email || currentUserProfile?.user?.email || '').toLowerCase();
@@ -139,7 +143,9 @@ const SprintsView = () => {
         setProjects(records);
         const dashboardProjectId = getDashboardProjectId();
         setProjectId((currentId) =>
-          currentId && records.some((project) => String(getProjectId(project)) === currentId)
+          requestedProjectId && records.some((project) => String(getProjectId(project)) === requestedProjectId)
+            ? requestedProjectId
+            : currentId && records.some((project) => String(getProjectId(project)) === currentId)
             ? currentId
             : records.some((project) => String(getProjectId(project)) === dashboardProjectId)
               ? dashboardProjectId
@@ -157,7 +163,17 @@ const SprintsView = () => {
       });
 
     return () => { isMounted = false; };
-  }, [projectRefreshTrigger]);
+  }, [projectRefreshTrigger, requestedProjectId]);
+
+  useEffect(() => {
+    if (!requestedSprintId || projectsLoading || sprintsLoading) return;
+    const targetSprint = sprints.find((sprint) => String(getSprintId(sprint)) === requestedSprintId);
+    if (targetSprint) {
+      setSelectedSprint(targetSprint);
+      setSelectedSprintId(requestedSprintId);
+    }
+    navigate(location.pathname, { replace: true, state: null });
+  }, [requestedSprintId, projectsLoading, sprintsLoading, sprints, navigate, location.pathname]);
 
   useEffect(() => subscribeToDashboardProjectId((selectedProjectId) => {
     if (projects.some((project) => String(getProjectId(project)) === selectedProjectId)) {
