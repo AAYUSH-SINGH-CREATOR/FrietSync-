@@ -72,7 +72,7 @@ const DailyBriefingView = () => {
   const issueCount = (key) => Array.isArray(briefing?.[key]) ? briefing[key].length : 0;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-1 pb-10 text-slate-900 dark:text-white">
+    <div className="w-full min-w-0 space-y-6 px-4 pb-10 text-slate-900 dark:text-white sm:px-6 lg:px-7">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">Your day, at a glance</p>
@@ -102,15 +102,15 @@ const DailyBriefingView = () => {
         </div>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2">
           {LIST_SECTIONS.map((section) => <section key={section.key} className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1f1f1f]">
             <div className="mb-3 flex items-start justify-between gap-2"><div><h3 className="font-bold">{section.title}</h3><p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{section.hint}</p></div><span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold dark:bg-white/10">{loading ? '—' : issueCount(section.key)}</span></div>
             {loading ? <p className="py-3 text-sm text-slate-400">Loading…</p> : issueCount(section.key) === 0 ? <p className="py-3 text-sm text-slate-400">Nothing here right now.</p> : <ul className="divide-y divide-slate-100 dark:divide-[#303030]">{briefing[section.key].slice(0, 5).map((issue, index) => <li key={issue.id || index} className="py-2.5 first:pt-1"><div className="flex items-start justify-between gap-3"><p className="min-w-0 text-sm font-medium leading-snug text-slate-900 dark:text-white">{issue.issueNumber ? <span className="mr-1.5 text-xs text-slate-400">#{issue.issueNumber}</span> : null}{issue.title || 'Untitled issue'}</p><span className="shrink-0 text-[11px] text-slate-500">{dateLabel(issue.dueDate)}</span></div><p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{String(issue.status || 'OPEN').replace(/_/g, ' ')} · {String(issue.priority || 'NORMAL').replace(/_/g, ' ')}</p></li>)}</ul>}
           </section>)}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <section className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1f1f1f]"><h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><FiCalendar className="text-sky-500" /> Upcoming meetings</h3>{loading ? <p className="mt-4 text-sm text-slate-400">Loading…</p> : (briefing?.upcomingMeetings || []).length === 0 ? <p className="mt-4 text-sm text-slate-400">No upcoming meetings.</p> : <ul className="mt-3 space-y-3">{briefing.upcomingMeetings.slice(0, 5).map((meeting) => <li key={meeting.meetingId} className="rounded-xl bg-slate-50 p-3 dark:bg-[#25252c]"><p className="text-sm font-semibold text-slate-900 dark:text-white">{meeting.title || 'Untitled meeting'}</p><p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500"><FiClock />{new Date(meeting.startAt).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</p>{meeting.agenda && <p className="mt-2 line-clamp-2 text-xs text-slate-500">{meeting.agenda}</p>}</li>)}</ul>}</section>
           <section className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1f1f1f]"><h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><FiBell className="text-amber-500" /> Project alerts <span className="ml-auto rounded-lg bg-slate-100 px-2 py-0.5 text-xs dark:bg-[#25252c]">{loading ? '—' : briefing?.unreadNotifications ?? 0} unread</span></h3>{loading ? <p className="mt-4 text-sm text-slate-400">Loading…</p> : (briefing?.projectAlerts || []).length === 0 ? <p className="mt-4 text-sm text-slate-400">No project alerts.</p> : <ul className="mt-3 space-y-2">{briefing.projectAlerts.slice(0, 5).map((alert, index) => <li key={index} className="flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200"><FiAlertCircle className="mt-0.5 shrink-0" />{alert}</li>)}</ul>}</section>
           <section className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-[#303030] dark:bg-[#1f1f1f]"><h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><FiCheck className="text-emerald-500" /> Project updates</h3>{loading ? <p className="mt-4 text-sm text-slate-400">Loading…</p> : (briefing?.projectUpdates || []).length === 0 ? <p className="mt-4 text-sm text-slate-400">No recent updates.</p> : <ul className="mt-3 space-y-3">{briefing.projectUpdates.slice(0, 6).map((update) => <li key={update.id} className="border-l-2 border-sky-400 pl-3"><p className="text-sm font-medium text-slate-900 dark:text-white">{update.message || `${update.actorName || 'Someone'} updated ${update.resourceName || update.issueTitle || 'a project item'}`}</p><p className="mt-1 text-xs text-slate-500">{update.actorName && `${update.actorName} · `}{update.createdAt ? new Date(update.createdAt).toLocaleString() : 'Recently'}</p></li>)}</ul>}</section>

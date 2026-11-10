@@ -44,11 +44,13 @@ const getIssueStatus = (status) => {
 };
 
 const getStageDate = (group, issues, project) => {
-  const possibleDates = [group.startDate, group.endDate, ...issues.map((issue) => issue.startDate), project?.startDate]
+  // Prefer dates belonging to this sprint or milestone. Including the project
+  // start date in the same list makes every stage inherit that earlier date.
+  const stageDates = [group.startDate, group.endDate, ...issues.flatMap((issue) => [issue.startDate, issue.endDate])]
     .map(parseDate)
     .filter(Boolean)
     .sort((left, right) => left - right);
-  return possibleDates[0] || null;
+  return stageDates[0] || parseDate(project?.startDate);
 };
 
 const formatStageDate = (date) => date
@@ -282,7 +284,7 @@ const ProjectTimelineRoadmap = ({ isOpen, onClose, projectId, project, onOpenIss
                       </div>}
                     </div>
                     <div className={`absolute left-0 w-px bg-slate-500/80 dark:bg-slate-400/70 ${above ? 'top-[calc(26px+140px)] h-[calc(50%-186px)]' : 'top-1/2 h-[90px]'}`} />
-                    <div className={`absolute left-1/2 z-20 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-bold text-white shadow-sm ${color.chip} ${above ? 'top-[calc(50%-10px)]' : 'top-[calc(50%+63px)]'}`}>
+                    <div className={`absolute left-1/2 top-[calc(50%-10px)] z-20 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-bold text-white shadow-sm ${color.chip}`}>
                       {stage.date ? formatStageDate(stage.date) : stage.kind === 'RELEASE' ? 'Release' : `Stage ${index + 1}`}
                     </div>
                     {isToday && <span className="absolute left-0 top-0 h-full border-l-2 border-dashed border-amber-500" title="Today" />}
