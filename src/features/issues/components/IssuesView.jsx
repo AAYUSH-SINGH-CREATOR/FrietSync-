@@ -104,6 +104,10 @@ const IssuesView = () => {
   const [projectRequestsList, setProjectRequestsList] = useState([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
+  useEffect(() => {
+    if (selectedIssueForDetails) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [selectedIssueForDetails]);
+
   const showToast = useCallback((type, message) => {
     setToastNotice({ type, message });
     window.setTimeout(() => setToastNotice(null), 4500);

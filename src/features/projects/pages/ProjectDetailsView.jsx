@@ -330,6 +330,12 @@ const ProjectDetailsView = () => {
     currentUserIds.some((id) => projectManagerIds.includes(id) || teamLeadIds.includes(id)) ||
     ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(globalRole) ||
     currentProjectRoleNames.some((role) => ['PROJECT_MANAGER', 'TEAM_LEAD'].includes(role)));
+  const canOpenIssueFullView = !isProjectClosed && (
+    isAdmin ||
+    ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD'].includes(globalRole) ||
+    currentUserIds.some((id) => projectAdminIds.includes(id) || projectManagerIds.includes(id) || teamLeadIds.includes(id)) ||
+    currentProjectRoleNames.some((role) => ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD'].includes(role))
+  );
   const canCreateIssue = !isContributor && !isProjectClosed && (canCreateSprint ||
     globalRole === 'REPORTER' ||
     currentProjectRoleNames.includes('REPORTER'));
@@ -1911,7 +1917,22 @@ const ProjectDetailsView = () => {
                       <tr
                         key={issue.id || issue._id || issue.issueId || index}
                         className="cursor-pointer hover:bg-slate-50 dark:hover:bg-[#27272e] transition"
-                        onClick={() => setSelectedIssue(issue)}
+                        onClick={() => {
+                          if (canOpenIssueFullView) {
+                            const id = issue.id || issue._id || issue.issueId;
+                            navigate(`/dashboard/issues?projectId=${projectId}`, {
+                              state: {
+                                globalSearchIssue: {
+                                  id,
+                                  projectId,
+                                  projectName: project?.name || 'Project',
+                                },
+                              },
+                            });
+                            return;
+                          }
+                          setSelectedIssue(issue);
+                        }}
                       >
                         <td className="py-3 px-3">
                           <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
