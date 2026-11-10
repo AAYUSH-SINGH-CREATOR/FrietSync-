@@ -63,6 +63,26 @@ const Sidebar = ({
   const { isDarkMode, toggleTheme } = useTheme() || {};
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
+  const [isMobileRendered, setIsMobileRendered] = useState(isMobileOpen);
+  const [isMobileClosing, setIsMobileClosing] = useState(false);
+
+  useEffect(() => {
+    if (isMobileOpen) {
+      setIsMobileRendered(true);
+      setIsMobileClosing(false);
+      return undefined;
+    }
+
+    if (!isMobileRendered) return undefined;
+
+    setIsMobileClosing(true);
+    const closeTimer = window.setTimeout(() => {
+      setIsMobileRendered(false);
+      setIsMobileClosing(false);
+    }, 240);
+
+    return () => window.clearTimeout(closeTimer);
+  }, [isMobileOpen, isMobileRendered]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -363,16 +383,16 @@ const Sidebar = ({
       </aside>
 
       {}
-      {isMobileOpen && (
+      {isMobileRendered && (
         <>
           <div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden animate-fadeIn"
+            className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden ${isMobileClosing ? 'mobile-sidebar-backdrop-exit' : 'mobile-sidebar-backdrop'}`}
             onClick={onCloseMobile}
             aria-hidden="true"
           />
           <aside
             aria-label="Mobile navigation drawer"
-            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#181818] border-r border-slate-200 dark:border-[#303030] shadow-2xl flex flex-col justify-between p-4 sm:p-5 md:hidden text-left select-none overflow-y-auto"
+            className={`${isMobileClosing ? 'mobile-sidebar-exit' : 'mobile-sidebar-enter'} fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#181818] border-r border-slate-200 dark:border-[#303030] shadow-2xl flex flex-col justify-between p-4 sm:p-5 md:hidden text-left select-none overflow-y-auto`}
           >
             <div>
               {}
