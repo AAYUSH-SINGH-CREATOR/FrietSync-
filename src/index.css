@@ -15,6 +15,53 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+@keyframes mobile-sidebar-enter {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes mobile-sidebar-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mobile-sidebar-exit {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes mobile-sidebar-backdrop-exit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.mobile-sidebar-enter {
+  animation: mobile-sidebar-enter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mobile-sidebar-backdrop {
+  animation: mobile-sidebar-backdrop-enter 180ms ease-out both;
+}
+
+.mobile-sidebar-exit {
+  animation: mobile-sidebar-exit 240ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+.mobile-sidebar-backdrop-exit {
+  animation: mobile-sidebar-backdrop-exit 180ms ease-in both;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-sidebar-enter,
+  .mobile-sidebar-backdrop,
+  .mobile-sidebar-exit,
+  .mobile-sidebar-backdrop-exit {
+    animation-duration: 1ms;
+  }
+}
+
 @theme {
   --font-sans: "Google Sans Flex", "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Inter", "Google Sans Flex", sans-serif;

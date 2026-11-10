@@ -266,13 +266,13 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
       {}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/70 dark:bg-[#1d1d1d]/90 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 dark:border-[#303030] backdrop-blur-xs">
         {}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#242424]/80 rounded-xl">
+        <div className="grid min-w-0 grid-cols-2 items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-[#242424]/80 rounded-xl sm:flex sm:flex-nowrap">
           {filterTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => onFilterChange && onFilterChange(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition flex items-center gap-1.5 cursor-pointer ${
+              className={`min-w-0 justify-center whitespace-nowrap px-2 py-1.5 rounded-lg text-xs font-semibold capitalize transition flex items-center gap-1.5 cursor-pointer sm:px-3 ${
                 filter === tab.id
                   ? 'bg-white dark:bg-[#302477] text-slate-900 dark:text-[#d7d0ff] shadow-xs'
                   : 'text-slate-600 dark:text-[#b3b3b3] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
