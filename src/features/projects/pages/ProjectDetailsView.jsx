@@ -25,6 +25,7 @@ import {
   FiUploadCloud,
   FiExternalLink,
   FiGithub,
+  FiLayers,
 } from 'react-icons/fi';
 import {
   getProjectById,
@@ -1014,6 +1015,16 @@ const ProjectDetailsView = () => {
             className="p-2 rounded-xl border border-slate-200 dark:border-[#35353d] bg-white dark:bg-[#222228] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#2b2b32] transition disabled:opacity-50 cursor-pointer shadow-xs"
           >
             <FiRefreshCw size={15} className={isLoading ? 'animate-spin text-sky-500 dark:text-sky-400' : ''} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/dashboard/projects/${projectId}/canvas`)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-700 hover:to-sky-600 text-white font-semibold text-xs shadow-md shadow-sky-600/30 transition cursor-pointer"
+            title="Open Collaborative Canvas"
+          >
+            <FiLayers size={16} />
+            <span>Canvas</span>
           </button>
 
           {canReopenProject && project && (

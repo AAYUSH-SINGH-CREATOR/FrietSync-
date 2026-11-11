@@ -25,6 +25,8 @@ import ProfileView from './features/dashboard/components/ProfileView';
 import NoWorkspace from './features/dashboard/components/NoWorkspace';
 import ProjectsView from './features/projects/pages/ProjectsView';
 import ProjectDetailsView from './features/projects/pages/ProjectDetailsView';
+import CanvasList from './features/canvas/components/CanvasList';
+import CanvasEditorPage from './features/canvas/components/CanvasEditorPage';
 import InvitesView from './features/invites/components/InvitesView';
 import Invite from './features/invites/pages/Invite';
 import AuthSessionManager from './features/auth/components/AuthSessionManager';
@@ -51,6 +53,8 @@ function App() {
           <Route index element={<DashboardOverview />} />
           <Route path="projects" element={<ProjectsView />} />
           <Route path="projects/:projectId" element={<ProjectDetailsView />} />
+          <Route path="projects/:projectId/canvas" element={<CanvasList />} />
+          <Route path="projects/:projectId/canvas/:canvasId" element={<CanvasEditorPage />} />
           <Route path="issues" element={<IssuesView />} />
           <Route path="issues/dependency-graph/:projectId" element={<DependencyGraphView />} />
           <Route path="sprints" element={<SprintsView />} />
