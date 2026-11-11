@@ -11,6 +11,7 @@ import {
   FiAlertCircle,
   FiCheckCircle,
   FiActivity,
+  FiLayers,
 } from 'react-icons/fi';
 import { getMyProjects, getProjectMembers, getFriendlyErrorMessage } from '../services/projectApi';
 import { getProjectIssues } from '../../issues/services/issueApi';
@@ -447,18 +448,31 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#2a2a2e] text-xs font-medium text-slate-600 dark:text-[#CBD5E1]">
-                  <span className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#222226] px-2 py-1 rounded-lg" title="Project members">
-                    <FiUsers size={14} className="text-slate-400" />
-                    <span>{memberCount}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#222226] px-2 py-1 rounded-lg" title="Project issues">
-                    <FiCheckSquare size={14} className="text-slate-400" />
-                    <span>{issueCount}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#222226] px-2.5 py-1 rounded-lg whitespace-nowrap" title="Project deadline">
-                    <FiCalendar size={14} className="text-slate-400" />
-                    <span>{project.deadline ? formatDate(project.deadline) : '—'}</span>
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 bg-slate-50 dark:bg-[#222226] px-1.5 py-1 rounded-lg" title="Project members">
+                      <FiUsers size={13} className="text-slate-400" />
+                      <span>{memberCount}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 bg-slate-50 dark:bg-[#222226] px-1.5 py-1 rounded-lg" title="Project issues">
+                      <FiCheckSquare size={13} className="text-slate-400" />
+                      <span>{issueCount}</span>
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (projectId) {
+                        navigate(`/dashboard/projects/${projectId}/canvas`);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-semibold transition cursor-pointer text-[11px]"
+                    title="Open Collaborative Canvas"
+                  >
+                    <FiLayers size={13} />
+                    <span>Canvas</span>
+                  </button>
                 </div>
               </div>
             );
