@@ -21,6 +21,8 @@ import { VideoCallPanel } from '../components/VideoCallPanel';
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import ChatArea from '../components/ChatsArea';
 import ChatSidebar from '../components/ChatSidebar';
+import AiAssistantChat from '../components/AiAssistantChat';
+import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProjectId } from '../../../utils/dashboardProjectSelection';
 
 const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => {
   const outletContext = useOutletContext() || {};
@@ -31,12 +33,14 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
 
   const [projects, setProjects] = useState([]);
   const [messagesMap, setMessagesMap] = useState({});
+  const [aiMessagesMap, setAiMessagesMap] = useState({});
   const [nextHistoryPage, setNextHistoryPage] = useState({});
   const [hasOlderMessages, setHasOlderMessages] = useState({});
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
-  const [activeConversationId, setActiveConversationId] = useState(urlProjectId || null);
+  const [activeConversationId, setActiveConversationId] = useState(urlProjectId || getDashboardProjectId() || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(Boolean(urlProjectId));
+  const [isAssistantActive, setIsAssistantActive] = useState(false);
 
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -792,6 +796,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   }, [activeProjectId, isActiveProjectReadOnly, leaveVideoCall]);
 
   const handleSelectConversation = (id) => {
+    setIsAssistantActive(false);
     setActiveConversationId(id);
     setSearchParams({ projectId: id });
     setIsMobileThreadOpen(true);
@@ -799,6 +804,31 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       setIsLoadingMessages(true);
     }
   };
+
+  const handleSelectAssistant = () => {
+    const selectedProjectId = projects.some((project) => project.id === activeConversationId)
+      ? activeConversationId
+      : projects.find((project) => project.id === getDashboardProjectId())?.id || projects[0]?.id;
+    if (selectedProjectId) {
+      setActiveConversationId(selectedProjectId);
+      setSearchParams({ projectId: selectedProjectId });
+    }
+    setIsAssistantActive(true);
+    setIsMobileThreadOpen(true);
+  };
+
+  const handleAssistantProjectChange = (projectId) => {
+    if (!projects.some((project) => project.id === String(projectId))) return;
+    setActiveConversationId(String(projectId));
+    setSearchParams({ projectId: String(projectId) });
+    setDashboardProjectId(String(projectId));
+  };
+
+  useEffect(() => subscribeToDashboardProjectId((projectId) => {
+    if (!isAssistantActive || !projects.some((project) => project.id === String(projectId))) return;
+    setActiveConversationId(String(projectId));
+    setSearchParams({ projectId: String(projectId) });
+  }), [isAssistantActive, projects, setSearchParams]);
 
   const loadOlderMessages = async () => {
     if (!activeProjectId || isLoadingOlder || olderRequestsRef.current.has(activeProjectId) || !hasOlderMessages[activeProjectId]) return;
@@ -1004,6 +1034,8 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
             groups={projects}
             activeConversationId={activeConversationId}
             onSelectConversation={handleSelectConversation}
+            isAssistantActive={isAssistantActive}
+            onSelectAssistant={handleSelectAssistant}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             isLoadingProjects={isLoadingChannels}
@@ -1015,6 +1047,24 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
             isMobileThreadOpen ? 'flex' : 'hidden md:flex'
           }`}
         >
+          {isAssistantActive ? (
+            <AiAssistantChat
+              key={activeProjectId || 'no-project'}
+              projects={projects}
+              projectId={activeProjectId}
+              onProjectChange={handleAssistantProjectChange}
+              messages={aiMessagesMap[activeProjectId] || []}
+              onMessagesChange={(update) => setAiMessagesMap((previous) => ({
+                ...previous,
+                [activeProjectId]: typeof update === 'function'
+                  ? update(previous[activeProjectId] || [])
+                  : update,
+              }))}
+              stompClientRef={stompClientRef}
+              onBackToList={() => setIsMobileThreadOpen(false)}
+              isPageActive={isPageActive}
+            />
+          ) : (
           <ChatArea
             activeChat={activeChat}
             readOnly={isActiveProjectReadOnly}
@@ -1060,6 +1110,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
               onStart: handleStartOrJoinVideoCall,
             } : null}
           />
+          )}
         </div>
       </div>
 
