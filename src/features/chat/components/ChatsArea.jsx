@@ -46,6 +46,7 @@ import {
   unmuteProjectChat,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
+import { ChatComposerFrame, ChatConversationPanel } from './ChatConversationLayout';
 
 const FAMOUS_EMOJIS = ['👍', '❤️', '😂', '🔥', '😮', '😢', '😡', '🎉'];
 const getProfileImageUrl = (person) => person?.profilePictureUrl || person?.user?.profilePictureUrl || person?.profileUrl || person?.user?.profileUrl || person?.avatarUrl || person?.user?.avatarUrl || person?.profileImageUrl || person?.imageUrl || person?.pictureUrl || person?.photoUrl || '';
@@ -730,7 +731,7 @@ const ChatArea = ({
   };
 
   return (
-    <div className="w-full flex-1 min-w-0 bg-gradient-to-br from-[#D9EAFD] via-[#EAF2FF] to-[#D5E7FC] dark:from-[#060D1A] dark:via-[#091527] dark:to-[#040A14] border-2 sm:border-4 border-[#CCE5FE] dark:border-[#1B3654] rounded-3xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden relative transition-colors">
+    <ChatConversationPanel>
       {}
       <div className="bg-white dark:bg-[#171717] rounded-2xl mx-2.5 sm:mx-3 mt-2.5 sm:mt-3 px-3.5 sm:px-5 py-2.5 sm:py-3 shadow-xs border border-sky-100 dark:border-white/5 flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-2 min-w-0 sm:gap-3">
@@ -1203,7 +1204,7 @@ const ChatArea = ({
       )}
 
       {}
-      {!readOnly && <form onSubmit={handleSend} className="bg-white dark:bg-[#171717] rounded-full mx-2 mb-2 sm:mx-3 sm:mb-3 p-1.5 px-2.5 sm:p-2 sm:px-4 shadow-xs border border-sky-100 dark:border-white/5 flex items-center gap-1 min-[380px]:gap-1.5 sm:gap-3 shrink-0 z-10 relative">
+      {!readOnly && <ChatComposerFrame onSubmit={handleSend}>
         <input
           ref={fileInputRef}
           type="file"
@@ -1296,7 +1297,7 @@ const ChatArea = ({
         >
           <FiSend size={16} className="sm:h-[18px] sm:w-[18px]" />
         </button>
-      </form>}
+      </ChatComposerFrame>}
 
       {}
       {previewImage && (
@@ -1421,7 +1422,7 @@ const ChatArea = ({
           </section>
         </div>
       )}
-    </div>
+    </ChatConversationPanel>
   );
 };
 
