@@ -13,7 +13,6 @@ const getAuthHeaders = () => {
     },
   };
 };
-
 const handleCanvasError = (error, defaultMessage) => {
   if (error.response) {
     error.status = error.response.status;

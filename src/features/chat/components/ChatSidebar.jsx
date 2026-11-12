@@ -1,11 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { FiSearch, FiX, FiMessageSquare } from 'react-icons/fi';
 import { getInitials, getAvatarColor, formatMessagePreview } from '../services/chatApi';
 
 const ConversationAvatar = ({ item, initials, color }) => {
   const [imageFailed, setImageFailed] = useState(false);
-
-  useEffect(() => setImageFailed(false), [item.id, item.avatar]);
 
   if (item.avatar && !imageFailed) {
     return <img src={item.avatar} alt={`${item.name} project`} onError={() => setImageFailed(true)} className="h-10 w-10 rounded-full border border-slate-200 object-cover dark:border-slate-700" />;
@@ -21,6 +19,8 @@ const ChatSidebar = ({
   searchQuery = '',
   onSearchChange,
   isLoadingProjects = false,
+  isAssistantActive = false,
+  onSelectAssistant,
 }) => {
   const [activeFilter, setActiveFilter] = useState('All');
 
@@ -85,6 +85,24 @@ const ChatSidebar = ({
 
       {}
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 mt-3 pr-0.5 min-h-0">
+        {(!searchQuery.trim() || 'ai assistant'.includes(searchQuery.trim().toLowerCase())) && (
+          <button
+            type="button"
+            onClick={onSelectAssistant}
+            className={`w-full rounded-2xl p-2.5 flex items-center gap-3 transition cursor-pointer text-left ${
+              isAssistantActive
+                ? 'bg-white dark:bg-[#171717] border-2 border-sky-400 shadow-sm'
+                : 'bg-white dark:bg-[#171717] border border-slate-200/70 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 shadow-2xs'
+            }`}
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-xs"><FiMessageSquare size={19} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">AI Assistant</span>
+              <span className="mt-0.5 block truncate text-[11px] text-slate-400 dark:text-slate-400">Ask about project documents</span>
+            </span>
+            <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-600 dark:bg-sky-950/60 dark:text-sky-300">AI</span>
+          </button>
+        )}
         {isLoadingProjects ? (
           <div className="space-y-2 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
@@ -105,7 +123,7 @@ const ChatSidebar = ({
           </div>
         ) : (
           filteredConversations.map((item) => {
-            const isSelected = activeConversationId === item.id;
+            const isSelected = !isAssistantActive && activeConversationId === item.id;
             const initials = getInitials(item.name);
             const avatarColor = getAvatarColor(item.name);
             const unread = item.unreadCount || 0;
@@ -123,7 +141,7 @@ const ChatSidebar = ({
               >
                 {}
                 <div className="relative shrink-0">
-                  <ConversationAvatar item={item} initials={initials} color={avatarColor} />
+                  <ConversationAvatar key={`${item.id}-${item.avatar || ''}`} item={item} initials={initials} color={avatarColor} />
                   {item.status === 'Online' && (
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#171717]" />
                   )}
