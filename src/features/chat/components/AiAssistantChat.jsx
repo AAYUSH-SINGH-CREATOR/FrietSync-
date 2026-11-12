@@ -1,11 +1,116 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertCircle, FiArrowLeft, FiBookOpen, FiMessageSquare, FiChevronDown, FiClock, FiRefreshCw, FiSend, FiTrash2 } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft, FiBookOpen, FiMessageSquare, FiRefreshCw, FiSend, FiTrash2 } from 'react-icons/fi';
 import { askRagAssistant } from '../services/ragChatApi';
 import { ChatComposerFrame, ChatConversationPanel } from './ChatConversationLayout';
 
 const QUESTION_LIMIT = 1000;
 const REQUEST_TIMEOUT_MS = 90000;
 const formatTime = (value) => new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(value);
+
+const normalizeAssistantText = (value = '') => String(value)
+  .replace(/\\([*_#~`])/g, '$1')
+  .replace(/\\[ \t]*\r?\n/g, '\n')
+  .replace(/&#(?:x([\da-f]+)|(\d+));/gi, (_match, hex, decimal) => {
+    const codePoint = Number.parseInt(hex || decimal, hex ? 16 : 10);
+    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+      ? String.fromCodePoint(codePoint)
+      : _match;
+  })
+  .replace(/&nbsp;/gi, ' ')
+  .replace(/&amp;/gi, '&')
+  .replace(/&lt;/gi, '<')
+  .replace(/&gt;/gi, '>')
+  .replace(/&quot;/gi, '"')
+  .replace(/&#39;|&apos;/gi, "'");
+
+const renderInlineMarkdown = (value, keyPrefix) => {
+  const tokens = value.split(/(\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_|`[^`]+`)/g);
+  return tokens.map((token, index) => {
+    const key = `${keyPrefix}-${index}`;
+    if ((token.startsWith('**') && token.endsWith('**')) || (token.startsWith('__') && token.endsWith('__'))) {
+      return <strong key={key}>{token.slice(2, -2)}</strong>;
+    }
+    if ((token.startsWith('*') && token.endsWith('*')) || (token.startsWith('_') && token.endsWith('_'))) {
+      return <em key={key}>{token.slice(1, -1)}</em>;
+    }
+    if (token.startsWith('`') && token.endsWith('`')) {
+      return <code key={key} className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.9em] dark:bg-white/10">{token.slice(1, -1)}</code>;
+    }
+    return token;
+  });
+};
+
+const AssistantResponse = ({ text }) => {
+  const lines = normalizeAssistantText(text).split(/\r?\n/);
+  const blocks = [];
+  let paragraph = [];
+  let list = [];
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    blocks.push({ type: 'paragraph', lines: paragraph });
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (!list.length) return;
+    blocks.push({ type: 'list', items: list });
+    list = [];
+  };
+
+  lines.forEach((line) => {
+    const bullet = line.match(/^(\s*)(?:[-*+]\s+)(.+)$/);
+    const numbered = line.match(/^(\s*)\d+[.)]\s+(.+)$/);
+    const heading = line.match(/^\s{0,3}(#{1,6})\s+(.+)$/);
+    if (bullet || numbered) {
+      flushParagraph();
+      const match = bullet || numbered;
+      const ordered = Boolean(numbered);
+      if (list.length && list[0].ordered !== ordered) flushList();
+      list.push({ text: match[2], indent: Math.min(6, Math.floor(match[1].length / 2)), ordered });
+      return;
+    }
+    flushList();
+    if (!line.trim()) {
+      flushParagraph();
+      return;
+    }
+    if (heading) {
+      flushParagraph();
+      blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] });
+      return;
+    }
+    paragraph.push(line);
+  });
+  flushParagraph();
+  flushList();
+
+  return (
+    <div className="space-y-2 whitespace-normal break-words">
+      {blocks.map((block, index) => {
+        if (block.type === 'heading') {
+          const Heading = block.level < 3 ? 'h3' : 'h4';
+          return <Heading key={`heading-${index}`} className="font-semibold">{renderInlineMarkdown(block.text, `heading-${index}`)}</Heading>;
+        }
+        if (block.type === 'list') {
+          const List = block.items[0]?.ordered ? 'ol' : 'ul';
+          return (
+            <List key={`list-${index}`} className={`${List === 'ol' ? 'list-decimal' : 'list-disc'} space-y-1 pl-5`}>
+              {block.items.map((item, itemIndex) => (
+                <li key={`list-${index}-${itemIndex}`} style={{ marginLeft: `${item.indent * 1}rem` }}>
+                  {renderInlineMarkdown(item.text, `list-${index}-${itemIndex}`)}
+                </li>
+              ))}
+            </List>
+          );
+        }
+        return (
+          <p key={`paragraph-${index}`}>
+            {block.lines.map((line, lineIndex) => <span key={`line-${index}-${lineIndex}`}>{lineIndex > 0 && <br />}{renderInlineMarkdown(line, `paragraph-${index}-${lineIndex}`)}</span>)}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
 
 const SourceList = ({ sources = [] }) => {
   if (!sources.length) return null;
@@ -29,7 +134,6 @@ const SourceList = ({ sources = [] }) => {
 const AiAssistantChat = ({
   projects = [],
   projectId,
-  onProjectChange,
   messages = [],
   onMessagesChange,
   stompClientRef,
@@ -126,7 +230,6 @@ const AiAssistantChat = ({
     setConnectionStatus('sending');
     const userMessage = { id: `user-${Date.now()}-${requestSequenceRef.current++}`, role: 'user', text, createdAt: Date.now() };
     onMessagesChange((current) => [...current, userMessage]);
-    const startedAt = performance.now();
 
     try {
       let response;
@@ -147,13 +250,11 @@ const AiAssistantChat = ({
         if (pendingRef.current === pending) pendingRef.current = null;
       }
       if (pendingRef.current?.cancelReason) return;
-      const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
       onMessagesChange((current) => [...current, {
         id: `assistant-${Date.now()}-${requestSequenceRef.current++}`,
         role: 'assistant',
         text: response?.answer || response?.response?.answer || 'I could not find an answer in this project’s documents.',
         sources: response?.sources || response?.response?.sources || [],
-        elapsedMs,
         createdAt: Date.now(),
       }]);
       setConnectionStatus('idle');
@@ -205,24 +306,9 @@ const AiAssistantChat = ({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <label className="relative hidden sm:block">
-            <span className="sr-only">Project context</span>
-            <select value={projectId || ''} onChange={(event) => onProjectChange(event.target.value)} className="max-w-40 appearance-none rounded-xl border border-slate-200 bg-[#F1F3F5] py-2 pl-3 pr-8 text-xs font-medium text-slate-700 outline-none focus:border-sky-400 dark:border-white/10 dark:bg-[#252525] dark:text-slate-200">
-              {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-            </select>
-            <FiChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-          </label>
           <button type="button" onClick={clearConversation} disabled={!messages.length && !isLoading} title="Clear conversation" className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-rose-500 disabled:opacity-40 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"><FiTrash2 size={15} /></button>
         </div>
       </header>
-
-      <div className="mx-3 mt-2 rounded-xl border border-sky-100 bg-white px-3 py-2 dark:border-white/5 dark:bg-[#171717] sm:hidden">
-        <label className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Project
-          <select value={projectId || ''} onChange={(event) => onProjectChange(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-[#F1F3F5] px-2 py-1.5 text-xs text-slate-700 dark:border-white/10 dark:bg-[#252525] dark:text-slate-200">
-            {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-          </select>
-        </label>
-      </div>
 
       {!projectId ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -254,9 +340,8 @@ const AiAssistantChat = ({
                     {!isUser && <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] text-white shadow-xs ${isError ? 'bg-rose-500' : 'bg-gradient-to-br from-sky-500 to-indigo-600'}`}><FiMessageSquare size={14} /></span>}
                     <div className={`min-w-0 max-w-full break-words rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs sm:text-sm [overflow-wrap:anywhere] ${isError ? 'rounded-tl-xs border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200' : isUser ? 'rounded-tr-xs bg-[#8AD4FF] text-slate-900 dark:border dark:border-white/10 dark:bg-[#1C1C1C] dark:text-white' : 'rounded-tl-xs border border-slate-100 bg-white text-slate-900 dark:border-white/5 dark:bg-[#171717] dark:text-white'}`}>
                       {isError && <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold"><FiAlertCircle size={13} /> Request failed</p>}
-                      <p className="whitespace-pre-wrap">{message.text}</p>
+                      {message.role === 'assistant' ? <AssistantResponse text={message.text} /> : <p className="whitespace-pre-wrap">{message.text}</p>}
                       {message.role === 'assistant' && <SourceList sources={message.sources} />}
-                      {message.elapsedMs !== undefined && <div className="mt-2 flex items-center gap-1.5 border-t border-slate-200 pt-2 text-[10px] text-slate-500 dark:border-white/10 dark:text-slate-400"><FiClock size={11} />{message.elapsedMs < 1000 ? `${message.elapsedMs} ms` : `${(message.elapsedMs / 1000).toFixed(1)} s`}</div>}
                     </div>
                     {isUser && <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#D95295] text-[10px] font-semibold text-white shadow-xs">Y</span>}
                   </div>

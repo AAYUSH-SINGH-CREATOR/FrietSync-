@@ -817,13 +817,6 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     setIsMobileThreadOpen(true);
   };
 
-  const handleAssistantProjectChange = (projectId) => {
-    if (!projects.some((project) => project.id === String(projectId))) return;
-    setActiveConversationId(String(projectId));
-    setSearchParams({ projectId: String(projectId) });
-    setDashboardProjectId(String(projectId));
-  };
-
   useEffect(() => subscribeToDashboardProjectId((projectId) => {
     if (!isAssistantActive || !projects.some((project) => project.id === String(projectId))) return;
     setActiveConversationId(String(projectId));
@@ -1052,7 +1045,6 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
               key={activeProjectId || 'no-project'}
               projects={projects}
               projectId={activeProjectId}
-              onProjectChange={handleAssistantProjectChange}
               messages={aiMessagesMap[activeProjectId] || []}
               onMessagesChange={(update) => setAiMessagesMap((previous) => ({
                 ...previous,
