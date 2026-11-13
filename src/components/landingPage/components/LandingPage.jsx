@@ -374,7 +374,7 @@ function PlanSection() {
 
 function WhySection() {
   return (
-    <section id="features" className="w-full bg-white py-14 sm:py-28">
+    <section id="feature-overview" className="w-full bg-white py-14 sm:py-28">
       <div className="mx-auto max-w-[1440px] space-y-12 px-6 sm:space-y-16 sm:px-12 lg:px-20">
         <SectionIntro
           eyebrow="Why Frietsync?"
@@ -430,7 +430,7 @@ function TestimonialsSection() {
 
 function QuickAccessSection() {
   return (
-    <section className="w-full bg-white py-14 sm:py-28">
+    <section id="features" className="w-full scroll-mt-20 bg-white py-14 sm:py-28">
       <div className="mx-auto max-w-[1440px] space-y-10 px-6 text-center sm:space-y-12 sm:px-12 lg:px-20">
         <h2 className="text-3xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Quickly access<br />what you need frequently</h2>
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-3 pt-2 sm:gap-4 sm:pt-4">

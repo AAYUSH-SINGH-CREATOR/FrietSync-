@@ -676,7 +676,6 @@ const DashboardNavbar = ({
           )}
           </div>
         </div>
-        <NavbarSearch compact />
       </header>
 
       <InvitesBellModal
