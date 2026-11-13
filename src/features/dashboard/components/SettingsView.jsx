@@ -661,10 +661,10 @@ const SettingsView = () => {
     <div className="w-full min-w-0 space-y-0 animate-fadeIn pb-12 px-3 sm:px-6 lg:px-8">
       {}
       <div
-        className="min-h-[126px] sm:min-h-[128px] rounded-t-xl sm:rounded-t-2xl px-4 sm:px-5 py-5 sm:py-6 flex items-center relative overflow-hidden bg-cover bg-center"
-        style={{ backgroundImage: `url(${profileBanner})` }}
+        className="min-h-[126px] sm:min-h-[128px] rounded-t-xl sm:rounded-t-2xl px-4 sm:px-5 py-5 sm:py-6 flex items-center relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-sky-900"
       >
-        <div className="relative z-10 max-w-[58%]">
+        <div aria-hidden="true" className="absolute inset-0 hidden bg-cover bg-center sm:block" style={{ backgroundImage: `url(${profileBanner})` }} />
+        <div className="relative z-10 w-full sm:max-w-[58%]">
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Settings</h1>
           <p className="text-xs text-white/90 mt-1">
             Manage your preferences, account details, and workspace settings.
