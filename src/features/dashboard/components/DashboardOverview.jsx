@@ -18,6 +18,7 @@ import {
   FiUsers,
   FiArrowDown,
   FiChevronRight,
+  FiChevronDown,
   FiCalendar,
   FiArrowRight,
   FiAlertCircle,
@@ -633,16 +634,19 @@ const DashboardOverview = () => {
         </div>
         <label className="flex min-w-[220px] flex-col gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
           <span>Dashboard project</span>
-          <select
-            value={selectedProjectId}
-            onChange={(event) => setSelectedProjectId(event.target.value)}
-            disabled={projects.length === 0}
-            className="h-10 max-w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 shadow-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-60 dark:border-[#35353d] dark:bg-[#202026] dark:text-white"
-          >
-            {projects.length === 0 ? <option value="">No projects available</option> : projects.map((project) => (
-              <option key={getProjectId(project)} value={getProjectId(project)}>{project.name || 'Untitled project'}</option>
-            ))}
-          </select>
+          <div className="relative w-full">
+            <select
+              value={selectedProjectId}
+              onChange={(event) => setSelectedProjectId(event.target.value)}
+              disabled={projects.length === 0}
+              className="h-10 w-full max-w-full appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-14 text-sm font-semibold text-slate-800 shadow-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 disabled:opacity-60 dark:border-[#35353d] dark:bg-[#202026] dark:text-white"
+            >
+              {projects.length === 0 ? <option value="">No projects available</option> : projects.map((project) => (
+                <option key={getProjectId(project)} value={getProjectId(project)}>{project.name || 'Untitled project'}</option>
+              ))}
+            </select>
+            <FiChevronDown aria-hidden="true" className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-slate-700 dark:text-slate-300" size={20} />
+          </div>
         </label>
       </div>
 
