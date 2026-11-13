@@ -15,6 +15,7 @@ import {
   FiEdit2,
   FiTrash2,
   FiCheck,
+  FiCopy,
   FiPhone,
   FiVideo,
   FiBell,
@@ -141,6 +142,7 @@ const ChatArea = ({
   const [messageMenuOpen, setMessageMenuOpen] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [isLoadingPinned, setIsLoadingPinned] = useState(false);
   const [isPinnedPanelOpen, setIsPinnedPanelOpen] = useState(false);
@@ -587,6 +589,17 @@ const ChatArea = ({
     setMessageMenuOpen(null);
   };
 
+  const handleCopyMessage = async (messageId, text) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedMessageId(messageId);
+      window.setTimeout(() => setCopiedMessageId((current) => (current === messageId ? null : current)), 1500);
+    } catch (error) {
+      console.warn('Could not copy chat message:', error);
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditingMessageId(null);
     setEditingText('');
@@ -965,7 +978,6 @@ const ChatArea = ({
                 {}
                 <div className={`text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 flex items-center gap-1.5 ${isOutgoing ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
                   <span>{senderName}</span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{msg.timestamp}</span>
                   {msg.editedAt && !isDeleted && (
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">(edited)</span>
                   )}
@@ -1165,6 +1177,20 @@ const ChatArea = ({
                     <ChatAvatar src={getProfileImageUrl(currentUser)} name={currentUser?.name || 'You'} color="bg-[#D95295]" className="w-7 h-7 text-[10px] shadow-xs" />
                   )}
                 </div>
+                {!isEditingThis && !isDeleted && (
+                  <div className={`mt-1 flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 ${isOutgoing ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
+                    <span>{msg.timestamp}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMessage(msg.id, displayText || messageAttachments.map((attachment) => attachment.name || attachment.fileName).filter(Boolean).join('\n'))}
+                      aria-label={copiedMessageId === msg.id ? 'Message copied' : 'Copy message'}
+                      title={copiedMessageId === msg.id ? 'Copied' : 'Copy message'}
+                      className="rounded p-0.5 transition hover:text-sky-600 focus:outline-none dark:hover:text-sky-300"
+                    >
+                      {copiedMessageId === msg.id ? <FiCheck size={13} /> : <FiCopy size={13} />}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })
@@ -1338,6 +1364,7 @@ const ChatArea = ({
               />
             </div>
           </div>
+
         </div>
       )}
 

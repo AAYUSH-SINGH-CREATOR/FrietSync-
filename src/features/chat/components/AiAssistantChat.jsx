@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertCircle, FiArrowLeft, FiBookOpen, FiMessageSquare, FiRefreshCw, FiSend, FiTrash2 } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft, FiBookOpen, FiCheck, FiCopy, FiMessageSquare, FiRefreshCw, FiSend, FiTrash2 } from 'react-icons/fi';
 import { askRagAssistant } from '../services/ragChatApi';
 import { ChatComposerFrame, ChatConversationPanel } from './ChatConversationLayout';
 
@@ -144,6 +144,7 @@ const AiAssistantChat = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('idle');
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
   const bottomRef = useRef(null);
   const pendingRef = useRef(null);
   const requestSequenceRef = useRef(0);
@@ -291,6 +292,16 @@ const AiAssistantChat = ({
     onMessagesChange([]);
   };
 
+  const copyMessage = async (message) => {
+    try {
+      await navigator.clipboard.writeText(message.text || '');
+      setCopiedMessageId(message.id);
+      window.setTimeout(() => setCopiedMessageId((current) => (current === message.id ? null : current)), 1500);
+    } catch (copyError) {
+      console.warn('Could not copy assistant chat message:', copyError);
+    }
+  };
+
   return (
     <ChatConversationPanel>
       <header className="mx-2.5 mt-2.5 flex shrink-0 items-center justify-between rounded-2xl border border-sky-100 bg-white px-3.5 py-2.5 shadow-xs dark:border-white/5 dark:bg-[#171717] sm:mx-3 sm:mt-3 sm:px-5 sm:py-3">
@@ -334,7 +345,7 @@ const AiAssistantChat = ({
               return (
                 <article key={message.id} className={`group flex min-w-0 max-w-full flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                   <div className={`mb-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 ${isUser ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
-                    <span>{sender}</span><span className="text-[10px] text-slate-400 dark:text-slate-500">{formatTime(message.createdAt || 0)}</span>
+                    <span>{sender}</span>
                   </div>
                   <div className={`flex min-w-0 max-w-full items-center gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
                     {!isUser && <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] text-white shadow-xs ${isError ? 'bg-rose-500' : 'bg-gradient-to-br from-sky-500 to-indigo-600'}`}><FiMessageSquare size={14} /></span>}
@@ -344,6 +355,12 @@ const AiAssistantChat = ({
                       {message.role === 'assistant' && <SourceList sources={message.sources} />}
                     </div>
                     {isUser && <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#D95295] text-[10px] font-semibold text-white shadow-xs">Y</span>}
+                  </div>
+                  <div className={`mt-1 flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 ${isUser ? 'mr-9 justify-end' : 'ml-9 justify-start'}`}>
+                    <span>{formatTime(message.createdAt || 0)}</span>
+                    {!isError && <button type="button" onClick={() => copyMessage(message)} aria-label={copiedMessageId === message.id ? 'Message copied' : 'Copy message'} title={copiedMessageId === message.id ? 'Copied' : 'Copy message'} className="rounded p-0.5 transition hover:text-sky-600 focus:outline-none dark:hover:text-sky-300">
+                      {copiedMessageId === message.id ? <FiCheck size={13} /> : <FiCopy size={13} />}
+                    </button>}
                   </div>
                 </article>
               );
@@ -361,8 +378,8 @@ const AiAssistantChat = ({
 
           <div className="shrink-0">
             {error && <p className="mx-3 mb-2 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400"><FiAlertCircle size={13} />{error}</p>}
-            <ChatComposerFrame onSubmit={handleSubmit} variant="multiline" className="focus-within:border-sky-400">
-              <div className="min-w-0 flex-1 rounded-full border border-transparent bg-[#F1F3F5] px-2.5 py-1.5 focus-within:border-sky-400 dark:border-white/5 dark:bg-[#252525] sm:px-4">
+            <ChatComposerFrame onSubmit={handleSubmit} variant="multiline" className="!border-0 focus-within:!border-0">
+              <div className="min-w-0 flex-1 rounded-full border border-slate-200 bg-[#F1F3F5] px-2.5 py-1.5 focus-within:border-sky-400 dark:border-white/10 dark:bg-[#252525] sm:px-4">
               <textarea
                 value={question}
                 onChange={(event) => setQuestion(event.target.value.slice(0, QUESTION_LIMIT))}
@@ -371,7 +388,7 @@ const AiAssistantChat = ({
                 rows={1}
                 placeholder="Ask about this project…"
                 aria-label="Question for AI Assistant"
-                className="max-h-36 min-h-8 w-full resize-y bg-transparent py-1.5 text-xs text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-500 sm:text-sm dark:placeholder:text-slate-500"
+                className="max-h-36 min-h-8 w-full resize-none bg-transparent py-1.5 text-xs text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-500 sm:text-sm dark:placeholder:text-slate-500"
               />
               </div>
               <button type="submit" disabled={!question.trim() || isLoading || question.length > QUESTION_LIMIT} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sky-500 transition hover:text-sky-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-sky-400 dark:hover:text-sky-300" aria-label="Send question"><FiSend size={17} /></button>

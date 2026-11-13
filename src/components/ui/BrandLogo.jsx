@@ -9,11 +9,11 @@ const BrandLogo = ({ size = 'desktop', className = '' }) => {
         src={logo}
         alt=""
         aria-hidden="true"
-        className={`${compact ? 'h-7 w-7' : 'h-9 w-9'} object-contain transition-transform duration-200 group-hover:scale-105`}
+        className={`${compact ? 'h-7 w-7 max-[360px]:h-6 max-[360px]:w-6' : 'h-9 w-9'} object-contain transition-transform duration-200 group-hover:scale-105`}
       />
       <span className="inline-flex items-baseline leading-none text-black transition group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300">
-        <span className={`${compact ? 'text-[21px]' : 'text-[30px]'} font-semibold tracking-tight`}>Friet</span>
-        <span className={`brand-script ${compact ? 'text-[28px]' : 'text-[39px]'} -ml-0.5`}>sync</span>
+        <span className={`${compact ? 'text-[21px] max-[360px]:text-[18px]' : 'text-[30px]'} font-semibold tracking-tight`}>Friet</span>
+        <span className={`brand-script ${compact ? 'text-[28px] max-[360px]:text-[24px]' : 'text-[39px]'} -ml-0.5`}>sync</span>
       </span>
     </span>
   );
