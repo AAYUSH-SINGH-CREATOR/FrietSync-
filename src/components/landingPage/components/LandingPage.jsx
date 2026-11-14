@@ -100,7 +100,7 @@ const SectionIntro = ({ eyebrow, title, description }) => (
   <div className="space-y-4 sm:space-y-4">
     <span className="inline-block text-xs font-bold text-slate-700">{eyebrow}</span>
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-8">
-      <h2 className="font-anton text-3xl font-normal leading-tight tracking-wide text-slate-900 lg:col-span-7 sm:text-5xl lg:text-6xl">
+      <h2 className="font-anton text-2xl font-normal leading-tight tracking-wide text-slate-900 lg:col-span-7 sm:text-4xl lg:text-5xl">
         {title}
       </h2>
       <p className="text-sm leading-relaxed text-slate-700 lg:col-span-5 sm:text-lg">
@@ -156,7 +156,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-white font-sans text-slate-900 antialiased selection:bg-sky-200 selection:text-slate-900">
+    <div className="landing-page-root min-h-screen w-full overflow-x-hidden bg-white font-sans text-slate-900 antialiased selection:bg-sky-200 selection:text-slate-900">
       <Header isAuthenticated={isAuthenticated} scrolled={scrolled} scrollToSection={scrollToSection} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <main className="landing-page-main">
         <Hero scrollToSection={scrollToSection} />
@@ -270,7 +270,7 @@ function Hero({ scrollToSection }) {
 
       <div className="relative z-10 mx-auto mb-[-0.1rem] max-w-[1376px] px-4 sm:px-12">
         <div className="mx-2 hidden select-none pl-6 sm:mx-4 sm:pl-7 md:block lg:pl-16">
-          <h1 className="landing-hero-title relative w-full whitespace-nowrap text-left text-[clamp(1.5rem,8vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.065em] text-white md:top-8 md:text-[clamp(5rem,11vw,10rem)]">
+          <h1 className="landing-hero-title relative w-full whitespace-nowrap text-left text-[clamp(1.5rem,8vw,4.5rem)] font-medium uppercase leading-[0.9] tracking-[0.02em] text-white md:top-8 md:text-[clamp(5rem,11vw,10rem)]">
             Make Work Flow
           </h1>
         </div>
@@ -278,7 +278,7 @@ function Hero({ scrollToSection }) {
 
       <div className="relative mx-auto mt-6 max-w-[1376px] px-4 sm:px-12 md:-mt-[clamp(8rem,10vw,9rem)]">
         <div className="relative mx-2 mb-6 min-h-0 overflow-hidden rounded-[24px] border border-white/35 bg-gradient-to-br from-[#164B93]/60 via-[#3C5CB2]/55 to-[#143F83]/55 px-6 pb-7 pt-7 shadow-[0_24px_80px_rgba(16,35,100,0.28)] backdrop-blur-2xl sm:mx-4 sm:mb-8 sm:rounded-[34px] sm:pl-7 sm:pr-9 sm:pb-9 sm:pt-8 md:mb-12 md:flex md:min-h-[calc(100svh_-_5rem)] md:flex-col md:pt-36 lg:pl-16 lg:pr-16 lg:pb-12 lg:pt-44">
-          <h1 className="landing-hero-title mb-8 w-full whitespace-nowrap text-left text-[clamp(1.5rem,8vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.065em] text-white md:hidden">
+          <h1 className="landing-hero-title mb-8 w-full whitespace-nowrap text-left text-[clamp(1.5rem,8vw,4.5rem)] font-medium uppercase leading-[0.9] tracking-[0.02em] text-white md:hidden">
             Make Work Flow
           </h1>
           <div className="grid grid-cols-1 items-start gap-8 md:my-auto md:w-full md:grid-cols-[1fr_1.35fr_.72fr] md:gap-4">
