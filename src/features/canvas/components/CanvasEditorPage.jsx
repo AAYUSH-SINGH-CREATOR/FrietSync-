@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   FiArrowLeft,
+  FiArrowRight,
   FiTrash2,
   FiZoomIn,
   FiZoomOut,
@@ -19,6 +20,7 @@ import {
   FiAlertCircle,
   FiWifi,
   FiWifiOff,
+  FiCopy,
 } from 'react-icons/fi';
 import { getCanvas } from '../services/canvasService';
 import { useCanvasSocket } from '../hooks/useCanvasSocket';
@@ -38,6 +40,8 @@ const CanvasEditorPage = () => {
 
   const [activeTool, setActiveTool] = useState(TOOLS.SELECT);
   const [selectedElementId, setSelectedElementId] = useState(null);
+  const [editingElementId, setEditingElementId] = useState(null);
+  const [inlineText, setInlineText] = useState('');
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -45,6 +49,9 @@ const CanvasEditorPage = () => {
 
   const [draggingElementId, setDraggingElementId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizingElementId, setResizingElementId] = useState(null);
+  const resizeStartRef = useRef(null);
+  const latestResizeRef = useRef(null);
 
   const [arrowStartElementId, setArrowStartElementId] = useState(null);
 
@@ -56,6 +63,7 @@ const CanvasEditorPage = () => {
   const [projectIssues, setProjectIssues] = useState([]);
 
   const svgRef = useRef(null);
+  const canvasViewportRef = useRef(null);
 
   const {
     connectionStatus,
@@ -134,9 +142,6 @@ const CanvasEditorPage = () => {
         const clickX = (e.clientX - rect.left - pan.x) / (rect.width * zoom);
         const clickY = (e.clientY - rect.top - pan.y) / (rect.height * zoom);
 
-        const clampedX = Math.max(0.02, Math.min(0.85, clickX));
-        const clampedY = Math.max(0.02, Math.min(0.85, clickY));
-
         let newType = ELEMENT_TYPES.STICKY_NOTE;
         let shape = SHAPES.RECTANGLE;
         let text = 'New Sticky Note';
@@ -162,8 +167,8 @@ const CanvasEditorPage = () => {
         const payload = {
           type: newType,
           shape,
-          x: clampedX,
-          y: clampedY,
+          x: clickX,
+          y: clickY,
           width,
           height,
           rotation: 0,
@@ -179,7 +184,15 @@ const CanvasEditorPage = () => {
   };
 
   const handleMouseMove = (e) => {
-    if (isPanning) {
+    if (resizingElementId && resizeStartRef.current) {
+      const rect = svgRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const start = resizeStartRef.current;
+      const width = Math.max(0.04, start.width + (e.clientX - start.clientX) / (rect.width * zoom));
+      const height = Math.max(0.04, start.height + (e.clientY - start.clientY) / (rect.height * zoom));
+      latestResizeRef.current = { id: start.id, width, height };
+      setElements((current) => current.map((element) => element.id === start.id ? { ...element, width, height } : element));
+    } else if (isPanning) {
       setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
     } else if (draggingElementId) {
       const rect = svgRef.current?.getBoundingClientRect();
@@ -188,13 +201,20 @@ const CanvasEditorPage = () => {
       const y = (e.clientY - rect.top - pan.y) / (rect.height * zoom) - dragOffset.y;
 
       setElements((prev) =>
-        prev.map((el) => (el.id === draggingElementId ? { ...el, x: Math.max(0, Math.min(0.9, x)), y: Math.max(0, Math.min(0.9, y)) } : el))
+        prev.map((el) => (el.id === draggingElementId ? { ...el, x, y } : el))
       );
     }
   };
 
   const handleMouseUp = () => {
     if (isPanning) setIsPanning(false);
+    if (resizingElementId) {
+      const resized = latestResizeRef.current;
+      if (resized?.id === resizingElementId) socketUpdateElement(resized.id, { width: resized.width, height: resized.height });
+      resizeStartRef.current = null;
+      latestResizeRef.current = null;
+      setResizingElementId(null);
+    }
     if (draggingElementId) {
       const el = elements.find((item) => item.id === draggingElementId);
       if (el) {
@@ -217,6 +237,16 @@ const CanvasEditorPage = () => {
       setDraggingElementId(null);
     }
   };
+
+  useEffect(() => {
+    if (!isPanning && !draggingElementId && !resizingElementId) return undefined;
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isPanning, draggingElementId, resizingElementId, handleMouseMove, handleMouseUp]);
 
   const handleElementMouseDown = (e, el) => {
     e.stopPropagation();
@@ -261,6 +291,23 @@ const CanvasEditorPage = () => {
     }
   };
 
+  const handleResizeMouseDown = (event, element) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedElementId(element.id);
+    setResizingElementId(element.id);
+    resizeStartRef.current = {
+      id: element.id,
+      x: element.x,
+      y: element.y,
+      width: element.width || 0.16,
+      height: element.height || 0.12,
+      clientX: event.clientX,
+      clientY: event.clientY,
+    };
+    latestResizeRef.current = { id: element.id, width: element.width || 0.16, height: element.height || 0.12 };
+  };
+
   const handleUpdateSelected = (fields) => {
     if (!selectedElementId) return;
     setElements((prev) =>
@@ -301,6 +348,37 @@ const CanvasEditorPage = () => {
     handleUpdateSelected({ zIndex: maxZ + 1 });
   };
 
+  const startInlineEdit = (element) => {
+    setSelectedElementId(element.id);
+    setEditingElementId(element.id);
+    setInlineText(element.text || '');
+  };
+
+  const commitInlineEdit = (elementId) => {
+    const text = inlineText;
+    setElements((current) => current.map((element) => (element.id === elementId ? { ...element, text } : element)));
+    socketUpdateElement(elementId, { text });
+    setEditingElementId(null);
+  };
+
+  const duplicateSelected = () => {
+    if (!selectedElement || selectedElement.type === ELEMENT_TYPES.ARROW || elements.length >= 2000) return;
+    const { type, shape, width, height, rotation, text, color } = selectedElement;
+    const maxZ = elements.reduce((highest, element) => Math.max(highest, element.zIndex || 0), 0);
+    socketCreateElement({
+      type,
+      shape,
+      x: selectedElement.x + 0.025,
+      y: selectedElement.y + 0.025,
+      width,
+      height,
+      rotation,
+      zIndex: maxZ + 1,
+      text,
+      color,
+    });
+  };
+
   const handleRenameCanvasSubmit = (e) => {
     e.preventDefault();
     if (!renameValue.trim()) return;
@@ -309,6 +387,31 @@ const CanvasEditorPage = () => {
     setIsRenaming(false);
     notifySuccess('Canvas renamed.');
   };
+
+  const handleCanvasWheel = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const zoomFactor = Math.exp(-event.deltaY * 0.0015);
+    const nextZoom = Math.max(0.3, Math.min(3, zoom * zoomFactor));
+    if (nextZoom === zoom) return;
+
+    const pointerX = event.clientX - rect.left;
+    const pointerY = event.clientY - rect.top;
+    const worldX = (pointerX - pan.x) / zoom;
+    const worldY = (pointerY - pan.y) / zoom;
+    setPan({ x: pointerX - worldX * nextZoom, y: pointerY - worldY * nextZoom });
+    setZoom(nextZoom);
+  }, [pan, zoom]);
+
+  useEffect(() => {
+    const viewport = canvasViewportRef.current;
+    if (!viewport) return undefined;
+    viewport.addEventListener('wheel', handleCanvasWheel, { passive: false });
+    return () => viewport.removeEventListener('wheel', handleCanvasWheel);
+  }, [handleCanvasWheel]);
 
   if (isLoading) {
     return (
@@ -430,7 +533,7 @@ const CanvasEditorPage = () => {
             { id: TOOLS.STICKY_NOTE, label: 'Sticky Note', icon: FiEdit3 },
             { id: TOOLS.SHAPE, label: 'Rectangle Shape', icon: FiSquare },
             { id: TOOLS.TEXT, label: 'Text Box', icon: FiType },
-            { id: TOOLS.ARROW, label: 'Connector Arrow', icon: FiNavigation },
+            { id: TOOLS.ARROW, label: 'Connector Arrow', icon: FiArrowRight },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -449,11 +552,22 @@ const CanvasEditorPage = () => {
         </div>
 
         <div
-          className="flex-1 relative cursor-crosshair overflow-hidden bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] dark:bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:24px_24px]"
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          ref={canvasViewportRef}
+          className="flex-1 relative cursor-crosshair overflow-hidden bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] dark:bg-[radial-gradient(#333_1px,transparent_1px)]"
+          style={{ backgroundSize: `${24 * zoom}px ${24 * zoom}px`, backgroundPosition: `${pan.x}px ${pan.y}px` }}
         >
+          {selectedElement && selectedElement.type !== ELEMENT_TYPES.ARROW && (
+            <div className="absolute left-1/2 top-3 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#202020]/95">
+              <button type="button" onClick={() => startInlineEdit(selectedElement)} title="Edit on canvas" aria-label="Edit on canvas" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"><FiEdit3 size={15} /></button>
+              <span className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-white/10" />
+              {CANVAS_COLORS.map((color) => (
+                <button key={color} type="button" onClick={() => handleUpdateSelected({ color })} title={`Set color ${color}`} aria-label={`Set color ${color}`} className={`h-6 w-6 rounded-full border border-slate-300 dark:border-white/20 ${selectedElement.color === color ? 'ring-2 ring-sky-500 ring-offset-1 dark:ring-offset-[#202020]' : ''}`} style={{ backgroundColor: color }} />
+              ))}
+              <span className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-white/10" />
+              <button type="button" onClick={duplicateSelected} title="Duplicate" aria-label="Duplicate" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"><FiCopy size={15} /></button>
+              <button type="button" onClick={handleDeleteSelected} title="Delete" aria-label="Delete" className="flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"><FiTrash2 size={15} /></button>
+            </div>
+          )}
           <svg
             ref={svgRef}
             className="w-full h-full absolute inset-0"
@@ -471,6 +585,17 @@ const CanvasEditorPage = () => {
                   const y1 = (fromEl.y + (fromEl.height || 0.12) / 2) * 1000;
                   const x2 = (toEl.x + (toEl.width || 0.16) / 2) * 1000;
                   const y2 = (toEl.y + (toEl.height || 0.12) / 2) * 1000;
+                  const dx = x2 - x1;
+                  const dy = y2 - y1;
+                  const length = Math.hypot(dx, dy) || 1;
+                  const unitX = dx / length;
+                  const unitY = dy / length;
+                  const headLength = 14;
+                  const headWidth = 6;
+                  const baseX = x2 - unitX * headLength;
+                  const baseY = y2 - unitY * headLength;
+                  const arrowHead = `${x2},${y2} ${baseX - unitY * headWidth},${baseY + unitX * headWidth} ${baseX + unitY * headWidth},${baseY - unitX * headWidth}`;
+                  const arrowColor = arrow.color || '#64748b';
 
                   return (
                     <g key={arrow.id}>
@@ -479,11 +604,11 @@ const CanvasEditorPage = () => {
                         y1={y1}
                         x2={x2}
                         y2={y2}
-                        stroke={arrow.color || '#64748b'}
+                        stroke={arrowColor}
                         strokeWidth="3"
                         strokeDasharray={arrow.shape === 'dashed' ? '5,5' : undefined}
                       />
-                      <circle cx={x2} cy={y2} r="5" fill={arrow.color || '#64748b'} />
+                      <polygon points={arrowHead} fill={arrowColor} />
                     </g>
                   );
                 })}
@@ -503,29 +628,36 @@ const CanvasEditorPage = () => {
                       key={el.id}
                       transform={`translate(${posX}, ${posY}) rotate(${el.rotation || 0})`}
                       onMouseDown={(e) => handleElementMouseDown(e, el)}
+                      onDoubleClick={(e) => { e.stopPropagation(); startInlineEdit(el); }}
                       className="cursor-move group"
                     >
                       {el.type === ELEMENT_TYPES.SHAPE ? (
-                        <rect
-                          width={width}
-                          height={height}
-                          rx={el.shape === 'rounded_rectangle' ? 12 : 0}
-                          fill={el.color || '#bfdbfe'}
-                          stroke={isSelected ? '#0284c7' : '#94a3b8'}
-                          strokeWidth={isSelected ? 3 : 1}
-                          className="shadow-md transition-all"
-                        />
+                        <g>
+                          <rect
+                            width={width}
+                            height={height}
+                            rx={el.shape === 'rounded_rectangle' ? 12 : 0}
+                            fill={el.color || '#bfdbfe'}
+                            stroke={isSelected ? '#0284c7' : '#94a3b8'}
+                            strokeWidth={isSelected ? 3 : 1}
+                            className="shadow-md"
+                          />
+                          <foreignObject x="6" y="6" width={width - 12} height={height - 12}>
+                            {editingElementId === el.id ? (
+                              <textarea xmlns="http://www.w3.org/1999/xhtml" autoFocus value={inlineText} onChange={(event) => setInlineText(event.target.value)} onBlur={() => commitInlineEdit(el.id)} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEditingElementId(null); setInlineText(el.text || ''); } }} className="h-full w-full resize-none whitespace-pre-wrap bg-transparent p-1 text-sm font-medium leading-snug text-slate-900 outline-2 outline-sky-500" />
+                            ) : (
+                              <div xmlns="http://www.w3.org/1999/xhtml" className="h-full w-full overflow-auto break-words p-1 text-sm font-medium leading-snug text-slate-900" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{el.text}</div>
+                            )}
+                          </foreignObject>
+                        </g>
                       ) : el.type === ELEMENT_TYPES.TEXT ? (
-                        <text
-                          x="10"
-                          y="30"
-                          fill={el.color || '#1e293b'}
-                          fontSize="18"
-                          fontWeight="bold"
-                          className="font-sans select-none"
-                        >
-                          {el.text || 'Text element'}
-                        </text>
+                        <foreignObject x="0" y="0" width={width} height={height}>
+                          {editingElementId === el.id ? (
+                            <textarea xmlns="http://www.w3.org/1999/xhtml" autoFocus value={inlineText} onChange={(event) => setInlineText(event.target.value)} onBlur={() => commitInlineEdit(el.id)} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEditingElementId(null); setInlineText(el.text || ''); } }} className="h-full w-full resize-none whitespace-pre-wrap bg-white/90 p-1 text-lg font-bold leading-tight text-slate-900 outline-2 outline-sky-500 dark:bg-slate-900/90 dark:text-white" />
+                          ) : (
+                            <div xmlns="http://www.w3.org/1999/xhtml" className="h-full w-full overflow-auto break-words p-1 font-sans text-lg font-bold leading-tight" style={{ color: el.color || '#1e293b', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{el.text}</div>
+                          )}
+                        </foreignObject>
                       ) : (
                         <g>
                           <rect
@@ -538,9 +670,11 @@ const CanvasEditorPage = () => {
                             className="shadow-lg filter drop-shadow-md"
                           />
                           <foreignObject x="10" y="10" width={width - 20} height={height - 20}>
-                            <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full overflow-hidden text-slate-900 text-sm font-medium leading-snug break-words">
-                              {el.text || 'Sticky note'}
-                            </div>
+                            {editingElementId === el.id ? (
+                              <textarea xmlns="http://www.w3.org/1999/xhtml" autoFocus value={inlineText} onChange={(event) => setInlineText(event.target.value)} onBlur={() => commitInlineEdit(el.id)} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEditingElementId(null); setInlineText(el.text || ''); } }} className="h-full w-full resize-none bg-transparent text-slate-900 outline-2 outline-sky-500 text-sm font-medium leading-snug" />
+                            ) : (
+                              <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full overflow-auto whitespace-pre-wrap break-words text-slate-900 text-sm font-medium leading-snug [overflow-wrap:anywhere]">{el.text}</div>
+                            )}
                           </foreignObject>
                           {el.linkedIssue && (
                             <g transform={`translate(${width - 28}, 8)`}>
@@ -551,18 +685,16 @@ const CanvasEditorPage = () => {
                         </g>
                       )}
 
-                      {isSelected && (
-                        <rect
-                          x="-4"
-                          y="-4"
-                          width={width + 8}
-                          height={height + 8}
-                          rx={10}
-                          fill="none"
-                          stroke="#0284c7"
+                      {isSelected && el.type === ELEMENT_TYPES.SHAPE && (
+                        <circle
+                          cx={width}
+                          cy={height}
+                          r="8"
+                          fill="#0284c7"
+                          stroke="white"
                           strokeWidth="2"
-                          strokeDasharray="4,4"
-                          className="animate-pulse pointer-events-none"
+                          className="cursor-nwse-resize"
+                          onMouseDown={(event) => handleResizeMouseDown(event, el)}
                         />
                       )}
                     </g>
@@ -594,7 +726,8 @@ const CanvasEditorPage = () => {
                     rows={3}
                     value={selectedElement.text || ''}
                     onChange={(e) => handleUpdateSelected({ text: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-[#282828] border border-slate-200 dark:border-[#3a3a3a] rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="w-full select-text resize-y p-2.5 bg-slate-50 dark:bg-[#282828] border border-slate-200 dark:border-[#3a3a3a] rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
                     placeholder="Type element text..."
                   />
                 </div>
