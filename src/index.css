@@ -243,3 +243,152 @@ body:has([aria-modal="true"]) {
 .dark .action-primary:hover { background: #0369a1; }
 .dark .action-danger { border-color: #7f1d1d; background: #3f1519; color: #fda4af; }
 .dark .action-danger:hover { background: #551b22; }
+
+/* Modern Landing Page Animations */
+@keyframes hero-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(0.8deg);
+  }
+}
+
+@keyframes hero-float-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(-0.8deg);
+  }
+}
+
+@keyframes ambient-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1) translate(0px, 0px);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1) translate(18px, -12px);
+  }
+}
+
+@keyframes ambient-glow-secondary {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1) translate(0px, 0px);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.08) translate(-16px, 14px);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.9;
+  }
+}
+
+.animate-hero-float {
+  animation: hero-float 6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.animate-hero-float-delayed {
+  animation: hero-float-reverse 7s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.animate-ambient-glow-1 {
+  animation: ambient-glow 9s ease-in-out infinite alternate;
+}
+
+.animate-ambient-glow-2 {
+  animation: ambient-glow-secondary 11s ease-in-out infinite alternate;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+/* Scroll Reveal classes */
+.reveal-base {
+  opacity: 0;
+  transition-property: opacity, transform;
+  transition-duration: 700ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-fade-up {
+  transform: translateY(32px);
+}
+
+.reveal-fade-left {
+  transform: translateX(-32px);
+}
+
+.reveal-fade-right {
+  transform: translateX(32px);
+}
+
+.reveal-scale-up {
+  transform: scale(0.94) translateY(20px);
+}
+
+.reveal-visible {
+  opacity: 1 !important;
+  transform: translate(0, 0) scale(1) !important;
+}
+
+/* Modern interactive card lift */
+.modern-card-interactive {
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+  will-change: transform, box-shadow;
+}
+
+.modern-card-interactive:hover {
+  transform: translateY(-6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-float,
+  .animate-hero-float-delayed,
+  .animate-ambient-glow-1,
+  .animate-ambient-glow-2,
+  .animate-bounce-subtle,
+  .animate-pulse-subtle,
+  .modern-card-interactive {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+  .reveal-base {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
