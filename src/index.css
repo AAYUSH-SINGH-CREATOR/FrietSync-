@@ -66,6 +66,58 @@
   }
 }
 
+.canvas-rich-editor .ql-toolbar.ql-snow {
+  border: 0;
+  border-bottom: 1px solid rgb(226 232 240);
+  padding: 6px;
+}
+
+.canvas-rich-editor .ql-container.ql-snow {
+  border: 0;
+  font: inherit;
+}
+
+.canvas-rich-editor .ql-editor {
+  min-height: 116px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  user-select: text;
+}
+
+.canvas-rich-text p,
+.canvas-rich-text h3,
+.canvas-rich-text h4,
+.canvas-rich-text blockquote {
+  margin: 0 0 0.3em;
+}
+
+.canvas-rich-text ol,
+.canvas-rich-text ul {
+  margin: 0.2em 0;
+  padding-left: 1.35em;
+}
+
+.canvas-rich-text ol { list-style: decimal; }
+.canvas-rich-text ul { list-style: disc; }
+.canvas-rich-text blockquote {
+  border-left: 3px solid #94a3b8;
+  padding-left: 0.65em;
+  color: #475569;
+}
+
+.dark .canvas-rich-editor .ql-toolbar.ql-snow {
+  border-bottom-color: rgb(63 63 70);
+}
+
+.dark .canvas-rich-editor .ql-stroke { stroke: #cbd5e1; }
+.dark .canvas-rich-editor .ql-fill { fill: #cbd5e1; }
+.dark .canvas-rich-editor .ql-picker { color: #cbd5e1; }
+.dark .canvas-rich-editor .ql-picker-options {
+  border-color: rgb(63 63 70);
+  background-color: #282828;
+}
+
 @theme {
   --font-sans: "Google Sans Flex", "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Anton", "Inter", "Google Sans Flex", sans-serif;

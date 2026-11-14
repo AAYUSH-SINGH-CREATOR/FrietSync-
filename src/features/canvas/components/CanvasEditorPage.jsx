@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, createElement, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import {
   FiArrowLeft,
   FiArrowRight,
@@ -28,6 +30,73 @@ import { normalizeElement, generateTempId } from '../utils/canvasHelpers';
 import { TOOLS, SHAPES, CANVAS_COLORS, ELEMENT_TYPES } from '../utils/canvasConstants';
 import { notifySuccess, notifyError } from '../../../utils/toast';
 import { getProjectIssues } from '../../issues/services/issueApi';
+
+const richTextTags = {
+  P: 'p', BR: 'br', STRONG: 'strong', B: 'strong', EM: 'em', I: 'em', U: 'u',
+  S: 's', STRIKE: 's', OL: 'ol', UL: 'ul', LI: 'li', H1: 'h3', H2: 'h4',
+  BLOCKQUOTE: 'blockquote', CODE: 'code', PRE: 'pre', A: 'a', SPAN: 'span',
+};
+
+const richTextToPlainText = (value) => {
+  if (!value || typeof window === 'undefined' || !window.DOMParser) return value || '';
+  const doc = new window.DOMParser().parseFromString(String(value), 'text/html');
+  const collect = (node) => {
+    if (node.nodeType === 3) return node.textContent;
+    if (node.nodeType !== 1) return '';
+    if (node.tagName === 'BR') return '\n';
+    const content = Array.from(node.childNodes).map(collect).join('');
+    return /^(P|DIV|LI|H1|H2|BLOCKQUOTE)$/.test(node.tagName) ? `${content}\n` : content;
+  };
+  return Array.from(doc.body.childNodes).map(collect).join('').replace(/\n+$/, '');
+};
+
+const renderRichText = (html) => {
+  if (!html || typeof window === 'undefined' || !window.DOMParser) return html || '';
+  const doc = new window.DOMParser().parseFromString(String(html), 'text/html');
+  let key = 0;
+  const renderNode = (node) => {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+    const children = Array.from(node.childNodes).map(renderNode);
+    const tag = richTextTags[node.tagName];
+    if (!tag) return createElement(Fragment, { key: `rich-${key++}` }, ...children);
+
+    const props = { key: `rich-${key++}` };
+    if (tag === 'a') {
+      const href = node.getAttribute('href') || '';
+      if (/^(https?:|mailto:)/i.test(href)) {
+        props.href = href;
+        props.target = '_blank';
+        props.rel = 'noreferrer';
+      }
+    }
+    if (tag === 'span') {
+      const style = {};
+      const color = node.style.color;
+      const backgroundColor = node.style.backgroundColor;
+      const fontSize = node.style.fontSize;
+      if (/^(#[\da-f]{3,8}|rgba?\([\d\s.,%]+\)|[a-z]+)$/i.test(color)) style.color = color;
+      if (/^(#[\da-f]{3,8}|rgba?\([\d\s.,%]+\)|[a-z]+)$/i.test(backgroundColor)) style.backgroundColor = backgroundColor;
+      if (/^(\d+(\.\d+)?(px|em|rem|%))$/.test(fontSize)) style.fontSize = fontSize;
+      if (Object.keys(style).length) props.style = style;
+    }
+    const alignment = node.className?.match(/(?:^|\s)ql-align-(center|right|justify)(?:\s|$)/)?.[1];
+    if (alignment) props.style = { ...props.style, textAlign: alignment };
+    return createElement(tag, props, ...children);
+  };
+  return Array.from(doc.body.childNodes).map(renderNode);
+};
+
+const richTextModules = {
+  toolbar: [
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ header: [1, 2, false] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    ['link', 'clean'],
+  ],
+};
 
 const CanvasEditorPage = () => {
   const { projectId, canvasId } = useParams();
@@ -351,7 +420,7 @@ const CanvasEditorPage = () => {
   const startInlineEdit = (element) => {
     setSelectedElementId(element.id);
     setEditingElementId(element.id);
-    setInlineText(element.text || '');
+    setInlineText(richTextToPlainText(element.text || ''));
   };
 
   const commitInlineEdit = (elementId) => {
@@ -646,7 +715,7 @@ const CanvasEditorPage = () => {
                             {editingElementId === el.id ? (
                               <textarea xmlns="http://www.w3.org/1999/xhtml" autoFocus value={inlineText} onChange={(event) => setInlineText(event.target.value)} onBlur={() => commitInlineEdit(el.id)} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEditingElementId(null); setInlineText(el.text || ''); } }} className="h-full w-full resize-none whitespace-pre-wrap bg-transparent p-1 text-sm font-medium leading-snug text-slate-900 outline-2 outline-sky-500" />
                             ) : (
-                              <div xmlns="http://www.w3.org/1999/xhtml" className="h-full w-full overflow-auto break-words p-1 text-sm font-medium leading-snug text-slate-900" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{el.text}</div>
+                              <div xmlns="http://www.w3.org/1999/xhtml" className="canvas-rich-text h-full w-full overflow-auto break-words p-1 text-sm font-medium leading-snug text-slate-900" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{renderRichText(el.text)}</div>
                             )}
                           </foreignObject>
                         </g>
@@ -655,7 +724,7 @@ const CanvasEditorPage = () => {
                           {editingElementId === el.id ? (
                             <textarea xmlns="http://www.w3.org/1999/xhtml" autoFocus value={inlineText} onChange={(event) => setInlineText(event.target.value)} onBlur={() => commitInlineEdit(el.id)} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEditingElementId(null); setInlineText(el.text || ''); } }} className="h-full w-full resize-none whitespace-pre-wrap bg-white/90 p-1 text-lg font-bold leading-tight text-slate-900 outline-2 outline-sky-500 dark:bg-slate-900/90 dark:text-white" />
                           ) : (
-                            <div xmlns="http://www.w3.org/1999/xhtml" className="h-full w-full overflow-auto break-words p-1 font-sans text-lg font-bold leading-tight" style={{ color: el.color || '#1e293b', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{el.text}</div>
+                            <div xmlns="http://www.w3.org/1999/xhtml" className="canvas-rich-text h-full w-full overflow-auto break-words p-1 font-sans text-lg font-bold leading-tight" style={{ color: el.color || '#1e293b', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{renderRichText(el.text)}</div>
                           )}
                         </foreignObject>
                       ) : (
@@ -673,7 +742,7 @@ const CanvasEditorPage = () => {
                             {editingElementId === el.id ? (
                               <textarea xmlns="http://www.w3.org/1999/xhtml" autoFocus value={inlineText} onChange={(event) => setInlineText(event.target.value)} onBlur={() => commitInlineEdit(el.id)} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEditingElementId(null); setInlineText(el.text || ''); } }} className="h-full w-full resize-none bg-transparent text-slate-900 outline-2 outline-sky-500 text-sm font-medium leading-snug" />
                             ) : (
-                              <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full overflow-auto whitespace-pre-wrap break-words text-slate-900 text-sm font-medium leading-snug [overflow-wrap:anywhere]">{el.text}</div>
+                              <div xmlns="http://www.w3.org/1999/xhtml" className="canvas-rich-text w-full h-full overflow-auto whitespace-pre-wrap break-words text-slate-900 text-sm font-medium leading-snug [overflow-wrap:anywhere]">{renderRichText(el.text)}</div>
                             )}
                           </foreignObject>
                           {el.linkedIssue && (
@@ -722,14 +791,15 @@ const CanvasEditorPage = () => {
               {selectedElement.type !== ELEMENT_TYPES.ARROW && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Content / Text</label>
-                  <textarea
-                    rows={3}
-                    value={selectedElement.text || ''}
-                    onChange={(e) => handleUpdateSelected({ text: e.target.value })}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    className="w-full select-text resize-y p-2.5 bg-slate-50 dark:bg-[#282828] border border-slate-200 dark:border-[#3a3a3a] rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
-                    placeholder="Type element text..."
-                  />
+                  <div className="canvas-rich-editor select-text overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus-within:border-sky-500 dark:border-[#3a3a3a] dark:bg-[#282828] dark:text-white">
+                    <ReactQuill
+                      theme="snow"
+                      value={selectedElement.text || ''}
+                      onChange={(html) => handleUpdateSelected({ text: html })}
+                      modules={richTextModules}
+                      placeholder="Write something..."
+                    />
+                  </div>
                 </div>
               )}
 
