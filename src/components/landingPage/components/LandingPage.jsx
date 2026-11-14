@@ -18,6 +18,7 @@ import lnuser2 from '../../../assets/lnuser2.png';
 import lnuser3 from '../../../assets/lnuser3.png';
 import logoIcon from '../../../assets/logo.svg';
 import faviconLogo from '../../../assets/favicon.svg';
+import frame707 from '../../../assets/Frame 707.svg';
 
 const initialTasks = [
   { id: 1, text: 'Investigate token expiration', completed: true },
@@ -80,8 +81,6 @@ const testimonials = [
   },
 ];
 
-const workspaceTools = [ ['Backlog', '#FF5259'], ['Kanban charts', '#70D982'], ['Issue reviews', '#D19BFA'], ['Calendar', '#99D1F1'], ['Tasks', '#FFB671'], ['My work', '#B06982'], ['Chats', '#6987C9'], ['Sprints managment', '#FF95C9'], ['Project Updates', '#FFD269']];
-
 const showcaseCards = [lncard1, lncard2, lncard3, lncard4];
 const roleCards = ['Project manager', 'Reporter', 'Senior Designer', 'Full-Stack Developer'];
 
@@ -101,7 +100,7 @@ const SectionIntro = ({ eyebrow, title, description }) => (
   <div className="space-y-4 sm:space-y-4">
     <span className="inline-block text-xs font-bold text-slate-700">{eyebrow}</span>
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-8">
-      <h2 className="text-3xl font-semibold leading-tight text-slate-900 lg:col-span-7 sm:text-5xl lg:text-6xl">
+      <h2 className="font-anton text-3xl font-normal leading-tight tracking-wide text-slate-900 lg:col-span-7 sm:text-5xl lg:text-6xl">
         {title}
       </h2>
       <p className="text-sm leading-relaxed text-slate-700 lg:col-span-5 sm:text-lg">
@@ -401,7 +400,7 @@ function TestimonialsSection() {
   return (
     <section className="w-full rounded-t-[24px] bg-[#FFA7CE] py-14 sm:py-28">
       <div className="mx-auto max-w-[1440px] space-y-10 px-6 sm:space-y-16 sm:px-12 lg:px-20">
-        <h2 className="mx-auto max-w-3xl text-center text-3xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+        <h2 className="font-anton mx-auto max-w-3xl text-center text-3xl font-normal leading-tight tracking-wide text-slate-900 sm:text-5xl">
           See how teams bring their projects, people, and ideas together with Frietsync.
         </h2>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3 sm:gap-8">
@@ -430,16 +429,21 @@ function TestimonialsSection() {
 
 function QuickAccessSection() {
   return (
-    <section id="features" className="w-full scroll-mt-20 bg-white py-14 sm:py-28">
-      <div className="mx-auto max-w-[1440px] space-y-10 px-6 text-center sm:space-y-12 sm:px-12 lg:px-20">
-        <h2 className="text-3xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Quickly access<br />what you need frequently</h2>
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-3 pt-2 sm:gap-4 sm:pt-4">
-          {workspaceTools.map(([label, color]) => (
-            <div key={label} className="inline-flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-800 shadow-xs transition hover:bg-slate-200 sm:px-5 sm:py-2.5 sm:text-sm">
-              <span className="h-2.5 w-2.5 rounded-full shadow-xs" style={{ backgroundColor: color }} />
-              <span>{label}</span>
-            </div>
-          ))}
+    <section id="features" className="w-full scroll-mt-20 overflow-hidden bg-white py-14 sm:py-24 lg:py-28">
+      <div className="mx-auto max-w-[1440px] px-6 text-center sm:px-12 lg:px-20">
+        <div className="relative mx-auto flex max-w-[1028px] flex-col items-center">
+          <h2 className="font-anton z-10 max-w-3xl text-3xl font-normal leading-tight tracking-wide text-slate-900 sm:text-5xl lg:text-6xl">
+            Quickly access<br />what you need frequently
+          </h2>
+          <div className="mt-6 w-full sm:-mt-8 md:-mt-16 lg:-mt-24">
+            <img
+              src={frame707}
+              alt="Quickly access tools: Backlog, Kanban charts, Issue reviews, Calendar, Tasks, My work, Chats, Sprints management, and Project Updates"
+              className="mx-auto h-auto w-full max-w-[1028px] select-none object-contain pointer-events-none"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -450,7 +454,7 @@ function ShowcaseSection() {
   return (
     <section className="w-full overflow-hidden bg-[#C1E8FF] py-14 sm:py-28">
       <div className="mx-auto max-w-[1440px] space-y-10 px-6 text-center sm:space-y-12 sm:px-12">
-        <h2 className="text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">One Platform. Endless Possibilities</h2>
+        <h2 className="font-anton text-3xl font-normal leading-tight tracking-wide text-slate-950 sm:text-5xl lg:text-6xl">One Platform. Endless Possibilities</h2>
         <div className="showcase-marquee overflow-hidden pb-4 pt-2" aria-label="Frietsync product feature cards">
           <div className="showcase-marquee-track flex w-max">
             {[0, 1].map((setIndex) => (
@@ -473,7 +477,7 @@ function ProductCardsSection({ tasks, completedCount, toggleTask }) {
   return (
     <section className="w-full bg-white py-14 sm:py-28">
       <div className="mx-auto max-w-[1440px] space-y-10 px-6 sm:space-y-16 sm:px-12 lg:px-20">
-        <h2 className="text-center text-3xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Simplify work. Amplify progress.</h2>
+        <h2 className="font-anton text-center text-3xl font-normal leading-tight tracking-wide text-slate-900 sm:text-5xl lg:text-6xl">Simplify work. Amplify progress.</h2>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 sm:gap-8">
           <ChatCard />
           <ChecklistCard tasks={tasks} completedCount={completedCount} toggleTask={toggleTask} />
@@ -572,7 +576,7 @@ function Footer({ scrollToSection }) {
   return (
     <footer className="w-full overflow-hidden border-t border-amber-200/60 bg-[#FFF6C2] py-14 sm:py-20">
       <div className="mx-auto max-w-[1440px] space-y-12 px-6 sm:space-y-16 sm:px-12 lg:px-20">
-        <h2 className="mx-auto max-w-3xl text-center text-3xl font-semibold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
+        <h2 className="font-anton mx-auto max-w-3xl text-center text-3xl font-normal leading-tight tracking-wide text-slate-950 sm:text-5xl lg:text-6xl">
           You can find everything you need right here
         </h2>
 
