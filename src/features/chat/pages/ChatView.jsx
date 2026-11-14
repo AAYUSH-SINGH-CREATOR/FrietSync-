@@ -41,6 +41,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(Boolean(urlProjectId));
   const [isAssistantActive, setIsAssistantActive] = useState(false);
+  const [aiProjectId, setAiProjectId] = useState(null);
 
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -813,6 +814,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       setActiveConversationId(selectedProjectId);
       setSearchParams({ projectId: selectedProjectId });
     }
+    setAiProjectId(null);
     setIsAssistantActive(true);
     setIsMobileThreadOpen(true);
   };
@@ -1042,14 +1044,15 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         >
           {isAssistantActive ? (
             <AiAssistantChat
-              key={activeProjectId || 'no-project'}
+              key={aiProjectId || 'all-projects'}
               projects={projects}
-              projectId={activeProjectId}
-              messages={aiMessagesMap[activeProjectId] || []}
+              projectId={aiProjectId}
+              onProjectChange={setAiProjectId}
+              messages={aiMessagesMap[aiProjectId || 'all-projects'] || []}
               onMessagesChange={(update) => setAiMessagesMap((previous) => ({
                 ...previous,
-                [activeProjectId]: typeof update === 'function'
-                  ? update(previous[activeProjectId] || [])
+                [aiProjectId || 'all-projects']: typeof update === 'function'
+                  ? update(previous[aiProjectId || 'all-projects'] || [])
                   : update,
               }))}
               stompClientRef={stompClientRef}
