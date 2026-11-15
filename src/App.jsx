@@ -3,6 +3,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import AppToaster from './components/ui/AppToaster';
 import LandingPage from './components/landingPage';
 import LegalPage from './pages/LegalPage';
+import NotFoundPage from './pages/NotFoundPage';
 import Signup from './features/auth/pages/Signup';
 import Login from './features/auth/pages/Login';
 import OtpVerification from './features/auth/pages/OtpVerification';
@@ -76,7 +77,7 @@ function App() {
         <Route path="/invite" element={<Invite />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );
