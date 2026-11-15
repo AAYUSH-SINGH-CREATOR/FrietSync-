@@ -769,17 +769,24 @@ const CanvasEditorPage = () => {
                   const arrowColor = arrow.color || '#64748b';
 
                   return (
-                    <g key={arrow.id}>
+                    <g
+                      key={arrow.id}
+                      className="cursor-pointer"
+                      onMouseDown={(event) => {
+                        event.stopPropagation();
+                        setSelectedElementId(arrow.id);
+                      }}
+                    >
                       <line
                         x1={x1}
                         y1={y1}
                         x2={lineEndX}
                         y2={lineEndY}
                         stroke={arrowColor}
-                        strokeWidth="3"
+                        strokeWidth={selectedElementId === arrow.id ? 5 : 3}
                         strokeDasharray={arrow.shape === 'dashed' ? '5,5' : undefined}
                       />
-                      <polygon points={arrowHead} fill={arrowColor} />
+                      <polygon points={arrowHead} fill={selectedElementId === arrow.id ? '#0284c7' : arrowColor} />
                     </g>
                   );
                 })}
