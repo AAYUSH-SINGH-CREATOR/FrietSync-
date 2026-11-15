@@ -644,45 +644,6 @@ const CanvasEditorPage = () => {
           >
             <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
               {elements
-                .filter((el) => el.type === ELEMENT_TYPES.ARROW || el.fromElementId)
-                .map((arrow) => {
-                  const fromEl = elements.find((e) => e.id === arrow.fromElementId);
-                  const toEl = elements.find((e) => e.id === arrow.toElementId);
-                  if (!fromEl || !toEl) return null;
-
-                  const x1 = (fromEl.x + (fromEl.width || 0.16) / 2) * 1000;
-                  const y1 = (fromEl.y + (fromEl.height || 0.12) / 2) * 1000;
-                  const x2 = (toEl.x + (toEl.width || 0.16) / 2) * 1000;
-                  const y2 = (toEl.y + (toEl.height || 0.12) / 2) * 1000;
-                  const dx = x2 - x1;
-                  const dy = y2 - y1;
-                  const length = Math.hypot(dx, dy) || 1;
-                  const unitX = dx / length;
-                  const unitY = dy / length;
-                  const headLength = 14;
-                  const headWidth = 6;
-                  const baseX = x2 - unitX * headLength;
-                  const baseY = y2 - unitY * headLength;
-                  const arrowHead = `${x2},${y2} ${baseX - unitY * headWidth},${baseY + unitX * headWidth} ${baseX + unitY * headWidth},${baseY - unitX * headWidth}`;
-                  const arrowColor = arrow.color || '#64748b';
-
-                  return (
-                    <g key={arrow.id}>
-                      <line
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke={arrowColor}
-                        strokeWidth="3"
-                        strokeDasharray={arrow.shape === 'dashed' ? '5,5' : undefined}
-                      />
-                      <polygon points={arrowHead} fill={arrowColor} />
-                    </g>
-                  );
-                })}
-
-              {elements
                 .filter((el) => el.type !== ELEMENT_TYPES.ARROW && !el.fromElementId)
                 .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
                 .map((el) => {
@@ -766,6 +727,59 @@ const CanvasEditorPage = () => {
                           onMouseDown={(event) => handleResizeMouseDown(event, el)}
                         />
                       )}
+                    </g>
+                  );
+                })}
+
+              {elements
+                .filter((el) => el.type === ELEMENT_TYPES.ARROW || el.fromElementId)
+                .map((arrow) => {
+                  const fromEl = elements.find((el) => el.id === arrow.fromElementId);
+                  const toEl = elements.find((el) => el.id === arrow.toElementId);
+                  if (!fromEl || !toEl) return null;
+
+                  const fromCenterX = (fromEl.x + (fromEl.width || 0.18) / 2) * 1000;
+                  const fromCenterY = (fromEl.y + (fromEl.height || 0.14) / 2) * 1000;
+                  const toCenterX = (toEl.x + (toEl.width || 0.18) / 2) * 1000;
+                  const toCenterY = (toEl.y + (toEl.height || 0.14) / 2) * 1000;
+                  const dx = toCenterX - fromCenterX;
+                  const dy = toCenterY - fromCenterY;
+                  const length = Math.hypot(dx, dy) || 1;
+                  const unitX = dx / length;
+                  const unitY = dy / length;
+                  const fromEdge = Math.min(
+                    ((fromEl.width || 0.18) * 500) / Math.max(Math.abs(unitX), 0.0001),
+                    ((fromEl.height || 0.14) * 500) / Math.max(Math.abs(unitY), 0.0001)
+                  );
+                  const toEdge = Math.min(
+                    ((toEl.width || 0.18) * 500) / Math.max(Math.abs(unitX), 0.0001),
+                    ((toEl.height || 0.14) * 500) / Math.max(Math.abs(unitY), 0.0001)
+                  );
+                  const x1 = fromCenterX + unitX * fromEdge;
+                  const y1 = fromCenterY + unitY * fromEdge;
+                  const x2 = toCenterX - unitX * toEdge;
+                  const y2 = toCenterY - unitY * toEdge;
+                  const headLength = 18;
+                  const headWidth = 8;
+                  const baseX = x2 - unitX * headLength;
+                  const baseY = y2 - unitY * headLength;
+                  const lineEndX = x2 - unitX * (headLength * 0.82);
+                  const lineEndY = y2 - unitY * (headLength * 0.82);
+                  const arrowHead = `${x2},${y2} ${baseX - unitY * headWidth},${baseY + unitX * headWidth} ${baseX + unitY * headWidth},${baseY - unitX * headWidth}`;
+                  const arrowColor = arrow.color || '#64748b';
+
+                  return (
+                    <g key={arrow.id}>
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={lineEndX}
+                        y2={lineEndY}
+                        stroke={arrowColor}
+                        strokeWidth="3"
+                        strokeDasharray={arrow.shape === 'dashed' ? '5,5' : undefined}
+                      />
+                      <polygon points={arrowHead} fill={arrowColor} />
                     </g>
                   );
                 })}
