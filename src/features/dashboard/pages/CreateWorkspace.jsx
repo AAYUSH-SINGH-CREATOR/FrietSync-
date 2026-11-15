@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   FiLayers,
   FiArrowRight,
@@ -16,6 +16,9 @@ import {
   getFriendlyErrorMessage,
 } from '../services/workspaceApi';
 import logo from '../../../assets/logo.svg';
+import WorkspaceInviteModal from '../../invites/components/WorkspaceInviteModal';
+
+const INVITE_ONBOARDING_KEY = 'frietSyncWorkspaceInviteOnboarding';
 
 const CreateWorkspace = () => {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ const CreateWorkspace = () => {
   const [isCheckingExisting, setIsCheckingExisting] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     useEffect(() => {
     let isMounted = true;
@@ -32,6 +36,9 @@ const CreateWorkspace = () => {
         if (isMounted) {
           if (ws && (ws.name || ws.id || ws._id)) {
             setExistingWorkspace(ws);
+            if (localStorage.getItem(INVITE_ONBOARDING_KEY) === 'pending') {
+              setIsInviteModalOpen(true);
+            }
           }
           setIsCheckingExisting(false);
         }
@@ -60,7 +67,8 @@ const CreateWorkspace = () => {
 
     try {
       await createWorkspace({ name: workspaceName.trim() });
-      navigate('/dashboard');
+      localStorage.setItem(INVITE_ONBOARDING_KEY, 'pending');
+      setIsInviteModalOpen(true);
     } catch (err) {
       setErrorMessage(getFriendlyErrorMessage(err, 'workspace'));
     } finally {
@@ -80,8 +88,14 @@ const CreateWorkspace = () => {
     }
   };
 
+  const finishOnboarding = () => {
+    localStorage.removeItem(INVITE_ONBOARDING_KEY);
+    navigate('/dashboard', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-[#eaedf1] dark:bg-[#292929] flex flex-col justify-center items-center px-4 py-8 font-sans transition-colors duration-200">
+      {isInviteModalOpen && <WorkspaceInviteModal onFinish={finishOnboarding} />}
       <div className="flex items-center gap-2.5 mb-8">
         <img src={logo} alt="FrietSync Logo" className="w-9 h-9 object-contain" />
         <span className="text-2xl font-black text-sky-600 dark:text-[#60A5FA] tracking-tight">
@@ -222,14 +236,16 @@ const CreateWorkspace = () => {
               </div>
             </form>
 
-            <div className="mt-6 text-center">
-              <Link
-                to="/dashboard"
-                className="text-xs font-medium text-slate-500 dark:text-[#b3b3b3] hover:text-slate-800 dark:hover:text-[#F1F5F9] transition"
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard', { state: { allowWorkspaceSetupSkip: true } })}
+                className="text-sm font-semibold text-slate-500 transition hover:text-sky-700 dark:text-slate-400 dark:hover:text-sky-300"
               >
-                Skip for now &rarr; Go to Dashboard
-              </Link>
+                Go to Dashboard
+              </button>
             </div>
+
           </div>
         )}
       </div>

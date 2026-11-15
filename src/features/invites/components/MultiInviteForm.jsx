@@ -43,7 +43,7 @@ const createEmptyMember = () => ({
     expiresDate: getDefaultExpiryDate(7),
 });
 
-const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
+const MultiInviteForm = ({ onSuccess, onComplete, onCancel, showCancel = false }) => {
     const [members, setMembers] = useState([createEmptyMember()]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -181,6 +181,9 @@ const MultiInviteForm = ({ onSuccess, onCancel, showCancel = false }) => {
 
             if (onSuccess) {
                 onSuccess(totalCount);
+            }
+            if (onComplete) {
+                onComplete(totalCount);
             }
         }
     };

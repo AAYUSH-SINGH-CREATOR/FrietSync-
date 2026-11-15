@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { getMyWorkspace } from '../services/workspaceApi';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 
 const WorkspaceRoute = () => {
+  const location = useLocation();
   const [workspace, setWorkspace] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
@@ -24,6 +25,7 @@ const WorkspaceRoute = () => {
   }, []);
 
   useEffect(() => {
+    if (location.state?.allowWorkspaceSetupSkip) return undefined;
     let isActive = true;
     getMyWorkspace()
       .then((result) => {
@@ -37,7 +39,9 @@ const WorkspaceRoute = () => {
         setStatus('error');
       });
     return () => { isActive = false; };
-  }, []);
+  }, [location.state?.allowWorkspaceSetupSkip]);
+
+  if (location.state?.allowWorkspaceSetupSkip) return <Outlet />;
 
   if (status === 'loading') {
     return <LoadingScreen fullScreen label="Checking your workspace" />;

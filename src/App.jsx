@@ -24,6 +24,7 @@ import DependencyGraphView from './features/issues/components/DependencyGraphVie
 import SettingsView from './features/dashboard/components/SettingsView';
 import ProfileView from './features/dashboard/components/ProfileView';
 import NoWorkspace from './features/dashboard/components/NoWorkspace';
+import WorkspaceRoute from './features/dashboard/components/WorkspaceRoute';
 import ProjectsView from './features/projects/pages/ProjectsView';
 import ProjectDetailsView from './features/projects/pages/ProjectDetailsView';
 import CanvasList from './features/canvas/components/CanvasList';
@@ -50,31 +51,34 @@ function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />}>
-          <Route index element={<DashboardOverview />} />
-          <Route path="projects" element={<ProjectsView />} />
-          <Route path="projects/:projectId" element={<ProjectDetailsView />} />
-          <Route path="projects/:projectId/canvas" element={<CanvasList />} />
-          <Route path="projects/:projectId/canvas/:canvasId" element={<CanvasEditorPage />} />
-          <Route path="issues" element={<IssuesView />} />
-          <Route path="issues/dependency-graph/:projectId" element={<DependencyGraphView />} />
-          <Route path="sprints" element={<SprintsView />} />
-          <Route path="my-work" element={<MyWorkView />} />
-          <Route path="briefing" element={<DailyBriefingView />} />
-          <Route path="calendar" element={<CalendarView />} />
-          <Route path="chats" element={<></>} />
-          <Route path="invites" element={<InvitesView />} />
-          <Route path="team" element={<TeamView />} />
-          <Route path="settings" element={<SettingsView />} />
-          <Route path="settings/reset-password" element={<SettingsPasswordReset />} />
-          <Route path="settings/profile" element={<ProfileView />} />
-          <Route path="profile" element={<Navigate to="/dashboard/settings/profile" replace />} />
-          <Route path="no-workspace" element={<NoWorkspace />} />
+        <Route element={<WorkspaceRoute />}>
+          <Route path="/dashboard" element={<Dashboard />}>
+            <Route index element={<DashboardOverview />} />
+            <Route path="projects" element={<ProjectsView />} />
+            <Route path="projects/:projectId" element={<ProjectDetailsView />} />
+            <Route path="projects/:projectId/canvas" element={<CanvasList />} />
+            <Route path="projects/:projectId/canvas/:canvasId" element={<CanvasEditorPage />} />
+            <Route path="issues" element={<IssuesView />} />
+            <Route path="issues/dependency-graph/:projectId" element={<DependencyGraphView />} />
+            <Route path="sprints" element={<SprintsView />} />
+            <Route path="my-work" element={<MyWorkView />} />
+            <Route path="briefing" element={<DailyBriefingView />} />
+            <Route path="calendar" element={<CalendarView />} />
+            <Route path="chats" element={<></>} />
+            <Route path="invites" element={<InvitesView />} />
+            <Route path="team" element={<TeamView />} />
+            <Route path="settings" element={<SettingsView />} />
+            <Route path="settings/reset-password" element={<SettingsPasswordReset />} />
+            <Route path="settings/profile" element={<ProfileView />} />
+            <Route path="profile" element={<Navigate to="/dashboard/settings/profile" replace />} />
+            <Route path="no-workspace" element={<NoWorkspace />} />
+          </Route>
         </Route>
 
         <Route path="/create-workspace" element={<CreateWorkspace />} />
         <Route path="/team" element={<Navigate to="/dashboard/team" replace />} />
         <Route path="/invite" element={<Invite />} />
+        <Route path="/dashboard/*" element={<NotFoundPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

@@ -36,6 +36,10 @@ import NoWorkspace from './NoWorkspace';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { getUserProfile } from '../../auth/services/authApi';
 import { getDashboardProjectId, setDashboardProjectId, subscribeToDashboardProjectId } from '../../../utils/dashboardProjectSelection';
+import EmptyState from '../../../components/ui/EmptyState';
+import CreateProjectModal from '../../projects/components/CreateProjectModal';
+import esproject from '../../../assets/esproject.png';
+import { canCreateProject } from '../../projects/utils/projectUtils';
 
 const normalize = (v) => String(v || '').toUpperCase().replace(/[\s-]+/g, '_');
 const getProjectId = (project) => String(project?.id || project?._id || project?.projectId || '');
@@ -104,6 +108,7 @@ const DashboardOverview = () => {
   const [issueTotalsByProject, setIssueTotalsByProject] = useState({});
   const [selectedProjectId, setSelectedProjectId] = useState(getDashboardProjectId);
   const [selectedProjectMembers, setSelectedProjectMembers] = useState([]);
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -596,6 +601,33 @@ const DashboardOverview = () => {
 
   if (!workspace || !(workspace.name || workspace.id || workspace._id)) {
     return <NoWorkspace userName={userName} />;
+  }
+
+  if (!isLoading && projects.length === 0) {
+    return (
+      <>
+        <div className="px-3 sm:px-6 lg:px-8">
+          <EmptyState
+            title="Projects"
+            subtitle="No projects yet. Create one to organize your team's work."
+            illustration={esproject}
+            illustrationAlt="No projects yet"
+            onCreateProject={() => {
+              if (canCreateProject(currentUserProfile)) setIsCreateProjectModalOpen(true);
+              else navigate('/dashboard/projects');
+            }}
+          />
+        </div>
+        <CreateProjectModal
+          isOpen={canCreateProject(currentUserProfile) && isCreateProjectModalOpen}
+          onClose={() => setIsCreateProjectModalOpen(false)}
+          onProjectCreated={() => {
+            setIsCreateProjectModalOpen(false);
+            loadDashboardData();
+          }}
+        />
+      </>
+    );
   }
 
   
