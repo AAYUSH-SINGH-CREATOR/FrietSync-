@@ -16,6 +16,10 @@ import lnissuesPreview from '../../../assets/lnissues_preview.png';
 import lnuser1 from '../../../assets/lnuser1.png';
 import lnuser2 from '../../../assets/lnuser2.png';
 import lnuser3 from '../../../assets/lnuser3.png';
+import ideaIcon from '../../../assets/idea.svg';
+import teamIcon from '../../../assets/team.svg';
+import progressIcon from '../../../assets/progress.svg';
+import settingsIcon from '../../../assets/settings.svg';
 import logoIcon from '../../../assets/logo.svg';
 import faviconLogo from '../../../assets/favicon.svg';
 import frame707 from '../../../assets/Frame 707.svg';
@@ -36,22 +40,22 @@ const metrics = [
 
 const featurePillars = [
   {
-    icon: FiZap,
+    icon: ideaIcon,
     title: 'Turn ideas into action',
     description: 'Turn plans into progress with agile task management and milestone tracking.',
   },
   {
-    icon: FiUsers,
+    icon: teamIcon,
     title: 'Keep your team aligned',
     description: 'Never miss what matters with real-time project messaging and updates.',
   },
   {
-    icon: FiBarChart2,
+    icon: progressIcon,
     title: 'Track your progress',
     description: 'Use interactive boards, lists, timelines, and audit history effortlessly.',
   },
   {
-    icon: FiSettings,
+    icon: settingsIcon,
     title: 'Manage your workspace',
     description: 'Configure roles, customize sprints, and streamline member collaboration.',
   },
@@ -473,14 +477,14 @@ function WhySection() {
           />
         </Reveal>
         <div className="grid grid-cols-1 gap-6 pt-2 sm:grid-cols-2 lg:grid-cols-4">
-          {featurePillars.map(({ icon: Icon, title, description }, index) => (
+          {featurePillars.map(({ icon, title, description }, index) => (
             <Reveal key={title} delay={index * 120} animation="fade-up">
-              <article className="modern-card-interactive group h-full space-y-4 rounded-3xl border border-slate-100 bg-slate-50 p-7 shadow-xs hover:border-sky-300 hover:bg-white hover:shadow-xl">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-[#007DFE] shadow-xs transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                  <Icon size={22} />
+              <article className="modern-card-interactive group h-full space-y-2 rounded-3xl border border-slate-100 bg-slate-50 p-6 shadow-xs hover:border-sky-300 hover:bg-white hover:shadow-xl sm:p-7">
+                <div className="flex h-20 items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <img src={icon} alt="" aria-hidden="true" className="h-[88px] w-[88px] object-contain" />
                 </div>
-                <h3 className="text-lg font-bold leading-snug text-slate-900">{title}</h3>
-                <p className="text-sm leading-relaxed text-slate-600">{description}</p>
+                <h3 className="text-center text-base font-bold leading-snug text-slate-900">{title}</h3>
+                <p className="text-center text-xs leading-relaxed text-slate-600">{description.split('.')[0]}.</p>
               </article>
             </Reveal>
           ))}
