@@ -24,7 +24,7 @@ import {
   FiWifiOff,
   FiCopy,
 } from 'react-icons/fi';
-import { getCanvas } from '../services/canvasService';
+import { getCanvas, renameCanvas as renameCanvasRequest, deleteCanvas as deleteCanvasRequest } from '../services/canvasService';
 import { useCanvasSocket } from '../hooks/useCanvasSocket';
 import { normalizeElement, generateTempId } from '../utils/canvasHelpers';
 import { TOOLS, SHAPES, CANVAS_COLORS, ELEMENT_TYPES } from '../utils/canvasConstants';
@@ -136,8 +136,6 @@ const CanvasEditorPage = () => {
 
   const {
     connectionStatus,
-    renameCanvas: socketRenameCanvas,
-    deleteCanvas: socketDeleteCanvas,
     createElement: socketCreateElement,
     updateElement: socketUpdateElement,
     deleteElement: socketDeleteElement,
@@ -448,13 +446,19 @@ const CanvasEditorPage = () => {
     });
   };
 
-  const handleRenameCanvasSubmit = (e) => {
+  const handleRenameCanvasSubmit = async (e) => {
     e.preventDefault();
     if (!renameValue.trim()) return;
-    socketRenameCanvas(renameValue.trim());
-    setCanvas((prev) => (prev ? { ...prev, name: renameValue.trim() } : prev));
-    setIsRenaming(false);
-    notifySuccess('Canvas renamed.');
+    try {
+      const response = await renameCanvasRequest(canvasId, renameValue.trim());
+      const name = response?.canvas?.name || response?.data?.name || response?.name || renameValue.trim();
+      setCanvas((prev) => (prev ? { ...prev, name } : prev));
+      setRenameValue(name);
+      setIsRenaming(false);
+      notifySuccess('Canvas renamed.');
+    } catch (err) {
+      notifyError(err.message || 'Failed to rename canvas.');
+    }
   };
 
   const handleCanvasWheel = useCallback((event) => {
@@ -902,10 +906,14 @@ const CanvasEditorPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  socketDeleteCanvas();
-                  notifySuccess('Canvas deleted.');
-                  navigate(`/dashboard/projects/${projectId}/canvas`);
+                onClick={async () => {
+                  try {
+                    await deleteCanvasRequest(canvasId);
+                    notifySuccess('Canvas deleted.');
+                    navigate(`/dashboard/projects/${projectId}/canvas`);
+                  } catch (err) {
+                    notifyError(err.message || 'Failed to delete canvas.');
+                  }
                 }}
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs cursor-pointer shadow-md"
               >

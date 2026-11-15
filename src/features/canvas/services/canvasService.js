@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getFriendlyErrorMessage } from '../../../utils/errorHandler';
 import { getAccessToken } from '../../auth/services/authApi';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -42,7 +41,10 @@ export const listCanvases = async (projectId) => {
     const data = response.data;
     if (Array.isArray(data)) return data;
     if (Array.isArray(data?.canvases)) return data.canvases;
+    if (Array.isArray(data?.data?.canvases)) return data.data.canvases;
     if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.data?.items)) return data.data.items;
     return [];
   } catch (error) {
     handleCanvasError(error, 'Failed to load project canvases.');
@@ -94,11 +96,19 @@ export const getCanvas = async (canvasId) => {
       getAuthHeaders()
     );
     const data = response.data;
-    const canvas = data?.canvas || data?.data?.canvas || data;
+    const canvas = data?.canvas || data?.data?.canvas || data?.data || data;
     const elements = Array.isArray(data?.elements)
       ? data.elements
       : Array.isArray(data?.data?.elements)
       ? data.data.elements
+      : Array.isArray(canvas?.elements)
+      ? canvas.elements
+      : Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data?.data?.items)
+      ? data.data.items
+      : Array.isArray(canvas?.items)
+      ? canvas.items
       : [];
     return { canvas, elements };
   } catch (error) {
