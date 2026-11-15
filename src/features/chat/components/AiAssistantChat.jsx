@@ -156,6 +156,7 @@ const AiAssistantChat = ({
     pending.cancelReason = reason;
     clearTimeout(pending.timer);
     pending.unsubscribe?.();
+    pending.connectUnsubscribe?.();
     pending.controller?.abort();
     pending.reject?.(new Error(reason));
   }, []);
@@ -173,46 +174,75 @@ const AiAssistantChat = ({
   const askOverSocket = useCallback((targetProjectId, text) => new Promise((resolve, reject) => {
     const stompClient = stompClientRef.current;
     if (!stompClient?.connected) {
-      reject(new Error('The live connection is not ready.'));
-      return;
-    }
-
-    const sequence = ++requestSequenceRef.current;
-    const pending = { sequence, requestId: null, resolve, reject, unsubscribe: null, timer: null };
-    pendingRef.current = pending;
-    setConnectionStatus('connecting');
-    pending.unsubscribe = stompClient.subscribe('/user/queue/ai-chat', (event) => {
-      if (pendingRef.current !== pending || !event) return;
-      const eventType = String(event.type || '').toLowerCase();
-      if (eventType === 'started') {
-        pending.requestId = String(event.requestId || '');
-        setConnectionStatus('thinking');
+      if (!stompClient) {
+        reject(new Error('The live connection is unavailable. Please wait for chat to reconnect and try again.'));
         return;
       }
-      if (eventType !== 'completed' && eventType !== 'error') return;
-      if (pending.requestId && String(event.requestId || '') !== pending.requestId) return;
-      if (!pending.requestId && event.requestId) pending.requestId = String(event.requestId);
-      pendingRef.current = null;
-      clearTimeout(pending.timer);
-      pending.unsubscribe?.();
-      if (eventType === 'error') reject(new Error(event.error || 'The AI Assistant could not answer right now.'));
-      else resolve(event.response || event.data || event);
-    });
+    }
 
-    pending.timer = setTimeout(() => {
+    const pending = {
+      requestId: null,
+      resolve,
+      reject,
+      unsubscribe: null,
+      connectUnsubscribe: null,
+      timer: null,
+    };
+    pendingRef.current = pending;
+
+    const fail = (message) => {
       if (pendingRef.current !== pending) return;
       pendingRef.current = null;
-      pending.unsubscribe?.();
-      reject(new Error('The AI Assistant took too long to respond. Please try again.'));
-    }, REQUEST_TIMEOUT_MS);
-
-    try {
-      stompClient.publish('/app/ai-chat', { question: text, projectId: targetProjectId || null });
-    } catch (publishError) {
-      pendingRef.current = null;
       clearTimeout(pending.timer);
       pending.unsubscribe?.();
-      reject(publishError);
+      pending.connectUnsubscribe?.();
+      reject(message instanceof Error ? message : new Error(message));
+    };
+
+    const publishWhenConnected = () => {
+      if (pendingRef.current !== pending) return;
+      if (!stompClient.connected) return;
+
+      pending.connectUnsubscribe?.();
+      pending.connectUnsubscribe = null;
+      pending.unsubscribe = stompClient.subscribe('/user/queue/ai-chat', (event) => {
+        if (pendingRef.current !== pending || !event) return;
+        const eventType = String(event.type || '').toLowerCase();
+        if (eventType === 'started') {
+          pending.requestId = String(event.requestId || '');
+          setConnectionStatus('thinking');
+          return;
+        }
+        if (eventType !== 'completed' && eventType !== 'error') return;
+        if (pending.requestId && String(event.requestId || '') !== pending.requestId) return;
+        pendingRef.current = null;
+        clearTimeout(pending.timer);
+        pending.unsubscribe?.();
+        if (eventType === 'error') reject(new Error(event.error || 'The AI Assistant could not answer right now.'));
+        else resolve(event.response || event.data || event);
+      });
+
+      try {
+        stompClient.publish('/app/ai-chat', { question: text, projectId: targetProjectId || null });
+        setConnectionStatus('thinking');
+      } catch (publishError) {
+        fail(publishError);
+      }
+    };
+
+    pending.timer = setTimeout(() => {
+      fail(new Error('The live connection took too long to respond. Please try again.'));
+    }, REQUEST_TIMEOUT_MS);
+
+    if (stompClient.connected) {
+      publishWhenConnected();
+    } else {
+      setConnectionStatus('connecting');
+      pending.connectUnsubscribe = stompClient.addConnectListener(publishWhenConnected);
+      if (!stompClient.ws || stompClient.ws.readyState === WebSocket.CLOSED) {
+        stompClient.connect();
+      }
+      if (stompClient.connected) publishWhenConnected();
     }
   }), [stompClientRef]);
 

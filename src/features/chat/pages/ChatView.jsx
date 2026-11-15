@@ -540,7 +540,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
   }, []);
 
   useEffect(() => {
-    if (!activeProjectId) {
+    if (!activeProjectId && !isAssistantActive) {
       setPinnedMessages([]);
       return;
     }
@@ -572,7 +572,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     const projectId = activeProjectId;
     let isMounted = true;
 
-    getProjectChatMessages(projectId, 0, 50)
+    if (projectId) getProjectChatMessages(projectId, 0, 50)
       .then((serverMessages) => {
         if (!isMounted) return;
 
@@ -647,7 +647,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       stompClientRef.current = null;
     }
 
-    if (isActiveProjectReadOnly) {
+    if (isActiveProjectReadOnly && !isAssistantActive) {
       setConnectionStatus('disconnected');
       return () => { isMounted = false; };
     }
@@ -667,7 +667,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
     stompClientRef.current = client;
     client.connect();
 
-    const unsub = client.subscribe(`/topic/projects/${projectId}/chat`, (receivedMsg) => {
+    const unsub = projectId ? client.subscribe(`/topic/projects/${projectId}/chat`, (receivedMsg) => {
       if (!isMounted || !receivedMsg) return;
 
       const outgoing = isOutgoingMessageRef.current ? isOutgoingMessageRef.current(receivedMsg) : false;
@@ -711,10 +711,10 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
             : p
         )
       );
-    });
+    }) : null;
 
     unsubscribeRef.current = unsub;
-    callUnsubscribeRef.current = client.subscribe(`/topic/projects/${projectId}/calls`, (event) => {
+    callUnsubscribeRef.current = projectId ? client.subscribe(`/topic/projects/${projectId}/calls`, (event) => {
       if (!isMounted || !event) return;
 
       const eventType = String(event.type || '').toUpperCase();
@@ -776,7 +776,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
         setActiveCallProjectId(projectId);
         setIsCallActive(true);
       }
-    });
+    }) : null;
 
     return () => {
       isMounted = false;
@@ -794,7 +794,7 @@ const ChatsView = ({ currentUserProfile: profileProp, isPageActive = true }) => 
       }
     };
     
-  }, [activeProjectId, isActiveProjectReadOnly, leaveVideoCall]);
+  }, [activeProjectId, isActiveProjectReadOnly, isAssistantActive, leaveVideoCall]);
 
   const handleSelectConversation = (id) => {
     setIsAssistantActive(false);
