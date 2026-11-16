@@ -60,6 +60,7 @@ import DeleteReleaseModal from '../components/DeleteReleaseModal';
 import AttachReleaseIssuesModal from '../components/AttachReleaseIssuesModal';
 import LinkRepositoryModal from '../components/LinkRepositoryModal';
 import ProjectContributionsSection from '../components/ProjectContributionsSection';
+import ProjectDocumentsSection from '../components/ProjectDocumentsSection';
 import ProjectSummaryModal from '../components/ProjectSummaryModal';
 import ProjectMembersModal from '../components/ProjectMembersModal';
 import ProjectTimelineRoadmap from '../components/ProjectTimelineRoadmap';
@@ -95,6 +96,14 @@ const formatMilestoneDate = (dateStr) => {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return String(dateStr);
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const formatMilestoneTimestamp = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
 };
 
 const isMilestoneCompleted = (milestone) => {
@@ -204,6 +213,7 @@ const ProjectDetailsView = () => {
   
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
+  const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [isDeleteMilestoneOpen, setIsDeleteMilestoneOpen] = useState(false);
   const [deletingMilestone, setDeletingMilestone] = useState(null);
 
@@ -1286,6 +1296,7 @@ const ProjectDetailsView = () => {
       ) : (
         
         <div className="space-y-6">
+          <ProjectDocumentsSection projectId={projectId} canManage={isAdmin && !isProjectClosed} />
           {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {}
@@ -1372,8 +1383,13 @@ const ProjectDetailsView = () => {
                             <span
                               className={`absolute -left-5 top-2 h-2.5 w-2.5 rounded-full ${statusInfo.dotClass}`}
                             />
-                            <div className="min-w-0 pr-2">
-                              <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedMilestone(m)}
+                              className="min-w-0 flex-1 pr-2 text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                              aria-label={`View details for ${m.name || m.title || 'milestone'}`}
+                            >
+                              <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate hover:text-sky-600 dark:hover:text-sky-400">
                                 {m.name || m.title || `Milestone ${idx + 1}`}
                               </p>
                               {m.description && (
@@ -1384,7 +1400,7 @@ const ProjectDetailsView = () => {
                               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                                 Due: {formatMilestoneDate(m.dueDate || m.targetDate || m.deadline)}
                               </p>
-                            </div>
+                            </button>
                             <div className="flex items-center gap-2 shrink-0">
                               <span
                                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border shrink-0 ${statusInfo.badgeClass}`}
@@ -2287,6 +2303,46 @@ const ProjectDetailsView = () => {
         project={project}
         onOpenIssue={(issue) => setSelectedIssue(issue)}
       />
+
+      {selectedMilestone && (() => {
+        const completed = isMilestoneCompleted(selectedMilestone);
+        const statusInfo = getMilestoneStatusInfo(selectedMilestone.status, selectedMilestone.completed);
+        return (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedMilestone(null); }}
+            role="presentation"
+          >
+            <section role="dialog" aria-modal="true" aria-labelledby="milestone-detail-title" className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-[#38383f] dark:bg-[#1e1e23]">
+              <header className="flex items-start justify-between gap-4 border-b border-slate-100 p-6 dark:border-[#34343b]">
+                <div className="min-w-0">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"><FiLayers size={12} /> Milestone</span>
+                  <h2 id="milestone-detail-title" className="mt-3 text-xl font-bold text-slate-900 dark:text-white">{selectedMilestone.name || selectedMilestone.title || 'Milestone details'}</h2>
+                </div>
+                <button type="button" onClick={() => setSelectedMilestone(null)} aria-label="Close milestone details" className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-[#303038] dark:hover:text-white"><FiX size={18} /></button>
+              </header>
+              <div className="space-y-5 p-6">
+                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">{selectedMilestone.description || 'No description provided.'}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-slate-200 p-4 dark:border-[#38383f]">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Due date</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{formatMilestoneDate(selectedMilestone.dueDate)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 p-4 dark:border-[#38383f]">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</p>
+                    <p className="mt-1"><span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusInfo.badgeClass}`}>{completed ? 'Completed' : statusInfo.label}</span></p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-3 border-t border-slate-100 pt-4 text-xs dark:border-[#34343b] sm:grid-cols-2">
+                  <div><p className="text-slate-500 dark:text-slate-400">Completed at</p><p className="mt-1 font-medium text-slate-800 dark:text-slate-200">{formatMilestoneTimestamp(selectedMilestone.completedAt)}</p></div>
+                  <div><p className="text-slate-500 dark:text-slate-400">Created</p><p className="mt-1 font-medium text-slate-800 dark:text-slate-200">{formatMilestoneTimestamp(selectedMilestone.createdAt)}</p></div>
+                  <div><p className="text-slate-500 dark:text-slate-400">Last updated</p><p className="mt-1 font-medium text-slate-800 dark:text-slate-200">{formatMilestoneTimestamp(selectedMilestone.updatedAt)}</p></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        );
+      })()}
 
       {}
       <MilestoneModal
