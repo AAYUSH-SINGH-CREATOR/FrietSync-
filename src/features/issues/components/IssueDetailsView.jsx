@@ -9,7 +9,7 @@ import { AiOutlineBug } from 'react-icons/ai';
 import {
   getIssueDetails, getProjectIssues, updateIssue, updateIssueStatus, deleteIssue, assignIssue, resolveIssue, reviewIssue,
   getIssueHistory, getIssueLabels, attachIssueLabel, removeIssueLabel,
-  getIssueLinks, createIssueLink, deleteIssueLink, getIssueDependencies, getIssueImpact,
+  getIssueLinks, createIssueLink, deleteIssueLink, getIssueDependencies,
   getIssueAttachments, uploadIssueAttachment, downloadIssueAttachment, deleteIssueAttachment,
   requestIssueAssignment, getMyIssueAssignmentRequest, cancelIssueAssignmentRequest,
   getProjectIssueRequests, manageProjectIssueRequest, deleteProjectIssueRequest,
@@ -89,7 +89,6 @@ const IssueDetailsView = ({
   const [labels, setLabels] = useState([]);
   const [links, setLinks] = useState([]);
   const [dependencies, setDependencies] = useState(null);
-  const [impact, setImpact] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [history, setHistory] = useState([]);
   const [historyPage, setHistoryPage] = useState(0);
@@ -179,18 +178,16 @@ const IssueDetailsView = ({
       getIssueLabels(issueId),
       getIssueLinks(issueId),
       getIssueDependencies(issueId),
-      getIssueImpact(issueId),
       getIssueAttachments(issueId),
       getIssueHistory(issueId, { page: 0, size: 20 }),
       getIssueSprints(issueId),
       getMyIssueAssignmentRequest(issueId),
       pid && isManager ? getProjectIssueRequests(pid) : Promise.resolve([]),
-    ]).then(([lbls, lnks, deps, imp, atts, hist, sprts, myReq, projReqs]) => {
+    ]).then(([lbls, lnks, deps, atts, hist, sprts, myReq, projReqs]) => {
       if (!active) return;
       if (lbls.status === 'fulfilled') setLabels(asList(lbls.value));
       if (lnks.status === 'fulfilled') setLinks(asList(lnks.value));
       if (deps.status === 'fulfilled') setDependencies(deps.value);
-      if (imp.status === 'fulfilled') setImpact(imp.value);
       if (atts.status === 'fulfilled') setAttachments(asList(atts.value));
       if (hist.status === 'fulfilled') {
         const hItems = asList(hist.value);
@@ -208,11 +205,10 @@ const IssueDetailsView = ({
   const refreshAuxData = useCallback(async () => {
     if (!issueId) return;
     try {
-      const [lbls, lnks, deps, imp, atts, hist, sprts, myReq, projReqs] = await Promise.allSettled([
+      const [lbls, lnks, deps, atts, hist, sprts, myReq, projReqs] = await Promise.allSettled([
         getIssueLabels(issueId),
         getIssueLinks(issueId),
         getIssueDependencies(issueId),
-        getIssueImpact(issueId),
         getIssueAttachments(issueId),
         getIssueHistory(issueId, { page: 0, size: 20 }),
         getIssueSprints(issueId),
@@ -222,7 +218,6 @@ const IssueDetailsView = ({
       if (lbls.status === 'fulfilled') setLabels(asList(lbls.value));
       if (lnks.status === 'fulfilled') setLinks(asList(lnks.value));
       if (deps.status === 'fulfilled') setDependencies(deps.value);
-      if (imp.status === 'fulfilled') setImpact(imp.value);
       if (atts.status === 'fulfilled') setAttachments(asList(atts.value));
       if (hist.status === 'fulfilled') {
         const hItems = asList(hist.value);
@@ -586,21 +581,6 @@ const IssueDetailsView = ({
             ) : (
               <p className="text-xs text-slate-400 dark:text-[#888] italic py-2">No linked issues yet.</p>
             )}
-          </Card>
-
-          <Card>
-            <CardHeader title="Issue Doubts / Impact" />
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-[#a0a0a0] leading-relaxed">
-              {impact?.summary || impact?.description || 'This issue affects users who remain inactive for more than 60 minutes, leading to unexpected logouts and failed API requests.'}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-md bg-rose-500/15 border border-rose-500/30 px-2.5 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                {impact?.severity || 'High Impact'}
-              </span>
-              <span className="rounded-md bg-indigo-500/15 border border-indigo-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
-                {impact?.affectedScope || 'Affects multiple users'}
-              </span>
-            </div>
           </Card>
 
           <Card>

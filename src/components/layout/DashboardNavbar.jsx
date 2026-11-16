@@ -593,19 +593,19 @@ const DashboardNavbar = ({
       </header>
 
       {}
-      <header className="flex md:hidden flex-col gap-2 bg-[#81ebfe] px-3 min-[380px]:px-4 py-2 sticky top-0 z-40 w-full shadow-xs select-none">
+      <header className="flex md:hidden flex-col gap-2 bg-[#81ebfe] dark:bg-gradient-to-r dark:from-[#21396a] dark:via-[#2b467d] dark:to-[#21396a] px-3 min-[380px]:px-4 py-2 sticky top-0 z-40 w-full shadow-xs select-none">
         <div className="flex h-[38px] w-full items-center justify-between">
           <button
             type="button"
             onClick={onToggleMobileSidebar}
             aria-label={isMobileSidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            className="flex items-center justify-center p-2 -ml-2 text-black hover:opacity-75 active:scale-95 transition cursor-pointer"
+            className="flex items-center justify-center p-2 -ml-2 text-black dark:text-white hover:opacity-75 active:scale-95 transition cursor-pointer"
           >
             <FiMenu size={24} className="stroke-[2.5]" />
           </button>
 
           <Link to="/dashboard" aria-label="FrietSync home" className="group flex items-center select-none">
-            <BrandLogo size="mobile" />
+            <BrandLogo size={isDarkMode ? 'mobile-dark' : 'mobile'} />
           </Link>
 
           <div className="relative" ref={mobileProfileMenuRef}>

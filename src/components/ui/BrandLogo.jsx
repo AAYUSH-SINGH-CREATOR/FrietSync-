@@ -1,7 +1,8 @@
 import logo from '../../assets/logo.svg';
 
 const BrandLogo = ({ size = 'desktop', className = '' }) => {
-  const compact = size === 'mobile';
+  const compact = size === 'mobile' || size === 'mobile-dark';
+  const darkMobile = size === 'mobile-dark';
 
   return (
     <span className={`inline-flex shrink-0 items-center gap-2 ${className}`}>
@@ -11,7 +12,7 @@ const BrandLogo = ({ size = 'desktop', className = '' }) => {
         aria-hidden="true"
         className={`${compact ? 'h-7 w-7 max-[360px]:h-6 max-[360px]:w-6' : 'h-9 w-9'} object-contain transition-transform duration-200 group-hover:scale-105`}
       />
-      <span className={`inline-flex items-baseline leading-none transition ${compact ? 'text-black group-hover:text-black dark:text-black dark:group-hover:text-black' : 'text-black group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300'}`}>
+      <span className={`inline-flex items-baseline leading-none transition ${darkMobile ? 'text-white group-hover:text-white' : compact ? 'text-black group-hover:text-black dark:text-black dark:group-hover:text-black' : 'text-black group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300'}`}>
         <span className={`${compact ? 'text-[21px] max-[360px]:text-[18px]' : 'text-[30px]'} font-semibold tracking-tight`}>Friet</span>
         <span className={`brand-script ${compact ? 'text-[28px] max-[360px]:text-[24px]' : 'text-[39px]'} -ml-0.5`}>sync</span>
       </span>
