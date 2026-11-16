@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   FiCalendar, FiLayers, FiAlertCircle, FiCheckCircle, FiClock,
   FiAlertTriangle, FiPlus, FiTrash2, FiSearch, FiFilter, FiArrowLeft, FiShield
@@ -12,7 +12,7 @@ import {
   updateSprintGanttDates,
   updateIssueGanttDates
 } from '../services/ganttApi';
-import { getMyProjects, getFriendlyErrorMessage } from '../../projects/services/projectApi';
+import { getMyProjects, getProjectMembers, getFriendlyErrorMessage } from '../../projects/services/projectApi';
 import { getStatusStyle } from '../utils/ganttUtils';
 import { getDashboardProjectId, setDashboardProjectId } from '../../../utils/dashboardProjectSelection';
 
@@ -27,9 +27,11 @@ const formatDayLabel = (value) => parseDay(value)?.toLocaleDateString(undefined,
 const GanttChart = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const { currentUserProfile } = useOutletContext() || {};
 
   const [project, setProject] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [projectMembers, setProjectMembers] = useState([]);
   const [ganttData, setGanttData] = useState({ groups: [], issues: [], milestones: [], timelineDays: [], hasBaseline: false });
   const [criticalPathIds, setCriticalPathIds] = useState(new Set());
   const [showCriticalPathOnly, setShowCriticalPathOnly] = useState(false);
@@ -118,6 +120,18 @@ const GanttChart = () => {
       setDashboardProjectId(projectId);
       loadData(projectId);
     }
+  }, [projectId]);
+
+  useEffect(() => {
+    let active = true;
+    if (!projectId) {
+      setProjectMembers([]);
+      return undefined;
+    }
+    getProjectMembers(projectId)
+      .then((members) => { if (active) setProjectMembers(Array.isArray(members) ? members : []); })
+      .catch(() => { if (active) setProjectMembers([]); });
+    return () => { active = false; };
   }, [projectId]);
 
   const handleProjectChange = (nextProjectId) => {
@@ -255,6 +269,23 @@ const GanttChart = () => {
   };
 
   const formatAssignees = (assignees = []) => assignees.map((assignee) => assignee.name).filter(Boolean).join(', ');
+  const normalizeRole = (role) => String(role || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+  const currentUserIds = [currentUserProfile?.id, currentUserProfile?._id, currentUserProfile?.userId, currentUserProfile?.user?.id, currentUserProfile?.user?._id].filter(Boolean).map(String);
+  const currentUserEmails = [currentUserProfile?.email, currentUserProfile?.user?.email].filter(Boolean).map((email) => String(email).toLowerCase());
+  const currentMember = projectMembers.find((member) => {
+    const memberIds = [member.userId, member.id, member._id, member.user?.id, member.user?._id].filter(Boolean).map(String);
+    const memberEmails = [member.email, member.user?.email].filter(Boolean).map((email) => String(email).toLowerCase());
+    return memberIds.some((id) => currentUserIds.includes(id)) || memberEmails.some((email) => currentUserEmails.includes(email));
+  });
+  const globalRole = normalizeRole(currentUserProfile?.role || currentUserProfile?.user?.role);
+  const projectRole = normalizeRole(currentMember?.role || currentMember?.projectRole || currentMember?.userRole || currentMember?.user?.role);
+  const managerIds = [project?.projectManagerId, project?.projectManager?.id, project?.projectManager?._id, project?.projectManager?.userId].filter(Boolean).map(String);
+  const leaderIds = [project?.teamLeadId, project?.teamLead?.id, project?.teamLead?._id, project?.teamLead?.userId].filter(Boolean).map(String);
+  const adminIds = [project?.adminId].filter(Boolean).map(String);
+  const canEditSchedule = [globalRole, projectRole].some((role) => ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(role)) ||
+    currentUserIds.some((id) => adminIds.includes(id) || managerIds.includes(id) || leaderIds.includes(id)) ||
+    (project?.projectManagerEmail && currentUserEmails.includes(String(project.projectManagerEmail).toLowerCase())) ||
+    (project?.teamLeadEmail && currentUserEmails.includes(String(project.teamLeadEmail).toLowerCase()));
   const renderTimelineLane = (item, colorClass = 'bg-sky-500') => {
     const barStyle = getBarStyle(item);
     const baselineStyle = getBarStyle({ startDate: item.baselineStartDate, endDate: item.baselineEndDate });
@@ -451,7 +482,7 @@ const GanttChart = () => {
                           <div className="truncate text-sm font-semibold text-slate-800 dark:text-white">{group.name || 'Sprint'}</div>
                           <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{group.status || 'Sprint'} · {formatDayLabel(group.startDate)} – {formatDayLabel(group.endDate)}</div>
                         </div>
-                        <button onClick={() => setEditingItem({ type: 'sprint', id: group.id, startDate: group.startDate || '', endDate: group.endDate || '' })} className="text-[11px] font-medium text-sky-600 hover:underline dark:text-sky-400">Edit</button>
+                        {canEditSchedule && <button onClick={() => setEditingItem({ type: 'sprint', id: group.id, startDate: group.startDate || '', endDate: group.endDate || '' })} className="text-[11px] font-medium text-sky-600 hover:underline dark:text-sky-400">Edit</button>}
                       </div>
                       {renderTimelineLane(group, 'bg-gradient-to-r from-sky-500 to-indigo-500')}
                     </div>}
@@ -474,7 +505,7 @@ const GanttChart = () => {
                                 </div>
                               </div>
                               <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${statusInfo.badge}`}>{issue.status || issue.priority || 'Open'}</span>
-                              {issue.itemType === 'issue' && <button onClick={() => setEditingItem({ type: 'issue', id: issue.id, startDate: issue.startDate || '', endDate: issue.endDate || '' })} className="text-[11px] font-medium text-sky-600 hover:underline dark:text-sky-400">Edit</button>}
+                              {canEditSchedule && issue.itemType === 'issue' && <button onClick={() => setEditingItem({ type: 'issue', id: issue.id, startDate: issue.startDate || '', endDate: issue.endDate || '' })} className="text-[11px] font-medium text-sky-600 hover:underline dark:text-sky-400">Edit</button>}
                             </div>
                             {renderTimelineLane(issue, color)}
                           </div>

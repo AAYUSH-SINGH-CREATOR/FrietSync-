@@ -23,6 +23,7 @@ import {
   FiWifi,
   FiWifiOff,
   FiCopy,
+  FiBarChart,
 } from 'react-icons/fi';
 import { getCanvas, renameCanvas as renameCanvasRequest, deleteCanvas as deleteCanvasRequest } from '../services/canvasService';
 import { useCanvasSocket } from '../hooks/useCanvasSocket';
