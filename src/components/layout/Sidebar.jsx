@@ -17,6 +17,7 @@ import {
   FiMoon,
   FiLogOut,
   FiSunrise,
+  FiBarChart,
 } from 'react-icons/fi';
 import { AiOutlineBug } from 'react-icons/ai';
 import { IoChatboxEllipsesOutline, IoMailOutline } from 'react-icons/io5';
@@ -125,6 +126,7 @@ const Sidebar = ({
     { id: 'my-work', to: '/dashboard/my-work', label: 'My Work', icon: FiBriefcase },
     { id: 'briefing', to: '/dashboard/briefing', label: 'Daily Briefing', icon: FiSunrise },
     { id: 'calendar', to: '/dashboard/calendar', label: 'Calendar', icon: FiCalendar },
+    { id: 'gantt', to: '/dashboard/projects/:projectId/gantt', label: 'Gantt Chart', icon: FiBarChart },
     { id: 'chats', to: '/dashboard/chats', label: 'Chats', icon: IoChatboxEllipsesOutline },
     { id: 'invites', to: '/dashboard/invites', label: 'My Invites', icon: IoMailOutline, badge: pendingInviteCount },
   ];
