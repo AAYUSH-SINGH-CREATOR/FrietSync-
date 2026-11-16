@@ -47,6 +47,7 @@ import {
   unmuteProjectChat,
 } from '../services/chatApi';
 import { ChatPollModal } from '../../polls/components';
+import ProjectThreadsPanel from './ProjectThreadsPanel';
 import { ChatComposerFrame, ChatConversationPanel } from './ChatConversationLayout';
 
 const FAMOUS_EMOJIS = ['👍', '❤️', '😂', '🔥', '😮', '😢', '😡', '🎉'];
@@ -132,6 +133,7 @@ const ChatArea = ({
   const [searchInChat, setSearchInChat] = useState('');
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isProjectDetailsOpen, setIsProjectDetailsOpen] = useState(false);
+  const [isThreadsOpen, setIsThreadsOpen] = useState(false);
   const [chatMuteStatus, setChatMuteStatus] = useState({ muted: false, mutedUntil: null });
   const [isUpdatingMute, setIsUpdatingMute] = useState(false);
   const [projectDetailsError, setProjectDetailsError] = useState('');
@@ -165,6 +167,14 @@ const ChatArea = ({
   const messageMenuRef = useRef(null);
 
   const currentUser = currentUserProp || getCurrentChatUser();
+  const currentChatUserId = String(currentUser?.userId || currentUser?.id || '');
+  const currentChatMember = (activeChat?.members || []).find((member) => {
+    if (!member || typeof member === 'string') return false;
+    const memberId = member.userId || member.memberId || member.id || member._id || member.user?.id || member.user?._id;
+    return currentChatUserId && String(memberId || '') === currentChatUserId;
+  });
+  const currentChatRole = String(currentChatMember?.role || currentChatMember?.projectRole || '').toUpperCase();
+  const canManageProjectThreads = ['ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD'].includes(currentChatRole);
 
   const visibleMembers = useMemo(() => {
     const normalizedQuery = detailsSearch.trim().toLowerCase();
@@ -792,6 +802,15 @@ const ChatArea = ({
         <div className="flex items-center gap-0 shrink-0 text-slate-600 dark:text-slate-300 sm:gap-1">
           <button
             type="button"
+            onClick={() => setIsThreadsOpen(true)}
+            title="Project threads"
+            aria-label="Open project threads"
+            className="p-1 sm:p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+          >
+            <FiMessageSquare size={16} className="sm:h-[18px] sm:w-[18px]" />
+          </button>
+          <button
+            type="button"
             onClick={() => { setPollToOpenId(null); setIsPollModalOpen(true); }}
             title="Project Polls & Decisions"
             className="p-1 sm:p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
@@ -1381,6 +1400,24 @@ const ChatArea = ({
           onSendMessage(shareText);
         }}
       />
+
+      {isThreadsOpen && (
+        <div
+          className="fixed inset-0 z-[80] flex justify-end bg-black/30 p-3 sm:p-4"
+          role="presentation"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setIsThreadsOpen(false); }}
+          onKeyDown={(event) => { if (event.key === 'Escape') setIsThreadsOpen(false); }}
+        >
+          <div className="h-full max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-y-auto rounded-[24px] sm:max-h-[calc(100dvh-32px)]">
+            <ProjectThreadsPanel
+              projectId={activeChat?.id}
+              currentUserId={currentChatUserId}
+              canManage={canManageProjectThreads}
+              readOnly={readOnly}
+            />
+          </div>
+        </div>
+      )}
 
       {isProjectDetailsOpen && (
         <div

@@ -444,3 +444,12 @@ body:has([aria-modal="true"]) {
   }
 }
 
+
+input[type="password"]::-ms-reveal {
+  display: none;
+}
+
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
