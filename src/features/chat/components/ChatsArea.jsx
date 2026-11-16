@@ -1414,6 +1414,7 @@ const ChatArea = ({
               currentUserId={currentChatUserId}
               canManage={canManageProjectThreads}
               readOnly={readOnly}
+              onClose={() => setIsThreadsOpen(false)}
             />
           </div>
         </div>

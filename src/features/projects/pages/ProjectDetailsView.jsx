@@ -355,9 +355,11 @@ const ProjectDetailsView = () => {
     currentUserIds.some((id) => projectAdminIds.includes(id) || projectManagerIds.includes(id)) ||
     currentProjectRoleNames.includes('PROJECT_MANAGER'));
   const canAttachIssues = canManageReleases;
-  const canReopenProject = isAdmin || globalRole === 'PROJECT_MANAGER' ||
+  const isTeamLead = globalRole === 'TEAM_LEAD' || currentProjectRoleNames.includes('TEAM_LEAD') ||
+    currentUserIds.some((id) => teamLeadIds.includes(id));
+  const canReopenProject = !isTeamLead && (isAdmin || globalRole === 'PROJECT_MANAGER' ||
     currentUserIds.some((id) => projectManagerIds.includes(id)) ||
-    currentProjectRoleNames.includes('PROJECT_MANAGER');
+    currentProjectRoleNames.includes('PROJECT_MANAGER'));
   const canEditProject = canReopenProject && !isProjectClosed;
 
   const changeProjectStatus = async (status) => {

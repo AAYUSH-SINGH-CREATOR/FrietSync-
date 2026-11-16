@@ -181,7 +181,7 @@ const ProjectsView = ({ filter: propFilter, onFilterChange: propOnFilterChange }
             subtitle="No projects yet. Create one to organize your team's work."
             illustration={esproject}
             illustrationAlt="No projects yet"
-            onCreateProject={() => setIsCreateModalOpen(true)}
+            onCreateProject={canCreateProjectButton ? () => setIsCreateModalOpen(true) : undefined}
           />
         </div>
         <CreateProjectModal

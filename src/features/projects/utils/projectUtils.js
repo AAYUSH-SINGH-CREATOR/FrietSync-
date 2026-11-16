@@ -6,7 +6,7 @@ export const canCreateProject = (profile) => {
     .trim()
     .toUpperCase()
     .replace(/[\s-]+/g, '_');
-  return ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER', 'PROJECT_MANAGER', 'TEAM_LEAD', 'LEAD'].includes(role);
+  return ['ADMIN', 'WORKSPACE_ADMIN', 'OWNER', 'PROJECT_MANAGER'].includes(role);
 };
 
 export const formatDate = (dateStr) => {
