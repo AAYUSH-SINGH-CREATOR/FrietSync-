@@ -723,8 +723,6 @@ const SettingsView = () => {
           </div>
         </button>
 
-        <RecycleBinSection />
-
         {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">
           <button
@@ -1012,6 +1010,8 @@ const SettingsView = () => {
             </div>
           )}
         </div>
+
+        <RecycleBinSection />
 
         {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FiArchive, FiRotateCcw, FiRefreshCw, FiAlertCircle, FiFolder, FiCheckCircle, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiArchive, FiRotateCcw, FiRefreshCw, FiAlertCircle, FiFolder, FiCheckCircle, FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { getMyProjects } from '../../projects/services/projectApi';
 import { getDashboardProjectId } from '../../../utils/dashboardProjectSelection';
+import { isTechnicalError } from '../../../utils/errorHandler';
 import {
   getDeletedIssues,
   getDeletedMilestones,
@@ -34,6 +35,21 @@ const formatDeletedAt = (value) => {
   if (!value) return '';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '' : `Deleted ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+};
+const getRecycleBinErrorMessage = (error, action) => {
+  const status = error?.response?.status ?? error?.status;
+  const data = error?.response?.data ?? error?.data;
+  const serverMessage = data?.message || data?.error || data?.msg || (typeof data === 'string' ? data : '');
+
+  if (!status || status === 0 || error?.code === 'ERR_NETWORK') {
+    return 'Unable to connect to the server. Check your connection and try again.';
+  }
+  if (status === 401) return 'Your session has expired. Please sign in again.';
+  if (status === 403) return `You don't have permission to ${action}.`;
+  if (status === 404) return 'This item could not be found. Refresh the Recycle Bin and try again.';
+  if (status >= 500) return 'The Recycle Bin is temporarily unavailable. Please try again later.';
+  if (serverMessage && !isTechnicalError(serverMessage)) return serverMessage;
+  return `Could not ${action}. Please try again.`;
 };
 
 const RecycleBinSection = () => {
@@ -75,7 +91,7 @@ const RecycleBinSection = () => {
         return String(getItemId(all[0]) || '');
       });
       if (deletedResult.status === 'rejected' && projectsResult.status === 'rejected') {
-        setError(deletedResult.reason?.response?.data?.message || 'Could not load deleted projects.');
+        setError(getRecycleBinErrorMessage(deletedResult.reason, 'load deleted projects'));
       }
     } finally {
       setLoadingProjects(false);
@@ -106,7 +122,7 @@ const RecycleBinSection = () => {
       }
     } catch (err) {
       setItems([]);
-      setError(err.response?.data?.message || err.message || `Could not load deleted ${activeTab.toLowerCase()}.`);
+      setError(getRecycleBinErrorMessage(err, `load deleted ${activeTab.toLowerCase()}`));
     } finally {
       setLoading(false);
     }
@@ -135,7 +151,7 @@ const RecycleBinSection = () => {
       await loadItems();
       if (activeTab === 'Projects') await loadProjectOptions();
     } catch (err) {
-      setError(err.response?.data?.message || err.message || `Could not restore this ${activeTab.slice(0, -1).toLowerCase()}.`);
+      setError(getRecycleBinErrorMessage(err, `restore this ${activeTab.slice(0, -1).toLowerCase()}`));
     } finally {
       setRestoringId('');
     }
@@ -156,7 +172,7 @@ const RecycleBinSection = () => {
       <div className="border-t border-slate-100 bg-slate-50/60 p-4 dark:border-[#383838] dark:bg-[#202020] sm:p-5">
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Deleted item type">{TABS.map((tab) => <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => selectTab(tab)} className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${activeTab === tab ? 'bg-slate-900 text-white dark:bg-sky-600' : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-[#2a2a2a] dark:text-slate-300 dark:hover:bg-[#303030]'}`}>{tab}{tab === 'Projects' && deletedProjects.length > 0 ? ` (${deletedProjects.length})` : ''}</button>)}</div>
 
-        {activeTab !== 'Projects' && <div className="mt-4 flex flex-wrap items-center gap-3"><label htmlFor="recycle-bin-project" className="text-xs font-semibold text-slate-600 dark:text-slate-300">Project</label><select id="recycle-bin-project" value={selectedProjectId} onChange={(event) => { setSelectedProjectId(event.target.value); setIssuePage(0); }} disabled={loadingProjects || projectOptions.length === 0} className="min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-400 dark:border-[#404040] dark:bg-[#2a2a2a] dark:text-white">{projectOptions.length === 0 ? <option value="">No projects available</option> : projectOptions.map((project) => <option key={project.id} value={project.id}>{projectName(project)}{project.deletedAt ? ' (deleted)' : ''}</option>)}</select></div>}
+        {activeTab !== 'Projects' && <div className="mt-4 flex flex-wrap items-center gap-3"><label htmlFor="recycle-bin-project" className="text-xs font-semibold text-slate-600 dark:text-slate-300">Project</label><span className="relative min-w-[220px]"><select id="recycle-bin-project" value={selectedProjectId} onChange={(event) => { setSelectedProjectId(event.target.value); setIssuePage(0); }} disabled={loadingProjects || projectOptions.length === 0} className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-9 text-xs text-slate-700 outline-none focus:border-sky-400 disabled:opacity-60 dark:border-[#404040] dark:bg-[#2a2a2a] dark:text-white">{projectOptions.length === 0 ? <option value="">No projects available</option> : projectOptions.map((project) => <option key={project.id} value={project.id}>{projectName(project)}{project.deletedAt ? ' (deleted)' : ''}</option>)}</select><FiChevronDown aria-hidden="true" size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" /></span></div>}
 
         {error && <div role="alert" className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"><FiAlertCircle size={15} className="mt-0.5 shrink-0" />{error}</div>}
         {notice && <div role="status" className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"><FiCheckCircle size={15} />{notice}</div>}
