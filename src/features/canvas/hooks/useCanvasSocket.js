@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAccessToken } from '../../auth/services/authApi';
 import { getWebSocketUrl } from '../../chat/services/stompClient';
 
-export const useCanvasSocket = (canvasId, onEventReceived) => {
+export const useCanvasSocket = (projectId, canvasId, onEventReceived) => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const wsRef = useRef(null);
   const connectedRef = useRef(false);
@@ -112,6 +112,7 @@ export const useCanvasSocket = (canvasId, onEventReceived) => {
         'accept-version:1.0,1.1,1.2',
         `host:${host}`,
         'heart-beat:0,0',
+        `projectId:${projectId}`,
         `Authorization:Bearer ${token}`,
         `authorization:Bearer ${token}`,
         `passcode:${token}`,
@@ -162,7 +163,7 @@ export const useCanvasSocket = (canvasId, onEventReceived) => {
         setConnectionStatus('disconnected');
       }
     };
-  }, [canvasId]);
+  }, [canvasId, projectId]);
 
   const handleReconnect = () => {
     setConnectionStatus('reconnecting');
@@ -253,7 +254,7 @@ export const useCanvasSocket = (canvasId, onEventReceived) => {
   };
 
   useEffect(() => {
-    if (!canvasId) return undefined;
+    if (!projectId || !canvasId) return undefined;
     connect();
 
     const unsubscribeTopic = subscribeToDestination(`/topic/canvases/${canvasId}`, (eventData) => {
@@ -283,7 +284,7 @@ export const useCanvasSocket = (canvasId, onEventReceived) => {
       connectedRef.current = false;
       setConnectionStatus('disconnected');
     };
-  }, [canvasId, connect, subscribeToDestination]);
+  }, [projectId, canvasId, connect, subscribeToDestination]);
 
   const createCanvas = useCallback((projectId, name) => {
     return new Promise((resolve, reject) => {

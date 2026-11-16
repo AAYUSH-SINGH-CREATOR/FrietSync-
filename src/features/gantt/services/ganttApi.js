@@ -2,6 +2,8 @@ import axios from 'axios';
 import { getAccessToken } from '../../auth/services/authApi';
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+const ganttUrl = (projectId, suffix = '') =>
+  `${String(BASE_URL || '').replace(/\/+$/, '')}/projects/${encodeURIComponent(String(projectId))}/gantt${suffix}`;
 
 const getAuthHeaders = () => {
   const token = getAccessToken();
@@ -35,7 +37,7 @@ const handleGanttError = (error, defaultMessage) => {
 export const getGanttData = async (projectId) => {
   if (!projectId) throw new Error('Project ID is required.');
   try {
-    const response = await axios.get(`${BASE_URL}/projects/${projectId}/gantt`, getAuthHeaders());
+    const response = await axios.get(ganttUrl(projectId), getAuthHeaders());
     return response.data?.data || response.data;
   } catch (error) {
     handleGanttError(error, 'Failed to load Gantt chart data.');
@@ -45,7 +47,7 @@ export const getGanttData = async (projectId) => {
 export const getCriticalPath = async (projectId) => {
   if (!projectId) throw new Error('Project ID is required.');
   try {
-    const response = await axios.get(`${BASE_URL}/projects/${projectId}/gantt/critical-path`, getAuthHeaders());
+    const response = await axios.get(ganttUrl(projectId, '/critical-path'), getAuthHeaders());
     return response.data?.data || response.data;
   } catch (error) {
     handleGanttError(error, 'Failed to load critical path.');
@@ -55,7 +57,7 @@ export const getCriticalPath = async (projectId) => {
 export const captureBaseline = async (projectId) => {
   if (!projectId) throw new Error('Project ID is required.');
   try {
-    const response = await axios.post(`${BASE_URL}/projects/${projectId}/gantt/baseline`, {}, getAuthHeaders());
+    const response = await axios.post(ganttUrl(projectId, '/baseline'), {}, getAuthHeaders());
     return response.data?.data || response.data;
   } catch (error) {
     handleGanttError(error, 'Failed to capture baseline.');
@@ -65,7 +67,7 @@ export const captureBaseline = async (projectId) => {
 export const deleteBaseline = async (projectId) => {
   if (!projectId) throw new Error('Project ID is required.');
   try {
-    const response = await axios.delete(`${BASE_URL}/projects/${projectId}/gantt/baseline`, getAuthHeaders());
+    const response = await axios.delete(ganttUrl(projectId, '/baseline'), getAuthHeaders());
     return response.data?.data || response.data;
   } catch (error) {
     handleGanttError(error, 'Failed to delete baseline.');
@@ -76,7 +78,7 @@ export const updateSprintGanttDates = async (projectId, sprintId, { startDate, e
   if (!projectId || !sprintId) throw new Error('Project ID and Sprint ID are required.');
   try {
     const response = await axios.patch(
-      `${BASE_URL}/projects/${projectId}/gantt/sprints/${sprintId}`,
+      ganttUrl(projectId, `/sprints/${encodeURIComponent(String(sprintId))}`),
       { startDate, endDate },
       getAuthHeaders()
     );
@@ -90,7 +92,7 @@ export const updateIssueGanttDates = async (projectId, issueId, { startDate, end
   if (!projectId || !issueId) throw new Error('Project ID and Issue ID are required.');
   try {
     const response = await axios.patch(
-      `${BASE_URL}/projects/${projectId}/gantt/issues/${issueId}`,
+      ganttUrl(projectId, `/issues/${encodeURIComponent(String(issueId))}`),
       { startDate, endDate },
       getAuthHeaders()
     );

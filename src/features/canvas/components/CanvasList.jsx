@@ -40,6 +40,7 @@ const CanvasList = () => {
   const [renameValue, setRenameValue] = useState('');
 
   useCanvasSocket(
+    projectId,
     canvases[0]?.id,
     (event) => {
       if (event.type === 'CANVAS_RENAMED') {

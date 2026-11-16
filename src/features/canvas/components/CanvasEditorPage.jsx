@@ -141,7 +141,7 @@ const CanvasEditorPage = () => {
     updateElement: socketUpdateElement,
     deleteElement: socketDeleteElement,
     convertToIssue: socketConvertToIssue,
-  } = useCanvasSocket(canvasId, (event) => {
+  } = useCanvasSocket(projectId, canvasId, (event) => {
     if (event.type === 'ELEMENTS_UPSERTED') {
       if (Array.isArray(event.elements)) {
         setElements((prev) => {
