@@ -31,6 +31,26 @@ export const createDocument = async (projectId, payload) => {
   return unwrap(data);
 };
 
+export const uploadProjectDocument = async (projectId, file, { title, content } = {}) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (title) formData.append('title', title);
+  if (content !== undefined) formData.append('content', content);
+  const token = getAccessToken();
+  const { data } = await axios.post(`${BASE_URL}/projects/${projectId}/documents/upload`, formData, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return unwrap(data);
+};
+
+export const downloadDocument = async (documentId) => {
+  const response = await axios.get(`${BASE_URL}/documents/${documentId}/download`, {
+    ...config(),
+    responseType: 'blob',
+  });
+  return { blob: response.data, contentDisposition: response.headers?.['content-disposition'] };
+};
+
 export const updateDocument = async (documentId, payload) => {
   const { data } = await axios.patch(`${BASE_URL}/documents/${documentId}`, payload, config());
   return unwrap(data);
