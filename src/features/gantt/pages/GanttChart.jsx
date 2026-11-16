@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   FiCalendar, FiLayers, FiAlertCircle, FiCheckCircle, FiClock,
-  FiAlertTriangle, FiPlus, FiTrash2, FiSearch, FiFilter, FiArrowLeft, FiShield
+  FiAlertTriangle, FiPlus, FiTrash2, FiSearch, FiFilter, FiShield, FiChevronDown
 } from 'react-icons/fi';
 import {
   getGanttData,
@@ -42,15 +42,18 @@ const GanttChart = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [editingItem, setEditingItem] = useState(null); // { type: 'sprint' | 'issue', id, startDate, endDate }
+  const loadRequestIdRef = useRef(0);
 
   const loadData = async (selectedProjectId = projectId) => {
     if (!selectedProjectId) return;
+    const requestId = ++loadRequestIdRef.current;
 
     setIsLoading(true);
     setError('');
 
     try {
       const ganttRes = await getGanttData(selectedProjectId);
+      if (requestId !== loadRequestIdRef.current) return;
       const data = ganttRes || {};
       const currentProject = projects.find((item) => String(item.id || item._id || item.projectId) === String(selectedProjectId));
       setProject(currentProject || { id: selectedProjectId, name: data.projectName });
@@ -85,9 +88,9 @@ const GanttChart = () => {
       });
       setCriticalPathIds(new Set(Array.isArray(data.criticalPath) ? data.criticalPath : []));
     } catch (err) {
-      setError(getFriendlyErrorMessage(err, 'project timeline'));
+      if (requestId === loadRequestIdRef.current) setError(getFriendlyErrorMessage(err, 'project timeline'));
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestIdRef.current) setIsLoading(false);
     }
   };
 
@@ -116,7 +119,7 @@ const GanttChart = () => {
   }, []);
 
   useEffect(() => {
-    if (projectId) {
+    if (projectId && !projectId.startsWith(':')) {
       setDashboardProjectId(projectId);
       loadData(projectId);
     }
@@ -322,32 +325,29 @@ const GanttChart = () => {
       {/* Top Header & Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <button
-            onClick={() => navigate(`/dashboard/projects/${projectId}`)}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white mb-2 transition"
-          >
-            <FiArrowLeft size={16} /> Back to Project Details
-          </button>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <FiCalendar className="text-sky-500" /> Gantt Timeline & Schedule — {project?.name || 'Project'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Manage sprints, milestone schedules, track critical paths, and compare baselines.
           </p>
-          <label className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-            Project
-            <select
-              value={projectId || ''}
-              onChange={(event) => handleProjectChange(event.target.value)}
-              className="min-w-48 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-[#35353d] dark:bg-[#222228] dark:text-white"
-              aria-label="Select project for Gantt chart"
-            >
-              {!projectId && <option value="">Select a project</option>}
-              {projects.map((item) => {
-                const id = String(item.id || item._id || item.projectId);
-                return <option key={id} value={id}>{item.name || 'Untitled project'}</option>;
-              })}
-            </select>
+          <label className="mt-3 flex w-fit flex-col items-start gap-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <span>Project</span>
+            <span className="relative block w-[220px] max-w-full">
+              <select
+                value={projectId || ''}
+                onChange={(event) => handleProjectChange(event.target.value)}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-2 pr-12 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-[#35353d] dark:bg-[#222228] dark:text-white"
+                aria-label="Select project for Gantt chart"
+              >
+                {!projectId && <option value="">Select a project</option>}
+                {projects.map((item) => {
+                  const id = String(item.id || item._id || item.projectId);
+                  return <option key={id} value={id}>{item.name || 'Untitled project'}</option>;
+                })}
+              </select>
+              <FiChevronDown aria-hidden="true" className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-200" size={16} />
+            </span>
           </label>
         </div>
 
@@ -365,21 +365,23 @@ const GanttChart = () => {
             {showCriticalPathOnly ? 'Showing Critical Path' : 'Critical Path'}
           </button>
 
-          <button
-            onClick={handleCaptureBaseline}
-            disabled={isActionLoading}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-[#222228] border border-slate-200 dark:border-[#35353d] text-slate-700 dark:text-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-[#2a2a32] transition"
-          >
-            <FiPlus className="text-sky-500" /> Capture Baseline
-          </button>
+          {canEditSchedule && <>
+            <button
+              onClick={handleCaptureBaseline}
+              disabled={isActionLoading}
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-[#222228] border border-slate-200 dark:border-[#35353d] text-slate-700 dark:text-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-[#2a2a32] transition"
+            >
+              <FiPlus className="text-sky-500" /> Capture Baseline
+            </button>
 
-          <button
-            onClick={handleDeleteBaseline}
-            disabled={isActionLoading}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-[#222228] border border-slate-200 dark:border-[#35353d] text-rose-600 dark:text-rose-400 rounded-xl text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 transition"
-          >
-            <FiTrash2 /> Reset Baseline
-          </button>
+            <button
+              onClick={handleDeleteBaseline}
+              disabled={isActionLoading}
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-[#222228] border border-slate-200 dark:border-[#35353d] text-rose-600 dark:text-rose-400 rounded-xl text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 transition"
+            >
+              <FiTrash2 /> Reset Baseline
+            </button>
+          </>}
         </div>
       </div>
 
@@ -435,17 +437,20 @@ const GanttChart = () => {
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <FiFilter size={14} /> Status:
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-[#141416] border border-slate-200 dark:border-[#35353d] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-          >
-            <option value="all">All Statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
-          </select>
+          <span className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-[#35353d] dark:bg-[#141416]"
+            >
+              <option value="all">All Statuses</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+            <FiChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-200" size={16} />
+          </span>
         </div>
       </div>
 

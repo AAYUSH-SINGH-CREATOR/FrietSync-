@@ -24,6 +24,7 @@ import { IoChatboxEllipsesOutline, IoMailOutline } from 'react-icons/io5';
 import logo from '../../assets/logo.svg';
 import { useTheme } from '../../context/ThemeContext';
 import { logoutUser } from '../../features/auth/services/authApi';
+import { getDashboardProjectId } from '../../utils/dashboardProjectSelection';
 
 const ActiveNotch = ({ icon: Icon, badge = 0 }) => (
   <>
@@ -66,6 +67,11 @@ const Sidebar = ({
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
   const [isMobileRendered, setIsMobileRendered] = useState(isMobileOpen);
   const [isMobileClosing, setIsMobileClosing] = useState(false);
+  const ganttRouteMatch = location.pathname.match(/^\/dashboard\/projects\/([^/]+)\/gantt(?:\/|$)/);
+  const projectRouteMatch = location.pathname.match(/^\/dashboard\/projects\/([^/]+)(?:\/|$)/);
+  const activeProjectId = projectRouteMatch?.[1] && projectRouteMatch[1] !== ':projectId'
+    ? projectRouteMatch[1]
+    : getDashboardProjectId();
 
   useEffect(() => {
     if (isMobileOpen) {
@@ -126,7 +132,7 @@ const Sidebar = ({
     { id: 'my-work', to: '/dashboard/my-work', label: 'My Work', icon: FiBriefcase },
     { id: 'briefing', to: '/dashboard/briefing', label: 'Daily Briefing', icon: FiSunrise },
     { id: 'calendar', to: '/dashboard/calendar', label: 'Calendar', icon: FiCalendar },
-    { id: 'gantt', to: '/dashboard/projects/:projectId/gantt', label: 'Gantt Chart', icon: FiBarChart },
+    { id: 'gantt', to: activeProjectId ? `/dashboard/projects/${activeProjectId}/gantt` : '/dashboard/projects', label: 'Gantt Chart', icon: FiBarChart },
     { id: 'chats', to: '/dashboard/chats', label: 'Chats', icon: IoChatboxEllipsesOutline },
     { id: 'invites', to: '/dashboard/invites', label: 'My Invites', icon: IoMailOutline, badge: pendingInviteCount },
   ];
@@ -137,6 +143,8 @@ const Sidebar = ({
   ];
 
   const checkIsActive = (item) => {
+    if (item.id === 'gantt') return Boolean(ganttRouteMatch);
+    if (item.id === 'projects' && ganttRouteMatch) return false;
     if (item.end) {
       return location.pathname === item.to;
     }
@@ -205,7 +213,7 @@ const Sidebar = ({
                   <div key={item.id} className="relative w-full flex justify-center py-0.5 group">
                     <NavLink
                       to={item.to}
-                      end={item.end}
+                      end={item.id === 'projects' && ganttRouteMatch ? true : item.end}
                       aria-label={item.label}
                       className={({ isActive }) =>
                         `relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
@@ -240,7 +248,7 @@ const Sidebar = ({
                 <div key={item.id} className="w-full">
                   <NavLink
                     to={item.to}
-                    end={item.end}
+                    end={item.id === 'projects' && ganttRouteMatch ? true : item.end}
                     onClick={() => {
                       if (item.hasSubmenu) {
                         setIsProjectsExpanded((prev) => !prev);
@@ -333,7 +341,7 @@ const Sidebar = ({
                   <div key={item.id} className="relative w-full flex justify-center py-0.5 group">
                     <NavLink
                       to={item.to}
-                      end={item.end}
+                      end={item.id === 'projects' && ganttRouteMatch ? true : item.end}
                       aria-label={item.label}
                       className={({ isActive }) =>
                         `relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
@@ -359,7 +367,7 @@ const Sidebar = ({
                 <NavLink
                   key={item.id}
                   to={item.to}
-                  end={item.end}
+                  end={item.id === 'projects' && ganttRouteMatch ? true : item.end}
                   className={({ isActive }) =>
                     `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                       isActive
@@ -425,7 +433,7 @@ const Sidebar = ({
                     <div key={item.id}>
                       <NavLink
                         to={item.to}
-                        end={item.end}
+                        end={item.id === 'projects' && ganttRouteMatch ? true : item.end}
                         onClick={() => {
                           if (item.hasSubmenu) {
                             setIsProjectsExpanded((prev) => !prev);
