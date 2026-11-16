@@ -43,6 +43,7 @@ import {
   disconnectGithub,
 } from '../../projects/services/projectApi';
 import { sendInvite, formatExpiryToUtc } from '../../invites/services/inviteApi';
+import RecycleBinSection from './RecycleBinSection';
 import { CiLock } from "react-icons/ci";
 
 
@@ -721,6 +722,8 @@ const SettingsView = () => {
             </div>
           </div>
         </button>
+
+        <RecycleBinSection />
 
         {}
         <div className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden transition-colors">

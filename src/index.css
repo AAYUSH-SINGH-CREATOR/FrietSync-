@@ -453,3 +453,6 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
