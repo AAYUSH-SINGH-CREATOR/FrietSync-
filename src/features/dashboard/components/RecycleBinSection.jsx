@@ -53,6 +53,7 @@ const getRecycleBinErrorMessage = (error, action) => {
 };
 
 const RecycleBinSection = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('Projects');
   const [activeProjects, setActiveProjects] = useState([]);
   const [deletedProjects, setDeletedProjects] = useState([]);
@@ -61,7 +62,7 @@ const RecycleBinSection = () => {
   const [issuePage, setIssuePage] = useState(0);
   const [issueTotalPages, setIssueTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [restoringId, setRestoringId] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -128,8 +129,8 @@ const RecycleBinSection = () => {
     }
   }, [activeTab, selectedProjectId, issuePage]);
 
-  useEffect(() => { loadProjectOptions(); }, [loadProjectOptions]);
-  useEffect(() => { loadItems(); }, [loadItems]);
+  useEffect(() => { if (isExpanded) loadProjectOptions(); }, [isExpanded, loadProjectOptions]);
+  useEffect(() => { if (isExpanded) loadItems(); }, [isExpanded, loadItems]);
 
   const selectTab = (tab) => {
     setActiveTab(tab);
@@ -161,15 +162,16 @@ const RecycleBinSection = () => {
 
   return (
     <section className="bg-white dark:bg-[#2a2a2a] rounded-xl overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-6 sm:py-4">
+      <button type="button" onClick={() => setIsExpanded((expanded) => !expanded)} aria-expanded={isExpanded} className="w-full p-4 sm:px-6 sm:py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-[#303030] transition cursor-pointer text-left">
         <div className="flex items-center gap-4 min-w-0">
           <div className="w-10 h-10 rounded-full text-slate-600 dark:text-white flex items-center justify-center shrink-0"><FiArchive size={20} /></div>
           <div className="min-w-0"><h2 className="text-base font-bold text-slate-900 dark:text-white">Recycle Bin</h2><p className="text-xs text-slate-500 dark:text-[#94a3b8] mt-0.5">Restore deleted projects and project items.</p></div>
         </div>
-        <button type="button" onClick={() => { loadProjectOptions(); loadItems(); }} disabled={loading || loadingProjects} aria-label="Refresh recycle bin" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-slate-300 dark:hover:bg-[#303030]"><FiRefreshCw size={14} className={loading || loadingProjects ? 'animate-spin' : ''} /> Refresh</button>
-      </div>
+        <FiChevronDown size={18} className={`shrink-0 text-slate-500 transition-transform dark:text-white/80 ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
 
-      <div className="border-t border-slate-100 bg-slate-50/60 p-4 dark:border-[#383838] dark:bg-[#202020] sm:p-5">
+      {isExpanded && <div className="border-t border-slate-100 bg-slate-50/60 p-4 dark:border-[#383838] dark:bg-[#202020] sm:p-5">
+        <div className="mb-4 flex justify-end"><button type="button" onClick={() => { loadProjectOptions(); loadItems(); }} disabled={loading || loadingProjects} aria-label="Refresh recycle bin" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-[#404040] dark:text-slate-300 dark:hover:bg-[#303030]"><FiRefreshCw size={14} className={loading || loadingProjects ? 'animate-spin' : ''} /> Refresh</button></div>
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Deleted item type">{TABS.map((tab) => <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => selectTab(tab)} className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${activeTab === tab ? 'bg-slate-900 text-white dark:bg-sky-600' : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-[#2a2a2a] dark:text-slate-300 dark:hover:bg-[#303030]'}`}>{tab}{tab === 'Projects' && deletedProjects.length > 0 ? ` (${deletedProjects.length})` : ''}</button>)}</div>
 
         {activeTab !== 'Projects' && <div className="mt-4 flex flex-wrap items-center gap-3"><label htmlFor="recycle-bin-project" className="text-xs font-semibold text-slate-600 dark:text-slate-300">Project</label><span className="relative min-w-[220px]"><select id="recycle-bin-project" value={selectedProjectId} onChange={(event) => { setSelectedProjectId(event.target.value); setIssuePage(0); }} disabled={loadingProjects || projectOptions.length === 0} className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-9 text-xs text-slate-700 outline-none focus:border-sky-400 disabled:opacity-60 dark:border-[#404040] dark:bg-[#2a2a2a] dark:text-white">{projectOptions.length === 0 ? <option value="">No projects available</option> : projectOptions.map((project) => <option key={project.id} value={project.id}>{projectName(project)}{project.deletedAt ? ' (deleted)' : ''}</option>)}</select><FiChevronDown aria-hidden="true" size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" /></span></div>}
@@ -180,7 +182,7 @@ const RecycleBinSection = () => {
         {loading || loadingProjects ? <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-white py-10 text-xs text-slate-500 dark:bg-[#2a2a2a] dark:text-slate-400"><FiRefreshCw size={15} className="animate-spin" />Loading deleted items…</div> : items.length === 0 ? <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center dark:border-[#404040] dark:bg-[#2a2a2a]"><FiArchive size={23} className="mx-auto text-slate-300 dark:text-slate-600" /><p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Nothing to restore</p><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Deleted {activeTab.toLowerCase()} will appear here.</p></div> : <div className="mt-4 space-y-2">{items.map((item, index) => { const id = getItemId(item, activeTab) || `${activeTab}-${index}`; return <div key={id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-[#383838] dark:bg-[#2a2a2a]"><div className="flex min-w-0 items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-[#343434] dark:text-slate-300">{activeTab === 'Projects' ? <FiFolder size={16} /> : <FiArchive size={16} />}</span><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{getItemTitle(item, activeTab)}</p><p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{formatDeletedAt(item.deletedAt || item.deletedOn || item.updatedAt)}{item.projectName ? ` · ${item.projectName}` : ''}</p></div></div><button type="button" onClick={() => restoreItem(item)} disabled={Boolean(restoringId)} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">{restoringId === String(id) ? <FiRefreshCw size={13} className="animate-spin" /> : <FiRotateCcw size={13} />}{restoringId === String(id) ? 'Restoring…' : 'Restore'}</button></div>; })}</div>}
 
         {activeTab === 'Issues' && issueTotalPages > 1 && <div className="mt-4 flex items-center justify-between"><button type="button" onClick={() => setIssuePage((value) => Math.max(0, value - 1))} disabled={issuePage <= 0 || loading} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-40 dark:text-slate-300 dark:hover:bg-[#303030]"><FiChevronLeft size={14} /> Previous</button><span className="text-xs text-slate-500 dark:text-slate-400">Page {issuePage + 1} of {issueTotalPages}</span><button type="button" onClick={() => setIssuePage((value) => Math.min(issueTotalPages - 1, value + 1))} disabled={issuePage >= issueTotalPages - 1 || loading} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-40 dark:text-slate-300 dark:hover:bg-[#303030]">Next <FiChevronRight size={14} /></button></div>}
-      </div>
+      </div>}
     </section>
   );
 };
